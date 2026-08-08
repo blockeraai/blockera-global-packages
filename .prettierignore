@@ -1,0 +1,9 @@
+# Ignore artifacts:
+dist
+example
+vendor
+node_modules
+
+# Ignore test fixtures
+**/tests/**/input.html
+**/tests/**/*.css
