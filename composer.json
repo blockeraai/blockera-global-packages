@@ -1,0 +1,36 @@
+{
+	"name": "blockera/global-packages",
+	"description": "Global packages for Blockera shared between all consumers (plugins, themes, etc.)",
+	"type": "library",
+	"license": "ISC",
+	"authors": [
+		{
+			"name": "The Blockera Contributors"
+		}
+	],
+	"minimum-stability": "dev",
+	"require": {
+		"php": ">=7.4"
+	},
+	"require-dev": {
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+		"phpcompatibility/phpcompatibility-wp": "^2.1",
+		"squizlabs/php_codesniffer": "^3.13.5",
+		"wp-coding-standards/wpcs": "^3.4.1"
+	},
+	"config": {
+		"process-timeout": 0,
+		"platform": {
+			"php": "7.4"
+		},
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	},
+	"scripts": {
+		"lint": "./bin/phpcs.sh --standard=phpcs.xml",
+		"format": "phpcbf --standard=phpcs.xml --report-summary --report-source",
+		"phpcs": "./bin/phpcs.sh",
+		"phpcbf": "phpcbf"
+	}
+}
