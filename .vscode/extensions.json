@@ -1,0 +1,10 @@
+{
+	"recommendations": [
+		"valeryanm.vscode-phpsab",
+		"sheeraz.phpcs",
+		"dbaeumer.vscode-eslint",
+		"esbenp.prettier-vscode",
+		"stylelint.vscode-stylelint",
+		"editorconfig.editorconfig"
+	]
+}
