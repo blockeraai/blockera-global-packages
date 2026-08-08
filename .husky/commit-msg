@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+commit_message="$1"
+# exit with a non zero exit code incase of an invalid commit message
+
+# use git-conventional-commits, see https://github.com/qoomon/git-conventional-commits
+node_modules/git-conventional-commits/cli.js commit-msg-hook "$commit_message"
