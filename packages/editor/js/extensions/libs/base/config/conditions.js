@@ -1,0 +1,25 @@
+// @flow
+
+/**
+ * External dependencies
+ */
+import { __ } from '@wordpress/i18n';
+
+/**
+ * Internal dependencies
+ */
+import type { FeatureConfig } from '../types';
+
+const blockeraConditions: FeatureConfig = {
+	show: true,
+	force: true,
+	status: true,
+	label: __('Conditions', 'blockera'),
+	keywords: ['conditions', 'conditional', 'display', 'show', 'hide'],
+};
+
+export const conditionsConfig = {
+	status: true,
+	initialOpen: true,
+	blockeraConditions,
+};

@@ -1,0 +1,25 @@
+// @flow
+
+/**
+ * External dependencies
+ */
+import { __ } from '@wordpress/i18n';
+
+/**
+ * Internal dependencies
+ */
+import type { FeatureConfig } from '../types';
+
+const blockeraScrollAnimation: FeatureConfig = {
+	show: true,
+	force: true,
+	status: true,
+	label: __('On Scroll Animation', 'blockera'),
+	keywords: ['scroll', 'animation', 'parallax', 'reveal'],
+};
+
+export const scrollAnimationConfig = {
+	status: true,
+	initialOpen: true,
+	blockeraScrollAnimation,
+};
