@@ -1,0 +1,13 @@
+{
+	"name": "blockera/dev-cypress",
+	"version": "1.0.0",
+	"description": "Blockera Cypress config and helpers",
+	"autoload": {
+		"psr-4": {
+			"Blockera\\DevCypress\\": "php/"
+		},
+		"files": [
+			"php/functions.php"
+		]
+	}
+}
