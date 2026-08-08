@@ -1,192 +1,106 @@
-# @blockera/dev-playwright
+# `@blockera/dev-playwright`
 
-Blockera Playwright configuration and helper utilities for end-to-end testing.
+Playwright helpers and WordPress global-setup utilities for Blockera E2E tests.
 
-## Overview
+Intended as the Playwright counterpart to `@blockera/dev-cypress`. Canonical source in `blockera-global-packages`; synced via `blockera-folder-sync.json`.
 
-This package provides Playwright configuration, fixtures, and helper utilities for writing e2e tests in the Blockera plugin ecosystem. It mirrors the functionality of `@blockera/dev-cypress` but uses Playwright instead of Cypress.
+---
 
-## Usage
+## Why it exists
 
-Import fixtures and helpers in your Playwright test files:
+Share editor/control/responsive helpers and authentication setup across Blockera products without duplicating Playwright glue in every repo.
 
-```javascript
-const { test, expect } = require('@blockera/dev-playwright/js/fixtures/editor');
+---
+
+## Package layout
+
+```text
+packages/dev-playwright/
+├── js/
+│   ├── index.js                 # Root aggregator (see caveat below)
+│   ├── helpers.js
+│   ├── support/
+│   │   ├── index.js
+│   │   └── commands.js          # Custom command-style helpers
+│   ├── utils/                   # Domain utilities + helpers.js barrel
+│   └── config/
+│       ├── global-setup.ts      # WP RequestUtils auth + reset
+│       └── flaky-tests-report.ts
+└── package.json                 # @blockera/dev-playwright
+```
+
+This package does **not** ship a full `playwright.config.js` — consumers own the config and point at these helpers/setup files.
+
+---
+
+## Working imports (prefer these)
+
+```js
 const {
 	addBlockToPost,
 	selectBlock,
-} = require('@blockera/dev-playwright/js/utils/helpers');
-```
+} = require( '@blockera/dev-playwright/js/utils/helpers' );
 
-Or import specific utility modules:
-
-```javascript
 const {
 	resetPanelSettings,
-} = require('@blockera/dev-playwright/js/utils/admin');
+} = require( '@blockera/dev-playwright/js/utils/admin' );
+
 const {
 	setDeviceType,
-} = require('@blockera/dev-playwright/js/utils/responsive');
+} = require( '@blockera/dev-playwright/js/utils/responsive' );
+
 const {
 	setBoxSpacingSide,
-} = require('@blockera/dev-playwright/js/utils/controls-box-spacing');
+} = require( '@blockera/dev-playwright/js/utils/controls-box-spacing' );
+
+const commands = require( '@blockera/dev-playwright/js/support/commands' );
 ```
 
-## Structure
+### Utility modules
 
--   `js/fixtures/editor.js` - Playwright test fixtures with WordPress utilities
--   `js/support/` - Support files (similar to Cypress support files):
-    -   `commands.js` - Custom Playwright commands (similar to Cypress commands)
-    -   `e2e.js` - E2E test setup and hooks (with automatic login and editor setup)
--   `js/utils/` - Helper utility functions organized by category:
-    -   `admin.js` - Admin panel utilities
-    -   `editor.js` - Editor utilities (blocks, content, etc.)
-    -   `inner-blocks.js` - Inner blocks utilities
-    -   `block-states.js` - Block states utilities
-    -   `responsive.js` - Responsive/breakpoint utilities
-    -   `controls.js` - General control utilities
-    -   `controls-box-position.js` - Box position control utilities
-    -   `controls-box-spacing.js` - Box spacing control utilities
-    -   `other.js` - Miscellaneous utilities
-    -   `site-navigation.js` - Site navigation utilities
-    -   `create-term.js` - Taxonomy term creation utilities
-    -   `helpers.js` - Main export file (re-exports all utilities)
--   `js/config/global-setup.js` - Global setup configuration for WordPress authentication
+| Module | Role |
+|--------|------|
+| `utils/editor.js` | Blocks, content, editor chrome |
+| `utils/admin.js` | Admin panel helpers |
+| `utils/inner-blocks.js` | Inner blocks |
+| `utils/block-states.js` | Block states |
+| `utils/responsive.js` | Breakpoints / device type |
+| `utils/controls*.js` | Control helpers (box position/spacing, …) |
+| `utils/site-navigation.js` | Site navigation |
+| `utils/create-term.js` | Taxonomy terms |
+| `utils/other.js` | Misc |
+| `utils/helpers.js` | Re-exports all utilities |
 
-## Available Utilities
+### Global setup
 
-### Editor Utilities
+`js/config/global-setup.ts` authenticates via WordPress `RequestUtils`, activates test theme (e.g. Blockera One), and resets test data/preferences. Point the consumer Playwright config’s `globalSetup` at this file (or a thin wrapper).
 
--   `addBlockToPost()` - Add a block to the editor
--   `selectBlock()` - Select a block by type
--   `clearBlocks()` - Clear all blocks
--   `savePage()` - Save the post/page
--   `getSelectedBlock()` - Get selected block data
--   `getEditorContent()` - Get editor content
--   `openDocumentSettingsSidebar()` - Open settings sidebar
--   `openSettingsPanel()` - Open a settings panel
--   `closeWelcomeGuide()` - Close welcome guide
--   And many more...
+---
 
-### Admin Utilities
+## Root entry caveat
 
--   `resetPanelSettings()` - Reset panel settings
+`js/index.js` currently requires `./fixtures/editor`, but **`js/fixtures/` does not exist**. Therefore:
 
-### Inner Blocks Utilities
-
--   `setInnerBlock()` - Set inner block
--   `getAllowedBlocks()` - Get allowed blocks
--   `checkSelectedInnerBlock()` - Check selected inner block
-
-### Block States Utilities
-
--   `addBlockState()` - Add block state
--   `setBlockState()` - Set block state
--   `resetBlockState()` - Reset block state
--   `checkCurrentState()` - Check current state
-
-### Responsive Utilities
-
--   `setDeviceType()` - Set device type/breakpoint
-
-### Controls Utilities
-
--   `setInputValue()` - Set input value
--   `setColorSettingsFoldableSetting()` - Set color setting
--   `toggleSettingCheckbox()` - Toggle checkbox
-
-### Box Position/Spacing Utilities
-
--   `setBoxPositionSide()` - Set box position side
--   `setBoxSpacingSide()` - Set box spacing side
--   `clearBoxPositionSide()` - Clear box position side
--   `clearBoxSpacingSide()` - Clear box spacing side
-
-### Site Navigation Utilities
-
--   `loginToSite()` - Login to WordPress
--   `goTo()` - Navigate to a URL
--   `createPost()` - Create a new post
--   `openSiteEditor()` - Open site editor
--   `editPost()` - Edit a post
-
-### Other Utilities
-
--   `hexToRGB()` - Convert hex to RGB
--   `isWP62AtLeast()` - Check WordPress version
--   `createTerm()` - Create taxonomy term
-
-## Custom Commands
-
-The package provides custom commands similar to Cypress commands:
-
--   `getByDataCy()` - Get element by data-cy attribute
--   `getByDataTest()` - Get element by data-test attribute
--   `getByDataId()` - Get element by data-id attribute
--   `getByAriaLabel()` - Get element by aria-label
--   `getBlock()` - Get block by name
--   `getSelectedBlock()` - Get selected block
--   `uploadFile()` - Upload file
--   `multiClick()` - Click element multiple times
--   `setSliderValue()` - Set slider value
--   `customSelect()` - Select from custom dropdown
--   `setColorControlValue()` - Set color control value
--   `setBlockVariation()` - Set block variation
--   `wpCli()` - Execute WP CLI command
--   `checkBlockCardItems()` - Check block card items
--   `prepareEditorForScreenshot()` - Prepare editor for screenshots
--   And many more...
-
-### Usage
-
-```javascript
-const { test, expect } = require('@blockera/dev-playwright/js/fixtures/editor');
-const { getByDataCy, getBlock, wpCli } = require('@blockera/dev-playwright/js/support/commands');
-
-test('example test', async ({ page }) => {
-	// Use custom commands
-	const element = getByDataCy(page, 'my-element');
-	await element.click();
-
-	const block = await getBlock(page, 'core/paragraph');
-	await expect(block).toBeVisible();
-
-	// Execute WP CLI
-	const result = await wpCli(page, 'wp core version');
-	console.log(result.stdout);
-});
+```js
+require( '@blockera/dev-playwright' ); // fails today
 ```
 
-## Spec File Patterns
+Until fixtures land, use the subpath imports above. Do not document or rely on a missing `js/support/e2e.js` either — only `support/commands.js` and `support/index.js` are present.
 
-Playwright tests follow similar naming patterns to Cypress:
+---
 
--   **E2E tests**: `*.e2e.spec.js` or `*.spec.js` in `tests/e2e/specs/` or `packages/**/`
--   **Visual tests**: `*.visual.spec.js` (if implementing visual testing)
--   **Categorized tests**: `*.category-1.spec.js` (e.g., `example.blocks-1.spec.js`)
+## Agent rules
 
-The Playwright config automatically discovers test files matching these patterns, similar to how Cypress uses `specPattern` in `cypress.config.js`.
+- Use Playwright locators and `page` parameters — do not copy Cypress chaining APIs blindly.
+- Prefer WordPress `RequestUtils` for auth/reset over bespoke browser login.
+- Keep iframe vs post-editor DOM compatibility paths when editing helpers.
+- Screenshot helpers may alter the rendered UI — reset deliberately.
+- Edit here, then sync to consumers — do not maintain divergent forks.
 
-## Test File Structure
+---
 
-Test files should be placed in:
--   `tests/e2e/specs/` - Main test directory
--   `packages/**/` - Package-specific tests (mirrors Cypress pattern)
+## Related packages
 
-Example test file structure:
-
-```
-tests/e2e/specs/
-  ├── example.spec.js
-  ├── blocks/
-  │   └── paragraph.blocks-1.spec.js
-  └── editor/
-      └── inserter.spec.js
-
-packages/
-  └── blocks-core/
-      └── test/
-          └── functionality.blocks-2.spec.js
-```
-
-This mirrors the Cypress structure where tests are in `packages/**/*.e2e.cy.js` and `tests/**/*.e2e.cy.js`.
+- `@blockera/dev-cypress` — Cypress twin (more mature helper surface)
+- `@wordpress/e2e-test-utils-playwright`, `@playwright/test`
+- Root scripts: `test:e2e:base`, `test:e2e:base:ui` (consumer `playwright.config.js`)
