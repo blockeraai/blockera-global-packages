@@ -5,9 +5,10 @@
  * @package .dev/tests/phpunit/bootstrap.php
  */
 
-$root_dir = dirname(__DIR__, 3);
-
 require 'config.php';
+
+// $root_path is resolved in config.php (supports nested global-packages checkout).
+$root_dir = $root_path;
 
 // Require dependencies.
 require_once $root_dir . '/vendor/wp-phpunit/wp-phpunit/__loaded.php';
