@@ -1,6 +1,7 @@
 /**
  * External dependencies
  */
+const fs = require('fs');
 const path = require('path');
 const { test, expect } = require('@wordpress/e2e-test-utils-playwright');
 
@@ -856,8 +857,13 @@ async function wpCli(
 		? command
 		: command.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
-	// Use plugin root as cwd so wp-env finds .wp-env.json (critical for CI)
-	const pluginRoot = path.resolve(__dirname, '../../../../');
+	// Consumer plugin root (not global-packages). Tests start from the product
+	// repo; __dirname would resolve into the monorepo checkout on CI.
+	const pluginRoot =
+		process.env.BLOCKERA_CONSUMER_ROOT &&
+		fs.existsSync(process.env.BLOCKERA_CONSUMER_ROOT)
+			? path.resolve(process.env.BLOCKERA_CONSUMER_ROOT)
+			: process.cwd();
 
 	try {
 		const result = await execAsync(
