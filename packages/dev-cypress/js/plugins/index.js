@@ -5,15 +5,57 @@ const os = require('os');
 const crypto = require('crypto');
 const { execSync } = require('child_process');
 
-const BLOCKERA_PLUGIN_ROOT = path.resolve(__dirname, '../../../..');
-const WP_PLUGIN_SLUG = path.basename(BLOCKERA_PLUGIN_ROOT);
-const WP_ENV_BIN = path.join(
+/**
+ * Consumer plugin root (e.g. blockera/), not the global-packages checkout.
+ * `__dirname` walks into `.blockera-global-packages` on CI — use cwd / Cypress
+ * projectRoot / BLOCKERA_CONSUMER_ROOT instead.
+ *
+ * @param {import('cypress').PluginConfigOptions|undefined} config
+ * @return {string}
+ */
+function resolvePluginRoot(config) {
+	if (
+		process.env.BLOCKERA_CONSUMER_ROOT &&
+		fs.existsSync(process.env.BLOCKERA_CONSUMER_ROOT)
+	) {
+		return path.resolve(process.env.BLOCKERA_CONSUMER_ROOT);
+	}
+
+	if (config?.projectRoot && fs.existsSync(config.projectRoot)) {
+		return path.resolve(config.projectRoot);
+	}
+
+	const cwd = process.cwd();
+	if (
+		fs.existsSync(path.join(cwd, 'node_modules', '.bin', 'wp-env')) ||
+		fs.existsSync(path.join(cwd, 'cypress.config.js')) ||
+		fs.existsSync(path.join(cwd, '.wp-env.json'))
+	) {
+		return cwd;
+	}
+
+	// Last resort: historic layout when packages lived under the consumer.
+	return path.resolve(__dirname, '../../../..');
+}
+
+let BLOCKERA_PLUGIN_ROOT = resolvePluginRoot();
+let WP_PLUGIN_SLUG = path.basename(BLOCKERA_PLUGIN_ROOT);
+let WP_ENV_BIN = path.join(
 	BLOCKERA_PLUGIN_ROOT,
 	'node_modules',
 	'.bin',
 	'wp-env'
 );
 const WP_EVAL_TIMEOUT_MS = 120000;
+
+/**
+ * @param {string} pluginRoot
+ */
+function setPluginRoot(pluginRoot) {
+	BLOCKERA_PLUGIN_ROOT = pluginRoot;
+	WP_PLUGIN_SLUG = path.basename(pluginRoot);
+	WP_ENV_BIN = path.join(pluginRoot, 'node_modules', '.bin', 'wp-env');
+}
 
 /**
  * @return {string}
@@ -533,6 +575,8 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 	if (testingType !== 'e2e') {
 		return;
 	}
+
+	setPluginRoot(resolvePluginRoot(config));
 
 	const options = {
 		webpackOptions: require(
