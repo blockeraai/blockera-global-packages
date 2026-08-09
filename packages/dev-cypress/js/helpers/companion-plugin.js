@@ -119,7 +119,7 @@ function findHydratedDefaultParagraphBlock(data) {
  * `primePresetHover`), which marks the post dirty. Pre-hydrate + save via store
  * APIs so opening styles does not apply new customizations.
  *
- * @see source-code-block-editor/packages/e2e-test-utils-playwright/src/editor/select-blocks.ts
+ * @see source-codes/block-editor/packages/e2e-test-utils-playwright/src/editor/select-blocks.ts
  * @see packages/editor/js/extensions/components/block-base.js
  */
 export function ensureSavedHydratedDefaultParagraphBlock() {
@@ -168,8 +168,8 @@ export function ensureSavedHydratedDefaultParagraphBlock() {
  *
  * Uses `initialPosition: -1` so Gutenberg does not focus the content area.
  *
- * @see source-code-block-editor/packages/block-editor/src/store/actions.js selectBlock
- * @see source-code-block-editor/packages/e2e-test-utils-playwright/src/editor/select-blocks.ts
+ * @see source-codes/block-editor/packages/block-editor/src/store/actions.js selectBlock
+ * @see source-codes/block-editor/packages/e2e-test-utils-playwright/src/editor/select-blocks.ts
  */
 export function selectDefaultParagraphBlockInEditor() {
 	assertBlockData((data) => {

@@ -58,8 +58,7 @@ module.exports = {
 	modulePathIgnorePatterns: [],
 	testPathIgnorePatterns: [
 		'/node_modules/',
-		'/source-code-block-editor/',
-		'/source-code-wordpress/',
+		'/source-codes/',
 	],
 	testMatch: ['**/test/**/*.spec.js', '**/tests/**/*.spec.js'],
 	transformIgnorePatterns: [
