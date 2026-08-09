@@ -58,6 +58,28 @@ function setPluginRoot(pluginRoot) {
 }
 
 /**
+ * Map legacy consumer-relative package paths to the sparse submodule layout:
+ * `packages/<pkg>/...` → `packages/global-packages/packages/<pkg>/...`
+ *
+ * @param {string} relativePath
+ * @return {string}
+ */
+function resolveSharedPackageRelPath(relativePath) {
+	const normalized = String(relativePath || '').replace(/\\/g, '/');
+	if (
+		normalized.startsWith('packages/') &&
+		!normalized.startsWith('packages/global-packages/') &&
+		!normalized.startsWith('packages/autoloader-coordinator/')
+	) {
+		return normalized.replace(
+			/^packages\//,
+			'packages/global-packages/packages/'
+		);
+	}
+	return normalized;
+}
+
+/**
  * @return {string}
  */
 function getWpEnvHome() {
@@ -609,8 +631,10 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 			maxAttempts = 1,
 			log = false,
 		}) {
+			const resolvedMuPluginPath =
+				resolveSharedPackageRelPath(muPluginPath);
 			const resolvedTarget = getMuPluginTargetName(
-				muPluginPath,
+				resolvedMuPluginPath,
 				targetName
 			);
 			const transport = getMuPluginTransport();
@@ -622,7 +646,7 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 					attempt,
 					maxAttempts,
 					force,
-					source: muPluginPath,
+					source: resolvedMuPluginPath,
 					target: resolvedTarget,
 					ci: Boolean(process.env.CI),
 				},
@@ -634,13 +658,13 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 			try {
 				if (transport === 'host') {
 					result = activateMuPluginOnHost(
-						muPluginPath,
+						resolvedMuPluginPath,
 						resolvedTarget,
 						force
 					);
 				} else {
 					result = activateMuPluginInContainer(
-						muPluginPath,
+						resolvedMuPluginPath,
 						resolvedTarget,
 						force
 					);
@@ -704,8 +728,10 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 			maxAttempts = 1,
 			log = false,
 		}) {
+			const resolvedMuPluginPath =
+				resolveSharedPackageRelPath(muPluginPath);
 			const resolvedTarget = getMuPluginTargetName(
-				muPluginPath,
+				resolvedMuPluginPath,
 				targetName
 			);
 			const transport = getMuPluginTransport();
@@ -716,7 +742,7 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 					transport,
 					attempt,
 					maxAttempts,
-					source: muPluginPath,
+					source: resolvedMuPluginPath,
 					target: resolvedTarget,
 					ci: Boolean(process.env.CI),
 				},
@@ -725,8 +751,14 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 
 			const result =
 				transport === 'host'
-					? verifyMuPluginOnHost(muPluginPath, resolvedTarget)
-					: verifyMuPluginInContainer(muPluginPath, resolvedTarget);
+					? verifyMuPluginOnHost(
+							resolvedMuPluginPath,
+							resolvedTarget
+					  )
+					: verifyMuPluginInContainer(
+							resolvedMuPluginPath,
+							resolvedTarget
+					  );
 
 			logMuPlugin(
 				result?.ok ? 'verify:ok' : 'verify:failed',
