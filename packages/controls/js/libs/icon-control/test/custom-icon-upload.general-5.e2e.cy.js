@@ -38,7 +38,7 @@ describe('icon-control → custom SVG upload', () => {
 			cy.contains('button', 'Upload files').click();
 
 			cy.get('input[type="file"]').selectFile(
-				'packages/dev-cypress/js/fixtures/home.svg',
+				'packages/global-packages/packages/dev-cypress/js/fixtures/home.svg',
 				{
 					force: true,
 				}
