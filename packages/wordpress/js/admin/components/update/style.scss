@@ -1,6 +1,6 @@
 .save-settings__save-button {
 	&.blockera-settings-has-update {
-		&:before {
+		&::before {
 			content: "";
 			background: #ffffff;
 			width: 5px;
