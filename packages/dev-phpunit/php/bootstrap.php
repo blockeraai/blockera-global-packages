@@ -71,7 +71,7 @@ if ( 'tests-mysql' === getenv( 'WORDPRESS_DB_HOST' ) ) {
 
 tests_add_filter('muplugins_loaded', function () use ($root_dir) {
 
-	define( '__PACKAGES_DIR__', dirname( __DIR__, 2 ) );
+	define( '__PACKAGES_DIR__', dirname( __DIR__, 4 ) );
 	define( 'BLOCKERA_DEVELOPMENT', true );
 
 	include trailingslashit($root_dir) . 'tests/phpunit/bootstrap.php';
