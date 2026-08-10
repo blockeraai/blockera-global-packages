@@ -2,7 +2,7 @@
 /**
  * External dependencies
  */
-import type { MixedElement } from 'react';
+import type { ComponentType, MixedElement } from 'react';
 
 /**
  * Blockera dependencies
@@ -19,7 +19,7 @@ export type BlockType = {
 	hasStyleVariations?: boolean,
 	blockeraInnerBlocks?: InnerBlocks,
 	edit: (props: Object) => MixedElement,
-	canvasEdit?: (props: Object) => MixedElement,
+	canvasEdit?: ComponentType<Object> | ((props: Object) => MixedElement),
 	availableBlockStates?: {
 		[key: string]: StateTypes,
 	},

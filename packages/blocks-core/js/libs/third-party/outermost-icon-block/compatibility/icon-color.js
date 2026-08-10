@@ -16,7 +16,7 @@ export function iconColorFromWPCompatibility({
 	let color: ValueAddon | string | false = false;
 
 	if (attributes?.iconColor !== undefined) {
-		color = getColorVAFromIdString(attributes?.iconColor);
+		color = (getColorVAFromIdString(attributes?.iconColor): any);
 	}
 
 	if (!color) {
