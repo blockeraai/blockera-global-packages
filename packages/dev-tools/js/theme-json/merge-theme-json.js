@@ -14,8 +14,16 @@ const {
 	themeJsonKeyRank,
 } = require('./sort-theme-json-keys');
 
-// packages/dev-tools/js/theme-json → product root (theme or plugin)
-const THEME_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
+// <product>/packages/global-packages/packages/dev-tools/js/theme-json → product root
+const THEME_ROOT = path.resolve(
+	__dirname,
+	'..',
+	'..',
+	'..',
+	'..',
+	'..',
+	'..'
+);
 const CONFIG_DIR = path.join(THEME_ROOT, 'theme-config');
 const OUTPUT_FILE = path.join(THEME_ROOT, 'theme.json');
 

@@ -5,7 +5,16 @@
 const fs = require('fs');
 const path = require('path');
 
-const PRODUCT_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
+// <product>/packages/global-packages/packages/dev-tools/js/patterns → product root
+const PRODUCT_ROOT = path.resolve(
+	__dirname,
+	'..',
+	'..',
+	'..',
+	'..',
+	'..',
+	'..'
+);
 const CONFIG_FILE_NAME = '.patterns.config.js';
 
 /**
