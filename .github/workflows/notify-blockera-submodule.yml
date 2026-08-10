@@ -1,0 +1,33 @@
+name: Notify Blockera submodule sync
+
+# Fires Blockera's sync-global-packages-submodule workflow so consumers never
+# need to manually bump packages/global-packages.
+on:
+    push:
+    workflow_dispatch:
+
+concurrency:
+    group: notify-blockera-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    notify:
+        name: repository_dispatch → blockera
+        runs-on: ubuntu-latest
+        # Avoid loops / noise from bot-only noise if needed later.
+        if: ${{ github.repository == 'blockeraai/blockera-global-packages' }}
+
+        steps:
+            - name: Dispatch global-packages-updated to Blockera
+              uses: peter-evans/repository-dispatch@v3
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+                  repository: blockeraai/blockera
+                  event-type: global-packages-updated
+                  client-payload: |-
+                      {
+                        "sha": "${{ github.sha }}",
+                        "ref": "${{ github.ref }}",
+                        "branch": "${{ github.ref_name }}",
+                        "message": ${{ toJSON(github.event.head_commit.message || github.event_name) }}
+                      }
