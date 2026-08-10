@@ -4,17 +4,24 @@
 	"title": "Blockera consumer CI config",
 	"type": "object",
 	"required": ["pluginSlug", "repository"],
+	"additionalProperties": false,
 	"properties": {
 		"pluginSlug": {
 			"type": "string",
-			"description": "WordPress plugin directory slug (e.g. blockera-pro)."
+			"description": "WordPress product slug (plugin or theme directory name)."
 		},
 		"repository": {
 			"type": "string",
-			"description": "GitHub repository in owner/name form."
+			"description": "GitHub repository in owner/name form (used for workflow repo guards)."
+		},
+		"productType": {
+			"type": "string",
+			"enum": ["plugin", "theme"],
+			"default": "plugin"
 		},
 		"submodule": {
 			"type": "object",
+			"additionalProperties": false,
 			"properties": {
 				"path": {
 					"type": "string",
@@ -22,17 +29,40 @@
 				}
 			}
 		},
+		"node": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"versionFile": {
+					"type": "string",
+					"default": ".nvmrc"
+				}
+			}
+		},
+		"php": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"defaultVersion": {
+					"type": "string",
+					"default": "7.4"
+				}
+			}
+		},
 		"lint": {
 			"type": "object",
+			"additionalProperties": false,
 			"properties": {
 				"js": {
 					"type": "object",
+					"additionalProperties": false,
 					"properties": {
 						"command": { "type": "string" }
 					}
 				},
 				"css": {
 					"type": "object",
+					"additionalProperties": false,
 					"properties": {
 						"command": { "type": "string" },
 						"scssRoot": { "type": "string" },
@@ -41,11 +71,47 @@
 				},
 				"php": {
 					"type": "object",
+					"additionalProperties": false,
 					"properties": {
 						"command": { "type": "string" },
 						"reportPath": { "type": "string" }
 					}
 				}
+			}
+		},
+		"test": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"jest": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"command": { "type": "string" },
+						"build": {
+							"type": "boolean",
+							"default": true,
+							"description": "Run buildCommand before Jest."
+						},
+						"buildCommand": {
+							"type": "string",
+							"default": "npm run build"
+						},
+						"composerInstall": {
+							"type": "boolean",
+							"default": false,
+							"description": "Run Composer before build (needed when webpack resolves vendor paths)."
+						},
+						"composerCommand": { "type": "string" }
+					}
+				}
+			}
+		},
+		"workflows": {
+			"type": "object",
+			"description": "Optional feature flags documenting which shared workflow templates this consumer enables.",
+			"additionalProperties": {
+				"type": "boolean"
 			}
 		}
 	}

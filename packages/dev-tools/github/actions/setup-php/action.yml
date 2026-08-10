@@ -1,0 +1,35 @@
+name: 'Setup PHP and install Composer dependencies'
+description: >
+    Shared PHP/Composer setup for Blockera consumers. Expects packages/global-packages
+    to already be initialized (consumer bootstrap / thin .github/setup-php).
+inputs:
+    php-version:
+        description: 'PHP version for the runner (and composer platform.php).'
+        required: false
+        default: '7.4'
+    composer-options:
+        description: 'Extra options passed to composer install.'
+        required: false
+        default: ''
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Set up PHP
+          uses: shivammathur/setup-php@v2
+          with:
+              php-version: '${{ inputs.php-version }}'
+              ini-file: development
+              coverage: none
+              tools: cs2pr
+              ini-values: memory_limit=128M, max_execution_time=30, max_input_time=60, max_input_vars=1000
+
+        - name: Override PHP version in composer.json
+          shell: bash
+          run: composer config platform.php ${{ inputs.php-version }}
+
+        - name: Install Composer dependencies
+          uses: ramsey/composer-install@v4
+          with:
+              custom-cache-suffix: $(/bin/date -u --date='last Mon' "+%F")
+              composer-options: '${{ inputs.composer-options }}'
