@@ -38,13 +38,10 @@ import { generalBlockFeatures } from '@blockera/blocks-core/js/libs/general-bloc
  */
 import { BlockStyle, StylesWrapper } from '../../style-engine';
 import { BlockEditContextProvider } from '.';
-import {
-	// useIconEffect,
-	useAttributes,
-	useInnerBlocksInfo,
-	useCalculateCurrentAttributes,
-	useDisplayBlockControls,
-} from '../../hooks';
+import { useAttributes } from '../../hooks/use-attributes';
+import { useInnerBlocksInfo } from '../../hooks/use-inner-blocks-info';
+import { useCalculateCurrentAttributes } from '../../hooks/use-calculate-current-attributes';
+import { useDisplayBlockControls } from '../../hooks/use-display-block-controls';
 import { getBlockVariationSupport } from '../../editor/global-styles/panel/block-variation-support';
 import { isInnerBlock } from './utils';
 import { isBaseBreakpoint } from '../..';

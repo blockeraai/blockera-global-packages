@@ -3,14 +3,16 @@
 /**
  * External dependencies
  */
-import type { MixedElement } from 'react';
+import type { ComponentType, MixedElement } from 'react';
 import { memo } from '@wordpress/element';
+
+type StyleProps = {
+	declarations: string,
+};
 
 const StyleComponent = ({
 	declarations,
-}: {
-	declarations: string,
-}): MixedElement => {
+}: StyleProps): MixedElement => {
 	if (!declarations) {
 		return <></>;
 	}
@@ -18,7 +20,8 @@ const StyleComponent = ({
 	return <style>{declarations}</style>;
 };
 
-export const Style = memo(
+export const Style: ComponentType<StyleProps> = memo(
 	StyleComponent,
-	(prev, next) => prev.declarations === next.declarations
+	(prev: StyleProps, next: StyleProps): boolean =>
+		prev.declarations === next.declarations
 );

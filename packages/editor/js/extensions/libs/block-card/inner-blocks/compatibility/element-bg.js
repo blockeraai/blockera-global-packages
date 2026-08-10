@@ -86,14 +86,14 @@ export function elementNormalBackgroundFromWPCompatibility({
 			dataCompatibilityElement
 		]?.color?.gradient.startsWith('var(')
 	) {
-		gradient = getGradientVAFromVarString(
+		gradient = (getGradientVAFromVarString(
 			useStyle
 				? attributes.style.elements[dataCompatibilityElement]?.color
 						?.gradient
 				: attributes.elements[dataCompatibilityElement]?.color?.gradient
-		);
+		): any);
 
-		if (isValid(gradient)) {
+		if (isValid((gradient: any))) {
 			gradientType = getGradientType(gradient);
 		}
 	} else {

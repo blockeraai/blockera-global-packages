@@ -153,6 +153,7 @@ export const useBlockSection = (sectionId: string): BlockSection => {
 	return {
 		onToggle,
 		initialOpen,
+		status: section?.status ?? true,
 	};
 };
 

@@ -12,7 +12,7 @@ import { useSelect } from '@wordpress/data';
 import { getBlockeraActiveColorStyleProperties } from './blockera-active-color';
 import { useBlockeraActiveColor } from './use-blockera-active-color';
 import { isInnerBlock } from './utils';
-import { useExtensionsStore } from '../../hooks';
+import { useExtensionsStore } from '../../hooks/use-extensions-store';
 import {
 	VARIATION_SURFACE_SIZE,
 	VARIATION_SURFACE_STYLE,

@@ -142,11 +142,13 @@ export function backgroundFromWPCompatibility({
 				editorSelectedBlockEvent
 			)
 		) {
-			gradient = getGradientVAFromVarString(
+			gradient = (getGradientVAFromVarString(
 				`var:preset|gradient|${attributes?.gradient}`
-			);
+			): any);
 		} else {
-			gradient = getGradientVAFromVarString(attributes?.color?.gradient);
+			gradient = (getGradientVAFromVarString(
+				attributes?.color?.gradient
+			): any);
 		}
 
 		gradientType = getGradientType(gradient);

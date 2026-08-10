@@ -25,8 +25,12 @@ function mapPositionInsetFromWP(raw: mixed): ValueAddon | string {
 		asString = String(raw);
 	}
 	const converted = getSpacingVAFromVarString(asString);
-	if (converted && typeof converted === 'object' && converted.isValueAddon) {
-		return converted;
+	if (
+		converted &&
+		typeof converted === 'object' &&
+		(converted: any).isValueAddon
+	) {
+		return (converted: any);
 	}
 	return normalizeCssLengthValue(converted);
 }

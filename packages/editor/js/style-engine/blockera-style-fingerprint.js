@@ -3,12 +3,12 @@
 /**
  * Stable fingerprint of Blockera-controlled attributes for style-engine memoization.
  *
- * @param {Object|null|undefined} attributes Block attributes.
- * @param {Object|null|undefined} inlineStyles Optional inline style overrides.
+ * @param {Object|null|void} attributes Block attributes.
+ * @param {Object|null|void} inlineStyles Optional inline style overrides.
  * @return {string} Fingerprint string.
  */
 export function getBlockeraStyleFingerprint(
-	attributes: Object | null | undefined,
+	attributes: Object | null | void,
 	inlineStyles?: Object | null
 ): string {
 	if (!attributes) {

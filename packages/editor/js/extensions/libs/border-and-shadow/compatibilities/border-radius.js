@@ -39,16 +39,17 @@ function resolveBorderRadiusFieldFromWP(raw: string): mixed {
 		}
 	);
 
-	return isObject(converted) && converted.isValueAddon
+	return isObject(converted) && (converted: any).isValueAddon
 		? converted
 		: normalized;
 }
 
 function borderRadiusFieldToWP(field: mixed): string | void {
-	if (isValid(field)) {
+	if (isValid((field: any))) {
+		const settings = (field: any)?.settings;
 		return (
-			getBorderRadiusVAStringFromId(field?.settings?.id) ||
-			`var:preset|border-radius|${field?.settings?.id}`
+			getBorderRadiusVAStringFromId(settings?.id) ||
+			`var:preset|border-radius|${settings?.id}`
 		);
 	}
 
@@ -67,9 +68,10 @@ function borderRadiusCornerIdentity(value: mixed): string {
 		return '';
 	}
 
-	if (isValid(value)) {
-		const type = value.settings?.type || 'border-radius';
-		let id = value.settings?.id || '';
+	if (isValid((value: any))) {
+		const settings = (value: any).settings;
+		const type = settings?.type || 'border-radius';
+		let id = settings?.id || '';
 
 		if (typeof id === 'string' && isBorderRadiusPresetVarString(id)) {
 			const parsed = parseVarString(id, 'border-radius');
