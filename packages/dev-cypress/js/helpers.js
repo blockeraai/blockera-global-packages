@@ -16,4 +16,5 @@ export * from './helpers/missing-variable';
 export * from './helpers/storage';
 export * from './helpers/companion-plugin';
 export * from './helpers/site-editor-main-panel';
+export * from './helpers/site-editor-reset';
 export * from './helpers/stub-companion-plugin-for-component';
