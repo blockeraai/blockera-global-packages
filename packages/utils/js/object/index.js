@@ -189,9 +189,9 @@ function mergeObjectDeep(
 export function mergeObject(
 	target: Object,
 	source: Object,
-	args: {
-		forceUpdated: Array<string>,
-		deletedProps: Array<string>,
+	args?: {
+		forceUpdated?: Array<string>,
+		deletedProps?: Array<string>,
 	}
 ): Object {
 	const { forceUpdated = [], deletedProps = [] } = args || {};
