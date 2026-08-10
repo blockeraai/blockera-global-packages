@@ -68,8 +68,7 @@ function resolveSharedPackageRelPath(relativePath) {
 	const normalized = String(relativePath || '').replace(/\\/g, '/');
 	if (
 		normalized.startsWith('packages/') &&
-		!normalized.startsWith('packages/global-packages/') &&
-		!normalized.startsWith('packages/autoloader-coordinator/')
+		!normalized.startsWith('packages/global-packages/')
 	) {
 		return normalized.replace(
 			/^packages\//,
