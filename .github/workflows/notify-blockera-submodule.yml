@@ -1,33 +1,65 @@
-name: Notify Blockera submodule sync
+name: Notify consumers submodule sync
 
-# Fires Blockera's sync-global-packages-submodule workflow so consumers never
+# Fires each consumer's sync-global-packages-submodule workflow so they never
 # need to manually bump packages/global-packages.
+# Consumers are listed in .github/global-packages-consumers.json.
 on:
     push:
     workflow_dispatch:
 
 concurrency:
-    group: notify-blockera-${{ github.ref }}
+    group: notify-consumers-${{ github.ref }}
     cancel-in-progress: true
 
 jobs:
-    notify:
-        name: repository_dispatch → blockera
+    resolve-consumers:
+        name: Resolve consumer matrix
         runs-on: ubuntu-latest
-        # Avoid loops / noise from bot-only noise if needed later.
         if: ${{ github.repository == 'blockeraai/blockera-global-packages' }}
+        outputs:
+            matrix: ${{ steps.build.outputs.matrix }}
+        steps:
+            - name: Checkout consumers config
+              uses: actions/checkout@v5
+              with:
+                  sparse-checkout: |
+                      .github/global-packages-consumers.json
+                  sparse-checkout-cone-mode: false
+
+            - name: Build matrix from consumers.json
+              id: build
+              run: |
+                  set -euo pipefail
+                  MATRIX="$(jq -c '{ include: [ .consumers[] | select(.enabled != false) | { repository } ] }' .github/global-packages-consumers.json)"
+                  COUNT="$(echo "${MATRIX}" | jq '.include | length')"
+                  if [[ "${COUNT}" -eq 0 ]]; then
+                    echo "No enabled consumers in .github/global-packages-consumers.json" >&2
+                    exit 1
+                  fi
+                  echo "matrix=${MATRIX}" >> "$GITHUB_OUTPUT"
+                  echo "Dispatching to ${COUNT} consumer(s):"
+                  echo "${MATRIX}" | jq -r '.include[].repository'
+
+    notify:
+        name: repository_dispatch → ${{ matrix.repository }}
+        needs: resolve-consumers
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix: ${{ fromJSON(needs.resolve-consumers.outputs.matrix) }}
 
         steps:
-            - name: Dispatch global-packages-updated to Blockera
+            - name: Dispatch global-packages-updated
               uses: peter-evans/repository-dispatch@v3
               with:
                   token: ${{ secrets.BLOCKERABOT_PAT }}
-                  repository: blockeraai/blockera
+                  repository: ${{ matrix.repository }}
                   event-type: global-packages-updated
                   client-payload: |-
                       {
                         "sha": "${{ github.sha }}",
                         "ref": "${{ github.ref }}",
                         "branch": "${{ github.ref_name }}",
-                        "message": ${{ toJSON(github.event.head_commit.message || github.event_name) }}
+                        "message": ${{ toJSON(github.event.head_commit.message || github.event_name) }},
+                        "source_repository": "${{ github.repository }}"
                       }
