@@ -9,7 +9,8 @@ submodule at `packages/global-packages`
 Duplicate workflow YAML across consumers drifts quickly. Shared logic lives here;
 each consumer only keeps:
 
-1. **Config** — `.github/blockera-ci.json` (see `config/schema.json`)
+1. **Config** — `.github/blockera-ci.json` identity + overrides only
+   (merged over `config/defaults.json`; see `config/schema.json`)
 2. **Thin workflows** — triggers, permissions, concurrency, `repository` guard
 3. **Bootstrap** — a tiny local ensure step so this tree exists on disk before
    any `uses: ./packages/global-packages/...` composite runs
@@ -26,7 +27,7 @@ Therefore:
 | Composite actions (`actions/*`) | `.github/workflows/*.yml` triggers |
 | Shared scripts (`scripts/*`) | Bootstrap copy of ensure/husky scripts |
 | Workflow **templates** (`workflows/*`) | Adapted thin YAML (copy from templates) |
-| Config schema | `.github/blockera-ci.json` values |
+| Config defaults + schema | Consumer overrides in `.github/blockera-ci.json` |
 
 ## Layout
 
@@ -35,9 +36,10 @@ github/
   actions/
     setup-node/           # npm install (after bootstrap)
     setup-php/            # composer install (after bootstrap)
-    code-lint/            # js | css | php from config
-    jest-unit-tests/      # optional build + jest from config
+    code-lint/            # js | css | php from merged config
+    jest-unit-tests/      # optional build + jest from merged config
   scripts/
+    load-ci-config.js     # deep-merge defaults.json + consumer config
     ensure-global-packages-sparse.sh
     bump-global-packages-submodule.sh
     ensure-global-packages-pre-push.sh
@@ -45,7 +47,9 @@ github/
     retry-npm-ci.sh
     sync-consumer-bootstrap.sh   # copy bootstrap scripts → consumer .github/scripts
   workflows/              # templates to copy into consumers
-  config/schema.json
+  config/
+    defaults.json         # shared CI defaults for all consumers
+    schema.json
 ```
 
 ## Consumer contract
@@ -79,33 +83,45 @@ Sync bootstrap scripts from the submodule (source of truth):
 bash packages/global-packages/packages/dev-tools/github/scripts/sync-consumer-bootstrap.sh
 ```
 
-### Config
+### Config (defaults + consumer merge)
+
+Shared defaults live in `config/defaults.json` (lint commands, jest, workflows flags,
+submodule path, …). Composites load config via `scripts/load-ci-config.js`:
+
+```
+deepMerge(defaults.json, consumer .github/blockera-ci.json)
+```
+
+Consumers only declare identity and **overrides**:
 
 ```json
 {
   "pluginSlug": "blockera-pro",
-  "repository": "blockeraai/blockera-pro",
-  "productType": "plugin",
-  "lint": {
-    "js": { "command": "npm run lint:js" },
-    "css": { "command": "npm run lint:css", "scssRoot": "./packages", "scssGlob": "*.scss" },
-    "php": {
-      "command": "phpcs --report-full --report-checkstyle=./.cache/phpcs-report.xml --standard=phpcs.xml",
-      "reportPath": "./.cache/phpcs-report.xml"
-    }
-  },
-  "test": {
-    "jest": {
-      "command": "npm run test:js -- --ci --maxWorkers=2 --cacheDirectory=\"$HOME/.jest-cache\"",
-      "build": true,
-      "composerInstall": false
-    }
-  },
-  "workflows": {
-    "codeLint": true,
-    "jest": true
-  }
+  "repository": "blockeraai/blockera-pro"
 }
+```
+
+```json
+{
+  "pluginSlug": "blockera",
+  "repository": "blockeraai/blockera",
+  "test": { "jest": { "composerInstall": true } }
+}
+```
+
+```json
+{
+  "pluginSlug": "blockera-one",
+  "repository": "blockeraai/blockera-one",
+  "productType": "theme"
+}
+```
+
+Inspect the merged result locally:
+
+```bash
+node packages/global-packages/packages/dev-tools/github/scripts/load-ci-config.js .github/blockera-ci.json
+node packages/global-packages/packages/dev-tools/github/scripts/load-ci-config.js .github/blockera-ci.json --get test.jest.composerInstall
 ```
 
 ### Thin workflow flow
@@ -131,14 +147,16 @@ Move job bodies into composites here; leave triggers in consumers.
 
 When adding a new shared job:
 
-1. Add `actions/<name>/action.yml` reading `.github/blockera-ci.json`
-2. Extend `config/schema.json`
-3. Add `workflows/<name>.yml` template with `OWNER/REPO` placeholder
-4. Point each consumer thin workflow at the composite
-5. Delete duplicated steps from consumers
+1. Add defaults under `config/defaults.json` when the setting is shared
+2. Add `actions/<name>/action.yml` reading merged config via `load-ci-config.js`
+3. Extend `config/schema.json`
+4. Add `workflows/<name>.yml` template with `OWNER/REPO` placeholder
+5. Point each consumer thin workflow at the composite; keep only overrides in consumer JSON
+6. Delete duplicated steps from consumers
 
 ## This package currently provides
 
+- `config/defaults.json` + `scripts/load-ci-config.js` (merge layer)
 - `actions/setup-node` / `actions/setup-php`
 - `actions/code-lint`
 - `actions/jest-unit-tests`

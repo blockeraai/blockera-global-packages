@@ -1,5 +1,5 @@
 name: 'Blockera Jest unit tests'
-description: 'Build (optional) and run Jest using consumer .github/blockera-ci.json'
+description: 'Build (optional) and run Jest using defaults + consumer .github/blockera-ci.json'
 inputs:
     config-path:
         description: 'Path to consumer blockera-ci.json'
@@ -9,37 +9,20 @@ inputs:
 runs:
     using: 'composite'
     steps:
-        - name: Resolve Jest settings from consumer config
+        - name: Resolve Jest settings from merged CI config
           id: cfg
           shell: bash
           env:
               CONFIG_PATH: ${{ inputs.config-path }}
           run: |
               set -euo pipefail
-              if [[ ! -f "${CONFIG_PATH}" ]]; then
-                echo "Missing consumer config: ${CONFIG_PATH}" >&2
-                exit 1
-              fi
+              LOADER="${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/load-ci-config.js"
 
-              EVAL="$(node -e '
-                const fs = require("fs");
-                const cfg = JSON.parse(fs.readFileSync(process.env.CONFIG_PATH, "utf8"));
-                const jest = (cfg.test && cfg.test.jest) || {};
-                const out = {
-                  command: jest.command || "npm run test:js -- --ci --maxWorkers=2 --cacheDirectory=\"$HOME/.jest-cache\"",
-                  build_command: jest.buildCommand || "npm run build",
-                  run_build: jest.build === false ? "false" : "true",
-                  run_composer: jest.composerInstall === true ? "true" : "false",
-                  composer_command: jest.composerCommand || "composer install --no-dev -o --apcu-autoloader -a",
-                };
-                process.stdout.write(JSON.stringify(out));
-              ')"
-
-              COMMAND="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).command)' "${EVAL}")"
-              BUILD_COMMAND="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).build_command)' "${EVAL}")"
-              RUN_BUILD="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).run_build)' "${EVAL}")"
-              RUN_COMPOSER="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).run_composer)' "${EVAL}")"
-              COMPOSER_COMMAND="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).composer_command)' "${EVAL}")"
+              COMMAND="$(node "${LOADER}" "${CONFIG_PATH}" --get test.jest.command)"
+              BUILD_COMMAND="$(node "${LOADER}" "${CONFIG_PATH}" --get test.jest.buildCommand)"
+              RUN_BUILD="$(node "${LOADER}" "${CONFIG_PATH}" --get test.jest.build)"
+              RUN_COMPOSER="$(node "${LOADER}" "${CONFIG_PATH}" --get test.jest.composerInstall)"
+              COMPOSER_COMMAND="$(node "${LOADER}" "${CONFIG_PATH}" --get test.jest.composerCommand)"
 
               {
                 echo "command<<EOF"

@@ -1,5 +1,5 @@
 name: 'Blockera code lint'
-description: 'Run js, css, or php lint using consumer .github/blockera-ci.json'
+description: 'Run js, css, or php lint using defaults + consumer .github/blockera-ci.json'
 inputs:
     suite:
         description: 'Lint suite to run: js | css | php'
@@ -12,7 +12,7 @@ inputs:
 runs:
     using: 'composite'
     steps:
-        - name: Resolve lint command from consumer config
+        - name: Resolve lint command from merged CI config
           id: cfg
           shell: bash
           env:
@@ -20,11 +20,6 @@ runs:
               CONFIG_PATH: ${{ inputs.config-path }}
           run: |
               set -euo pipefail
-              if [[ ! -f "${CONFIG_PATH}" ]]; then
-                echo "Missing consumer config: ${CONFIG_PATH}" >&2
-                exit 1
-              fi
-
               case "${SUITE}" in
                 js|css|php) ;;
                 *)
@@ -33,38 +28,11 @@ runs:
                   ;;
               esac
 
-              COMMAND="$(node -e '
-                const fs = require("fs");
-                const cfg = JSON.parse(fs.readFileSync(process.env.CONFIG_PATH, "utf8"));
-                const suite = process.env.SUITE;
-                const entry = cfg.lint && cfg.lint[suite];
-                if (!entry || !entry.command) {
-                  console.error("lint." + suite + ".command missing in " + process.env.CONFIG_PATH);
-                  process.exit(1);
-                }
-                process.stdout.write(entry.command);
-              ')"
-
-              SCSS_ROOT="$(node -e '
-                const fs = require("fs");
-                const cfg = JSON.parse(fs.readFileSync(process.env.CONFIG_PATH, "utf8"));
-                const entry = (cfg.lint && cfg.lint.css) || {};
-                process.stdout.write(entry.scssRoot || "./packages");
-              ')"
-
-              SCSS_GLOB="$(node -e '
-                const fs = require("fs");
-                const cfg = JSON.parse(fs.readFileSync(process.env.CONFIG_PATH, "utf8"));
-                const entry = (cfg.lint && cfg.lint.css) || {};
-                process.stdout.write(entry.scssGlob || "*.scss");
-              ')"
-
-              REPORT_PATH="$(node -e '
-                const fs = require("fs");
-                const cfg = JSON.parse(fs.readFileSync(process.env.CONFIG_PATH, "utf8"));
-                const entry = (cfg.lint && cfg.lint.php) || {};
-                process.stdout.write(entry.reportPath || "./.cache/phpcs-report.xml");
-              ')"
+              LOADER="${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/load-ci-config.js"
+              COMMAND="$(node "${LOADER}" "${CONFIG_PATH}" --get "lint.${SUITE}.command")"
+              SCSS_ROOT="$(node "${LOADER}" "${CONFIG_PATH}" --get lint.css.scssRoot)"
+              SCSS_GLOB="$(node "${LOADER}" "${CONFIG_PATH}" --get lint.css.scssGlob)"
+              REPORT_PATH="$(node "${LOADER}" "${CONFIG_PATH}" --get lint.php.reportPath)"
 
               {
                 echo "command=${COMMAND}"

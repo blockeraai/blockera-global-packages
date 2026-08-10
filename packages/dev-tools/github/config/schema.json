@@ -2,6 +2,7 @@
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"$id": "https://blockera.ai/schemas/blockera-ci.json",
 	"title": "Blockera consumer CI config",
+	"description": "Consumer overrides merged over packages/dev-tools/github/config/defaults.json. Only pluginSlug and repository are required in the consumer file; shared lint/test/workflow defaults come from defaults.json.",
 	"type": "object",
 	"required": ["pluginSlug", "repository"],
 	"additionalProperties": false,
