@@ -1,5 +1,6 @@
-# Template — copy to consumer `.github/workflows/jest-unit-tests.yml`
-# Replace OWNER/REPO with the consumer repository.
+# Thin caller template — copy to consumer `.github/workflows/jest-unit-tests.yml`
+# Replace OWNER/REPO. Pin WORKFLOWS_REF to a GP commit/tag/branch that contains
+# `.github/workflows/consumer-jest-unit-tests.yml` (prefer a SHA or tag in prod).
 name: JavaScript Unit Tests (By Jest)
 
 on:
@@ -14,25 +15,9 @@ concurrency:
 jobs:
     unit-js:
         name: JavaScript
-        runs-on: ubuntu-latest
         if: ${{ github.repository == 'OWNER/REPO' || github.event_name == 'pull_request' }}
-        strategy:
-            fail-fast: false
-            matrix:
-                node: ['18.3.0']
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v5
-              with:
-                  token: ${{ secrets.BLOCKERABOT_PAT }}
-
-            - name: Setup Node.js and install dependencies
-              uses: ./.github/setup-node
-              with:
-                  global-packages-token: ${{ secrets.BLOCKERABOT_PAT }}
-                  node-version: ${{ matrix.node }}
-
-            - name: Jest unit tests
-              uses: ./packages/global-packages/packages/dev-tools/github/actions/jest-unit-tests
-              with:
-                  config-path: .github/blockera-ci.json
+        uses: blockeraai/blockera-global-packages/.github/workflows/consumer-jest-unit-tests.yml@WORKFLOWS_REF
+        secrets:
+            BLOCKERABOT_PAT: ${{ secrets.BLOCKERABOT_PAT }}
+        with:
+            config-path: .github/blockera-ci.json

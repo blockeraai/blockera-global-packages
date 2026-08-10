@@ -1,5 +1,5 @@
-# Template — copy to consumer `.github/workflows/code-lint.yml`
-# Replace OWNER/REPO with the consumer repository (e.g. blockeraai/blockera-pro).
+# Thin caller template — copy to consumer `.github/workflows/code-lint.yml`
+# Replace OWNER/REPO and WORKFLOWS_REF (GP ref with consumer-code-lint.yml).
 name: Code Lint
 
 on:
@@ -12,68 +12,11 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    jslint:
-        name: JavaScript coding standards
-        runs-on: ubuntu-latest
-        timeout-minutes: 20
+    lint:
+        name: Code lint
         if: ${{ github.repository == 'OWNER/REPO' || github.event_name == 'pull_request' }}
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v5
-              with:
-                  token: ${{ secrets.BLOCKERABOT_PAT }}
-
-            - name: Setup Node.js and install dependencies
-              uses: ./.github/setup-node
-              with:
-                  global-packages-token: ${{ secrets.BLOCKERABOT_PAT }}
-
-            - name: Lint JS
-              uses: ./packages/global-packages/packages/dev-tools/github/actions/code-lint
-              with:
-                  suite: js
-                  config-path: .github/blockera-ci.json
-
-    stylelint:
-        name: CSS coding standards
-        runs-on: ubuntu-latest
-        timeout-minutes: 20
-        if: ${{ github.repository == 'OWNER/REPO' || github.event_name == 'pull_request' }}
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v5
-              with:
-                  token: ${{ secrets.BLOCKERABOT_PAT }}
-
-            - name: Setup Node.js and install dependencies
-              uses: ./.github/setup-node
-              with:
-                  global-packages-token: ${{ secrets.BLOCKERABOT_PAT }}
-
-            - name: Lint CSS
-              uses: ./packages/global-packages/packages/dev-tools/github/actions/code-lint
-              with:
-                  suite: css
-                  config-path: .github/blockera-ci.json
-
-    phpcs:
-        name: PHP coding standards
-        runs-on: ubuntu-latest
-        timeout-minutes: 20
-        if: ${{ github.repository == 'OWNER/REPO' || github.event_name == 'pull_request' }}
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v5
-              with:
-                  token: ${{ secrets.BLOCKERABOT_PAT }}
-
-            - name: Setup PHP Composer install dependencies
-              uses: ./.github/setup-php
-              with:
-                  global-packages-token: ${{ secrets.BLOCKERABOT_PAT }}
-
-            - name: Lint PHP
-              uses: ./packages/global-packages/packages/dev-tools/github/actions/code-lint
-              with:
-                  suite: php
-                  config-path: .github/blockera-ci.json
+        uses: blockeraai/blockera-global-packages/.github/workflows/consumer-code-lint.yml@WORKFLOWS_REF
+        secrets:
+            BLOCKERABOT_PAT: ${{ secrets.BLOCKERABOT_PAT }}
+        with:
+            config-path: .github/blockera-ci.json
