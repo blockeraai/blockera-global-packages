@@ -27,9 +27,9 @@ export const BLOCKERA_NESTED_SETTINGS_PROPERTY = {
 };
 
 /** All Blockera-only settings keys at the `settings` root. */
-export const BLOCKERA_SETTINGS_KEYS: string[] = Object.values(
+export const BLOCKERA_SETTINGS_KEYS: string[] = (Object.values(
 	BLOCKERA_SETTINGS_PROPERTY
-);
+): any);
 
 /** `useGlobalSetting` paths (relative to the settings root). */
 export const BLOCKERA_GLOBAL_SETTING_PATH = {
@@ -70,7 +70,7 @@ export const BLOCKERA_CUSTOM_PRESET_SETTINGS_PATH = {
 	filter: 'settings.blockeraFilter.presets.custom',
 };
 
-type JsonObject = { +[string]: mixed };
+type JsonObject = { [string]: any };
 
 function isPlainObject(value: mixed): boolean %checks {
 	return value !== null && typeof value === 'object' && !Array.isArray(value);

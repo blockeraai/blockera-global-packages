@@ -56,17 +56,33 @@ const _getVariableGroupItems = (
 	// If group is not specified, search in all groups
 	if (!group) {
 		const allGroups = Object.values(store?.variables || {});
+		const items: Array<any> = allGroups
+			.map((groupData) => Object.values(groupData?.items || {}))
+			.flat();
+		const matched: Array<any> = [];
 
-		return allGroups
-			.map((group) => Object.values(group?.items || {}))
-			.flat()
-			.filter((i: { ...Object, type: string }) => i?.type === type);
+		for (let i = 0; i < items.length; i++) {
+			if (items[i]?.type === type) {
+				matched.push(items[i]);
+			}
+		}
+
+		return (matched: any);
 	}
 
 	// If group is specified, search in the specified group
-	return Object.values(store?.variables[group]?.items || {}).filter(
-		(i: { ...Object, type: string }) => i?.type === type
+	const groupItems: Array<any> = Object.values(
+		store?.variables[group]?.items || {}
 	);
+	const matched: Array<any> = [];
+
+	for (let i = 0; i < groupItems.length; i++) {
+		if (groupItems[i]?.type === type) {
+			matched.push(groupItems[i]);
+		}
+	}
+
+	return (matched: any);
 };
 
 export const getVariableGroupItems: DynamicVariableType = memoize(

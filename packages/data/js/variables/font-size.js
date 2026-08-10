@@ -74,7 +74,10 @@ export const getFontSizes = (): Array<VariableItem> => {
 					};
 
 					if (item?.fluid) {
-						row.fluid = normalizeFontSizeFluid(item.fluid);
+						const fluid = normalizeFontSizeFluid(item.fluid);
+						if (fluid && typeof fluid === 'object') {
+							row.fluid = fluid;
+						}
 					}
 
 					return row;

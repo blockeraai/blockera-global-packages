@@ -48,7 +48,7 @@ function resolveCatalogItemReference(
 		typeof item.reference === 'object' &&
 		!Array.isArray(item.reference)
 	) {
-		return (item.reference: ValueAddonReference);
+		return (item.reference: any);
 	}
 
 	return referenceFromPresetOrigin(origin);
@@ -215,22 +215,29 @@ export function buildPresetVariablePickerPayload(
 
 	const value = serializeGlobalStylePresetItemValue(item, variableType);
 
-	return {
+	const payload: { [string]: mixed } = {
 		id,
 		name: String(item.name ?? id),
 		type: variableType,
 		reference,
 		value,
 		var: varString,
-		...(typeof item.group === 'string' ? { group: item.group } : {}),
-		...(typeof item.label === 'string' ? { label: item.label } : {}),
-		...(item.fluid !== undefined && item.fluid !== null
-			? {
-					fluid:
-						variableType === 'font-size'
-							? normalizeFontSizeFluid(item.fluid)
-							: item.fluid,
-				}
-			: {}),
 	};
+
+	if (typeof item.group === 'string') {
+		payload.group = item.group;
+	}
+
+	if (typeof item.label === 'string') {
+		payload.label = item.label;
+	}
+
+	if (item.fluid !== undefined && item.fluid !== null) {
+		payload.fluid =
+			variableType === 'font-size'
+				? normalizeFontSizeFluid((item.fluid: any))
+				: item.fluid;
+	}
+
+	return payload;
 }
