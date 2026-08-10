@@ -51,7 +51,7 @@ export default function GradientBarControl({
 		onChange,
 	});
 
-	const normalizedVariableTypes =
+	const normalizedVariableTypes: Array<any> =
 		typeof variableTypes === 'string'
 			? [variableTypes]
 			: variableTypes || [];

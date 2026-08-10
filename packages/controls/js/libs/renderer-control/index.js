@@ -60,6 +60,9 @@ export const RendererControl = ({
 
 	let Component;
 
+	const controlProps: Object = (props: any);
+	const resolvedDefaultValue: any = defaultValue || value[id];
+
 	switch (type) {
 		case 'text':
 			Component = (
@@ -67,8 +70,8 @@ export const RendererControl = ({
 					id={id}
 					singularId={id}
 					onChange={handleOnChange}
-					defaultValue={defaultValue || value[id]}
-					{...props}
+					defaultValue={resolvedDefaultValue}
+					{...controlProps}
 				/>
 			);
 			break;
@@ -79,9 +82,9 @@ export const RendererControl = ({
 					id={id}
 					singularId={id}
 					onChange={handleOnChange}
-					defaultValue={defaultValue || value[id]}
+					defaultValue={resolvedDefaultValue}
 					options={normalizedSelectOptions(options)}
-					{...props}
+					{...controlProps}
 				/>
 			);
 			break;
@@ -91,10 +94,10 @@ export const RendererControl = ({
 				<LinkControl
 					id={id}
 					singularId={id}
-					defaultValue={defaultValue || value[id]}
+					defaultValue={resolvedDefaultValue}
 					//
 					onChange={handleOnChange}
-					{...props}
+					{...controlProps}
 				/>
 			);
 			break;
@@ -106,8 +109,8 @@ export const RendererControl = ({
 					singularId={id}
 					//
 					onChange={handleOnChange}
-					defaultValue={defaultValue || value[id]}
-					{...props}
+					defaultValue={resolvedDefaultValue}
+					{...controlProps}
 				/>
 			);
 			break;

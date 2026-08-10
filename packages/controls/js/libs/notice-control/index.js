@@ -46,9 +46,8 @@ export default function NoticeControl({
 		setIsShown(false);
 	};
 
-	// $FlowFixMe
 	if (isShown && children && isFunction(onShown)) {
-		onShown();
+		(onShown: any)();
 	}
 
 	return (

@@ -41,8 +41,8 @@ export type CodeControlProps = {
 	 */
 	lang?: 'css' | 'javascript',
 	defaultValue?: string,
-	width?: number,
-	height?: number,
+	width?: number | string,
+	height?: number | string,
 	/**
 	 * Enables a placeholder—a piece of example content to show when the editor is empty.
 	 */

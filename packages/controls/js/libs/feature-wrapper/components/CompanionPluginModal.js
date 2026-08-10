@@ -130,7 +130,7 @@ export function CompanionPluginModal({
 					{...({
 						'test-id':
 							FEATURE_WRAPPER_TEST_ID.companionReloadCancel,
-					}: Record<string, string>)}
+					}: { [string]: string })}
 					variant="tertiary"
 					onClick={(event) => {
 						handleModalClose(event);
@@ -144,7 +144,7 @@ export function CompanionPluginModal({
 					{...({
 						'test-id':
 							FEATURE_WRAPPER_TEST_ID.companionReloadDiscard,
-					}: Record<string, string>)}
+					}: { [string]: string })}
 					variant="secondary"
 					isDestructive
 					onClick={reloadPage}
@@ -156,7 +156,7 @@ export function CompanionPluginModal({
 				<Button
 					{...({
 						'test-id': FEATURE_WRAPPER_TEST_ID.companionReloadSave,
-					}: Record<string, string>)}
+					}: { [string]: string })}
 					variant="primary"
 					onClick={() => {
 						void (async () => {
@@ -180,7 +180,7 @@ export function CompanionPluginModal({
 				<Button
 					{...({
 						'test-id': FEATURE_WRAPPER_TEST_ID.companionClose,
-					}: Record<string, string>)}
+					}: { [string]: string })}
 					variant="tertiary"
 					onClick={(event) => {
 						handleModalClose(event);
@@ -192,7 +192,7 @@ export function CompanionPluginModal({
 				<Button
 					{...({
 						'test-id': FEATURE_WRAPPER_TEST_ID.companionReloadNow,
-					}: Record<string, string>)}
+					}: { [string]: string })}
 					variant="primary"
 					onClick={reloadNow}
 				>
@@ -206,7 +206,7 @@ export function CompanionPluginModal({
 				<Button
 					{...({
 						'test-id': FEATURE_WRAPPER_TEST_ID.companionClose,
-					}: Record<string, string>)}
+					}: { [string]: string })}
 					variant="tertiary"
 					onClick={(event) => {
 						handleModalClose(event);
@@ -219,7 +219,7 @@ export function CompanionPluginModal({
 				<Button
 					{...({
 						'test-id': FEATURE_WRAPPER_TEST_ID.companionInstall,
-					}: Record<string, string>)}
+					}: { [string]: string })}
 					variant="primary"
 					className={installButtonClassName}
 					onClick={handleInstall}

@@ -150,7 +150,7 @@ export default function InputControl({
 		? pickedUnit
 		: getUnitByValue(extractedValue.unit, units);
 	const fallbackUnit = getFirstUnit(units);
-	let unitValue = { value: '', label: '', format: 'number' };
+	let unitValue: Object = { value: '', label: '', format: 'number' };
 
 	if (typeof resolvedUnitValue?.value === 'string') {
 		unitValue = resolvedUnitValue;

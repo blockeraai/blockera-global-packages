@@ -12,7 +12,7 @@ import {
 	useState,
 } from '@wordpress/element';
 import { useReducedMotion } from '@wordpress/compose';
-import type { Element, Node } from 'react';
+import type { Element as ReactElement, Node } from 'react';
 
 /**
  * Blockera dependencies
@@ -68,7 +68,7 @@ const RepeaterItem = ({
 	itemId,
 	showVariations = true,
 	size,
-}: RepeaterItemProps): null | Element<any> => {
+}: RepeaterItemProps): null | ReactElement<any> => {
 	const rowSize: RepeaterItemSize = size ?? 'full';
 	// Start closed; open via effect when item is new (isOpen/creatingStep).
 	const [isOpen, setOpen] = useState(item?.isOpen ?? false);
@@ -316,7 +316,7 @@ const RepeaterItem = ({
 
 	// Stable row keys survive delete/reorder — close when this itemId is gone.
 	useEffect(() => {
-		if (!Object.prototype.hasOwnProperty.call(items, itemId)) {
+		if (!((items: Object): any).hasOwnProperty(itemId)) {
 			setOpen(false);
 			clearPendingOpenItemId(itemId);
 		}
@@ -435,14 +435,16 @@ const RepeaterItem = ({
 			handleItemPopoverClose();
 		}
 
-		if (e.dataTransfer) {
+		const dataTransfer = e.dataTransfer;
+
+		if (dataTransfer) {
 			const row = itemRef.current;
 			const draggedId =
 				row instanceof HTMLElement
 					? (row.getAttribute('data-id') ?? index)
 					: index;
 
-			e.dataTransfer.setData('text/plain', draggedId);
+			dataTransfer.setData('text/plain', draggedId);
 			setDraggingIndex(index);
 		}
 	};
@@ -837,15 +839,15 @@ const RepeaterItem = ({
 					? 'repeater-item-creating-step'
 					: itemId
 			}
-			{...(showVariationsBranch && isOpen
+			{...((showVariationsBranch && isOpen
 				? { 'data-edit-popover-open': 'true' }
-				: {})}
-			{...(item?.isSelected && !isOpen
+				: {}): Object)}
+			{...((item?.isSelected && !isOpen
 				? {
 						onClick: (event: MouseEvent) =>
 							mainItemGroupSharedProps.onClick(event),
 					}
-				: {})}
+				: {}): Object)}
 		>
 			{'accordion' === mode && (
 				<RepeaterProItemInteractionGuard

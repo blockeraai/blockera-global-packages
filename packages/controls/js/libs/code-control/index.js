@@ -61,7 +61,7 @@ const getVariableSuggestions = memoize(() => {
 				id: color.id,
 				reference: color.reference,
 				type: 'color',
-			})}, ${color.value})`,
+			})}, ${String(color.value)})`,
 			documentation: {
 				value: color.name,
 				isTrusted: true,
@@ -87,9 +87,9 @@ const getVariableSuggestions = memoize(() => {
 				id: fontSize.id,
 				reference: fontSize.reference,
 				type: 'font-size',
-			})}, ${fontSize.value})`,
+			})}, ${String(fontSize.value)})`,
 			documentation: {
-				value: `${fontSize.name}\n\nPreview: <div style="font-size: ${fontSize.value}">Aa</div>`,
+				value: `${fontSize.name}\n\nPreview: <div style="font-size: ${String(fontSize.value)}">Aa</div>`,
 				isTrusted: true,
 				supportHtml: true,
 				colorInfo: {
@@ -113,9 +113,9 @@ const getVariableSuggestions = memoize(() => {
 				id: spacing.id,
 				reference: spacing.reference,
 				type: 'spacing',
-			})}, ${spacing.value})`,
+			})}, ${String(spacing.value)})`,
 			documentation: {
-				value: `${spacing.name}\n\nPreview: <div style="display: flex; align-items: center; gap: 8px;"><div style="width: ${spacing.value}; height: 20px; background: #e0e0e0;"></div><span>${spacing.value}</span></div>`,
+				value: `${spacing.name}\n\nPreview: <div style="display: flex; align-items: center; gap: 8px;"><div style="width: ${String(spacing.value)}; height: 20px; background: #e0e0e0;"></div><span>${String(spacing.value)}</span></div>`,
 				isTrusted: true,
 				supportHtml: true,
 				colorInfo: {
@@ -139,9 +139,9 @@ const getVariableSuggestions = memoize(() => {
 				id: widthSize.id,
 				reference: widthSize.reference,
 				type: 'width-size',
-			})}, ${widthSize.value})`,
+			})}, ${String(widthSize.value)})`,
 			documentation: {
-				value: `${widthSize.name}\n\nPreview: <div style="display: flex; align-items: center; gap: 8px;"><div style="width: ${widthSize.value}; height: 20px; background: #e0e0e0;"></div><span>${widthSize.value}</span></div>`,
+				value: `${widthSize.name}\n\nPreview: <div style="display: flex; align-items: center; gap: 8px;"><div style="width: ${String(widthSize.value)}; height: 20px; background: #e0e0e0;"></div><span>${String(widthSize.value)}</span></div>`,
 				isTrusted: true,
 				supportHtml: true,
 				colorInfo: {
@@ -165,9 +165,9 @@ const getVariableSuggestions = memoize(() => {
 				id: gradient.id,
 				reference: gradient.reference,
 				type: 'linear-gradient',
-			})}, ${gradient.value})`,
+			})}, ${String(gradient.value)})`,
 			documentation: {
-				value: `${gradient.name}\n\nPreview: <div style="width: 100px; height: 50px; background: ${gradient.value};"></div>`,
+				value: `${gradient.name}\n\nPreview: <div style="width: 100px; height: 50px; background: ${String(gradient.value)};"></div>`,
 				isTrusted: true,
 				supportHtml: true,
 				colorInfo: {
@@ -190,9 +190,9 @@ const getVariableSuggestions = memoize(() => {
 				id: gradient.id,
 				reference: gradient.reference,
 				type: 'radial-gradient',
-			})}, ${gradient.value})`,
+			})}, ${String(gradient.value)})`,
 			documentation: {
-				value: `${gradient.name}\n\nPreview: <div style="width: 100px; height: 50px; background: ${gradient.value};"></div>`,
+				value: `${gradient.name}\n\nPreview: <div style="width: 100px; height: 50px; background: ${String(gradient.value)};"></div>`,
 				isTrusted: true,
 				supportHtml: true,
 				colorInfo: {

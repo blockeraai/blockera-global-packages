@@ -186,12 +186,14 @@ export const PopoverCore: React$AbstractComponent<TPopoverCoreProps, mixed> =
 					'blockera-control-btn-toggle',
 				];
 
+				const focusTarget = e.target;
+
 				if (
-					e.target instanceof HTMLElement &&
+					focusTarget instanceof HTMLElement &&
 					excludeClasses.filter(
 						(className) =>
-							e.target.classList.contains(className) ||
-							e.target.closest(`.${className}`)
+							focusTarget.classList.contains(className) ||
+							focusTarget.closest(`.${className}`)
 					).length !== 0
 				) {
 					return;
