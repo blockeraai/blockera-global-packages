@@ -31,7 +31,7 @@ describe('media-image', () => {
 				cy.contains('button', 'Upload files').click();
 
 				cy.get('input[type="file"]').selectFile(
-					'global-packages/packages/dev-cypress/js/fixtures/test.jpg',
+					'packages/global-packages/packages/dev-cypress/js/fixtures/test.jpg',
 					{
 						force: true,
 					}
@@ -90,7 +90,7 @@ describe('media-image', () => {
 				cy.contains('button', 'Upload files').click();
 
 				cy.get('input[type="file"]').selectFile(
-					'global-packages/packages/dev-cypress/js/fixtures/test.jpg',
+					'packages/global-packages/packages/dev-cypress/js/fixtures/test.jpg',
 					{
 						force: true,
 					}
@@ -128,7 +128,7 @@ describe('media-image', () => {
 				cy.contains('button', 'Upload files').click();
 
 				cy.get('input[type="file"]').selectFile(
-					'global-packages/packages/dev-cypress/js/fixtures/test.jpg',
+					'packages/global-packages/packages/dev-cypress/js/fixtures/test.jpg',
 					{
 						force: true,
 					}

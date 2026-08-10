@@ -34,7 +34,7 @@ describe('Site Logo Block', () => {
 				$body.find('#menu-item-upload').click();
 
 				cy.get('input[type="file"]').selectFile(
-					'global-packages/packages/dev-cypress/js/fixtures/test.jpg',
+					'packages/global-packages/packages/dev-cypress/js/fixtures/test.jpg',
 					{
 						force: true,
 					}
