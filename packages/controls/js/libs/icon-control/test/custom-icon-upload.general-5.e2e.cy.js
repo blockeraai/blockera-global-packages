@@ -49,12 +49,21 @@ describe('icon-control → custom SVG upload', () => {
 				.click();
 		});
 
-		cy.contains('button', /Use icon/i).click({ force: true });
+		// Wait for async media fetch + SVG sanitize before inserting.
+		cy.get('.blockera-control-icon-picker-modal').within(() => {
+			cy.contains(
+				'.blockera-control-icon-picker-custom-icon-footer-status-valid-label',
+				/Valid SVG/i
+			).should('be.visible');
+			cy.contains('button', /^Use icon$/i)
+				.should('not.be.disabled')
+				.click();
+		});
 
 		getWPDataObject().then((data) => {
-			const uploadedFileName = getSelectedBlock(data, 'blockeraIcon')
-				.uploadSVG.filename;
-			expect(uploadedFileName).to.match(/home(-\d+)?.svg/);
+			const uploadSVG = getSelectedBlock(data, 'blockeraIcon')?.uploadSVG;
+			expect(uploadSVG, 'uploadSVG object').to.be.an('object');
+			expect(uploadSVG.filename).to.match(/home(-\d+)?\.svg/);
 		});
 	});
 });
