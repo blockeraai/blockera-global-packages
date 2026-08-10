@@ -61,6 +61,9 @@ function setPluginRoot(pluginRoot) {
  * Map legacy consumer-relative package paths to the sparse submodule layout:
  * `packages/<pkg>/...` → `packages/global-packages/packages/<pkg>/...`
  *
+ * Prefers the remapped path when it exists; keeps the legacy path when only
+ * that exists (e.g. theme-local `packages/blockera-one/...`).
+ *
  * @param {string} relativePath
  * @return {string}
  */
@@ -70,10 +73,19 @@ function resolveSharedPackageRelPath(relativePath) {
 		normalized.startsWith('packages/') &&
 		!normalized.startsWith('packages/global-packages/')
 	) {
-		return normalized.replace(
+		const remapped = normalized.replace(
 			/^packages\//,
 			'packages/global-packages/packages/'
 		);
+		const remappedAbs = path.join(BLOCKERA_PLUGIN_ROOT, remapped);
+		if (fs.existsSync(remappedAbs)) {
+			return remapped;
+		}
+		const legacyAbs = path.join(BLOCKERA_PLUGIN_ROOT, normalized);
+		if (fs.existsSync(legacyAbs)) {
+			return normalized;
+		}
+		return remapped;
 	}
 	return normalized;
 }
@@ -629,8 +641,10 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 			maxAttempts = 1,
 			log = false,
 		}) {
+			const resolvedMuPluginPath =
+				resolveSharedPackageRelPath(muPluginPath);
 			const resolvedTarget = getMuPluginTargetName(
-				muPluginPath,
+				resolvedMuPluginPath,
 				targetName
 			);
 			const transport = getMuPluginTransport();
@@ -642,7 +656,7 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 					attempt,
 					maxAttempts,
 					force,
-					source: muPluginPath,
+					source: resolvedMuPluginPath,
 					target: resolvedTarget,
 					ci: Boolean(process.env.CI),
 				},
@@ -654,13 +668,13 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 			try {
 				if (transport === 'host') {
 					result = activateMuPluginOnHost(
-						muPluginPath,
+						resolvedMuPluginPath,
 						resolvedTarget,
 						force
 					);
 				} else {
 					result = activateMuPluginInContainer(
-						muPluginPath,
+						resolvedMuPluginPath,
 						resolvedTarget,
 						force
 					);
@@ -724,8 +738,10 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 			maxAttempts = 1,
 			log = false,
 		}) {
+			const resolvedMuPluginPath =
+				resolveSharedPackageRelPath(muPluginPath);
 			const resolvedTarget = getMuPluginTargetName(
-				muPluginPath,
+				resolvedMuPluginPath,
 				targetName
 			);
 			const transport = getMuPluginTransport();
@@ -736,7 +752,7 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 					transport,
 					attempt,
 					maxAttempts,
-					source: muPluginPath,
+					source: resolvedMuPluginPath,
 					target: resolvedTarget,
 					ci: Boolean(process.env.CI),
 				},
@@ -745,8 +761,14 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 
 			const result =
 				transport === 'host'
-					? verifyMuPluginOnHost(muPluginPath, resolvedTarget)
-					: verifyMuPluginInContainer(muPluginPath, resolvedTarget);
+					? verifyMuPluginOnHost(
+							resolvedMuPluginPath,
+							resolvedTarget
+					  )
+					: verifyMuPluginInContainer(
+							resolvedMuPluginPath,
+							resolvedTarget
+					  );
 
 			logMuPlugin(
 				result?.ok ? 'verify:ok' : 'verify:failed',
@@ -852,7 +874,9 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 				);
 			}
 
-			const source = path.join(BLOCKERA_PLUGIN_ROOT, fixturePath);
+			const resolvedFixturePath =
+				resolveSharedPackageRelPath(fixturePath);
+			const source = path.join(BLOCKERA_PLUGIN_ROOT, resolvedFixturePath);
 			const target = path.join(
 				BLOCKERA_PLUGIN_ROOT,
 				'templates',
@@ -862,7 +886,7 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 			if (!fs.existsSync(source)) {
 				return {
 					ok: false,
-					message: `fixture_missing:${fixturePath}`,
+					message: `fixture_missing:${resolvedFixturePath}`,
 				};
 			}
 
