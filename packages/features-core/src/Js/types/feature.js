@@ -12,7 +12,7 @@ import type { CssRule } from '@blockera/editor/js/style-engine/types';
 import type { StylesProps } from '@blockera/editor/js/extensions/libs/types';
 import type { FeatureConfig } from '@blockera/editor/js/extensions/libs/base/types';
 import type { StateTypes } from '@blockera/editor/js/extensions/libs/block-card/block-states/types';
-import type { InnerBlocks } from '@blockera/editor/js/extensions/libs/block-card/inner-blocks/types';
+import type { InnerBlockModel } from '@blockera/editor/js/extensions/libs/block-card/inner-blocks/types';
 
 type TFeatureId = 'icon';
 
@@ -30,11 +30,11 @@ export type TEditBlockHTMLArgs = {
 	clientId: string,
 	attributes: Object,
 	htmlEditable: THtmlEditable,
-	getBlockCSSSelector: (
+	getBlockCSSSelector?: (
 		blockType: Object,
 		target: Array<string> | string,
 		options: { fallback?: boolean }
-	) => string,
+	) => ?string,
 };
 
 type TFeatureInspector = {
@@ -55,8 +55,9 @@ type TFeatureInspector = {
 	},
 	innerBlocks: {
 		status: boolean,
+		// Block configs often override only a subset (e.g. availableBlockStates).
 		items: {
-			[key: string]: InnerBlocks,
+			[key: string]: $Shape<InnerBlockModel>,
 		},
 	},
 	blockStates: {
@@ -69,6 +70,7 @@ type TFeatureInspector = {
 
 export type TBlockFeatures = {
 	[key: TFeatureId]: {
+		status: boolean,
 		inspector: TFeatureInspector,
 		htmlEditable: THtmlEditable,
 		contextualToolbar: TFeatureContextualToolbar,

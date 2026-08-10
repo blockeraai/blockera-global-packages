@@ -3,10 +3,6 @@
  * External dependencies
  */
 import type { MixedElement } from 'react';
-/**
- * Internal dependencies
- */
-import type { TBlockProps, THandleOnChangeAttributes } from '../../types';
 
 export type TIconStateAttributes = {
 	blockeraIcon: Object,
@@ -22,15 +18,30 @@ export type TIconStateAttributes = {
 	[key: string]: any,
 };
 
+/**
+ * Slot-fill props passed into feature extension components.
+ * Kept local (optional fields) so icon extension typing stays practical.
+ */
+export type TExtensionFillComponentProps = {
+	settings?: Object,
+	slotName?: string,
+	blockFeatures?: Object,
+	handleOnChangeSettings?: (newSupports: Object, name: string) => void,
+};
+
 export type TIconProps = {
-	block: TBlockProps,
+	block: Object,
 	iconConfig: Object,
 	children?: MixedElement,
 	currentStateAttributes: TIconStateAttributes,
 	attributes: Object,
 	useBlockSection: (id: string) => Object,
 	activeSearchMode?: boolean,
-	handleOnChangeAttributes: THandleOnChangeAttributes,
+	handleOnChangeAttributes: (
+		attributeId: string,
+		newValue: any,
+		options?: Object
+	) => void,
 	extensionProps: {
 		blockeraIcon: Object,
 		blockeraIconPosition: Object,

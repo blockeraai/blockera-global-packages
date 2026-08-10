@@ -144,14 +144,22 @@ export const blockeraEditorFilters = () => {
 				}
 			}
 
-			const updatedBlockExtension = mergeObject(block, {
-				...(Object.keys(blockeraInnerBlocks)?.length
-					? { blockeraInnerBlocks }
-					: {}),
-				...(Object.keys(availableBlockStates)?.length
-					? { availableBlockStates }
-					: {}),
-			});
+			const updatedBlockExtensionPatch: Object = {};
+
+			if (Object.keys(blockeraInnerBlocks)?.length) {
+				updatedBlockExtensionPatch.blockeraInnerBlocks =
+					blockeraInnerBlocks;
+			}
+
+			if (Object.keys(availableBlockStates)?.length) {
+				updatedBlockExtensionPatch.availableBlockStates =
+					availableBlockStates;
+			}
+
+			const updatedBlockExtension = mergeObject(
+				block,
+				updatedBlockExtensionPatch
+			);
 
 			updateBlockExtensions(updatedBlockExtension);
 
@@ -159,7 +167,7 @@ export const blockeraEditorFilters = () => {
 		}
 	);
 
-	const filterExtensionsSupports = (extensionsSupports) => {
+	const filterExtensionsSupports = (extensionsSupports: Object): Object => {
 		const newExtensionsSupports = {};
 		const { getFeatures } = select(STORE_NAME);
 		const registeredFeatures = getFeatures();

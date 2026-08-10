@@ -11,7 +11,7 @@ import { __ } from '@wordpress/i18n';
 import { Icon } from '@blockera/icons';
 import { generalInnerBlockStates } from '@blockera/editor/js/extensions/libs/block-card/block-states/states';
 
-export const icon = {
+export const icon: Object = {
 	block: {
 		status: true,
 		inspector: {

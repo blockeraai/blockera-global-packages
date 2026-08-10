@@ -206,11 +206,17 @@ export const getIconPresentationStyle = (attributes: Object): Object => {
 	const library = getBlockeraIconValue(attributes)?.library;
 	const isStrokeLibrary = isStrokeIconLibrary(library);
 	const resolvedColor = iconColor || 'currentColor';
-	const style = {
+	const style: { [string]: mixed } = {
 		color: resolvedColor,
-		...(isStrokeLibrary ? {} : { fill: resolvedColor }),
-		...(transform ? { transform } : {}),
 	};
+
+	if (!isStrokeLibrary) {
+		style.fill = resolvedColor;
+	}
+
+	if (transform) {
+		style.transform = transform;
+	}
 
 	return style;
 };
