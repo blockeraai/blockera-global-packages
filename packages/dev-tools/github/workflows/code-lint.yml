@@ -1,0 +1,70 @@
+name: Code Lint
+
+# Template: copy to consumer `.github/workflows/code-lint.yml` and adjust
+# repository guard / config path as needed.
+on:
+    pull_request:
+        types: [opened, synchronize, ready_for_review]
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+    cancel-in-progress: true
+
+jobs:
+    jslint:
+        name: JavaScript coding standards
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js and install dependencies
+              uses: ./.github/setup-node
+              with:
+                  global-packages-token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Lint JS
+              uses: ./packages/global-packages/packages/dev-tools/github/actions/code-lint
+              with:
+                  suite: js
+                  config-path: .github/blockera-ci.json
+
+    stylelint:
+        name: CSS coding standards
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js and install dependencies
+              uses: ./.github/setup-node
+              with:
+                  global-packages-token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Lint CSS
+              uses: ./packages/global-packages/packages/dev-tools/github/actions/code-lint
+              with:
+                  suite: css
+                  config-path: .github/blockera-ci.json
+
+    phpcs:
+        name: PHP coding standards
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup PHP Composer install dependencies
+              uses: ./.github/setup-php
+              with:
+                  global-packages-token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Lint PHP
+              uses: ./packages/global-packages/packages/dev-tools/github/actions/code-lint
+              with:
+                  suite: php
+                  config-path: .github/blockera-ci.json

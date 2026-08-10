@@ -1,0 +1,52 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://blockera.ai/schemas/blockera-ci.json",
+	"title": "Blockera consumer CI config",
+	"type": "object",
+	"required": ["pluginSlug", "repository"],
+	"properties": {
+		"pluginSlug": {
+			"type": "string",
+			"description": "WordPress plugin directory slug (e.g. blockera-pro)."
+		},
+		"repository": {
+			"type": "string",
+			"description": "GitHub repository in owner/name form."
+		},
+		"submodule": {
+			"type": "object",
+			"properties": {
+				"path": {
+					"type": "string",
+					"default": "packages/global-packages"
+				}
+			}
+		},
+		"lint": {
+			"type": "object",
+			"properties": {
+				"js": {
+					"type": "object",
+					"properties": {
+						"command": { "type": "string" }
+					}
+				},
+				"css": {
+					"type": "object",
+					"properties": {
+						"command": { "type": "string" },
+						"scssRoot": { "type": "string" },
+						"scssGlob": { "type": "string" }
+					}
+				},
+				"php": {
+					"type": "object",
+					"properties": {
+						"command": { "type": "string" },
+						"reportPath": { "type": "string" }
+					}
+				}
+			}
+		}
+	}
+}

@@ -7,6 +7,10 @@
 		{
 			"repository": "blockeraai/blockera-one",
 			"enabled": true
+		},
+		{
+			"repository": "blockeraai/blockera-pro",
+			"enabled": true
 		}
 	]
 }
