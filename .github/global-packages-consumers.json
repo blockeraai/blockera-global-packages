@@ -5,10 +5,6 @@
 			"enabled": true
 		},
 		{
-			"repository": "blockeraai/blockera-pro",
-			"enabled": true
-		},
-		{
 			"repository": "blockeraai/blockera-one",
 			"enabled": true
 		}
