@@ -34,8 +34,9 @@ fi
 
 SKIP_PATHS_BLOB="${BLOCKERA_DEBUG_CHECK_SKIP_PATHS:-}"
 if [[ -z "${SKIP_PATHS_BLOB}" ]]; then
-	# Tooling CLIs intentionally use exit()/console.* — skip those trees.
-	SKIP_PATHS_BLOB=$'test/\n.github/\nbin/\ndev-tools/github/\ndev-phpunit/'
+	# Tooling CLIs and PHPUnit trees intentionally use exit()/console.* —
+	# skip those paths (both test/ and tests/ package layouts).
+	SKIP_PATHS_BLOB=$'test/\ntests/\n.github/\nbin/\ndev-tools/github/\ndev-phpunit/'
 fi
 
 ERROR_FLAG="$(mktemp)"
