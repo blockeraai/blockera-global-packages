@@ -46,16 +46,33 @@ if [[ "${#COMMENT_IDS[@]}" -eq 0 ]]; then
 fi
 
 COMMENT_ID="${COMMENT_IDS[0]}"
-BODY="$(gh api "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" --jq .body)"
 
-if [[ "${BODY}" == "${TITLE}"* ]]; then
+# Keep large comment bodies on disk — passing them through jq --arg / argv
+# exceeds Linux ARG_MAX on big compressed-size reports.
+BODY_FILE="$(mktemp)"
+NEW_BODY_FILE="$(mktemp)"
+PAYLOAD_FILE="$(mktemp)"
+cleanup() {
+	rm -f "${BODY_FILE}" "${NEW_BODY_FILE}" "${PAYLOAD_FILE}"
+}
+trap cleanup EXIT
+
+gh api "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" --jq .body >"${BODY_FILE}"
+
+if [[ "$(head -c "${#TITLE}" "${BODY_FILE}")" == "${TITLE}" ]]; then
 	echo "bundle-size/comment-title: title already present"
 	exit 0
 fi
 
-NEW_BODY="$(printf '%s\n\n%s' "${TITLE}" "${BODY}")"
-jq -n --arg body "${NEW_BODY}" '{body: $body}' \
-	| gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" \
-		--input - >/dev/null
+{
+	printf '%s\n\n' "${TITLE}"
+	cat "${BODY_FILE}"
+} >"${NEW_BODY_FILE}"
+
+# --rawfile reads the body from disk (no argv size limit).
+jq -n --rawfile body "${NEW_BODY_FILE}" '{body: $body}' >"${PAYLOAD_FILE}"
+
+gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" \
+	--input "${PAYLOAD_FILE}" >/dev/null
 
 echo "bundle-size/comment-title: updated comment ${COMMENT_ID}"
