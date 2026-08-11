@@ -30,10 +30,20 @@ DEBUG_INFO="${BLOCKERA_PHP_UNIT_DEBUG_INFO:-true}"
 
 if [[ "${SKIP_IF_NO_TESTS}" == "true" ]]; then
 	TEST_ROOTS="${BLOCKERA_PHP_UNIT_TEST_ROOTS:-.}"
-	# shellcheck disable=SC2086
-	count="$(find ${TEST_ROOTS} -type f -name "${TEST_NAME}" 2>/dev/null | wc -l | tr -d '[:space:]')"
-	if [[ "${count}" == "0" ]]; then
-		echo "php-unit: no '${TEST_NAME}' under '${TEST_ROOTS}'; skipping"
+	# Expand globs; drop unmatched patterns so missing roots do not fail find
+	# under `set -o pipefail` (e.g. theme optional `blockera-one-*`).
+	shopt -s nullglob
+	# Intentional word-splitting for multiple roots / globs.
+	# shellcheck disable=SC2206
+	roots=(${TEST_ROOTS})
+	shopt -u nullglob
+	if [[ ${#roots[@]} -eq 0 ]]; then
+		echo "php-unit: no roots matched '${TEST_ROOTS}'; skipping"
+		exit 0
+	fi
+	count="$(find "${roots[@]}" -type f -name "${TEST_NAME}" 2>/dev/null | wc -l | tr -d '[:space:]' || true)"
+	if [[ "${count:-0}" == "0" ]]; then
+		echo "php-unit: no '${TEST_NAME}' under '${roots[*]}'; skipping"
 		exit 0
 	fi
 	echo "php-unit: found ${count} test file(s)"

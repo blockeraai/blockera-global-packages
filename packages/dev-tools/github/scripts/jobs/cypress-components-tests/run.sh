@@ -24,11 +24,20 @@ SPECS_NAME="${BLOCKERA_CT_SPECS_NAME:-*.component.cy.js}"
 
 if [[ "${SKIP_IF_NO_SPECS}" == "true" ]]; then
 	SPECS_ROOTS="${BLOCKERA_CT_SPECS_ROOTS:-.}"
-	# Intentional word-splitting for multiple roots.
-	# shellcheck disable=SC2086
-	count="$(find ${SPECS_ROOTS} -name "${SPECS_NAME}" 2>/dev/null | wc -l | tr -d '[:space:]')"
-	if [[ "${count}" == "0" ]]; then
-		echo "cypress-components: no '${SPECS_NAME}' under '${SPECS_ROOTS}'; skipping"
+	# Expand globs; drop unmatched patterns so missing roots do not fail find
+	# under `set -o pipefail` (e.g. theme optional `blockera-one-*`).
+	shopt -s nullglob
+	# Intentional word-splitting for multiple roots / globs.
+	# shellcheck disable=SC2206
+	roots=(${SPECS_ROOTS})
+	shopt -u nullglob
+	if [[ ${#roots[@]} -eq 0 ]]; then
+		echo "cypress-components: no roots matched '${SPECS_ROOTS}'; skipping"
+		exit 0
+	fi
+	count="$(find "${roots[@]}" -name "${SPECS_NAME}" 2>/dev/null | wc -l | tr -d '[:space:]' || true)"
+	if [[ "${count:-0}" == "0" ]]; then
+		echo "cypress-components: no '${SPECS_NAME}' under '${roots[*]}'; skipping"
 		exit 0
 	fi
 	echo "cypress-components: found ${count} spec file(s)"

@@ -16,12 +16,20 @@ ROOTS="${BLOCKERA_BUILD_ZIP_TESTS_SPECS_ROOTS:-.}"
 PATH_GLOB="${BLOCKERA_BUILD_ZIP_TESTS_SPECS_PATH:-}"
 NAME="${BLOCKERA_BUILD_ZIP_TESTS_SPECS_NAME:-*.build.e2e.cy.js}"
 
-if [[ -n "${PATH_GLOB}" ]]; then
-	# shellcheck disable=SC2086
-	count="$(find ${ROOTS} -path "${PATH_GLOB}" -name "${NAME}" 2>/dev/null | wc -l | tr -d '[:space:]')"
+# Expand globs; drop unmatched patterns so missing roots do not fail find
+# under `set -o pipefail`.
+shopt -s nullglob
+# Intentional word-splitting for multiple roots / globs.
+# shellcheck disable=SC2206
+roots=(${ROOTS})
+shopt -u nullglob
+
+if [[ ${#roots[@]} -eq 0 ]]; then
+	count=0
+elif [[ -n "${PATH_GLOB}" ]]; then
+	count="$(find "${roots[@]}" -path "${PATH_GLOB}" -name "${NAME}" 2>/dev/null | wc -l | tr -d '[:space:]' || true)"
 else
-	# shellcheck disable=SC2086
-	count="$(find ${ROOTS} -type f -name "${NAME}" 2>/dev/null | wc -l | tr -d '[:space:]')"
+	count="$(find "${roots[@]}" -type f -name "${NAME}" 2>/dev/null | wc -l | tr -d '[:space:]' || true)"
 fi
 
 echo "file_count=${count:-0}" >>"${GITHUB_OUTPUT}"
