@@ -1,0 +1,69 @@
+# Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO.
+# Theme consumers override slug/zip-file (e.g. blockera-one / blockera-one.zip).
+name: Create Demo and Attachment Files
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened, closed]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+    cancel-in-progress: true
+
+permissions:
+    contents: write
+    pull-requests: read
+
+jobs:
+    build:
+        name: Create Demo and Attachments
+        runs-on: ubuntu-latest
+        if: ${{ github.event.action != 'closed' && (github.repository == 'OWNER/REPO' || github.event_name == 'pull_request') }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+
+            - uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-php
+              with:
+                  composer-options: '--no-dev -o --apcu-autoloader -a'
+
+            - uses: ./packages/global-packages/packages/dev-tools/github/actions/create-demo-attachments
+              with:
+                  repo-token: ${{ secrets.BLOCKERABOT_PAT }}
+                  github-token: ${{ github.token }}
+                  pr-number: ${{ github.event.pull_request.number }}
+                  head-sha: ${{ github.event.pull_request.head.sha }}
+                  run-id: ${{ github.run_id }}-${{ github.run_attempt }}
+                  main-file-suffix: '-${{ github.event.pull_request.number }}'
+                  # Theme example:
+                  # slug: blockera-one
+                  # zip-file: blockera-one.zip
+
+    cleanup:
+        name: Remove PR CI Artifact
+        runs-on: ubuntu-latest
+        if: ${{ github.event.action == 'closed' && (github.repository == 'OWNER/REPO' || github.event_name == 'pull_request') }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/create-demo-attachments/cleanup.sh
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  REPO: ${{ github.repository }}
+                  # BLOCKERA_DEMO_SLUG: blockera-one
