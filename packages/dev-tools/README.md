@@ -6,6 +6,7 @@ Shared development tooling for Blockera packages and themes:
 - ESLint `@blockera/*` import resolver
 - Modular `theme.json` merge/check CLI
 - Localized block patterns CLI
+- Shared `git-conventional-commits.yaml` (husky `commit-msg` via `--config`)
 
 ---
 
@@ -27,8 +28,21 @@ packages/dev-tools/
 │   └── patterns/                # localize-patterns CLI
 ├── php/
 │   └── functions.php            # Composer placeholder
+├── git-conventional-commits.yaml # Shared conventional-commit types
 ├── package.json                 # @blockera/dev-tools
 └── composer.json                # blockera/dev-tools
+```
+
+### Conventional commits
+
+Source of truth: `git-conventional-commits.yaml` in this package.
+
+Consumers should point husky at it (no root copy):
+
+```sh
+node_modules/git-conventional-commits/cli.js commit-msg-hook \
+	--config packages/global-packages/packages/dev-tools/git-conventional-commits.yaml \
+	"$1"
 ```
 
 ---
