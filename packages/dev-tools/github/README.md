@@ -362,7 +362,8 @@ steps:
 
 ## Check PR config files
 
-Fails when leftover `.pr-*` files are present (except `*.env-example*` / `*.example.*`).
+Fails when leftover `.pr-*` files are present (except example templates:
+`*.env-example*` / `*.example.*` / `*-example*`).
 
 ```yaml
 steps:
@@ -376,7 +377,7 @@ steps:
 | Env | Default |
 | --- | --- |
 | `BLOCKERA_PR_CONFIG_NAME` | `.pr-*` |
-| `BLOCKERA_PR_CONFIG_EXCLUDE_NAMES` | `*.env-example* *.example.*` |
+| `BLOCKERA_PR_CONFIG_EXCLUDE_NAMES` | `*.env-example* *.example.* *-example*` |
 | `BLOCKERA_PR_CONFIG_ROOT` | `.` |
 
 ## Remove PR config files

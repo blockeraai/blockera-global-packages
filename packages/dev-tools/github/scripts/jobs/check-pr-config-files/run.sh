@@ -3,22 +3,35 @@
 #
 # Defaults match the Blockera plugin base. Override via env:
 #   BLOCKERA_PR_CONFIG_NAME            find -name pattern (default: .pr-*)
-#   BLOCKERA_PR_CONFIG_EXCLUDE_NAMES   space-separated extra ! -name patterns
-#                                      (default: *.env-example* *.example.*)
+#   BLOCKERA_PR_CONFIG_EXCLUDE_NAMES   space-separated ! -name patterns
+#                                      (default: *.env-example* *.example.* *-example*)
 #   BLOCKERA_PR_CONFIG_ROOT            search root (default: .)
 set -euo pipefail
 
 ROOT="${BLOCKERA_PR_CONFIG_ROOT:-.}"
 NAME_PATTERN="${BLOCKERA_PR_CONFIG_NAME:-.pr-*}"
-EXCLUDE_NAMES="${BLOCKERA_PR_CONFIG_EXCLUDE_NAMES:-*.env-example* *.example.*}"
+# Keep patterns literal: unquoted expansion would pathname-expand against cwd files.
+EXCLUDE_NAMES="${BLOCKERA_PR_CONFIG_EXCLUDE_NAMES:-*.env-example* *.example.* *-example*}"
 
-FIND_ARGS=(. -name "${NAME_PATTERN}")
+cd "${ROOT}"
+
+FIND_ARGS=(
+	.
+	\( -name node_modules -o -name .git -o -name vendor -o -name dist -o -name build \) -prune
+	-o
+	-type f
+	-name "${NAME_PATTERN}"
+)
+
+# noglob so "*.example.*" stays a find pattern, not a shell glob.
+set -f
 # shellcheck disable=SC2086
 for exclude in ${EXCLUDE_NAMES}; do
 	FIND_ARGS+=(! -name "${exclude}")
 done
+set +f
 
-cd "${ROOT}"
+FIND_ARGS+=(-print)
 
 FOUND="$(find "${FIND_ARGS[@]}" 2>/dev/null || true)"
 
