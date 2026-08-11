@@ -1,0 +1,19 @@
+name: 'Generate and run plugin zip builder'
+description: >
+    Generate bin/build-plugin-zip.temp.sh from bin/generate-build-plugin-zip-sh.php,
+    run it, and clean up. Prefer actions/build-plugin-zip when you also need
+    setup-node/setup-php and artifact upload.
+inputs:
+    main-file-suffix:
+        description: 'Optional MAIN_FILE_SUFFIX for the zip builder'
+        required: false
+        default: ''
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Build product zip
+          shell: bash
+          env:
+              BLOCKERA_DEMO_MAIN_FILE_SUFFIX: ${{ inputs.main-file-suffix }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/create-demo-attachments/build-zip.sh"
