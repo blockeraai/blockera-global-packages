@@ -1,0 +1,76 @@
+# Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO.
+# Reuses php-snapshots/compute-previous-wordpress-version.sh for matrix includes.
+name: PHP Unit Tests
+
+on:
+    pull_request:
+        types: [opened, synchronize, ready_for_review]
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+    cancel-in-progress: true
+
+jobs:
+    compute-previous-wordpress-version:
+        name: Compute previous WordPress version
+        runs-on: ubuntu-latest
+        outputs:
+            previous-wordpress-version: ${{ steps.get-previous-wordpress-version.outputs.previous-wordpress-version }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - id: get-previous-wordpress-version
+              run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/php-snapshots/compute-previous-wordpress-version.sh
+
+    test-php:
+        name: PHP ${{ matrix.php }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.wordpress != '' && format( ' (WP {0}) ', matrix.wordpress ) || '' }} on ubuntu-latest
+        needs: compute-previous-wordpress-version
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        if: ${{ github.repository == 'OWNER/REPO' || github.event_name == 'pull_request' }}
+        strategy:
+            fail-fast: true
+            matrix:
+                php:
+                    - '7.4'
+                    - '8.0'
+                    - '8.1'
+                    - '8.2'
+                multisite: [false]
+                wordpress: ['']
+                # include:
+                #     - php: '8.2'
+                #       wordpress: ${{ needs.compute-previous-wordpress-version.outputs.previous-wordpress-version }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+            WP_ENV_PHP_VERSION: ${{ matrix.php }}
+            WP_ENV_CORE: ${{ matrix.wordpress == '' && 'https://wordpress.org/wordpress-latest.zip' || format( 'https://wordpress.org/wordpress-{0}.zip', matrix.wordpress ) }}
+            BLOCKERA_PHP_UNIT_PHP_VERSION: ${{ matrix.php }}
+            BLOCKERA_PHP_UNIT_MULTISITE: ${{ matrix.multisite }}
+            # Theme example:
+            # BLOCKERA_PHP_UNIT_SKIP_IF_NO_TESTS: 'true'
+            # BLOCKERA_PHP_UNIT_TEST_ROOTS: './packages/blockera-one-* ./packages/*-one'
+            # BLOCKERA_PHP_UNIT_MIN_TESTS: '1'
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+
+            - uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-php
+              with:
+                  php-version: ${{ matrix.php }}
+
+            - run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/php-unit-tests/run.sh
