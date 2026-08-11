@@ -60,7 +60,8 @@ runs:
           run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/plugin-check/prepare-build.sh"
 
         - name: Test With WordPress Plugin Check (PCP)
-          uses: wordpress/plugin-check-action@v1.1.8
+          # v1.1.8 shipped a broken dist (webpackMissingModule for @actions/core).
+          uses: wordpress/plugin-check-action@v1.1.9
           with:
               repo-token: ${{ inputs.repo-token }}
               build-dir: ${{ inputs.build-dir }}
