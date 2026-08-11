@@ -30,19 +30,16 @@ mkdir -p "${BUILD_DIR}"
 unzip -q "${ZIP_FILE}" -d "${BUILD_DIR}"
 rm -f "${ZIP_FILE}"
 
-if [[ "${PRODUCT_STYLE}" == "pro" ]]; then
-	echo "build-zip-tests/prepare: pro style — consumer should supply a custom BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD" >&2
-	if [[ -n "${BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD:-}" ]]; then
-		eval "${BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD}"
-		exit 0
-	fi
-	echo "build-zip-tests/prepare: set BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD for pro" >&2
-	exit 1
-fi
-
 if [[ -n "${BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD:-}" ]]; then
 	echo "build-zip-tests/prepare: ${BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD}"
 	eval "${BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD}"
+	exit 0
+fi
+
+if [[ "${PRODUCT_STYLE}" == "pro" ]]; then
+	SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	echo "build-zip-tests/prepare: pro style → prepare-pro.sh"
+	bash "${SCRIPT_DIR}/prepare-pro.sh"
 	exit 0
 fi
 

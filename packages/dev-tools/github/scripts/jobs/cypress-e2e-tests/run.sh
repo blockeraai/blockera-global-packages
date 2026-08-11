@@ -12,9 +12,12 @@
 #   BLOCKERA_E2E_BUILD_CMD             default: npm run build
 #   BLOCKERA_E2E_TEST_CMD              default: npm run test:e2e
 #   BLOCKERA_E2E_STOP_CMD              default: npm run env:stop
-#   BLOCKERA_E2E_PRODUCT_STYLE         plugin|theme (default: plugin)
+#   BLOCKERA_E2E_PRODUCT_STYLE         plugin|theme|pro (default: plugin)
+#   BLOCKERA_E2E_PACKAGE_GLOB          optional Cypress glob prefix; wins over product style
+#   BLOCKERA_E2E_PREPARE_CMD           optional; replaces default .wp-env.json + .env setup
+#   BLOCKERA_E2E_PRE_TEST_CMD          optional; runs after build, before category specs
 #   BLOCKERA_E2E_PR_ENV_FILE           default: .pr-cypress.env.json
-#   BLOCKERA_E2E_GENERAL_CATEGORY      default: general-1
+#   BLOCKERA_E2E_GENERAL_CATEGORY      default: general-1 (Pro: general)
 set -euo pipefail
 
 CATEGORY="${BLOCKERA_E2E_CATEGORY:-}"
@@ -34,6 +37,9 @@ STOP_CMD="${BLOCKERA_E2E_STOP_CMD:-npm run env:stop}"
 PRODUCT_STYLE="${BLOCKERA_E2E_PRODUCT_STYLE:-plugin}"
 PR_ENV_FILE="${BLOCKERA_E2E_PR_ENV_FILE:-.pr-cypress.env.json}"
 GENERAL_CATEGORY="${BLOCKERA_E2E_GENERAL_CATEGORY:-general-1}"
+PACKAGE_GLOB="${BLOCKERA_E2E_PACKAGE_GLOB:-}"
+PREPARE_CMD="${BLOCKERA_E2E_PREPARE_CMD:-}"
+PRE_TEST_CMD="${BLOCKERA_E2E_PRE_TEST_CMD:-}"
 
 cleanup() {
 	echo "cypress-e2e/run: ${STOP_CMD}"
@@ -51,19 +57,24 @@ if [[ "${COMPOSER_INSTALL}" == "true" ]]; then
 	eval "${COMPOSER_CMD}"
 fi
 
-WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/base.json"
-if [[ -f "${WP_ENV_CONFIG_DIR}/${CATEGORY}.json" ]]; then
-	WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/${CATEGORY}.json"
-fi
-echo "cypress-e2e/run: using ${WP_ENV_CONFIG}"
-cp "${WP_ENV_CONFIG}" .wp-env.json
-cat .wp-env.json
+if [[ -n "${PREPARE_CMD}" ]]; then
+	echo "cypress-e2e/run: prepare via BLOCKERA_E2E_PREPARE_CMD"
+	eval "${PREPARE_CMD}"
+else
+	WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/base.json"
+	if [[ -f "${WP_ENV_CONFIG_DIR}/${CATEGORY}.json" ]]; then
+		WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/${CATEGORY}.json"
+	fi
+	echo "cypress-e2e/run: using ${WP_ENV_CONFIG}"
+	cp "${WP_ENV_CONFIG}" .wp-env.json
+	cat .wp-env.json
 
-{
-	echo "APP_MODE=production"
-	echo "DB=wp_tests"
-} >.env
-cat .env
+	{
+		echo "APP_MODE=production"
+		echo "DB=wp_tests"
+	} >.env
+	cat .env
+fi
 
 echo "cypress-e2e/run: ${WP_ENV_START_CMD}"
 eval "${WP_ENV_START_CMD}"
@@ -75,14 +86,23 @@ eval "${BUILD_CMD}"
 
 npx wp-env run cli -- wp eval 'if (!file_exists(WPMU_PLUGIN_DIR)) { wp_mkdir_p(WPMU_PLUGIN_DIR); }'
 
+if [[ -z "${PACKAGE_GLOB}" ]]; then
+	if [[ "${PRODUCT_STYLE}" == "theme" ]]; then
+		PACKAGE_GLOB='packages/**-one(-**|)/**'
+	elif [[ "${PRODUCT_STYLE}" == "pro" ]]; then
+		PACKAGE_GLOB='packages/**-pro(-**|)/**'
+	fi
+fi
+
 build_spec_pattern() {
 	local category="$1"
-	if [[ "${PRODUCT_STYLE}" == "theme" ]]; then
-		local package_glob='packages/**-one(-**|)/**'
+
+	# Theme / Pro (or any explicit package glob): Cypress brace/negation globs.
+	if [[ -n "${PACKAGE_GLOB}" ]]; then
 		if [[ "${category}" != "${GENERAL_CATEGORY}" ]]; then
-			echo "${package_glob}/*.${category}.e2e.cy.js"
+			echo "${PACKAGE_GLOB}/*.${category}.e2e.cy.js"
 		else
-			echo "${package_glob}/!(*.*.e2e).cy.js"
+			echo "${PACKAGE_GLOB}/!(*.*.e2e).cy.js"
 		fi
 		return
 	fi
@@ -125,6 +145,11 @@ if [[ -f "${PR_ENV_FILE}" ]]; then
 			break
 		fi
 	done
+fi
+
+if [[ -n "${PRE_TEST_CMD}" ]]; then
+	echo "cypress-e2e/run: pre-test via BLOCKERA_E2E_PRE_TEST_CMD"
+	eval "${PRE_TEST_CMD}"
 fi
 
 echo "cypress-e2e/run: spec=${spec_pattern}"

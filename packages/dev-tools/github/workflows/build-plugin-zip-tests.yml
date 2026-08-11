@@ -1,5 +1,5 @@
 # Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO.
-# Pro: skip-if-no-specs=true, zip/build-dir overrides, SPECS_PATH='*-pro*', PREPARE_CMD.
+# Pro: skip-if-no-specs=true, zip/build-dir overrides, SPECS_PATH='*-pro*', PRODUCT_STYLE=pro.
 name: Build Blockera Plugin Tests
 
 on:

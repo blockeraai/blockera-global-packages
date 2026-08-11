@@ -51,7 +51,7 @@ github/
     jobs/remove-pr-config-files/ # run.sh
     jobs/create-demo-attachments/ # build/publish/encode/comment/cleanup
     jobs/cypress-components-tests/ # run.sh
-    jobs/cypress-e2e-tests/      # detect-categories.sh | run.sh
+    jobs/cypress-e2e-tests/      # detect | run | prepare-pro.sh
     jobs/performance-benchmark/  # setup.sh | run-*.sh | stop.sh
     jobs/php-snapshots/          # compute-previous-wordpress-version.sh | run.sh
     jobs/php-unit-tests/         # run.sh
@@ -59,12 +59,14 @@ github/
     jobs/plugin-check/           # prepare-build.sh
     jobs/sync-global-packages-submodule/  # resolve | run-bump | commit | open-pr
     jobs/upload-release-to-plugin-repo/   # compute-release-branch.sh | publish-to-svn.sh
+    jobs/upload-release-to-blockeraai/    # publish.sh (Pro → Blockera AI)
     jobs/build-plugin-zip/                # version bump / notes / revert helpers
-    jobs/build-plugin-zip-tests/          # find-specs | prepare-build-env | run-e2e
+    jobs/build-plugin-zip-tests/          # find-specs | prepare-build-env | prepare-pro | run-e2e
     ensure-*.sh / bump-*.sh / retry-*.sh   # used in-place from toolkit
     actions/ensure-global-packages/         # source for consumer bootstrap action
     setup-wp-env.js
-    list-*-categories.js / list-visual-snapshot-batches.js
+    download-artifact.sh / create-wp-env-pro.js   # Pro free-plugin wp-env helpers
+    list-*-categories.js / list-*-categories-pro.js / list-visual-snapshot-batches.js
     sync-consumer-bootstrap.sh
   workflows/             # Blockera-base templates
 ```
@@ -143,6 +145,7 @@ run `*.build.e2e.cy.js` against wp-env.
 | `php-version` | matrix PHP |
 | `zip-file` / `build-dir` | `blockera.zip` / `./build/blockera` |
 | `skip-if-no-specs` | `false` (`true` for Pro-style empty suites) |
+| `BLOCKERA_BUILD_ZIP_TESTS_PRODUCT_STYLE` | `plugin` (`pro` → `prepare-pro.sh` + free Blockera via `create-wp-env-pro.js`) |
 | `BLOCKERA_BUILD_ZIP_TESTS_START_CMD` | `bash packages/global-packages/packages/dev-tools/github/scripts/retry-wp-env-start.sh` |
 
 ## Build plugin zip (release)
@@ -209,6 +212,20 @@ release zip asset to SVN trunk + tag (environment `wp.org plugin`).
 | `SVN_USERNAME` / `SVN_PASSWORD` | required secrets |
 | `PLUGIN_URL` / `VERSION` | from the GitHub release event |
 
+## Upload release to Blockera AI (Pro)
+
+Triggered on `release: published` (non-prerelease with assets). Reuses
+`upload-release-to-plugin-repo/compute-release-branch.sh`, then
+`upload-release-to-blockeraai/publish.sh` downloads the zip and POSTs multipart
+to the Blockera AI endpoint. See template `workflows/upload-release-to-blockeraai.yml`.
+
+| Env | Default (Pro) |
+| --- | --- |
+| `BLOCKERA_UPLOAD_BLOCKERAAI_ZIP` | `blockera-pro.zip` |
+| `BLOCKERA_UPLOAD_BLOCKERAAI_FILENAME_FIELD` | `./my-downloads/<zip>` |
+| `PLUGIN_URL` / `PLUGIN_VERSION` / `GH_TOKEN` | from the GitHub release event |
+| `RELEASE_ENDPOINT` / `BLOCKERAAI_PRODUCT_ID` / `RELEASE_*` / `BLOCKERABOT_API_KEY` | required secrets |
+
 ## Sync global-packages submodule
 
 Consumer bootstrap: `.github/actions/ensure-global-packages/` (synced via
@@ -273,8 +290,12 @@ Two-job flow: detect categories → matrix `run.sh` per category.
 | Env | Default (Blockera base) |
 | --- | --- |
 | `BLOCKERA_E2E_CATEGORY` | required on matrix job |
-| `BLOCKERA_E2E_PRODUCT_STYLE` | `plugin` (`theme` for blockera-one-style globs) |
-| `BLOCKERA_E2E_LIST_CATEGORIES_CMD` | `node packages/global-packages/packages/dev-tools/github/scripts/list-e2e-test-categories.js` |
+| `BLOCKERA_E2E_PRODUCT_STYLE` | `plugin` (`theme` / `pro` for package globs) |
+| `BLOCKERA_E2E_PACKAGE_GLOB` | empty (style defaults: theme `**-one`, pro `**-pro`) |
+| `BLOCKERA_E2E_GENERAL_CATEGORY` | `general-1` (Pro: `general`) |
+| `BLOCKERA_E2E_LIST_CATEGORIES_CMD` | `list-e2e-test-categories.js` (Pro: `list-e2e-test-categories-pro.js`) |
+| `BLOCKERA_E2E_PREPARE_CMD` | empty (default copies wp-env config + `.env`; Pro: `jobs/cypress-e2e-tests/prepare-pro.sh`) |
+| `BLOCKERA_E2E_PRE_TEST_CMD` | empty (Pro: license activation spec) |
 | `BLOCKERA_E2E_PR_ENV_FILE` | `.pr-cypress.env.json` |
 | `BLOCKERA_E2E_WP_ENV_START_CMD` | `bash packages/global-packages/packages/dev-tools/github/scripts/retry-wp-env-start.sh` |
 | `BLOCKERA_E2E_COMPOSER_INSTALL` | `true` |
@@ -391,6 +412,15 @@ Shares the same `BLOCKERA_PR_CONFIG_NAME` / `_EXCLUDE_NAMES` / `_ROOT` as the ch
 | `BLOCKERA_PR_CONFIG_GIT_EMAIL` | `blockeraai+githubbot@gmail.com` |
 | `BLOCKERA_PR_CONFIG_COMMIT_MSG` | `chore: remove PR config files` |
 | `BLOCKERA_PR_CONFIG_PUSH_BRANCH` | `master` |
+
+Pro (`.pr-env.json` only): same job script with overrides — see template
+`workflows/remove-pr-env-json.yml`:
+
+```yaml
+env:
+    BLOCKERA_PR_CONFIG_NAME: .pr-env.json
+    BLOCKERA_PR_CONFIG_COMMIT_MSG: 'chore: remove .pr-env.json redundant file'
+```
 
 ## Bundle size
 

@@ -1,5 +1,6 @@
 # Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO.
-# Theme consumers set BLOCKERA_E2E_PRODUCT_STYLE=theme on the test job.
+# Theme: BLOCKERA_E2E_PRODUCT_STYLE=theme
+# Pro: PRODUCT_STYLE=pro, GENERAL_CATEGORY=general, LIST/PREPARE/PRE_TEST overrides.
 name: Cypress E2E Tests
 
 on:
@@ -45,6 +46,12 @@ jobs:
             BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
             BLOCKERA_E2E_CATEGORY: ${{ matrix.category }}
             # BLOCKERA_E2E_PRODUCT_STYLE: theme
+            # Pro overrides (example):
+            # BLOCKERA_E2E_PRODUCT_STYLE: pro
+            # BLOCKERA_E2E_GENERAL_CATEGORY: general
+            # BLOCKERA_E2E_LIST_CATEGORIES_CMD: node packages/global-packages/packages/dev-tools/github/scripts/list-e2e-test-categories-pro.js
+            # BLOCKERA_E2E_PREPARE_CMD: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/cypress-e2e-tests/prepare-pro.sh
+            # BLOCKERA_E2E_PRE_TEST_CMD: npm run test:e2e -- --spec "packages/.../license.e2e.cy.js"
         steps:
             - uses: actions/checkout@v5
               with:
