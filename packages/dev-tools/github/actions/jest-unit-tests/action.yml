@@ -1,53 +1,40 @@
 name: 'Blockera Jest unit tests'
-description: 'Build (optional) and run Jest using defaults + consumer .github/blockera-ci.json'
+description: 'Optional Composer/build, then run Jest. Override via env on the workflow step.'
 inputs:
-    config-path:
-        description: 'Path to consumer blockera-ci.json'
+    command:
+        description: 'Jest command'
         required: false
-        default: '.github/blockera-ci.json'
+        default: 'npm run test:js -- --ci --maxWorkers=2 --cacheDirectory="$HOME/.jest-cache"'
+    build:
+        description: 'Run build before Jest (true|false)'
+        required: false
+        default: 'true'
+    build-command:
+        description: 'Build command when build is true'
+        required: false
+        default: 'npm run build'
+    composer-install:
+        description: 'Run Composer before build (true|false)'
+        required: false
+        default: 'false'
+    composer-command:
+        description: 'Composer command when composer-install is true'
+        required: false
+        default: 'composer install --no-dev -o --apcu-autoloader -a'
 
 runs:
     using: 'composite'
     steps:
-        - name: Resolve Jest settings from merged CI config
-          id: cfg
-          shell: bash
-          env:
-              CONFIG_PATH: ${{ inputs.config-path }}
-          run: |
-              set -euo pipefail
-              LOADER="${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/load-ci-config.js"
-
-              COMMAND="$(node "${LOADER}" "${CONFIG_PATH}" --get test.jest.command)"
-              BUILD_COMMAND="$(node "${LOADER}" "${CONFIG_PATH}" --get test.jest.buildCommand)"
-              RUN_BUILD="$(node "${LOADER}" "${CONFIG_PATH}" --get test.jest.build)"
-              RUN_COMPOSER="$(node "${LOADER}" "${CONFIG_PATH}" --get test.jest.composerInstall)"
-              COMPOSER_COMMAND="$(node "${LOADER}" "${CONFIG_PATH}" --get test.jest.composerCommand)"
-
-              {
-                echo "command<<EOF"
-                printf '%s\n' "${COMMAND}"
-                echo "EOF"
-                echo "build_command<<EOF"
-                printf '%s\n' "${BUILD_COMMAND}"
-                echo "EOF"
-                echo "run_build=${RUN_BUILD}"
-                echo "run_composer=${RUN_COMPOSER}"
-                echo "composer_command<<EOF"
-                printf '%s\n' "${COMPOSER_COMMAND}"
-                echo "EOF"
-              } >> "$GITHUB_OUTPUT"
-
         - name: Install Composer packages
-          if: ${{ steps.cfg.outputs.run_composer == 'true' }}
+          if: ${{ inputs.composer-install == 'true' }}
           shell: bash
-          run: ${{ steps.cfg.outputs.composer_command }}
+          run: ${{ inputs.composer-command }}
 
         - name: Build
-          if: ${{ steps.cfg.outputs.run_build == 'true' }}
+          if: ${{ inputs.build == 'true' }}
           shell: bash
-          run: ${{ steps.cfg.outputs.build_command }}
+          run: ${{ inputs.build-command }}
 
         - name: Run Jest
           shell: bash
-          run: ${{ steps.cfg.outputs.command }}
+          run: ${{ inputs.command }}
