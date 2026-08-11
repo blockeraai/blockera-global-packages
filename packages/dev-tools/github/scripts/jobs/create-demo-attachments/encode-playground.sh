@@ -6,7 +6,7 @@
 # Optional (Blockera base defaults):
 #   BLOCKERA_DEMO_PLAYGROUND_JSON      default: .github-playground.json
 #   BLOCKERA_DEMO_PR_PLAYGROUND_JSON   default: .pr-github-playground.json
-#   BLOCKERA_DEMO_PLUGIN_STEP_INDEX    default: 2  (pluginData.url step)
+#   BLOCKERA_DEMO_PLUGIN_STEP_INDEX    default: 2  (installPlugin/installTheme zip URL step)
 #   BLOCKERA_DEMO_BLOGNAME_STEP_INDEX  default: 3
 #   BLOCKERA_DEMO_META_TITLE_DEFAULT   default: Blockera Demo
 set -euo pipefail
@@ -40,6 +40,7 @@ else
 	FINAL_JSON="${JSON_STRING}"
 fi
 
+# Inject zip URL into installPlugin.pluginData or installTheme.themeData (never both).
 ENCODED_JSON="$(
 	echo "${FINAL_JSON}" | jq \
 		--arg new_url "${ZIP_URL}" \
@@ -49,7 +50,19 @@ ENCODED_JSON="$(
 		--argjson plugin_step "${PLUGIN_STEP}" \
 		--argjson blog_step "${BLOGNAME_STEP}" \
 		'
-			.steps[$plugin_step].pluginData.url = $new_url
+			.steps[$plugin_step] |= (
+				if has("themeData") then
+					.themeData.url = $new_url
+				elif has("pluginData") then
+					.pluginData.url = $new_url
+				elif .step == "installTheme" then
+					.themeData = {resource: "url", url: $new_url}
+				elif .step == "installPlugin" then
+					.pluginData = {resource: "url", url: $new_url}
+				else
+					error("step \($plugin_step) is not installPlugin/installTheme and has neither pluginData nor themeData")
+				end
+			)
 			| .steps[$blog_step].options.blogname += (" (PR " + $pr_num + ")")
 			| .meta.title = ((.meta.title // $meta_default) + " [" + $run_id + "]")
 			| .steps |= map(
