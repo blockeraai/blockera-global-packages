@@ -1,0 +1,108 @@
+name: 'Blockera performance benchmark'
+description: >
+    Setup wp-env and run Server-Timing or Block Editor performance suites.
+    Defaults match the Blockera plugin base.
+inputs:
+    suite:
+        description: 'server-timing | editor'
+        required: true
+    baseline:
+        description: 'core | master (editor suite)'
+        required: false
+        default: 'core'
+    environment:
+        description: 'Environment label for artifact names'
+        required: false
+        default: 'default'
+    repo-token:
+        description: 'PAT for sticky PR comments'
+        required: true
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Setup performance environment
+          shell: bash
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/performance-benchmark/setup.sh"
+
+        - name: Run Server-Timing suite
+          id: server_timing
+          if: ${{ inputs.suite == 'server-timing' }}
+          continue-on-error: true
+          shell: bash
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/performance-benchmark/run-server-timing.sh"
+
+        - name: Comment Server-Timing report on PR
+          if: ${{ always() && inputs.suite == 'server-timing' && github.event_name == 'pull_request' && steps.server_timing.outputs.has_report == 'true' }}
+          uses: marocchino/sticky-pull-request-comment@v2
+          with:
+              GITHUB_TOKEN: ${{ inputs.repo-token }}
+              header: blockera-perf-benchmark
+              path: .github/performance/results/report.md
+
+        - name: Fail Server-Timing job when thresholds exceeded
+          if: ${{ inputs.suite == 'server-timing' && steps.server_timing.outcome == 'failure' }}
+          shell: bash
+          run: |
+              echo "Server-Timing threshold gate failed. See the PR comment and artifacts."
+              exit 1
+
+        - name: Upload Server-Timing artifacts
+          if: ${{ always() && inputs.suite == 'server-timing' }}
+          uses: actions/upload-artifact@v4
+          with:
+              name: performance-benchmark-server-timing
+              path: |
+                  .github/performance/results/report.md
+                  .github/performance/results/compare.json
+                  .github/performance/results/resolved-scenarios.json
+                  .github/performance/results/content-state.json
+                  artifacts/blockera-performance-results.json
+                  artifacts/core-performance-results.json
+                  artifacts/performance-results.md
+              if-no-files-found: ignore
+              retention-days: 14
+
+        - name: Run Block Editor suite
+          id: editor
+          if: ${{ inputs.suite == 'editor' }}
+          continue-on-error: true
+          shell: bash
+          env:
+              BLOCKERA_PERF_BASELINE: ${{ inputs.baseline }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/performance-benchmark/run-editor.sh"
+
+        - name: Comment editor report on PR
+          if: ${{ always() && inputs.suite == 'editor' && github.event_name == 'pull_request' && steps.editor.outputs.has_report == 'true' }}
+          uses: marocchino/sticky-pull-request-comment@v2
+          with:
+              GITHUB_TOKEN: ${{ inputs.repo-token }}
+              header: blockera-editor-perf-benchmark-${{ inputs.baseline }}
+              path: .github/performance/results/editor-report-${{ inputs.baseline }}.md
+
+        - name: Fail editor job when thresholds exceeded
+          if: ${{ inputs.suite == 'editor' && steps.editor.outcome == 'failure' }}
+          shell: bash
+          run: |
+              echo "Block Editor threshold gate failed (baseline=${{ inputs.baseline }}). See the PR comment and artifacts."
+              exit 1
+
+        - name: Upload editor artifacts
+          if: ${{ always() && inputs.suite == 'editor' }}
+          uses: actions/upload-artifact@v4
+          with:
+              name: performance-benchmark-editor-${{ inputs.baseline }}-${{ inputs.environment }}
+              path: |
+                  .github/performance/results/editor-report-${{ inputs.baseline }}.md
+                  .github/performance/results/editor-compare-${{ inputs.baseline }}.json
+                  artifacts/blockera-editor-performance-results.json
+                  artifacts/core-editor-performance-results.json
+                  artifacts/master-editor-performance-results.json
+                  artifacts/editor-performance-results.md
+              if-no-files-found: ignore
+              retention-days: 14
+
+        - name: Stop WordPress Environment
+          if: ${{ always() }}
+          shell: bash
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/performance-benchmark/stop.sh"
