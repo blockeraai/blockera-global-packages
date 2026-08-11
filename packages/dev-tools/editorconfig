@@ -1,6 +1,6 @@
 # Shared Blockera EditorConfig (source of truth in @blockera/dev-tools).
-# Consumers: symlink root .editorconfig → packages/global-packages/packages/dev-tools/editorconfig
-# (EditorConfig has no extends/include; symlink is the thin-root pattern.)
+# Consumers keep a real root .editorconfig copy of this file (synced with global-packages).
+# EditorConfig has no extends/include.
 root = true
 
 [*]
