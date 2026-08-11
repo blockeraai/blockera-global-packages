@@ -13,6 +13,12 @@ const {
  * @param {(versions: Object) => Object} options.getExternals Build webpack externals from version map.
  * @param {string[]} [options.exportDefaultPackages]
  * @param {string} [options.devtoolNamespace]
+ * @param {(packageName: string) => string} [options.mapPackageName]
+ *        Remap dependency slug after stripping `@blockera/` (e.g. Pro: guard → features-manager).
+ * @param {(packageName: string) => string} [options.resolveCanonicalPackageName]
+ *        Map public/entry slug back to the filesystem package slug for resolvePackageDir.
+ * @param {(packageName: string) => boolean} [options.shouldIncludeEntry]
+ *        Return false to omit a package from webpack entries (still kept in version map).
  * @return {(env: Object, argv: Object) => Object} Webpack config factory.
  */
 function createRootWebpackConfig(options) {
@@ -23,9 +29,13 @@ function createRootWebpackConfig(options) {
 		getExternals,
 		exportDefaultPackages = [],
 		devtoolNamespace = 'blockera',
+		mapPackageName = (packageName) => packageName,
+		resolveCanonicalPackageName = (packageName) => packageName,
+		shouldIncludeEntry = () => true,
 	} = options;
 
 	return (env = {}, argv) => {
+		// Match Pro's historic `if (!argv)` Cypress branch, plus env.cypress for other consumers.
 		if (!argv || env?.cypress) {
 			return require(
 				path.resolve(
@@ -38,11 +48,13 @@ function createRootWebpackConfig(options) {
 		const BLOCKERA_NAMESPACE = '@blockera/';
 		const blockeraPackages = Object.keys(dependencies)
 			.filter((packageName) => packageName.startsWith(BLOCKERA_NAMESPACE))
-			.map((packageName) => packageName.replace(BLOCKERA_NAMESPACE, ''));
+			.map((packageName) => packageName.replace(BLOCKERA_NAMESPACE, ''))
+			.map(mapPackageName);
 
 		const blockeraPackagesVersion = Object.fromEntries(
 			blockeraPackages.map((packageName) => {
-				const packageDir = resolvePackageDir(packageName);
+				const canonicalName = resolveCanonicalPackageName(packageName);
+				const packageDir = resolvePackageDir(canonicalName);
 				const { version } = require(
 					path.resolve(process.cwd(), packageDir, 'package.json')
 				);
@@ -56,12 +68,17 @@ function createRootWebpackConfig(options) {
 				return memo;
 			}
 
+			if (!shouldIncludeEntry(packageName)) {
+				return memo;
+			}
+
 			if (!blockeraPackagesVersion[packageName]) {
 				return memo;
 			}
 
 			const version = blockeraPackagesVersion[packageName];
-			const packageDir = resolvePackageDir(packageName);
+			const canonicalName = resolveCanonicalPackageName(packageName);
+			const packageDir = resolvePackageDir(canonicalName);
 
 			let name = packageName.startsWith('blockera')
 				? camelCaseDash(packageName + '_' + version)
