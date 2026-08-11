@@ -1,0 +1,58 @@
+# Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO.
+# Theme consumers set BLOCKERA_E2E_PRODUCT_STYLE=theme on the test job.
+name: Cypress E2E Tests
+
+on:
+    pull_request:
+        types: [opened, synchronize, ready_for_review]
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+    cancel-in-progress: true
+
+jobs:
+    detect_categories:
+        name: Detecting E2E Test Categories
+        runs-on: ubuntu-latest
+        outputs:
+            categories: ${{ steps.detect.outputs.categories }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+
+            - id: detect
+              run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/cypress-e2e-tests/detect-categories.sh
+
+    cypress_e2e_tests:
+        name: Test
+        needs: detect_categories
+        runs-on: ubuntu-latest
+        if: ${{ github.repository == 'OWNER/REPO' || github.event_name == 'pull_request' }}
+        strategy:
+            fail-fast: false
+            matrix:
+                category: ${{ fromJson(needs.detect_categories.outputs.categories) }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+            BLOCKERA_E2E_CATEGORY: ${{ matrix.category }}
+            # BLOCKERA_E2E_PRODUCT_STYLE: theme
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+
+            - run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/cypress-e2e-tests/run.sh
