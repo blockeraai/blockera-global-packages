@@ -9,7 +9,9 @@
 #   BLOCKERA_BUILD_ZIP_TESTS_STOP_CMD    default: npm run env:stop
 set -euo pipefail
 
-BUILD_DIR="${BLOCKERA_BUILD_ZIP_TESTS_BUILD_DIR:-./build/blockera}"
+BUILD_DIR_RAW="${BLOCKERA_BUILD_ZIP_TESTS_BUILD_DIR:-./build/blockera}"
+# Resolve absolute path before any cd — cleanup trap must not use a cwd-relative path.
+BUILD_DIR="$(cd "$(dirname "${BUILD_DIR_RAW}")" && pwd)/$(basename "${BUILD_DIR_RAW}")"
 INSTALL_CMD="${BLOCKERA_BUILD_ZIP_TESTS_INSTALL_CMD:-npx cypress install}"
 START_CMD="${BLOCKERA_BUILD_ZIP_TESTS_START_CMD:-bash packages/global-packages/packages/dev-tools/github/scripts/retry-wp-env-start.sh}"
 TEST_CMD="${BLOCKERA_BUILD_ZIP_TESTS_TEST_CMD:-npm run test:e2e}"
@@ -21,6 +23,9 @@ if [[ ! -d "${BUILD_DIR}" ]]; then
 fi
 
 cleanup() {
+	if [[ ! -d "${BUILD_DIR}" ]]; then
+		return 0
+	fi
 	echo "build-zip-tests/run: ${STOP_CMD}"
 	(cd "${BUILD_DIR}" && eval "${STOP_CMD}") || true
 }

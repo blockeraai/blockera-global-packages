@@ -1,5 +1,6 @@
 const postcssScss = require('postcss-scss');
 const wpConfig = require('@wordpress/stylelint-config');
+const ignoreFiles = require('./ignore');
 
 module.exports = {
 	...wpConfig,
@@ -23,17 +24,8 @@ module.exports = {
 			},
 		],
 	},
-	ignoreFiles: [
-		...(wpConfig.ignoreFiles || []),
-		'coverage/**/*.css',
-		'packages/dev-cypress/**/*.css',
-		'packages/dev-cypress/**/*.scss',
-		'packages/global-packages/packages/dev-cypress/**/*.css',
-		'packages/global-packages/packages/dev-cypress/**/*.scss',
-		'packages/dev-storybook/**/*.css',
-		'packages/dev-storybook/**/*.scss',
-		'packages/blockera-admin/js/style.scss',
-		'packages/global-packages/packages/blockera-admin/js/style.scss',
-	],
+	// Setting ignoreFiles replaces Stylelint's default node_modules ignore —
+	// node_modules/** is included in ./ignore.js.
+	ignoreFiles: [...(wpConfig.ignoreFiles || []), ...ignoreFiles],
 	customSyntax: postcssScss, // MUST be last to prevent override
 };

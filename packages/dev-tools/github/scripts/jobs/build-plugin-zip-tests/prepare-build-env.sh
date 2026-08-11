@@ -83,6 +83,13 @@ cp ./babel.config.js "${BUILD_DIR}/"
 mkdir -p "${BUILD_DIR}/packages/global-packages/packages"
 cp -r ./packages/global-packages/packages/dev-cypress "${BUILD_DIR}/packages/global-packages/packages/"
 
+# Thin root cypress.config.js / babel.config.js require shared factories under dev-tools.
+mkdir -p "${BUILD_DIR}/packages/global-packages/packages/dev-tools/js"
+cp -r ./packages/global-packages/packages/dev-tools/js/cypress \
+	"${BUILD_DIR}/packages/global-packages/packages/dev-tools/js/"
+cp -r ./packages/global-packages/packages/dev-tools/js/babel \
+	"${BUILD_DIR}/packages/global-packages/packages/dev-tools/js/"
+
 # Cypress webpack aliases resolve to packages/.../testIds; the zip extract does
 # not include source packages, so mirror the minimal files.
 mkdir -p "${BUILD_DIR}/packages/global-packages/packages/editor/js/tabs/constants"

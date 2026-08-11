@@ -59,6 +59,17 @@ cp ./babel.config.js "${BUILD_DIR}/"
 mkdir -p "${BUILD_DIR}/packages/global-packages/packages"
 cp -r ./packages/global-packages/packages/dev-cypress "${BUILD_DIR}/packages/global-packages/packages/"
 
+# Thin root cypress/babel configs require shared factories under dev-tools.
+mkdir -p "${BUILD_DIR}/packages/global-packages/packages/dev-tools/js"
+if [[ -d ./packages/global-packages/packages/dev-tools/js/cypress ]]; then
+	cp -r ./packages/global-packages/packages/dev-tools/js/cypress \
+		"${BUILD_DIR}/packages/global-packages/packages/dev-tools/js/"
+fi
+if [[ -d ./packages/global-packages/packages/dev-tools/js/babel ]]; then
+	cp -r ./packages/global-packages/packages/dev-tools/js/babel \
+		"${BUILD_DIR}/packages/global-packages/packages/dev-tools/js/"
+fi
+
 mkdir -p "${BUILD_DIR}/packages/global-packages/packages/editor/js/tabs/constants"
 mkdir -p "${BUILD_DIR}/packages/global-packages/packages/editor/js/preview-mode/constants"
 cp ./packages/global-packages/packages/editor/js/tabs/constants/testIds.ts \
