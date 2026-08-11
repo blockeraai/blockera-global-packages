@@ -1,0 +1,70 @@
+name: 'Blockera bundle size'
+description: >
+    Path-filter (Blockera-base defaults), setup Node, prepare artifacts, compressed-size
+    report, and title the PR comment. Override paths/pattern via inputs or BLOCKERA_BUNDLE_SIZE_* env.
+inputs:
+    repo-token:
+        description: 'GitHub token for compressed-size-action and PR comment updates'
+        required: true
+    pattern:
+        description: 'Glob pattern for compressed-size-action (Blockera base default)'
+        required: false
+        default: '{dist/**/*.min.js,dist/**/*.min.css,blockera.zip,packages/**/*.php,!**/test/**,!**/tests/**,packages/php/**/*.json,packages/js/**/*.json,packages/**/*.svg}'
+    comment-title:
+        description: 'H1 prepended to the size report comment'
+        required: false
+        default: '# 📦 Bundle Size Report'
+    force:
+        description: 'Skip path filter and always run (true|false)'
+        required: false
+        default: 'false'
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Path filter (toolkit defaults)
+          id: gate
+          shell: bash
+          env:
+              BLOCKERA_BUNDLE_SIZE_FORCE: ${{ inputs.force }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/bundle-size/should-run.sh"
+
+        - name: Setup Node.js and install dependencies
+          if: ${{ steps.gate.outputs.run == 'true' }}
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+
+        - name: Resolve bundle-size config
+          if: ${{ steps.gate.outputs.run == 'true' }}
+          id: cfg
+          shell: bash
+          env:
+              INPUT_PATTERN: ${{ inputs.pattern }}
+              INPUT_TITLE: ${{ inputs.comment-title }}
+          run: |
+              set -euo pipefail
+              PATTERN="${BLOCKERA_BUNDLE_SIZE_PATTERN:-${INPUT_PATTERN}}"
+              TITLE="${BLOCKERA_BUNDLE_SIZE_COMMENT_TITLE:-${INPUT_TITLE}}"
+              {
+                echo "pattern=${PATTERN}"
+                echo "title=${TITLE}"
+              } >> "$GITHUB_OUTPUT"
+
+        - name: Prepare Composer + product zip
+          if: ${{ steps.gate.outputs.run == 'true' }}
+          shell: bash
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/bundle-size/prepare.sh"
+
+        - name: Compressed size report
+          if: ${{ steps.gate.outputs.run == 'true' }}
+          uses: preactjs/compressed-size-action@v2
+          with:
+              repo-token: ${{ inputs.repo-token }}
+              pattern: ${{ steps.cfg.outputs.pattern }}
+
+        - name: Title size comment
+          if: ${{ steps.gate.outputs.run == 'true' }}
+          shell: bash
+          env:
+              GITHUB_TOKEN: ${{ inputs.repo-token }}
+              BLOCKERA_BUNDLE_SIZE_COMMENT_TITLE: ${{ steps.cfg.outputs.title }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/bundle-size/comment-title.sh"
