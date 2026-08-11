@@ -41,11 +41,20 @@ fi
 
 PATHS_FILE="${BLOCKERA_BUNDLE_SIZE_PATHS_FILE:-${DEFAULT_PATHS_FILE}}"
 PATHS_BLOB="${BLOCKERA_BUNDLE_SIZE_PATHS:-}"
+CLEANUP_FILES=()
+
+cleanup() {
+	local f
+	for f in "${CLEANUP_FILES[@]+"${CLEANUP_FILES[@]}"}"; do
+		rm -f "${f}"
+	done
+}
+trap cleanup EXIT
 
 if [[ -n "${PATHS_BLOB}" ]]; then
 	PATTERNS_FILE="$(mktemp)"
+	CLEANUP_FILES+=("${PATTERNS_FILE}")
 	printf '%s\n' "${PATHS_BLOB}" >"${PATTERNS_FILE}"
-	trap 'rm -f "${PATTERNS_FILE}"' EXIT
 elif [[ -f "${PATHS_FILE}" ]]; then
 	PATTERNS_FILE="${PATHS_FILE}"
 else
@@ -72,15 +81,23 @@ fi
 # Ensure both commits exist locally when checkout was shallow.
 git fetch --no-tags --prune --depth=1 origin "${BASE_SHA}" "${HEAD_SHA}" 2>/dev/null || true
 
-CHANGED="$(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}" || true)"
-if [[ -z "${CHANGED}" ]]; then
+# Write changed paths to a file — putting a large PR file list in the
+# environment can exceed Linux ARG_MAX ("Argument list too long") when
+# spawning python3.
+CHANGED_LIST="$(mktemp)"
+CLEANUP_FILES+=("${CHANGED_LIST}")
+if ! git diff --name-only "${BASE_SHA}" "${HEAD_SHA}" >"${CHANGED_LIST}" 2>/dev/null; then
+	: >"${CHANGED_LIST}"
+fi
+
+if [[ ! -s "${CHANGED_LIST}" ]]; then
 	echo "bundle-size/should-run: no changed files"
 	set_run false
 	exit 0
 fi
 
 MATCHED="$(
-	PATHS_FILE="${PATTERNS_FILE}" CHANGED_FILES="${CHANGED}" python3 - <<'PY'
+	PATHS_FILE="${PATTERNS_FILE}" CHANGED_LIST="${CHANGED_LIST}" python3 - <<'PY'
 import fnmatch
 import os
 import sys
@@ -93,7 +110,9 @@ with open(os.environ["PATHS_FILE"], encoding="utf-8") as fh:
             continue
         patterns.append(line)
 
-files = [f for f in os.environ.get("CHANGED_FILES", "").splitlines() if f]
+with open(os.environ["CHANGED_LIST"], encoding="utf-8") as fh:
+    files = [line.strip() for line in fh if line.strip()]
+
 if not patterns or not files:
     sys.exit(0)
 
