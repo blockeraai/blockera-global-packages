@@ -145,7 +145,7 @@ run `*.build.e2e.cy.js` against wp-env.
 | `php-version` | matrix PHP |
 | `zip-file` / `build-dir` | `blockera.zip` / `./build/blockera` |
 | `skip-if-no-specs` | `false` (`true` for Pro-style empty suites) |
-| `BLOCKERA_BUILD_ZIP_TESTS_PRODUCT_STYLE` | `plugin` (`pro` → `prepare-pro.sh` + free Blockera via `create-wp-env-pro.js`) |
+| `BLOCKERA_BUILD_ZIP_TESTS_PRODUCT_STYLE` | `plugin` (`pro` → `prepare-pro.sh` + free Blockera via `create-wp-env-pro.js`; `theme` → `prepare-theme.sh` for blockera-one) |
 | `BLOCKERA_BUILD_ZIP_TESTS_START_CMD` | `bash packages/global-packages/packages/dev-tools/github/scripts/retry-wp-env-start.sh` |
 
 ## Build plugin zip (release)
