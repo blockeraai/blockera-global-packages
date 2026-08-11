@@ -17,6 +17,7 @@ parameters:
 			- %currentWorkingDirectory%/node_modules
 			- %currentWorkingDirectory%/dist
 			- %currentWorkingDirectory%/tests
-			- %currentWorkingDirectory%/source-codes
+			# Do not exclude consumer-specific reference trees here (source-codes vs
+			# source-code-*). Analyse paths are already limited to packages/.
 	bootstrapFiles:
 		- %currentWorkingDirectory%/vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
