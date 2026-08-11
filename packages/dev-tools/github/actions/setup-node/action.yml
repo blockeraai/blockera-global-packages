@@ -1,7 +1,8 @@
 name: 'Setup Node.js and install npm dependencies'
 description: >
-    Shared Node setup for Blockera consumers. Expects packages/global-packages to
-    already be initialized (consumer bootstrap / thin .github/setup-node).
+    Shared Node setup for Blockera consumers. Call after checkout +
+    ensure-global-packages-sparse.sh so this action path exists under
+    packages/global-packages/packages/dev-tools/github/actions/setup-node.
 inputs:
     node-version:
         description: 'Optional Node.js version. Defaults to .nvmrc via setup-node.'
