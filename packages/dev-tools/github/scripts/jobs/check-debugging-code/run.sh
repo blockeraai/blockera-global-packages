@@ -7,6 +7,7 @@
 #   BLOCKERA_DEBUG_CHECK_JS_PATTERN
 #   BLOCKERA_DEBUG_CHECK_TEST_PATTERN
 #   BLOCKERA_DEBUG_CHECK_SKIP_PATHS      newline-delimited substrings
+#                                       default: test/ .github/ bin/ dev-tools/github/ dev-phpunit/
 #   BLOCKERA_DEBUG_CHECK_SKIP_PHP|JS|TESTS  true|false (default: false)
 set -euo pipefail
 
@@ -33,7 +34,8 @@ fi
 
 SKIP_PATHS_BLOB="${BLOCKERA_DEBUG_CHECK_SKIP_PATHS:-}"
 if [[ -z "${SKIP_PATHS_BLOB}" ]]; then
-	SKIP_PATHS_BLOB=$'test/\n.github/\nbin/'
+	# Tooling CLIs intentionally use exit()/console.* — skip those trees.
+	SKIP_PATHS_BLOB=$'test/\n.github/\nbin/\ndev-tools/github/\ndev-phpunit/'
 fi
 
 ERROR_FLAG="$(mktemp)"
@@ -122,7 +124,19 @@ scan_files() {
 			fi
 			report_hit "${kind}" "${file}" "${line_number}" "${line}"
 		done < <(grep -n -E "${pattern}" "${file}" || true)
-	done < <(find . -type f "$@" -not -path '*/.patch/*')
+	done < <(
+		# Prune dependency / reference / build / local scratch trees.
+		find . \( \
+			-name node_modules -o \
+			-name vendor -o \
+			-name source-codes -o \
+			-name dist -o \
+			-name coverage -o \
+			-name Scratch -o \
+			-name .patch -o \
+			-name .git \
+		\) -prune -o -type f "$@" -print
+	)
 }
 
 echo "Checking PHP files for debugging code..."
@@ -146,7 +160,7 @@ echo "============================================"
 if [[ "${SKIP_TESTS}" != "true" ]]; then
 	# Test files live under test/ paths; only skip tooling dirs by default.
 	if [[ -z "${BLOCKERA_DEBUG_CHECK_SKIP_PATHS:-}" ]]; then
-		SKIP_PATHS_BLOB=$'.github/\nbin/'
+		SKIP_PATHS_BLOB=$'.github/\nbin/\ndev-tools/github/\ndev-phpunit/'
 	fi
 	scan_files "test skip/only" js "${TEST_PATTERN}" \( -name '*.test.*' -o -name '*.spec.*' -o -name '*.cy.js' \)
 else

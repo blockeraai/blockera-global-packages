@@ -320,8 +320,10 @@ steps:
 | `BLOCKERA_DEBUG_CHECK_PHP_PATTERN` | `die(`, `var_dump(`, `print_r(`, `error_log(`, `wp_die(`, `exit(` |
 | `BLOCKERA_DEBUG_CHECK_JS_PATTERN` | `console.*`, `debugger`, `alert(` |
 | `BLOCKERA_DEBUG_CHECK_TEST_PATTERN` | `.skip(`, `.only(` |
-| `BLOCKERA_DEBUG_CHECK_SKIP_PATHS` | `test/`, `.github/`, `bin/` (tests scan: `.github/`, `bin/`) |
+| `BLOCKERA_DEBUG_CHECK_SKIP_PATHS` | `test/`, `.github/`, `bin/`, `dev-tools/github/`, `dev-phpunit/` (tests scan: same minus `test/`) |
 | `BLOCKERA_DEBUG_CHECK_SKIP_PHP` / `_JS` / `_TESTS` | `false` |
+
+`find` also prunes `node_modules/`, `vendor/`, `source-codes/`, `dist/`, `coverage/`, `Scratch/`, `.patch/`, and `.git/`.
 
 ## Create demo attachments
 
