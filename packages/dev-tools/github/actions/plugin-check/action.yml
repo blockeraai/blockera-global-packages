@@ -60,7 +60,7 @@ runs:
           run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/plugin-check/prepare-build.sh"
 
         - name: Test With WordPress Plugin Check (PCP)
-          uses: wordpress/plugin-check-action@v1
+          uses: wordpress/plugin-check-action@v1.1.8
           with:
               repo-token: ${{ inputs.repo-token }}
               build-dir: ${{ inputs.build-dir }}
