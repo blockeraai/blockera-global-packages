@@ -1,0 +1,204 @@
+<?xml version="1.0"?>
+<ruleset name="Blockera Shared PHPCS">
+    <description>
+		Shared WordPress Coding Standards rules for Blockera plugins and themes.
+		Consumers keep a thin root phpcs.xml that refs this file and sets text_domain + scan roots.
+	</description>
+
+    <!-- Check for cross-version support for PHP 7.4 and higher. -->
+    <config name="testVersion" value="7.4-"/>
+    <rule ref="PHPCompatibilityWP">
+        <include-pattern>*\.php$</include-pattern>
+    </rule>
+
+    <rule ref="WordPress-Core"/>
+    <rule ref="WordPress-Docs"/>
+    <rule ref="WordPress.WP.I18n"/>
+
+    <rule ref="Generic.WhiteSpace.DisallowSpaceIndent.SpacesUsed">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Universal.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.WhiteSpace.SuperfluousWhitespace.EndLine">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="PEAR.Functions.FunctionCallSignature.SpaceAfterOpenBracket">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="PEAR.Functions.FunctionCallSignature.SpaceBeforeCloseBracket">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.WhiteSpace.ControlStructureSpacing.NoSpaceAfterOpenParenthesis">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.WhiteSpace.ControlStructureSpacing.NoSpaceBeforeCloseParenthesis">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Generic.Functions.OpeningFunctionBraceKernighanRitchie.SpaceBeforeBrace">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.WhiteSpace.OperatorSpacing.NoSpaceBefore">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.NamingConventions.ValidHookName.UseUnderscores">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.ClassComment.Missing">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Generic.Commenting.DocComment.MissingShort">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.FunctionComment.MissingParamComment">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.FunctionComment.Missing">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.FunctionComment.MissingParamTag">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.FunctionComment.MissingParamType">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.InlineComment.WrongStyle">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+
+    <rule ref="PHPCompatibility.Classes.NewTypedProperties.Found">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+
+    <rule ref="Generic.CodeAnalysis.EmptyPHPStatement"/>
+
+    <rule ref="PEAR.Functions.FunctionCallSignature">
+        <properties>
+            <property name="allowMultipleArguments" value="false"/>
+        </properties>
+    </rule>
+
+    <rule ref="WordPress.NamingConventions.ValidHookName">
+        <properties>
+            <property name="additionalWordDelimiters" value="/"/>
+        </properties>
+    </rule>
+
+    <arg value="ps"/>
+    <arg name="extensions" value="php"/>
+
+    <!--
+		Do not set cache here: PHPCS resolves cache paths relative to this ruleset file.
+		Consumers set <arg name="cache" value=".cache/phpcs.json"/> in their root phpcs.xml.
+	-->
+
+    <!-- Exclude generated / tooling paths (harmless if a consumer lacks the directory). -->
+    <exclude-pattern>node_modules/*</exclude-pattern>
+    <exclude-pattern>./bin/*</exclude-pattern>
+    <exclude-pattern>./packages/**/tests/*</exclude-pattern>
+    <exclude-pattern>./packages/dev-phpunit/*</exclude-pattern>
+    <exclude-pattern>./packages/dev-cypress/*</exclude-pattern>
+    <exclude-pattern>./packages/global-packages/packages/dev-phpunit/*</exclude-pattern>
+    <exclude-pattern>./packages/global-packages/packages/dev-cypress/*</exclude-pattern>
+    <exclude-pattern>./packages/bootstrap/*</exclude-pattern>
+    <exclude-pattern>./packages/global-packages/packages/bootstrap/*</exclude-pattern>
+    <exclude-pattern>.patch/*</exclude-pattern>
+    <exclude-pattern>./tests/*</exclude-pattern>
+    <exclude-pattern>**/test/**</exclude-pattern>
+    <exclude-pattern>**/tests/**</exclude-pattern>
+
+    <!-- Exclude third party libraries / local reference trees -->
+    <exclude-pattern>./vendor/*</exclude-pattern>
+    <exclude-pattern>./source-codes/*</exclude-pattern>
+    <exclude-pattern>./source-code-block-editor/*</exclude-pattern>
+    <exclude-pattern>./source-code-wordpress/*</exclude-pattern>
+
+    <rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Files.FileName.InvalidClassFileName">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.FileComment.Missing">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Generic.Arrays.DisallowShortArraySyntax.Found">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <!-- WPCS 3.x moved short-array checks to Universal; keep parity with Generic exclude above. -->
+    <rule ref="Universal.Arrays.DisallowShortArraySyntax.Found">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Generic.Files.LineEndings.InvalidEOLChar">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.ClosingDeclarationComment.Missing">
+        <exclude-pattern>/*</exclude-pattern>
+    </rule>
+
+    <!-- WPCS 3.x / PHPCSExtra sniffs that conflict with the existing codebase style. -->
+    <rule ref="Squiz.Functions.FunctionDeclarationArgumentSpacing.SpacingBeforeClose">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="PSR2.Classes.ClassDeclaration.CloseBraceAfterBody">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Functions.MultiLineFunctionDeclaration.SpaceAfterFunction">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Functions.MultiLineFunctionDeclaration.SpaceBeforeBrace">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="PSR12.Functions.ReturnTypeDeclaration.SpaceBeforeReturnType">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="PSR12.Functions.ReturnTypeDeclaration.SpaceBeforeColon">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="PSR12.Traits.UseDeclaration.MultipleImport">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="PSR2.Methods.FunctionClosingBrace.SpacingBeforeClose">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="PSR2.Files.EndFileNewline.TooMany">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="PSR2.Classes.PropertyDeclaration.ScopeMissing">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Universal.NamingConventions.NoReservedKeywordParameterNames">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Universal.Operators.DisallowStandalonePostIncrementDecrement">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="PEAR.Files.IncludingFile.BracketsNotRequired">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Modernize.FunctionCalls.Dirname.Nested">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Generic.CodeAnalysis.AssignmentInCondition">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Generic.WhiteSpace.LanguageConstructSpacing.IncorrectSingle">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+</ruleset>
