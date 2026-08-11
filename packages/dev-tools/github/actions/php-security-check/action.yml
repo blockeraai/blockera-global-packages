@@ -1,0 +1,24 @@
+name: 'Blockera PHP Security Check'
+description: >
+    Cache Symfony security-checker DB and run symfonycorp/security-checker-action.
+inputs:
+    cache-path:
+        description: 'Symfony checker cache path'
+        required: false
+        default: '~/.symfony/cache'
+    cache-key:
+        description: 'actions/cache key'
+        required: false
+        default: 'db'
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Cache mechanism
+          uses: actions/cache@v4
+          with:
+              path: ${{ inputs.cache-path }}
+              key: ${{ inputs.cache-key }}
+
+        - name: Run PHP Security Check
+          uses: symfonycorp/security-checker-action@v5
