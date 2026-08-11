@@ -33,6 +33,9 @@ async function findPluginReleaseBranchName(gitWorkingDirectoryPath) {
  * Calculates version bump for the packages based on the content
  * from the provided CHANGELOG file split into individual lines.
  *
+ * Recognizes Keep a Changelog headings (Added/Changed/…) and legacy
+ * product-friendly headings (New Feature/Enhancement/…).
+ *
  * @param {string[]}                  lines                Changelog content split into lines.
  * @param {('patch'|'minor'|'major')} [minimumVersionBump] Minimum version bump for the package.
  *                                                         Defaults to `patch`.
@@ -64,7 +67,10 @@ function calculateVersionBumpFromChangelog(
 		}
 
 		// A major version bump required. Stop processing.
-		if (lineNormalized.startsWith('### breaking change')) {
+		if (
+			lineNormalized.startsWith('### breaking change') ||
+			lineNormalized.startsWith('### removed')
+		) {
 			versionBump = 'major';
 			break;
 		}
@@ -72,15 +78,19 @@ function calculateVersionBumpFromChangelog(
 		// A minor version bump required. Proceed to the next line.
 		if (
 			lineNormalized.startsWith('### deprecation') ||
+			lineNormalized.startsWith('### deprecated') ||
 			lineNormalized.startsWith('### enhancement') ||
 			lineNormalized.startsWith('### new api') ||
-			lineNormalized.startsWith('### new feature')
+			lineNormalized.startsWith('### new feature') ||
+			lineNormalized.startsWith('### added') ||
+			lineNormalized.startsWith('### changed') ||
+			lineNormalized.startsWith('### features')
 		) {
 			versionBump = 'minor';
 			continue;
 		}
 
-		// A version bump required. Found new changelog section.
+		// A version bump required. Found new changelog section or bullet.
 		if (
 			versionBump !== 'minor' &&
 			(lineNormalized.startsWith('### ') || lineNormalized.includes('- '))

@@ -1,22 +1,16 @@
+/**
+ * Internal dependencies
+ */
+const {
+	createPluginCliConfig,
+} = require('../../packages/dev-tools/bin/plugin/create-config');
+
 const gitRepoOwner = 'blockeraai';
 
-/**
- * @typedef WPPluginCLIConfig
- *
- * @property {string} slug                  Slug.
- * @property {string} name                  Name.
- * @property {string} githubRepositoryOwner GitHub Repository Owner.
- * @property {string} githubRepositoryName  GitHub Repository Name.
- * @property {string} githubRepositoryURL   GitHub Repository URL.
- * @property {string} gitRepositoryURL      Git Repository URL.
- */
-
-/**
- * @type {WPPluginCLIConfig}
- */
-const config = {
+module.exports = createPluginCliConfig({
 	slug: 'blockera-global-packages',
 	name: 'Blockera Global Packages',
+	team: 'Blockeraai',
 	versionMilestoneFormat: '%(name)s %(major)s.%(minor)s',
 	githubRepositoryOwner: gitRepoOwner,
 	githubRepositoryName: 'blockera-global-packages',
@@ -24,6 +18,12 @@ const config = {
 		'https://github.com/' + gitRepoOwner + '/blockera-global-packages/',
 	gitRepositoryURL:
 		'https://github.com/' + gitRepoOwner + '/blockera-global-packages.git',
-};
-
-module.exports = config;
+	changelog: {
+		archiveUrl:
+			'https://github.com/' +
+			gitRepoOwner +
+			'/blockera-global-packages/releases',
+		archiveLabel: 'Blockera Global Packages',
+		includeCommitCount: true,
+	},
+});

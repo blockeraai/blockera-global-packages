@@ -17,11 +17,8 @@ const {
 	getIssuesByMilestone,
 } = require('../lib/milestone');
 const { log, formats } = require('../lib/logger');
-const config = require('../config');
-// @ts-ignore
-const manifest = require('../../../package.json');
+const { getPluginConfig } = require('../config-store');
 const fs = require('fs');
-const glob = require('fast-glob');
 const path = require('path');
 
 const UNKNOWN_FEATURE_FALLBACK_NAME = 'Uncategorized';
@@ -66,6 +63,11 @@ const UNKNOWN_FEATURE_FALLBACK_NAME = 'Uncategorized';
  *
  * @type {Record<string,string>}
  */
+/**
+ * Label → product-friendly section (user notes + development changelog).
+ * Keep a Changelog equivalents for package MD are handled separately when authors
+ * write Added/Changed/Fixed headings under ## Unreleased.
+ */
 const LABEL_TYPE_MAPPING = {
 	'[Type] Developer Documentation': 'Documentation',
 	'[Package] Jest Cypress PHPUnit': 'Tools',
@@ -84,9 +86,10 @@ const LABEL_TYPE_MAPPING = {
 	'[Type] Experimental': 'Experiments',
 	'[Type] Bug': 'Bug Fixes',
 	'[Type] Regression': 'Bug Fixes',
-	'[Type] Enhancement': 'Enhancements',
-	'[Type] New API': 'New APIs',
+	'[Type] Enhancement': 'Improvements',
+	'[Type] New API': 'Features',
 	'[Type] Feature': 'Features',
+	'[Type] Breaking Change': 'Breaking Changes',
 };
 
 /**
@@ -123,13 +126,12 @@ const LABEL_FEATURE_MAPPING = {
  * @type {Array<string|undefined>}
  */
 const GROUP_TITLE_ORDER = [
+	'Breaking Changes',
 	'Features',
-	'Enhancements',
-	'New APIs',
-	'New Features',
 	'Improvements',
 	'Bug Fixes',
-	`Accessibility`,
+	'Security',
+	'Accessibility',
 	'Performance',
 	'Experiments',
 	'Documentation',
@@ -140,14 +142,58 @@ const GROUP_TITLE_ORDER = [
 ];
 
 /**
+ * Product-friendly section order for changelog.txt merges.
+ *
+ * @type {string[]}
+ */
+const PRODUCT_SECTION_ORDER = [
+	'Breaking Changes',
+	'Features',
+	'Improvements',
+	'Bug Fixes',
+	'Security',
+	'Accessibility',
+	'Performance',
+	'Documentation',
+	'Code Quality',
+	'Tools',
+	'Experiments',
+	'Various',
+];
+
+/**
+ * Map Keep a Changelog headings (and legacy aliases) → product-friendly sections.
+ *
+ * @type {Record<string,string>}
+ */
+const KEEP_A_CHANGELOG_TO_PRODUCT = {
+	Added: 'Features',
+	Changed: 'Improvements',
+	Deprecated: 'Improvements',
+	Removed: 'Breaking Changes',
+	Fixed: 'Bug Fixes',
+	Security: 'Security',
+	// Legacy / mixed headings still present in some package changelogs.
+	'New Features': 'Features',
+	Features: 'Features',
+	Enhancements: 'Improvements',
+	Improvements: 'Improvements',
+	'Bug Fixes': 'Bug Fixes',
+	'Breaking Changes': 'Breaking Changes',
+};
+
+/**
  * Mapping of patterns to match a title to a grouping type.
  *
  * @type {Map<RegExp,string>}
  */
 const TITLE_TYPE_PATTERNS = new Map([
-	[/feat?(:|\/ )?/i, 'New Features'],
+	[/^(\w+:)?\s*feat(ure)?s?\b/i, 'Features'],
 	[/improve?\s*ment(s)?(:|\/ )?/i, 'Improvements'],
+	[/^(\w+:)?\s*enhanc(e|ement)\b/i, 'Improvements'],
 	[/^(\w+:)?(bug)?\s*fix(es)?(:|\/ )?/i, 'Bug Fixes'],
+	[/^(\w+:)?\s*secur(e|ity)\b/i, 'Security'],
+	[/breaking(\s+change)?s?\b/i, 'Breaking Changes'],
 ]);
 
 /**
@@ -487,6 +533,31 @@ const createOmitByLabelPrefix = (prefixes) => (text, issue) =>
 		: text;
 
 /**
+ * Alternate title prefixes that map to the same product section.
+ *
+ * @type {Record<string, string[]>}
+ */
+const TYPE_PREFIX_ALIASES = {
+	Features: [
+		'Feature',
+		'Features',
+		'New Feature',
+		'New Features',
+		'New API',
+		'New APIs',
+	],
+	Improvements: [
+		'Improvement',
+		'Improvements',
+		'Enhancement',
+		'Enhancements',
+	],
+	'Bug Fixes': ['Bug Fix', 'Bug Fixes', 'Bug', 'Fix', 'Fixes'],
+	Security: ['Security'],
+	'Breaking Changes': ['Breaking Change', 'Breaking Changes'],
+};
+
+/**
  * Given an issue title and issue, returns the title with redundant grouping
  * type details removed. The prefix is redundant since it would already be clear
  * enough by group assignment that the prefix would be inferred.
@@ -497,19 +568,23 @@ const createOmitByLabelPrefix = (prefixes) => (text, issue) =>
  */
 function removeRedundantTypePrefix(title, issue) {
 	const type = getIssueType(issue);
+	const aliases = TYPE_PREFIX_ALIASES[type] || [
+		// Naively try to convert to singular form, to match "Bug Fixes"
+		// type as either "Bug Fix" or "Bug Fixes".
+		type.replace(/(es|s)$/, ''),
+	];
 
-	return title.replace(
-		new RegExp(
-			`^\\[?${
-				// Naively try to convert to singular form, to match "Bug Fixes"
-				// type as either "Bug Fix" or "Bug Fixes" (technically matches
-				// "Bug Fixs" as well).
-				escapeRegExp(type.replace(/(es|s)$/, ''))
-			}(es|s)?\\]?:?\\s*`,
-			'i'
-		),
-		''
-	);
+	for (const alias of aliases) {
+		const next = title.replace(
+			new RegExp(`^\\[?${escapeRegExp(alias)}\\]?:?\\s*`, 'i'),
+			''
+		);
+		if (next !== title) {
+			return next;
+		}
+	}
+
+	return title;
 }
 
 /**
@@ -524,6 +599,38 @@ function removeFeaturePrefix(text) {
 }
 
 /**
+ * Strip conventional-commit / legacy type prefixes after classification.
+ *
+ * @type {WPChangelogNormalization}
+ *
+ * @return {string} Title without conventional prefix.
+ */
+function stripConventionalCommitPrefix(title) {
+	return title
+		.replace(
+			/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|improve|improvement|enhancement|feature|security)(\([^)]*\))?(!)?\s*:\s*/i,
+			''
+		)
+		.replace(
+			/^(feat|fix|feature|bug\s*fix|improvement|enhancement|security)\s*[:\/]\s*/i,
+			''
+		)
+		.trim();
+}
+
+/**
+ * Omit titles that are empty or punctuation-only after normalization.
+ *
+ * @type {WPChangelogNormalization}
+ *
+ * @return {string|undefined} Title or undefined to omit.
+ */
+function omitEmptyOrPunctuationTitle(title) {
+	const stripped = title.replace(/^[.\s\-–—,:;!]+$/, '').trim();
+	return stripped.length ? title : undefined;
+}
+
+/**
  * Array of normalizations applying to title, each returning a new string, or
  * undefined to indicate an entry which should be omitted.
  *
@@ -532,10 +639,12 @@ function removeFeaturePrefix(text) {
 const TITLE_NORMALIZATIONS = [
 	createOmitByLabelPrefix(['Mobile App']),
 	createOmitByTitlePrefix(['[rnmobile]', '[mobile]', 'Mobile Release']),
+	stripConventionalCommitPrefix,
 	removeRedundantTypePrefix,
 	reword,
 	capitalizeAfterColonSeparatedPrefix,
 	addTrailingPeriod,
+	omitEmptyOrPunctuationTitle,
 ];
 
 /**
@@ -671,7 +780,11 @@ async function fetchAllPullRequests(octokit, settings) {
 		);
 	}
 
-	const series = milestoneTitle.replace('Blockera ', '');
+	const productName = getPluginConfig().name;
+	const series = milestoneTitle.replace(
+		new RegExp(`^${productName}\\s+`),
+		''
+	);
 	const latestReleaseInSeries = unreleased
 		? await getLatestReleaseInSeries(octokit, owner, repo, series)
 		: undefined;
@@ -703,62 +816,63 @@ async function fetchAllPullRequests(octokit, settings) {
 }
 
 /**
- * Combines repeated sections in a changelog string.
+ * Normalize a ### heading to a product-friendly section name.
+ *
+ * @param {string} heading Raw heading text without ###.
+ * @return {string} Product section name.
+ */
+function toProductSection(heading) {
+	const trimmed = heading.trim();
+	return KEEP_A_CHANGELOG_TO_PRODUCT[trimmed] || trimmed;
+}
+
+/**
+ * Combines repeated sections in a changelog string into product-friendly order.
  *
  * @param {string} changelog the changelog text.
  *
- * @returns {string} the combined changelog same sections.
+ * @return {string} the combined changelog same sections.
  */
 function combineChangelogSections(changelog) {
-	// Split the changelog into lines
 	const lines = changelog.split('\n');
-
-	// Initialize an object to hold each section's content
+	/** @type {Record<string, string[]>} */
 	const sections = {};
 	let currentSection = '';
 
-	// Loop through each line
 	lines.forEach((line) => {
-		// Check if the line starts with a section heading (e.g., ### Bug Fixes)
 		const sectionMatch = line.match(/^### (.+)$/);
 		if (sectionMatch) {
-			currentSection = sectionMatch[1];
-			// Initialize the section in the object if it doesn't exist
+			currentSection = toProductSection(sectionMatch[1]);
 			if (!sections[currentSection]) {
 				sections[currentSection] = [];
 			}
-		} else if (currentSection) {
-			// Add the line to the current section
+			return;
+		}
+		if (currentSection && line.trim() !== '') {
 			sections[currentSection].push(line);
 		}
 	});
 
-	// Define the priority order for sections
-	const priorityOrder = ['New Features', 'Improvements', 'Bug Fixes'];
-
-	// Reconstruct the changelog by priority
 	let combinedChangelog = '';
+	const emitted = new Set();
 
-	// Add sections based on priority first
-	priorityOrder.forEach((section) => {
-		if (sections[section]) {
-			combinedChangelog += `\n### ${section}\n`;
-			combinedChangelog += sections[section]
-				.filter((line) => line.trim() !== '')
-				.join('\n');
-			combinedChangelog += '\n';
+	PRODUCT_SECTION_ORDER.forEach((section) => {
+		if (!sections[section]?.length) {
+			return;
 		}
+		emitted.add(section);
+		combinedChangelog += `\n### ${section}\n\n`;
+		combinedChangelog += sections[section].join('\n');
+		combinedChangelog += '\n';
 	});
 
-	// Add any other sections that were not prioritized
 	Object.keys(sections).forEach((section) => {
-		if (!priorityOrder.includes(section)) {
-			combinedChangelog += `\n### ${section}\n`;
-			combinedChangelog += sections[section]
-				.filter((line) => line.trim() !== '')
-				.join('\n');
-			combinedChangelog += '\n';
+		if (emitted.has(section) || !sections[section].length) {
+			return;
 		}
+		combinedChangelog += `\n### ${section}\n\n`;
+		combinedChangelog += sections[section].join('\n');
+		combinedChangelog += '\n';
 	});
 
 	return combinedChangelog.trim();
@@ -772,17 +886,16 @@ function combineChangelogSections(changelog) {
  *
  * @return {string} The formatted changelog string.
  */
-function getMainChangelog(changelogPath, version = '') {
-	let start =
+function getMainChangelog(changelogPath) {
+	const start =
 		'<details>\n' + '<summary>\n\n' + '## Changelog\n\n' + '</summary>\n\n';
-	let changelog = '';
 	const end = '\n\n</details>';
 
 	// Read the changelog file
 	const content = fs.readFileSync(changelogPath, 'utf8');
 
 	// Remove redundant headings or descriptions of changelog.
-	changelog = content
+	const changelog = content
 		.replace(/== Changelog ==/g, '')
 		.replace(/=\s[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?\s=/g, '')
 		.trim();
@@ -827,6 +940,7 @@ async function getCommitCountSinceLastRelease() {
 }
 
 async function updateChangelog(changelogs, version, publishDate) {
+	const config = getPluginConfig();
 	const start =
 		'== Changelog ==\n\n### Version ' +
 		version.trim() +
@@ -834,16 +948,9 @@ async function updateChangelog(changelogs, version, publishDate) {
 		publishDate +
 		'\n\n';
 	let changelog = '';
-	const end =
-		'\n\n### More\n\n' +
-		`This release includes {{COMMIT_COUNT}} commits since the last release.\n\n` +
-		'To read the changelog for older Blockera releases, please navigate to the [releases page](https://community.blockera.ai/changelog-9l8hbrv0).';
 
 	for (const changelogPath of changelogs) {
-		// Read the changelog file
 		const content = fs.readFileSync(changelogPath, 'utf8');
-
-		// Use a regular expression to extract the ## Unreleased section
 		const unreleasedSection = content.match(
 			/## Unreleased[\s\S]+?(?=\n## |\n$)/
 		);
@@ -853,14 +960,19 @@ async function updateChangelog(changelogs, version, publishDate) {
 		}
 	}
 
-	// Combine same sections.
 	changelog = combineChangelogSections(changelog);
-	const commitCount = await getCommitCountSinceLastRelease();
 
-	// Update the changelog.txt file to include combined changes of all packages.
+	let end = '\n\n### More\n\n';
+	if (config.changelog.includeCommitCount !== false) {
+		const commitCount = await getCommitCountSinceLastRelease();
+		end += `This release includes ${commitCount} commits since the last release.\n\n`;
+	}
+	const archiveLabel = config.changelog.archiveLabel || config.name;
+	end += `To read the changelog for older ${archiveLabel} releases, please navigate to the [releases page](${config.changelog.archiveUrl}).\n`;
+
 	fs.writeFileSync(
 		path.resolve(process.cwd(), 'changelog.txt'),
-		start + changelog + end.replace('{{COMMIT_COUNT}}', commitCount)
+		start + changelog + end
 	);
 }
 
@@ -1189,6 +1301,9 @@ async function createChangelog(settings) {
  * @param {WPChangelogCommandOptions} options
  */
 async function getReleaseChangelog(options) {
+	const config = getPluginConfig();
+	const manifest = require(path.resolve(process.cwd(), 'package.json'));
+
 	await createChangelog({
 		owner: config.githubRepositoryOwner,
 		repo: config.githubRepositoryName,
@@ -1232,4 +1347,8 @@ async function getReleaseChangelog(options) {
 	getUniqueByUsername,
 	skipCreatedByBots,
 	mapLabelsToFeatures,
+	stripConventionalCommitPrefix,
+	omitEmptyOrPunctuationTitle,
+	combineChangelogSections,
+	toProductSection,
 };
