@@ -28,11 +28,16 @@ printf '  %s\n' "${dirs[@]}"
 # Use --testsuite (not bare directory args): PHPUnit loads path arguments before
 # phpunit.xml bootstrap, which breaks WP test base classes (AppTestCase).
 # Theme phpunit.xml.dist `units` suite is already scoped to *-one packages.
-phpunit_args=( -c phpunit.xml.dist --verbose --testsuite units )
+#
+# --prepend MUST come before -c: PHPUnit's bin uses getopt('', ['prepend:']) which
+# stops at the first unknown option (-c), so a trailing --prepend is ignored and
+# Composer-autoloaded functions.php exits before tests run.
+phpunit_args=()
 if [[ -n "${PREPEND}" && -f "${PREPEND}" ]]; then
 	echo "run-phpunit-one-units: --prepend ${PREPEND}"
 	phpunit_args+=( --prepend "${PREPEND}" )
 fi
+phpunit_args+=( -c phpunit.xml.dist --verbose --testsuite units )
 
 # `--` so wp-env does not swallow PHPUnit flags like --prepend.
 wp-env run --env-cwd="${ENV_CWD}" tests-wordpress -- \
