@@ -75,8 +75,14 @@ SUBMODULE="${ROOT}/${SUBMODULE_PATH}"
 
 if [ ! -e "${SUBMODULE}/.git" ]; then
 	# Best-effort init so local branch creates still work after a fresh clone.
-	if [ -f "${ROOT}/.github/scripts/ensure-global-packages-sparse.sh" ]; then
-		bash "${ROOT}/.github/scripts/ensure-global-packages-sparse.sh" "${ROOT}" || true
+	ENSURE_SH=""
+	if [ -f "${ROOT}/.github/actions/ensure-global-packages/ensure.sh" ]; then
+		ENSURE_SH="${ROOT}/.github/actions/ensure-global-packages/ensure.sh"
+	elif [ -f "${ROOT}/packages/global-packages/packages/dev-tools/github/scripts/ensure-global-packages-sparse.sh" ]; then
+		ENSURE_SH="${ROOT}/packages/global-packages/packages/dev-tools/github/scripts/ensure-global-packages-sparse.sh"
+	fi
+	if [ -n "${ENSURE_SH}" ]; then
+		bash "${ENSURE_SH}" "${ROOT}" || true
 	fi
 fi
 

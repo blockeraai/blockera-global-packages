@@ -16,7 +16,7 @@ SUBMODULE_PATH="packages/global-packages"
 SUBMODULE="${ROOT}/${SUBMODULE_PATH}"
 
 if [ ! -e "${SUBMODULE}/.git" ]; then
-	echo "husky: packages/global-packages missing — run bash .github/scripts/ensure-global-packages-sparse.sh" >&2
+	echo "husky: packages/global-packages missing — run bash .github/actions/ensure-global-packages/ensure.sh (or init the submodule)" >&2
 	exit 1
 fi
 
