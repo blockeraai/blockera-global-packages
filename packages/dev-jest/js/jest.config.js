@@ -54,12 +54,10 @@ module.exports = {
 	],
 	setupFilesAfterEnv: [
 		require.resolve('@wordpress/jest-preset-default/scripts/setup-globals.js'),
+		path.join(DEV_JEST_JS, 'setup-mock-breakpoints-bootstrap.js'),
 	],
 	modulePathIgnorePatterns: [],
-	testPathIgnorePatterns: [
-		'/node_modules/',
-		'/source-codes/',
-	],
+	testPathIgnorePatterns: ['/node_modules/', '/source-codes/'],
 	testMatch: ['**/test/**/*.spec.js', '**/tests/**/*.spec.js'],
 	transformIgnorePatterns: [
 		'/node_modules/(?!(.*@wordpress/theme|parsel-js|client-zip|marked)).*\\.(js|jsx|mjs|cjs|ts|tsx)$',
