@@ -52,6 +52,14 @@ import {
 	normalizeCssLengthValue,
 	getIframe,
 	isSiteEditorUrl,
+	pushSiteEditorHistory,
+	navigateToSiteEditorPath,
+	getSiteEditorPath,
+	isSiteEditorRootPath,
+	useSiteEditorNavigate,
+	ensureSiteEditorHistoryPatch,
+	clickCoreNavItem,
+	clearCoreSidebarSlideClasses,
 	useOutsideClick,
 	useValue,
 	useIsVisible,
@@ -61,6 +69,13 @@ import {
 ```
 
 Exports are grouped by folder (`is`, `get`, `memo`, `array`, `color`, `css-length`, `angle`, `editor`, `site-editor`, `portal`, `object`, `string`, `general`, hooks, `change-case`). Prefer named imports from the package root.
+
+Site Editor helpers (`js/site-editor/`) are **side-effecting** where they talk to Gutenberg’s private `@wordpress/router` `history@5` singleton:
+
+- `pushSiteEditorHistory` / `navigateToSiteEditorPath` — `pushState` with `{ usr, key, idx }` + `popstate`.
+- `ensureSiteEditorHistoryPatch` / `useSiteEditorNavigate` — patch `pushState`/`replaceState` once and emit `SITE_EDITOR_NAVIGATE_EVENT` so listeners see core router navigations that do not fire `popstate`. The patch is process-wide; unsubscribe only removes the `popstate` listener.
+
+Use these only when you cannot call the locked `useHistory().navigate()` API.
 
 ---
 
