@@ -48,6 +48,7 @@ export const SITE_EDITOR_TEST_IDS = {
 	stylesPanel: 'blockera-site-editor-styles-panel',
 	stylesActions: 'blockera-site-editor-styles-actions',
 	templatesPanel: 'blockera-site-editor-templates-panel',
+	templatesBuilderShell: 'blockera-site-editor-templates-builder-shell',
 	templatesNav: 'blockera-site-editor-templates-nav',
 	templatesNavAll: 'blockera-site-editor-templates-nav-all',
 	templatesNavHomepage: 'blockera-site-editor-templates-nav-homepage-root',
@@ -899,10 +900,10 @@ export function assertTemplatesSingleSection({
 			return;
 		}
 
-		cy.getByDataTest(testId).should('be.visible');
+		scrollTemplatesNavItemIntoView(testId).should('be.visible');
 		if (typeof count === 'number') {
 			cy.getByDataTest(testId)
-				.find('.blockera-site-editor-templates-nav__count')
+				.find('.blockera-site-editor-nav__count')
 				.should('be.visible')
 				.and('contain.text', String(count));
 		}
@@ -943,9 +944,9 @@ export function assertTemplatesArchiveSection({
 	absentChildTestIds = [],
 } = {}) {
 	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNav)
-		.find('.blockera-site-editor-templates-nav__section')
+		.find('.blockera-site-editor-nav__section')
 		.contains(
-			'.blockera-site-editor-templates-nav__section-title',
+			'.blockera-site-editor-nav__section-title',
 			'Archive Templates'
 		)
 		.should('be.visible');
@@ -1019,10 +1020,10 @@ export function assertTemplatesArchiveSection({
 			return;
 		}
 
-		cy.getByDataTest(testId).should('be.visible');
+		scrollTemplatesNavItemIntoView(testId).should('be.visible');
 		if (typeof count === 'number') {
 			cy.getByDataTest(testId)
-				.find('.blockera-site-editor-templates-nav__count')
+				.find('.blockera-site-editor-nav__count')
 				.should('be.visible')
 				.and('contain.text', String(count));
 		}
@@ -1089,9 +1090,9 @@ export function assertTemplatesSpecialSection({
 	],
 } = {}) {
 	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNav)
-		.find('.blockera-site-editor-templates-nav__section')
+		.find('.blockera-site-editor-nav__section')
 		.contains(
-			'.blockera-site-editor-templates-nav__section-title',
+			'.blockera-site-editor-nav__section-title',
 			'Special Templates'
 		)
 		.scrollIntoView({ block: 'center', ensureScrollable: false })
@@ -1175,12 +1176,12 @@ const WOO_TEMPLATES_NAV_ROWS = [
 export function getTemplatesWooCommerceSection() {
 	return cy
 		.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNav)
-		.find('.blockera-site-editor-templates-nav__section')
+		.find('.blockera-site-editor-nav__section')
 		.contains(
-			'.blockera-site-editor-templates-nav__section-title',
+			'.blockera-site-editor-nav__section-title',
 			'WooCommerce Templates'
 		)
-		.parents('.blockera-site-editor-templates-nav__section');
+		.parents('.blockera-site-editor-nav__section');
 }
 
 /**
@@ -1212,13 +1213,13 @@ export function assertTemplatesWooCommerceSection({
 	assertUniqueness = true,
 } = {}) {
 	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNav)
-		.find('.blockera-site-editor-templates-nav__section')
+		.find('.blockera-site-editor-nav__section')
 		.then(($sections) => {
 			const titles = [...$sections]
 				.map((section) =>
 					section
 						.querySelector(
-							'.blockera-site-editor-templates-nav__section-title'
+							'.blockera-site-editor-nav__section-title'
 						)
 						?.textContent?.trim()
 				)
@@ -1253,7 +1254,7 @@ export function assertTemplatesWooCommerceSection({
 		).map((row) => row.testId());
 
 		cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNavWooArchiveProduct)
-			.parents('.blockera-site-editor-templates-nav__item-shell')
+			.parents('.blockera-site-editor-nav__item-shell')
 			.parent()
 			.within(() => {
 				shopChildTestIds.forEach((testId) => {
@@ -1271,7 +1272,7 @@ export function assertTemplatesWooCommerceSection({
 		).map((row) => row.testId());
 
 		getTemplatesWooCommerceSection()
-			.find('.blockera-site-editor-templates-nav__items [data-test]')
+			.find('.blockera-site-editor-nav__items [data-test]')
 			.then(($rows) => {
 				const testIds = [...$rows]
 					.map((el) => el.getAttribute('data-test'))
@@ -1410,10 +1411,25 @@ export function assertStatusTooltip(statusTestId, { heading, bodyIncludes }) {
 	// Homepage/nav status Tooltip delay is 200ms; realHover + pointer events for
 	// headless Chrome (WP Tooltip listens to mouseenter). Hover twice — lower
 	// sidebar rows are flaky on first hover in headless Chrome.
+	// Scroll the badge to the middle of the drill-down content pane so the
+	// pinned header / Save Hub never cover it (Cypress treats `.edit-site`
+	// as position:fixed and fails `be.visible` when covered).
 	const hoverStatus = () => {
+		cy.getByDataTest(statusTestId).then(($el) => {
+			const el = $el[0];
+			const scroller = el.closest(
+				'.blockera-site-editor-drill-down__content'
+			);
+			if (scroller) {
+				const sRect = scroller.getBoundingClientRect();
+				const eRect = el.getBoundingClientRect();
+				scroller.scrollTop +=
+					eRect.top - sRect.top - sRect.height / 2 + eRect.height / 2;
+			}
+		});
+
 		cy.getByDataTest(statusTestId)
 			.should('be.visible')
-			.scrollIntoView({ block: 'center' })
 			.trigger('pointerover', { force: true })
 			.trigger('mouseover', { force: true })
 			.trigger('mouseenter', { force: true })
