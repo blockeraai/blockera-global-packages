@@ -18,6 +18,7 @@ export {
 	ensureSiteEditorHistoryPatch,
 	useSiteEditorNavigate,
 } from './history-patch';
+export { useSiteEditorUrlState } from './use-url-state';
 export {
 	getSiteEditorPath,
 	isSiteEditorRootPath,
