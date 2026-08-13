@@ -43,9 +43,30 @@ function resolvePackagesRoot(rootDir) {
 const rootDir = resolveRootDir();
 const packagesRoot = resolvePackagesRoot(rootDir);
 
+/**
+ * Consumers that link the shared packages via packages/global-packages also
+ * keep their own product packages next to it (e.g. the blockera-one theme
+ * package). Include those as extra roots so their unit tests run too.
+ */
+function resolveTestRoots() {
+	const roots = [packagesRoot];
+	const consumerPackages = path.join(rootDir, 'packages');
+	if (packagesRoot === consumerPackages || !fs.existsSync(consumerPackages)) {
+		return roots;
+	}
+	for (const entry of fs.readdirSync(consumerPackages, {
+		withFileTypes: true,
+	})) {
+		if (entry.isDirectory() && entry.name !== 'global-packages') {
+			roots.push(path.join(consumerPackages, entry.name));
+		}
+	}
+	return roots;
+}
+
 module.exports = {
 	rootDir,
-	roots: [packagesRoot],
+	roots: resolveTestRoots(),
 	preset: '@wordpress/jest-preset-default',
 	collectCoverageFrom: [`${packagesRoot}/**/*.js`],
 	setupFiles: [
