@@ -78,7 +78,13 @@ const DEFAULT_CONFIG = {
 	BLOCKERA_TELEMETRY_OPT_IN_OFF: true,
 };
 
-const FREE_EXTRACT_DIR = '.github/cache/blockera-free';
+// wp-env uses the last path segment as the plugin directory name.
+// Theme CI runs `wp plugin activate blockera`, so the extract dir must
+// be `blockera`. Pro keeps `blockera-free` to avoid colliding with `blockera-pro`.
+const FREE_EXTRACT_DIR =
+	productStyle === 'theme'
+		? '.github/cache/blockera'
+		: '.github/cache/blockera-free';
 const DOWNLOAD_SCRIPT = path.join(__dirname, 'download-artifact.sh');
 
 function requireGitHubToken() {
