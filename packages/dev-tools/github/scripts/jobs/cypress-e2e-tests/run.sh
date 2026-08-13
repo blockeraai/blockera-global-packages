@@ -16,7 +16,8 @@
 #   BLOCKERA_E2E_PACKAGE_GLOB          optional Cypress glob prefix; wins over product style
 #   BLOCKERA_E2E_PREPARE_CMD           optional; replaces default .wp-env.json + .env setup
 #   BLOCKERA_E2E_PRE_TEST_CMD          optional; runs after build, before category specs
-#   BLOCKERA_E2E_PR_ENV_FILE           default: .pr-cypress.env.json
+#   BLOCKERA_E2E_PR_ENV_FILE           default: .pr-cypress.env.json (spec filter)
+#   BLOCKERA_WP_ENV_PR_ENV_FILE        default: .pr-env.json (wp-env overlay)
 #   BLOCKERA_E2E_GENERAL_CATEGORY      default: general-1 (Pro: general)
 set -euo pipefail
 
@@ -40,6 +41,10 @@ GENERAL_CATEGORY="${BLOCKERA_E2E_GENERAL_CATEGORY:-general-1}"
 PACKAGE_GLOB="${BLOCKERA_E2E_PACKAGE_GLOB:-}"
 PREPARE_CMD="${BLOCKERA_E2E_PREPARE_CMD:-}"
 PRE_TEST_CMD="${BLOCKERA_E2E_PRE_TEST_CMD:-}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TOOLKIT_SCRIPTS="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+CREATE_WP_ENV="${TOOLKIT_SCRIPTS}/create-wp-env.js"
+PR_WP_ENV_FILE="${BLOCKERA_WP_ENV_PR_ENV_FILE:-.pr-env.json}"
 
 cleanup() {
 	echo "cypress-e2e/run: ${STOP_CMD}"
@@ -61,12 +66,18 @@ if [[ -n "${PREPARE_CMD}" ]]; then
 	echo "cypress-e2e/run: prepare via BLOCKERA_E2E_PREPARE_CMD"
 	eval "${PREPARE_CMD}"
 else
-	WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/base.json"
-	if [[ -f "${WP_ENV_CONFIG_DIR}/${CATEGORY}.json" ]]; then
-		WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/${CATEGORY}.json"
+	export BLOCKERA_WP_ENV_PRODUCT_STYLE="${BLOCKERA_WP_ENV_PRODUCT_STYLE:-${PRODUCT_STYLE}}"
+	if [[ -f "${PR_WP_ENV_FILE}" ]]; then
+		echo "cypress-e2e/run: merge ${PR_WP_ENV_FILE} via ${CREATE_WP_ENV} ${CATEGORY}"
+		node "${CREATE_WP_ENV}" "${CATEGORY}"
+	else
+		WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/base.json"
+		if [[ -f "${WP_ENV_CONFIG_DIR}/${CATEGORY}.json" ]]; then
+			WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/${CATEGORY}.json"
+		fi
+		echo "cypress-e2e/run: using ${WP_ENV_CONFIG}"
+		cp "${WP_ENV_CONFIG}" .wp-env.json
 	fi
-	echo "cypress-e2e/run: using ${WP_ENV_CONFIG}"
-	cp "${WP_ENV_CONFIG}" .wp-env.json
 	cat .wp-env.json
 
 	{

@@ -51,7 +51,7 @@ github/
     jobs/remove-pr-config-files/ # run.sh
     jobs/create-demo-attachments/ # build/publish/encode/comment/cleanup
     jobs/cypress-components-tests/ # run.sh
-    jobs/cypress-e2e-tests/      # detect | run | prepare-pro.sh
+    jobs/cypress-e2e-tests/      # detect | run | prepare-pro.sh | prepare-theme.sh
     jobs/performance-benchmark/  # setup.sh | run-*.sh | stop.sh
     jobs/php-snapshots/          # compute-previous-wordpress-version.sh | run.sh
     jobs/php-unit-tests/         # run.sh
@@ -65,7 +65,7 @@ github/
     ensure-*.sh / bump-*.sh / retry-*.sh   # used in-place from toolkit
     actions/ensure-global-packages/         # source for consumer bootstrap action
     setup-wp-env.js
-    download-artifact.sh / create-wp-env-pro.js   # Pro free-plugin wp-env helpers
+    download-artifact.sh / create-wp-env.js       # merge wp-env-configs + .pr-env.json
     list-*-categories.js / list-*-categories-pro.js / list-visual-snapshot-batches.js
     sync-consumer-bootstrap.sh
   workflows/             # Blockera-base templates
@@ -145,7 +145,7 @@ run `*.build.e2e.cy.js` against wp-env.
 | `php-version` | matrix PHP |
 | `zip-file` / `build-dir` | `blockera.zip` / `./build/blockera` |
 | `skip-if-no-specs` | `false` (`true` for Pro-style empty suites) |
-| `BLOCKERA_BUILD_ZIP_TESTS_PRODUCT_STYLE` | `plugin` (`pro` → `prepare-pro.sh` + free Blockera via `create-wp-env-pro.js`; `theme` → `prepare-theme.sh` for blockera-one) |
+| `BLOCKERA_BUILD_ZIP_TESTS_PRODUCT_STYLE` | `plugin` (`pro` → `prepare-pro.sh` + free Blockera via `create-wp-env.js`; `theme` → `prepare-theme.sh` for blockera-one) |
 | `BLOCKERA_BUILD_ZIP_TESTS_START_CMD` | `bash packages/global-packages/packages/dev-tools/github/scripts/retry-wp-env-start.sh` |
 
 ## Build plugin zip (release)
@@ -294,12 +294,19 @@ Two-job flow: detect categories → matrix `run.sh` per category.
 | `BLOCKERA_E2E_PACKAGE_GLOB` | empty (style defaults: theme `**-one`, pro `**-pro`) |
 | `BLOCKERA_E2E_GENERAL_CATEGORY` | `general-1` (Pro: `general`) |
 | `BLOCKERA_E2E_LIST_CATEGORIES_CMD` | `list-e2e-test-categories.js` (Pro: `list-e2e-test-categories-pro.js`) |
-| `BLOCKERA_E2E_PREPARE_CMD` | empty (default copies wp-env config + `.env`; Pro: `jobs/cypress-e2e-tests/prepare-pro.sh`) |
+| `BLOCKERA_E2E_PREPARE_CMD` | empty (copies wp-env config, or merges `.pr-env.json` via `create-wp-env.js`; Pro: `prepare-pro.sh`; theme: `prepare-theme.sh`) |
 | `BLOCKERA_E2E_PRE_TEST_CMD` | empty (Pro: license activation spec) |
 | `BLOCKERA_E2E_PR_ENV_FILE` | `.pr-cypress.env.json` |
 | `BLOCKERA_E2E_WP_ENV_START_CMD` | `bash packages/global-packages/packages/dev-tools/github/scripts/retry-wp-env-start.sh` |
 | `BLOCKERA_E2E_COMPOSER_INSTALL` | `true` |
 | `BLOCKERA_E2E_BUILD_CMD` / `_TEST_CMD` / `_STOP_CMD` | `npm run build` / `test:e2e` / `env:stop` |
+
+`.pr-env.json` (PR-only; see `.pr-env.example.json` on Pro/theme) is merged onto
+`.github/wp-env-configs/{category}.json` by `create-wp-env.js`. Scalars replace,
+`config` / `lifecycleScripts` shallow-merge, and `plugins` / `themes` concatenate.
+Theme applies `.pr-env.json` plugins only to the `companion-plugin` category so
+other theme suites stay plugin-free. Pro always merges plugins and defaults the
+free Blockera source to `blockeraai/blockera@master` when none is provided.
 
 ## Cypress component tests
 

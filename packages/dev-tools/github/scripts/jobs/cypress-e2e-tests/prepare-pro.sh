@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pro Cypress E2E prepare: credentials + create-wp-env-pro (resolves free Blockera).
+# Pro Cypress E2E prepare: credentials + create-wp-env.js (merges .pr-env.json).
 #
 # Required env:
 #   BLOCKERA_E2E_CATEGORY
@@ -16,7 +16,9 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOLKIT_SCRIPTS="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-CREATE_WP_ENV="${TOOLKIT_SCRIPTS}/create-wp-env-pro.js"
+CREATE_WP_ENV="${TOOLKIT_SCRIPTS}/create-wp-env.js"
+
+export BLOCKERA_WP_ENV_PRODUCT_STYLE="${BLOCKERA_WP_ENV_PRODUCT_STYLE:-${BLOCKERA_E2E_PRODUCT_STYLE:-pro}}"
 
 USERNAME="${BLOCKERAAI_USERNAME:-}"
 PASSWORD="${BLOCKERAAI_USER_PASSWORD:-}"

@@ -4,7 +4,7 @@
 # Required env:
 #   BLOCKERA_BUILD_ZIP_TESTS_BUILD_DIR
 #   BLOCKERA_BUILD_ZIP_TESTS_PHP_VERSION
-#   GITHUB_TOKEN (for create-wp-env-pro free artifact download)
+#   GITHUB_TOKEN (for create-wp-env.js free artifact download)
 #
 # Optional:
 #   BLOCKERA_BUILD_ZIP_TESTS_SPECS_PATH   default: *-pro*
@@ -25,8 +25,10 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOLKIT_SCRIPTS="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-CREATE_WP_ENV="${TOOLKIT_SCRIPTS}/create-wp-env-pro.js"
+CREATE_WP_ENV="${TOOLKIT_SCRIPTS}/create-wp-env.js"
 WORKSPACE="${GITHUB_WORKSPACE:-$(pwd)}"
+
+export BLOCKERA_WP_ENV_PRODUCT_STYLE="${BLOCKERA_WP_ENV_PRODUCT_STYLE:-pro}"
 
 (
 	cd "${BUILD_DIR}"
