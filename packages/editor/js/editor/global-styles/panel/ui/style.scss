@@ -1,5 +1,5 @@
 .components-button.blockera-component-button.is-tertiary.blockera-control-style-variations-button {
-	--border-radius: var(--blockera-controls-border-radius);
+	--border-radius: 3px;
 	--primary-color: var(--blockera-controls-variations-color);
 	--secondary-color: #ffffff;
 	--border-color: var(--blockera-controls-border-color);
@@ -23,7 +23,8 @@
 		width: var(--height);
 		height: var(--height);
 		background-color: var(--secondary-color);
-		border-radius: 1px 0 0 1px;
+		border-radius: var(--blockera-controls-border-radius) 0 0
+			var(--blockera-controls-border-radius);
 		border-right: 1px solid var(--border-color);
 		color: var(--primary-color);
 		transition: var(--blockera-controls-transition);
@@ -39,12 +40,20 @@
 
 	.blockera-control-style-variations-button__label {
 		width: auto;
+		flex: 1;
 		height: var(--height);
 		padding: 0 0 0 6px;
 		background-color: var(--secondary-color);
 		color: var(--primary-color);
-		border-radius: 0 1px 1px 0;
+		border-radius: 0 var(--blockera-controls-border-radius)
+			var(--blockera-controls-border-radius) 0;
 		transition: var(--blockera-controls-transition);
+
+		.blockera-control-style-variations-button__text {
+			flex: 1;
+			min-width: 0;
+			text-align: left;
+		}
 
 		svg {
 			transition: var(--blockera-controls-transition);
