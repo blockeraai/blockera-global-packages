@@ -26,6 +26,8 @@ return array_merge(
 			[
 				// Layout selectors.
 				'layout' => '.wp-block-breadcrumbs ol',
+				// Gap applies to the trail list and each item (separator is li::after).
+				'blockeraGap' => '.wp-block-breadcrumbs :is(ol, li)',
 				// Inner blocks selectors.
 				'blockera/elements/trail-item' => [
 					'root' => 'ol li :is(a, span[aria-current="page"])',
