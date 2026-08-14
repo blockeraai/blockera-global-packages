@@ -1,5 +1,6 @@
 /**
  * Normalize WordPress block pattern PHP files:
+ * - pretty-print HTML (Prettier) before any PHP is injected into markup
  * - wrap user-facing strings in esc_html_e / esc_attr_e
  * - rewrite absolute theme/plugin image URLs to a configurable PHP URI expression
  * - strip Gutenberg insert-time pattern metadata copied from the editor
@@ -23,6 +24,10 @@ const {
 } = require('./escape-image-path');
 const { escapeBlockAttrs } = require('./escape-block-attrs');
 const { hasUnsanitizedPatternMetadata } = require('./sanitize-block-metadata');
+const {
+	hasPhpInPatternMarkup,
+	prettifyPatternMarkup,
+} = require('./prettify-pattern-markup');
 
 const DEFAULT_IMAGE_PATH_ROOTS = ['assets', 'patterns/images'];
 
@@ -185,13 +190,13 @@ function createRewriter(options) {
 }
 
 /**
- * Transform pattern file content in memory.
+ * Run the parse5 i18n / image / metadata rewriter on pattern markup.
  *
- * @param {string} content Original file contents.
+ * @param {string} content File contents (optionally already prettified).
  * @param {NormalizePatternsOptions} options Normalize options.
  * @return {Promise<string>} Transformed contents.
  */
-function normalizePatternContent(content, options) {
+function rewritePatternMarkup(content, options) {
 	return new Promise((resolve, reject) => {
 		const rewriter = createRewriter(options);
 		const chunks = [];
@@ -206,6 +211,19 @@ function normalizePatternContent(content, options) {
 
 		Readable.from([content]).pipe(rewriter);
 	});
+}
+
+/**
+ * Transform pattern file content in memory.
+ * Prettier runs first while markup has no PHP; i18n/sanitize follow.
+ *
+ * @param {string} content Original file contents.
+ * @param {NormalizePatternsOptions} options Normalize options.
+ * @return {Promise<string>} Transformed contents.
+ */
+async function normalizePatternContent(content, options) {
+	const prettied = await prettifyPatternMarkup(content, options);
+	return rewritePatternMarkup(prettied, options);
 }
 
 /**
@@ -240,6 +258,7 @@ async function normalizePatternsInDirectory(patternsDir, shared) {
 		quiet = false,
 		debug = false,
 		check = false,
+		productRoot,
 	} = shared;
 
 	if (!hasPatternPhpFiles(patternsDir)) {
@@ -264,6 +283,7 @@ async function normalizePatternsInDirectory(patternsDir, shared) {
 		force,
 		quiet,
 		debug,
+		productRoot,
 	};
 
 	if (!quiet) {
@@ -304,11 +324,13 @@ async function normalizePatternsInDirectory(patternsDir, shared) {
 		);
 		const needsMetadataSanitize =
 			hasUnsanitizedPatternMetadata(originalContent);
+		const canPrettify = !hasPhpInPatternMarkup(originalContent);
 
 		if (
 			!needsI18n &&
 			!hasStaticImages &&
 			!needsMetadataSanitize &&
+			!canPrettify &&
 			!force
 		) {
 			if (!quiet) {
@@ -378,6 +400,7 @@ async function normalizePatterns(options = {}) {
 		quiet = false,
 		debug = false,
 		check = false,
+		productRoot,
 	} = options;
 
 	const shared = {
@@ -388,6 +411,7 @@ async function normalizePatterns(options = {}) {
 		quiet,
 		debug,
 		check,
+		productRoot,
 	};
 
 	const changedFiles = [];
@@ -433,4 +457,6 @@ module.exports = {
 	escapeBlockAttrs,
 	hasStaticImagePaths,
 	hasUnsanitizedPatternMetadata,
+	hasPhpInPatternMarkup,
+	prettifyPatternMarkup,
 };
