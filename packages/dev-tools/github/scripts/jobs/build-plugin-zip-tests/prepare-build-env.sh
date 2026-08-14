@@ -6,7 +6,7 @@
 #   BLOCKERA_BUILD_ZIP_TESTS_BUILD_DIR      default: ./build/blockera
 #   BLOCKERA_BUILD_ZIP_TESTS_PHP_VERSION    required (matrix.php)
 #   BLOCKERA_BUILD_ZIP_TESTS_WP_ENV_CONFIG  default: .github/wp-env-configs/base.json
-#   BLOCKERA_BUILD_ZIP_TESTS_PRODUCT_STYLE  plugin|pro|theme (default: plugin)
+#   BLOCKERA_BUILD_ZIP_TESTS_PRODUCT_STYLE  plugin|pro|theme|toolkit (default: plugin)
 set -euo pipefail
 
 ZIP_FILE="${BLOCKERA_BUILD_ZIP_TESTS_ZIP:-blockera.zip}"
@@ -47,6 +47,12 @@ fi
 if [[ "${PRODUCT_STYLE}" == "theme" ]]; then
 	echo "build-zip-tests/prepare: theme style → prepare-theme.sh"
 	bash "${SCRIPT_DIR}/prepare-theme.sh"
+	exit 0
+fi
+
+if [[ "${PRODUCT_STYLE}" == "toolkit" ]]; then
+	echo "build-zip-tests/prepare: toolkit style → prepare-toolkit.sh"
+	bash "${SCRIPT_DIR}/prepare-toolkit.sh"
 	exit 0
 fi
 

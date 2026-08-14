@@ -12,7 +12,7 @@
 #   BLOCKERA_E2E_BUILD_CMD             default: npm run build
 #   BLOCKERA_E2E_TEST_CMD              default: npm run test:e2e
 #   BLOCKERA_E2E_STOP_CMD              default: npm run env:stop
-#   BLOCKERA_E2E_PRODUCT_STYLE         plugin|theme|pro (default: plugin)
+#   BLOCKERA_E2E_PRODUCT_STYLE         plugin|theme|pro|toolkit (default: plugin)
 #   BLOCKERA_E2E_PACKAGE_GLOB          optional Cypress glob prefix; wins over product style
 #   BLOCKERA_E2E_PREPARE_CMD           optional; replaces default .wp-env.json + .env setup
 #   BLOCKERA_E2E_PRE_TEST_CMD          optional; runs after build, before category specs
@@ -102,6 +102,9 @@ if [[ -z "${PACKAGE_GLOB}" ]]; then
 		PACKAGE_GLOB='packages/**-one(-**|)/**'
 	elif [[ "${PRODUCT_STYLE}" == "pro" ]]; then
 		PACKAGE_GLOB='packages/**-pro(-**|)/**'
+	elif [[ "${PRODUCT_STYLE}" == "toolkit" ]]; then
+		# Prefer product package first; still allow toolkit-tagged specs elsewhere under packages/.
+		PACKAGE_GLOB='packages/**'
 	fi
 fi
 
