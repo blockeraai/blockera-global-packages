@@ -19,6 +19,8 @@ const {
 	hasUnsanitizedPatternMetadata,
 	needsTranslation,
 	normalizePatternsDirs,
+	hasPhpInPatternMarkup,
+	prettifyPatternMarkup,
 } = require('../normalize-patterns');
 
 describe('escapeText', () => {
@@ -154,6 +156,86 @@ describe('escapeBlockAttrs', () => {
 	});
 });
 
+describe('prettifyPatternMarkup', () => {
+	it('detects PHP only in the file header as eligible to prettify', () => {
+		const content = `<?php
+/**
+ * Title: Sample
+ */
+?>
+<!-- wp:group --><div class="wp-block-group"></div><!-- /wp:group -->
+`;
+		expect(hasPhpInPatternMarkup(content)).toBe(false);
+	});
+
+	it('detects PHP already injected into pattern markup', () => {
+		const content = `<?php
+/**
+ * Title: Sample
+ */
+?>
+<!-- wp:heading -->
+<h2><?php esc_html_e( 'Hello', 'blockera-one' ); ?></h2>
+<!-- /wp:heading -->
+`;
+		expect(hasPhpInPatternMarkup(content)).toBe(true);
+	});
+
+	it('indents compact Gutenberg HTML before localization', async () => {
+		const input = `<?php
+/**
+ * Title: Sample
+ */
+?>
+<!-- wp:group {"align":"wide"} -->
+<div class="wp-block-group alignwide"><!-- wp:query-title {"type":"archive"} /--><!-- wp:term-description /--></div>
+<!-- /wp:group -->
+`;
+
+		const output = await prettifyPatternMarkup(input);
+
+		expect(output).toContain('\n<div class="wp-block-group alignwide">');
+		expect(output).toContain('\t<!-- wp:query-title');
+		expect(output).toContain('<!-- wp:term-description');
+		expect(output).toContain('</div>');
+		expect(output).not.toContain('<?php esc_');
+	});
+
+	it('re-indents comment-only nested blocks that Prettier flattens', async () => {
+		const input = `<?php
+/**
+ * Title: Pagination
+ */
+?>
+<!-- wp:query-pagination {"paginationArrow":"arrow","align":"wide"} -->
+    <!-- wp:query-pagination-previous /-->
+    <!-- wp:query-pagination-next /-->
+<!-- /wp:query-pagination -->
+`;
+
+		const output = await prettifyPatternMarkup(input);
+
+		expect(output).toContain(
+			'<!-- wp:query-pagination {"paginationArrow":"arrow","align":"wide"} -->\n' +
+				'\t<!-- wp:query-pagination-previous /-->\n' +
+				'\t<!-- wp:query-pagination-next /-->\n' +
+				'<!-- /wp:query-pagination -->'
+		);
+	});
+
+	it('does not prettify markup that already contains PHP', async () => {
+		const input = `<?php
+/**
+ * Title: Sample
+ */
+?>
+<!-- wp:group --><div class="wp-block-group"><h2><?php esc_html_e( 'Hello', 'blockera-one' ); ?></h2></div><!-- /wp:group -->
+`;
+
+		expect(await prettifyPatternMarkup(input)).toBe(input);
+	});
+});
+
 describe('normalizePatternContent', () => {
 	const baseOptions = {
 		textDomain: 'blockera-one',
@@ -272,6 +354,44 @@ describe('normalizePatternContent', () => {
 			"<?php esc_html_e( 'Hello', 'blockera-one' ); ?>"
 		);
 	});
+
+	it('keeps comment-only pagination children indented after rewrite', async () => {
+		const input = `<?php
+/**
+ * Title: Pagination
+ */
+?>
+<!-- wp:query-pagination {"paginationArrow":"arrow","align":"wide"} -->
+    <!-- wp:query-pagination-previous /-->
+    <!-- wp:query-pagination-next /-->
+<!-- /wp:query-pagination -->
+`;
+
+		const output = await normalizePatternContent(input, baseOptions);
+
+		expect(output).toContain('\t<!-- wp:query-pagination-previous /-->');
+		expect(output).toContain('\t<!-- wp:query-pagination-next /-->');
+		expect(output).toContain('<!-- /wp:query-pagination -->');
+	});
+
+	it('prettifies compact HTML then wraps strings', async () => {
+		const input = `<?php
+/**
+ * Title: Sample
+ */
+?>
+<!-- wp:group {"align":"wide"} -->
+<div class="wp-block-group alignwide"><!-- wp:paragraph --><p>Hello</p><!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+`;
+
+		const output = await normalizePatternContent(input, baseOptions);
+
+		expect(output).toContain('\t<!-- wp:paragraph -->');
+		expect(output).toContain(
+			"\t<p><?php esc_html_e( 'Hello', 'blockera-one' ); ?></p>"
+		);
+	});
 });
 
 describe('normalizePatterns / checkPatterns', () => {
@@ -387,6 +507,35 @@ describe('normalizePatterns / checkPatterns', () => {
 			)
 		).toBe(false);
 		expect(hasUnsanitizedPatternMetadata('<!-- wp:group -->')).toBe(false);
+	});
+
+	it('prettifies compact HTML that has no PHP in the markup yet', async () => {
+		writePattern(
+			'compact.php',
+			`<?php
+/**
+ * Title: Compact
+ */
+?>
+<!-- wp:group --><div class="wp-block-group"><!-- wp:query-title {"type":"archive"} /--><!-- wp:term-description /--></div><!-- /wp:group -->
+`
+		);
+
+		const result = await normalizePatterns({
+			patternsDir: tempDir,
+			textDomain: 'blockera-one',
+			uriPhpExpression: 'get_template_directory_uri()',
+			quiet: true,
+		});
+
+		expect(result.ok).toBe(true);
+		expect(result.changedFiles).toHaveLength(1);
+		expect(fs.readFileSync(result.changedFiles[0], 'utf8')).toContain(
+			'\t<!-- wp:query-title'
+		);
+		expect(fs.readFileSync(result.changedFiles[0], 'utf8')).not.toContain(
+			'<?php esc_'
+		);
 	});
 
 	it('skips already normalized files without static URLs', async () => {
