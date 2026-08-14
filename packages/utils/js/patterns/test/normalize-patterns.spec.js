@@ -12,13 +12,14 @@ const {
 	escapeText,
 	escapeImagePath,
 	escapeBlockAttrs,
-	localizePatternContent,
-	localizePatterns,
+	normalizePatternContent,
+	normalizePatterns,
 	checkPatterns,
 	hasPatternPhpFiles,
+	hasUnsanitizedPatternMetadata,
 	needsTranslation,
 	normalizePatternsDirs,
-} = require('../localize-patterns');
+} = require('../normalize-patterns');
 
 describe('escapeText', () => {
 	it('wraps plain text with esc_html_e and the given text domain', () => {
@@ -86,7 +87,7 @@ describe('escapeImagePath', () => {
 });
 
 describe('escapeBlockAttrs', () => {
-	it('localizes allowed block JSON string attributes', () => {
+	it('wraps allowed block JSON string attributes with i18n', () => {
 		const block =
 			' wp:search {"label":"Search","placeholder":"Type here...","buttonText":"Go"} /';
 
@@ -102,16 +103,65 @@ describe('escapeBlockAttrs', () => {
 			"<?php esc_html_e( 'Go', 'blockera-one' ); ?>"
 		);
 	});
+
+	it('strips Gutenberg copied pattern metadata and keeps blockeraOne', () => {
+		const block =
+			' wp:group {"metadata":{"blockeraOne":"section/page-title:default","patternName":"blockera-one/builder-archive-page-title","name":"Archive Page Title","description":"Simple archive page header with title and term description.","categories":["blockera-one/template-builder"]},"blockeraDisplay":{"value":"flex"},"align":"wide"} ';
+
+		const result = escapeBlockAttrs(block, 'blockera-one');
+
+		expect(result).toContain(
+			'"metadata":{"blockeraOne":"section/page-title:default"}'
+		);
+		expect(result).not.toContain('"patternName"');
+		expect(result).not.toContain('"Archive Page Title"');
+		expect(result).not.toContain('"categories"');
+		expect(result).toContain('"blockeraDisplay":{"value":"flex"}');
+		expect(result).toContain('"align":"wide"');
+	});
+
+	it('drops metadata entirely when only copied keys remain', () => {
+		const block =
+			' wp:group {"metadata":{"categories":["banner"],"patternName":"blockera-one/hero-book","name":"Hero book"},"align":"full"} ';
+
+		const result = escapeBlockAttrs(block, 'blockera-one');
+
+		expect(result).toBe(' wp:group {"align":"full"} ');
+		expect(result).not.toContain('"metadata"');
+	});
+
+	it('omits empty attrs when metadata was the only property', () => {
+		const block =
+			' wp:group {"metadata":{"patternName":"blockera-one/hero-book","name":"Hero book"}} ';
+
+		expect(escapeBlockAttrs(block, 'blockera-one')).toBe(' wp:group ');
+	});
+
+	it('strips metadata when PHP image URLs make the attrs JSON unparseable', () => {
+		const block =
+			' wp:cover {"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/cover.webp","metadata":{"patternName":"blockera-one/hero-book","name":"Hero book","blockeraOne":"section/hero:default"}} ';
+
+		const result = escapeBlockAttrs(block, 'blockera-one');
+
+		expect(result).toContain(
+			'"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/cover.webp"'
+		);
+		expect(result).toContain(
+			'"metadata":{"blockeraOne":"section/hero:default"}'
+		);
+		expect(result).not.toContain('"patternName"');
+		expect(result).not.toContain('"name":"Hero book"');
+	});
 });
 
-describe('localizePatternContent', () => {
+describe('normalizePatternContent', () => {
 	const baseOptions = {
 		textDomain: 'blockera-one',
 		uriPhpExpression: 'get_template_directory_uri()',
 		imagePathRoots: ['assets', 'patterns/images'],
 	};
 
-	it('localizes heading text, alt, aria-label, and image src', async () => {
+	it('normalizes heading text, alt, aria-label, and image src', async () => {
 		const input = `<?php
 /**
  * Title: Sample
@@ -125,7 +175,7 @@ describe('localizePatternContent', () => {
 <!-- /wp:group -->
 `;
 
-		const output = await localizePatternContent(input, baseOptions);
+		const output = await normalizePatternContent(input, baseOptions);
 
 		expect(output).toContain(
 			"<?php esc_html_e( 'The Stories Book', 'blockera-one' ); ?>"
@@ -152,17 +202,17 @@ describe('localizePatternContent', () => {
 <!-- /wp:cover -->
 `;
 
-		const output = await localizePatternContent(input, baseOptions);
+		const output = await normalizePatternContent(input, baseOptions);
 
 		expect(output).toContain(
 			'"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/cover.webp"'
 		);
 	});
 
-	it('is idempotent for already-localized content', async () => {
+	it('is idempotent for already-normalized content', async () => {
 		const input = `<?php
 /**
- * Title: Localized
+ * Title: Normalized
  */
 ?>
 <!-- wp:heading -->
@@ -170,7 +220,7 @@ describe('localizePatternContent', () => {
 <!-- /wp:heading -->
 `;
 
-		const output = await localizePatternContent(input, baseOptions);
+		const output = await normalizePatternContent(input, baseOptions);
 		expect(output).toBe(input);
 	});
 
@@ -186,7 +236,7 @@ describe('localizePatternContent', () => {
 <img src="https://site.test/wp-content/plugins/blockera-pro/assets/images/pro.webp" alt="Pro"/>
 `;
 
-		const output = await localizePatternContent(input, {
+		const output = await normalizePatternContent(input, {
 			textDomain: 'blockera-pro',
 			uriPhpExpression: "plugins_url( '/', BLOCKERA_PRO_FILE )",
 			imagePathRoots: ['assets'],
@@ -199,13 +249,36 @@ describe('localizePatternContent', () => {
 			"<?php echo esc_url( plugins_url( '/', BLOCKERA_PRO_FILE ) ); ?>/assets/images/pro.webp"
 		);
 	});
+
+	it('strips copied pattern metadata from already-normalized content', async () => {
+		const input = `<?php
+/**
+ * Title: Normalized
+ */
+?>
+<!-- wp:group {"metadata":{"categories":["banner"],"patternName":"blockera-one/hero-book","name":"Hero book"},"align":"full"} -->
+<div class="wp-block-group alignfull">
+	<h2 class="wp-block-heading"><?php esc_html_e( 'Hello', 'blockera-one' ); ?></h2>
+</div>
+<!-- /wp:group -->
+`;
+
+		const output = await normalizePatternContent(input, baseOptions);
+
+		expect(output).toContain('"align":"full"');
+		expect(output).not.toContain('"patternName"');
+		expect(output).not.toContain('"metadata"');
+		expect(output).toContain(
+			"<?php esc_html_e( 'Hello', 'blockera-one' ); ?>"
+		);
+	});
 });
 
-describe('localizePatterns / checkPatterns', () => {
+describe('normalizePatterns / checkPatterns', () => {
 	let tempDir;
 
 	beforeEach(() => {
-		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'patterns-localize-'));
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'patterns-normalize-'));
 	});
 
 	afterEach(() => {
@@ -236,7 +309,7 @@ describe('localizePatterns / checkPatterns', () => {
 		).toBe(false);
 	});
 
-	it('writes localized files and is then clean under checkPatterns', async () => {
+	it('writes normalized files and is then clean under checkPatterns', async () => {
 		writePattern(
 			'hero.php',
 			`<?php
@@ -250,7 +323,7 @@ describe('localizePatterns / checkPatterns', () => {
 `
 		);
 
-		const writeResult = await localizePatterns({
+		const writeResult = await normalizePatterns({
 			patternsDir: tempDir,
 			textDomain: 'blockera-one',
 			uriPhpExpression: 'get_template_directory_uri()',
@@ -274,7 +347,7 @@ describe('localizePatterns / checkPatterns', () => {
 		expect(checkResult.changedFiles).toHaveLength(0);
 	});
 
-	it('checkPatterns fails when files still need localization', async () => {
+	it('checkPatterns fails when files still need normalization', async () => {
 		writePattern(
 			'dirty.php',
 			`<?php
@@ -302,7 +375,21 @@ describe('localizePatterns / checkPatterns', () => {
 		).toContain('Needs work');
 	});
 
-	it('skips already localized files without static URLs', async () => {
+	it('hasUnsanitizedPatternMetadata detects copied editor keys', () => {
+		expect(
+			hasUnsanitizedPatternMetadata(
+				'<!-- wp:group {"metadata":{"patternName":"blockera-one/hero-book"}} -->'
+			)
+		).toBe(true);
+		expect(
+			hasUnsanitizedPatternMetadata(
+				'<!-- wp:group {"metadata":{"blockeraOne":"section/page-title:default"}} -->'
+			)
+		).toBe(false);
+		expect(hasUnsanitizedPatternMetadata('<!-- wp:group -->')).toBe(false);
+	});
+
+	it('skips already normalized files without static URLs', async () => {
 		writePattern(
 			'done.php',
 			`<?php
@@ -316,7 +403,7 @@ describe('localizePatterns / checkPatterns', () => {
 `
 		);
 
-		const result = await localizePatterns({
+		const result = await normalizePatterns({
 			patternsDir: tempDir,
 			textDomain: 'blockera-one',
 			uriPhpExpression: 'get_template_directory_uri()',
@@ -325,6 +412,39 @@ describe('localizePatterns / checkPatterns', () => {
 
 		expect(result.ok).toBe(true);
 		expect(result.changedFiles).toHaveLength(0);
+	});
+
+	it('sanitizes copied pattern metadata on already-normalized files', async () => {
+		writePattern(
+			'hero.php',
+			`<?php
+/**
+ * Title: Hero
+ */
+?>
+<!-- wp:group {"metadata":{"patternName":"blockera-one/hero-book","name":"Hero book"},"align":"full"} -->
+<div class="wp-block-group alignfull">
+	<h2><?php esc_html_e( 'Hello', 'blockera-one' ); ?></h2>
+</div>
+<!-- /wp:group -->
+`
+		);
+
+		const result = await normalizePatterns({
+			patternsDir: tempDir,
+			textDomain: 'blockera-one',
+			uriPhpExpression: 'get_template_directory_uri()',
+			quiet: true,
+		});
+
+		expect(result.ok).toBe(true);
+		expect(result.changedFiles).toHaveLength(1);
+		expect(fs.readFileSync(result.changedFiles[0], 'utf8')).not.toContain(
+			'"patternName"'
+		);
+		expect(fs.readFileSync(result.changedFiles[0], 'utf8')).toContain(
+			'"align":"full"'
+		);
 	});
 
 	it('normalizePatternsDirs accepts legacy patternsDir string', () => {
@@ -353,7 +473,7 @@ describe('localizePatterns / checkPatterns', () => {
 		expect(hasPatternPhpFiles([emptyDir])).toBe(false);
 	});
 
-	it('localizes across patternsDirs (dirty + clean directories)', async () => {
+	it('normalizes across patternsDirs (dirty + clean directories)', async () => {
 		const dirtyDir = path.join(tempDir, 'patterns');
 		const cleanDir = path.join(tempDir, 'patterns-woocommerce');
 		fs.mkdirSync(dirtyDir);
@@ -387,7 +507,7 @@ describe('localizePatterns / checkPatterns', () => {
 			'utf8'
 		);
 
-		const result = await localizePatterns({
+		const result = await normalizePatterns({
 			patternsDirs: [dirtyDir, cleanDir],
 			textDomain: 'blockera-one',
 			uriPhpExpression: 'get_template_directory_uri()',
@@ -405,7 +525,7 @@ describe('localizePatterns / checkPatterns', () => {
 		).toContain("esc_html_e( 'Already done', 'blockera-one' )");
 	});
 
-	it('legacy patternsDir string still localizes a single directory', async () => {
+	it('legacy patternsDir string still normalizes a single directory', async () => {
 		writePattern(
 			'legacy.php',
 			`<?php
@@ -419,7 +539,7 @@ describe('localizePatterns / checkPatterns', () => {
 `
 		);
 
-		const result = await localizePatterns({
+		const result = await normalizePatterns({
 			patternsDir: tempDir,
 			textDomain: 'blockera-one',
 			uriPhpExpression: 'get_template_directory_uri()',

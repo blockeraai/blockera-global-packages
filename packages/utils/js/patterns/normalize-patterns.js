@@ -1,7 +1,8 @@
 /**
- * Localize WordPress block pattern PHP files:
+ * Normalize WordPress block pattern PHP files:
  * - wrap user-facing strings in esc_html_e / esc_attr_e
  * - rewrite absolute theme/plugin image URLs to a configurable PHP URI expression
+ * - strip Gutenberg insert-time pattern metadata copied from the editor
  */
 
 const fs = require('fs');
@@ -21,17 +22,18 @@ const {
 	escapeRegExp,
 } = require('./escape-image-path');
 const { escapeBlockAttrs } = require('./escape-block-attrs');
+const { hasUnsanitizedPatternMetadata } = require('./sanitize-block-metadata');
 
 const DEFAULT_IMAGE_PATH_ROOTS = ['assets', 'patterns/images'];
 
 /**
- * @typedef {Object} LocalizePatternsOptions
+ * @typedef {Object} NormalizePatternsOptions
  * @property {string|string[]} [patternsDirs] Absolute path(s) to pattern directories.
  * @property {string|string[]} [patternsDir] Legacy alias for patternsDirs.
  * @property {string} textDomain Text domain for i18n calls.
  * @property {string} [uriPhpExpression] PHP expression passed to esc_url().
  * @property {string[]} [imagePathRoots] Product-relative image path roots.
- * @property {boolean} [force] Process even when already localized.
+ * @property {boolean} [force] Process even when already normalized.
  * @property {boolean} [quiet] Suppress logs.
  * @property {boolean} [debug] Verbose image logging.
  * @property {boolean} [check] Do not write; report files that would change.
@@ -40,7 +42,7 @@ const DEFAULT_IMAGE_PATH_ROOTS = ['assets', 'patterns/images'];
 /**
  * Normalize patternsDir / patternsDirs into an absolute path array.
  *
- * @param {LocalizePatternsOptions} options Localize options.
+ * @param {NormalizePatternsOptions} options Normalize options.
  * @return {string[]} Absolute pattern directory paths.
  */
 function normalizePatternsDirs(options = {}) {
@@ -90,16 +92,16 @@ function hasPatternPhpFiles(patternsDir) {
  *
  * @param {string} content File contents.
  * @param {string} textDomain Text domain.
- * @return {boolean} True when localization is needed.
+ * @return {boolean} True when i18n wrappers are needed.
  */
 function needsTranslation(content, textDomain) {
 	return !content.includes('<?php') || !content.includes(`'${textDomain}'`);
 }
 
 /**
- * Build a parse5 rewriting stream configured for pattern localization.
+ * Build a parse5 rewriting stream configured for pattern normalization.
  *
- * @param {LocalizePatternsOptions} options Localize options.
+ * @param {NormalizePatternsOptions} options Normalize options.
  * @return {import('stream').Transform} Configured rewriter.
  */
 function createRewriter(options) {
@@ -125,7 +127,7 @@ function createRewriter(options) {
 				const newSrc = escapeImagePath(originalSrc, imageOptions);
 
 				if (debug) {
-					// @debug-ignore — CLI debug output for patterns:localize --debug
+					// @debug-ignore — CLI debug output for patterns:normalize --debug
 					// eslint-disable-next-line no-console
 					console.log('Processing image src:', {
 						originalSrc,
@@ -186,10 +188,10 @@ function createRewriter(options) {
  * Transform pattern file content in memory.
  *
  * @param {string} content Original file contents.
- * @param {LocalizePatternsOptions} options Localize options.
+ * @param {NormalizePatternsOptions} options Normalize options.
  * @return {Promise<string>} Transformed contents.
  */
-function localizePatternContent(content, options) {
+function normalizePatternContent(content, options) {
 	return new Promise((resolve, reject) => {
 		const rewriter = createRewriter(options);
 		const chunks = [];
@@ -223,13 +225,13 @@ async function listPatternFiles(patternsDir) {
 }
 
 /**
- * Localize all pattern PHP files under one directory.
+ * Normalize all pattern PHP files under one directory.
  *
  * @param {string} patternsDir Absolute patterns directory.
- * @param {Object} shared Shared localize options (without patternsDir).
+ * @param {Object} shared Shared normalize options (without patternsDir).
  * @return {Promise<string[]>} Changed absolute file paths.
  */
-async function localizePatternsInDirectory(patternsDir, shared) {
+async function normalizePatternsInDirectory(patternsDir, shared) {
 	const {
 		textDomain,
 		uriPhpExpression = 'get_template_directory_uri()',
@@ -242,7 +244,7 @@ async function localizePatternsInDirectory(patternsDir, shared) {
 
 	if (!hasPatternPhpFiles(patternsDir)) {
 		if (!quiet) {
-			// @debug-ignore — CLI status output for patterns:localize
+			// @debug-ignore — CLI status output for patterns:normalize
 			// eslint-disable-next-line no-console
 			console.log(
 				`No PHP pattern files found in ${patternsDir}; skipping.`
@@ -265,7 +267,7 @@ async function localizePatternsInDirectory(patternsDir, shared) {
 	};
 
 	if (!quiet) {
-		// @debug-ignore — CLI status output for patterns:localize
+		// @debug-ignore — CLI status output for patterns:normalize
 		// eslint-disable-next-line no-console
 		console.log(
 			`Processing ${files.length} pattern file(s) in ${patternsDir} with text domain "${textDomain}"...`
@@ -276,7 +278,7 @@ async function localizePatternsInDirectory(patternsDir, shared) {
 		const relative = path.relative(patternsDir, file);
 
 		if (!quiet) {
-			// @debug-ignore — CLI status output for patterns:localize
+			// @debug-ignore — CLI status output for patterns:normalize
 			// eslint-disable-next-line no-console
 			console.log(`  - ${relative}`);
 		}
@@ -285,11 +287,11 @@ async function localizePatternsInDirectory(patternsDir, shared) {
 
 		if (debug) {
 			const imgMatches = [...originalContent.matchAll(/src="([^"]+)"/g)];
-			// @debug-ignore — CLI debug output for patterns:localize --debug
+			// @debug-ignore — CLI debug output for patterns:normalize --debug
 			// eslint-disable-next-line no-console
 			console.log('Found image src attributes:');
 			imgMatches.forEach((match) => {
-				// @debug-ignore — CLI debug output for patterns:localize --debug
+				// @debug-ignore — CLI debug output for patterns:normalize --debug
 				// eslint-disable-next-line no-console
 				console.log(`  - ${match[1]}`);
 			});
@@ -300,32 +302,39 @@ async function localizePatternsInDirectory(patternsDir, shared) {
 			originalContent,
 			imagePathRoots
 		);
+		const needsMetadataSanitize =
+			hasUnsanitizedPatternMetadata(originalContent);
 
-		if (!needsI18n && !hasStaticImages && !force) {
+		if (
+			!needsI18n &&
+			!hasStaticImages &&
+			!needsMetadataSanitize &&
+			!force
+		) {
 			if (!quiet) {
-				// @debug-ignore — CLI status output for patterns:localize
+				// @debug-ignore — CLI status output for patterns:normalize
 				// eslint-disable-next-line no-console
 				console.log(
-					'    - Already has translations and dynamic image paths, skipping'
+					'    - Already normalized, skipping'
 				);
 			}
 			continue;
 		}
 
 		if (hasStaticImages && !quiet) {
-			// @debug-ignore — CLI status output for patterns:localize
+			// @debug-ignore — CLI status output for patterns:normalize
 			// eslint-disable-next-line no-console
 			console.log('    - Found static image paths to update');
 		}
 
-		const nextContent = await localizePatternContent(
+		const nextContent = await normalizePatternContent(
 			originalContent,
 			runtimeOptions
 		);
 
 		if (nextContent === originalContent) {
 			if (!quiet) {
-				// @debug-ignore — CLI status output for patterns:localize
+				// @debug-ignore — CLI status output for patterns:normalize
 				// eslint-disable-next-line no-console
 				console.log('    - No content changes after transform');
 			}
@@ -343,22 +352,22 @@ async function localizePatternsInDirectory(patternsDir, shared) {
 }
 
 /**
- * Localize all pattern PHP files under options.patternsDirs / patternsDir.
+ * Normalize all pattern PHP files under options.patternsDirs / patternsDir.
  *
- * @param {LocalizePatternsOptions} options Localize options.
+ * @param {NormalizePatternsOptions} options Normalize options.
  * @return {Promise<{ changedFiles: string[], ok: boolean, reason?: string }>} Result.
  */
-async function localizePatterns(options = {}) {
+async function normalizePatterns(options = {}) {
 	const patternsDirs = normalizePatternsDirs(options);
 
 	if (!patternsDirs.length) {
 		throw new Error(
-			'localizePatterns: patternsDirs (or patternsDir) is required.'
+			'normalizePatterns: patternsDirs (or patternsDir) is required.'
 		);
 	}
 
 	if (!options.textDomain) {
-		throw new Error('localizePatterns: textDomain is required.');
+		throw new Error('normalizePatterns: textDomain is required.');
 	}
 
 	const {
@@ -384,7 +393,7 @@ async function localizePatterns(options = {}) {
 	const changedFiles = [];
 
 	for (const patternsDir of patternsDirs) {
-		const changed = await localizePatternsInDirectory(patternsDir, shared);
+		const changed = await normalizePatternsInDirectory(patternsDir, shared);
 		for (const file of changed) {
 			changedFiles.push(file);
 		}
@@ -394,7 +403,7 @@ async function localizePatterns(options = {}) {
 		return {
 			changedFiles,
 			ok: false,
-			reason: `${changedFiles.length} pattern file(s) need localization.`,
+			reason: `${changedFiles.length} pattern file(s) need normalization.`,
 		};
 	}
 
@@ -402,13 +411,13 @@ async function localizePatterns(options = {}) {
 }
 
 /**
- * Check that patterns are already localized (no writes).
+ * Check that patterns are already normalized (no writes).
  *
- * @param {LocalizePatternsOptions} options Localize options (check forced on).
+ * @param {NormalizePatternsOptions} options Normalize options (check forced on).
  * @return {Promise<{ changedFiles: string[], ok: boolean, reason?: string }>} Result.
  */
 async function checkPatterns(options = {}) {
-	return localizePatterns({ ...options, check: true });
+	return normalizePatterns({ ...options, check: true });
 }
 
 module.exports = {
@@ -416,11 +425,12 @@ module.exports = {
 	normalizePatternsDirs,
 	hasPatternPhpFiles,
 	needsTranslation,
-	localizePatternContent,
-	localizePatterns,
+	normalizePatternContent,
+	normalizePatterns,
 	checkPatterns,
 	escapeText,
 	escapeImagePath,
 	escapeBlockAttrs,
 	hasStaticImagePaths,
+	hasUnsanitizedPatternMetadata,
 };

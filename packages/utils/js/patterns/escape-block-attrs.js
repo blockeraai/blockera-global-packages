@@ -2,6 +2,10 @@
  * Internal dependencies
  */
 const { escapeText } = require('./escape-text');
+const {
+	stripCopiedPatternMetadata,
+	sanitizeMetadataInRawConfig,
+} = require('./sanitize-block-metadata');
 
 const ALLOWED_BLOCK_ATTRS = [
 	{ name: 'label' },
@@ -12,7 +16,24 @@ const ALLOWED_BLOCK_ATTRS = [
 ];
 
 /**
- * Escape selected string attributes inside a Gutenberg block comment JSON blob.
+ * Serialize block comment JSON, omitting an empty `{}` attrs object.
+ *
+ * @param {string} configPrefix Text before the JSON object.
+ * @param {Object} configJson Parsed attrs.
+ * @param {string} configSuffix Text after the JSON object.
+ * @return {string} Block comment text.
+ */
+function stringifyBlockConfig(configPrefix, configJson, configSuffix) {
+	if (Object.keys(configJson).length === 0) {
+		return configPrefix.replace(/\s+$/, '') + configSuffix;
+	}
+
+	return configPrefix + JSON.stringify(configJson) + configSuffix;
+}
+
+/**
+ * Escape selected string attributes inside a Gutenberg block comment JSON blob
+ * and strip copied pattern metadata (`patternName`, `name`, …).
  *
  * @param {string} block Raw block comment text (without surrounding delimiters).
  * @param {string} textDomain Text domain.
@@ -33,6 +54,8 @@ function escapeBlockAttrs(block, textDomain) {
 	try {
 		const configJson = JSON.parse(config);
 
+		stripCopiedPatternMetadata(configJson);
+
 		for (const attr of ALLOWED_BLOCK_ATTRS) {
 			if (!configJson[attr.name]) {
 				continue;
@@ -45,9 +68,17 @@ function escapeBlockAttrs(block, textDomain) {
 			);
 		}
 
-		return configPrefix + JSON.stringify(configJson) + configSuffix;
+		return stringifyBlockConfig(configPrefix, configJson, configSuffix);
 	} catch (error) {
-		return block;
+		// Image URL rewrites inject PHP, which is not valid JSON. Still strip
+		// copied pattern metadata from the raw attrs blob.
+		const nextConfig = sanitizeMetadataInRawConfig(config);
+
+		if (nextConfig === '{}') {
+			return configPrefix.replace(/\s+$/, '') + configSuffix;
+		}
+
+		return configPrefix + nextConfig + configSuffix;
 	}
 }
 

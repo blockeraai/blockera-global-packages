@@ -1,5 +1,5 @@
 /**
- * Pattern localization utilities (Node-only; do not import from browser bundles).
+ * Pattern normalization utilities (Node-only; do not import from browser bundles).
  */
 
-module.exports = require('./localize-patterns');
+module.exports = require('./normalize-patterns');
