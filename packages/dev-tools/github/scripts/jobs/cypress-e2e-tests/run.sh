@@ -103,8 +103,8 @@ if [[ -z "${PACKAGE_GLOB}" ]]; then
 	elif [[ "${PRODUCT_STYLE}" == "pro" ]]; then
 		PACKAGE_GLOB='packages/**-pro(-**|)/**'
 	elif [[ "${PRODUCT_STYLE}" == "toolkit" ]]; then
-		# Prefer product package first; still allow toolkit-tagged specs elsewhere under packages/.
-		PACKAGE_GLOB='packages/**'
+		# Site-toolkit product package only (not shared global-packages specs).
+		PACKAGE_GLOB='packages/site-toolkit/**'
 	fi
 fi
 

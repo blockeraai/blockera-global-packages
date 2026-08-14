@@ -1,11 +1,12 @@
 /**
  * Site-toolkit Cypress E2E category discovery (`*.toolkit.e2e.cy.js`).
- * Prefer packages/site-toolkit, but scan all packages so toolkit-tagged specs are not missed.
+ * Only scans packages/site-toolkit — shared global-packages specs belong to other consumers.
  */
 const fs = require('fs');
 const path = require('path');
 
 const excludedDirs = ['node_modules', 'vendor', 'dist'];
+const SCAN_ROOT = 'packages/site-toolkit';
 
 const getFiles = (dir, pattern) => {
 	if (!fs.existsSync(dir)) {
@@ -35,7 +36,7 @@ const main = () => {
 	const categories = new Set();
 
 	const categorizedFiles = getFiles(
-		'packages',
+		SCAN_ROOT,
 		/\.toolkit(\.[a-z0-9-]+)?\.e2e\.cy\.js$/i
 	);
 
