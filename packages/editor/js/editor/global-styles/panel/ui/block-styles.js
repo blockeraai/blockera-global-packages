@@ -73,6 +73,8 @@ function BlockStyles({
 	originDefaultAttributes,
 	context = 'inspector-controls',
 	pickerVariationSurface,
+	pickOnly = false,
+	onCommitStyle,
 }: T_BLOCK_STYLES_PROPS): MixedElement | null {
 	const [isPromotionPopoverOpen, setIsPromotionPopoverOpen] = useState(false);
 
@@ -97,7 +99,11 @@ function BlockStyles({
 		VARIATION_SURFACE_SIZE
 	);
 
-	const { isNormalState } = useBlockContext();
+	const blockContext = useBlockContext() || {};
+	const isNormalState =
+		typeof blockContext.isNormalState === 'function'
+			? blockContext.isNormalState
+			: () => true;
 	const [searchTerm, setSearchTerm] = useState('');
 	const [counter, setCounter] = useBlockStylesCounter({
 		blockName,
@@ -253,6 +259,9 @@ function BlockStyles({
 
 			setCurrentActiveStyle(style);
 			onSelect(style);
+			if (typeof onCommitStyle === 'function') {
+				onCommitStyle(style);
+			}
 			setCurrentPreviewStyle(null);
 			setShowPreview(false);
 			setIsOpen(false);
@@ -262,6 +271,7 @@ function BlockStyles({
 			isNormalState,
 			setCurrentActiveStyle,
 			onSelect,
+			onCommitStyle,
 			setIsOpen,
 			setHoveredStyle,
 			setCurrentPreviewStyle,
@@ -337,6 +347,7 @@ function BlockStyles({
 			setChangesets: setChangesets ?? (() => {}),
 			isNotActive: isNotActive ?? false,
 			variationSurface,
+			pickOnly,
 		}),
 		[
 			blockName,
@@ -359,6 +370,7 @@ function BlockStyles({
 			setChangesets,
 			isNotActive,
 			variationSurface,
+			pickOnly,
 		]
 	);
 
@@ -474,9 +486,13 @@ function BlockStyles({
 						) : (
 							<>
 								<Flex direction="column" gap="10px">
-									<AddNewStyleButton
-										label={
-											variationSurface !==
+									{pickOnly ? (
+										<h2
+											className={classNames(
+												'blockera-block-styles-category'
+											)}
+										>
+											{variationSurface !==
 											VARIATION_SURFACE_SIZE
 												? __(
 														'Style Variations',
@@ -485,10 +501,25 @@ function BlockStyles({
 												: __(
 														'Size Variations',
 														'blockera'
-													)
-										}
-									/>
-									{isPromotionPopoverOpen && (
+													)}
+										</h2>
+									) : (
+										<AddNewStyleButton
+											label={
+												variationSurface !==
+												VARIATION_SURFACE_SIZE
+													? __(
+															'Style Variations',
+															'blockera'
+														)
+													: __(
+															'Size Variations',
+															'blockera'
+														)
+											}
+										/>
+									)}
+									{!pickOnly && isPromotionPopoverOpen && (
 										<PromoteGlobalStylesPremiumFeature
 											onClose={() =>
 												setIsPromotionPopoverOpen(false)
@@ -546,7 +577,7 @@ function BlockStyles({
 									</div>
 								</Flex>
 
-								{activeStyle?.name && (
+								{!pickOnly && activeStyle?.name && (
 									<Flex direction="column" gap="8px">
 										<h2
 											className={classNames(
