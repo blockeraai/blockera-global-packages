@@ -5,7 +5,7 @@ Shared development tooling for Blockera packages and themes:
 - Package webpack configs (JS + style entries)
 - ESLint `@blockera/*` import resolver
 - Modular `theme.json` merge/check CLI
-- Localized block patterns CLI
+- Block patterns normalize/check CLI
 - Shared `git-conventional-commits.yaml` (husky `commit-msg` via `--config`)
 
 ---
@@ -25,7 +25,7 @@ packages/dev-tools/
 │   ├── webpack/                 # packages, styles, SVGO, plugins
 │   ├── eslint/import-resolver.js
 │   ├── theme-json/              # merge-theme-json CLI
-│   └── patterns/                # localize-patterns CLI
+│   └── patterns/                # normalize-patterns CLI
 ├── php/
 │   └── functions.php            # Composer placeholder
 ├── git-conventional-commits.yaml # Shared conventional-commit types
@@ -78,7 +78,7 @@ node packages/dev-tools/js/theme-json/merge-theme-json.js --check
 ### Patterns CLI
 
 ```bash
-node packages/dev-tools/js/patterns/localize-patterns-cli.js --check
+node packages/dev-tools/js/patterns/normalize-patterns-cli.js --check
 ```
 
 Supports `--check`, `--force`, `--debug`, `--quiet`, `--text-domain`, `--uri-php`.

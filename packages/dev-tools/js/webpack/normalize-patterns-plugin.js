@@ -1,5 +1,5 @@
 /**
- * Webpack plugin: localize patterns PHP files on each compile,
+ * Webpack plugin: normalize patterns PHP files on each compile,
  * and register the patterns directories as watch dependencies for `wp-scripts start`.
  *
  * Reads theme-root `.patterns.config.js`. No-ops when the configured patterns
@@ -12,13 +12,13 @@ const path = require('path');
 /**
  * @param {Object} [overrides] Optional config overrides.
  */
-class LocalizePatternsWebpackPlugin {
+class NormalizePatternsWebpackPlugin {
 	constructor(overrides = {}) {
 		this.overrides = overrides;
 	}
 
 	apply(compiler) {
-		const pluginName = 'LocalizePatternsWebpackPlugin';
+		const pluginName = 'NormalizePatternsWebpackPlugin';
 
 		let cachedConfig = null;
 
@@ -36,8 +36,8 @@ class LocalizePatternsWebpackPlugin {
 		compiler.hooks.beforeCompile.tapPromise(pluginName, async () => {
 			const {
 				hasPatternPhpFiles,
-				localizePatterns,
-			} = require('../../../utils/js/patterns/localize-patterns');
+				normalizePatterns,
+			} = require('../../../utils/js/patterns/normalize-patterns');
 
 			let config;
 			try {
@@ -54,7 +54,7 @@ class LocalizePatternsWebpackPlugin {
 				return;
 			}
 
-			await localizePatterns(config);
+			await normalizePatterns(config);
 		});
 
 		compiler.hooks.afterCompile.tap(pluginName, (compilation) => {
@@ -126,7 +126,7 @@ function hasConfiguredPatterns(overrides = {}) {
 		} = require('../patterns/load-patterns-config');
 		const {
 			hasPatternPhpFiles,
-		} = require('../../../utils/js/patterns/localize-patterns');
+		} = require('../../../utils/js/patterns/normalize-patterns');
 		const config = loadPatternsConfig({ ...overrides, quiet: true });
 		return hasPatternPhpFiles(config.patternsDirs);
 	} catch (error) {
@@ -134,5 +134,5 @@ function hasConfiguredPatterns(overrides = {}) {
 	}
 }
 
-module.exports = LocalizePatternsWebpackPlugin;
+module.exports = NormalizePatternsWebpackPlugin;
 module.exports.hasConfiguredPatterns = hasConfiguredPatterns;

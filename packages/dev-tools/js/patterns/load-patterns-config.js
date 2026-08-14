@@ -1,5 +1,5 @@
 /**
- * Load theme-root `.patterns.config.js` and normalize options for localize core.
+ * Load theme-root `.patterns.config.js` and build options for the patterns pipeline.
  */
 
 const fs = require('fs');
@@ -84,7 +84,7 @@ function resolvePatternsDirs(relativeDirs, productRoot) {
  *
  * @param {Object} [overrides] Optional overrides (CLI flags / webpack plugin).
  * @param {string} [productRoot] Product root override.
- * @return {Object} Options ready for localizePatterns().
+ * @return {Object} Options ready for normalizePatterns().
  */
 function loadPatternsConfig(overrides = {}, productRoot = PRODUCT_ROOT) {
 	const configPath = getPatternsConfigPath(productRoot);

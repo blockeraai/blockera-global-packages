@@ -1,9 +1,9 @@
 /**
- * CLI for pattern localization.
+ * CLI for pattern normalization.
  *
  * Usage:
- *   node packages/dev-tools/js/patterns/localize-patterns-cli.js
- *   node packages/dev-tools/js/patterns/localize-patterns-cli.js --check
+ *   node packages/dev-tools/js/patterns/normalize-patterns-cli.js
+ *   node packages/dev-tools/js/patterns/normalize-patterns-cli.js --check
  */
 
 const path = require('path');
@@ -13,15 +13,15 @@ const path = require('path');
  */
 const { loadPatternsConfig } = require('./load-patterns-config');
 const {
-	localizePatterns,
+	normalizePatterns,
 	checkPatterns,
-} = require('../../../utils/js/patterns/localize-patterns');
+} = require('../../../utils/js/patterns/normalize-patterns');
 
 /**
  * Parse CLI argv into option overrides.
  *
  * @param {string[]} argv process.argv.slice(2)
- * @return {Object} Overrides for loadPatternsConfig / localize.
+ * @return {Object} Overrides for loadPatternsConfig / normalize.
  */
 function parseArgs(argv) {
 	const overrides = {};
@@ -52,7 +52,7 @@ async function main() {
 	try {
 		const result = overrides.check
 			? await checkPatterns(options)
-			: await localizePatterns(options);
+			: await normalizePatterns(options);
 
 		if (!result.ok) {
 			// @debug-ignore — CLI status output for patterns:check
@@ -65,25 +65,25 @@ async function main() {
 			}
 			// @debug-ignore — CLI status output for patterns:check
 			console.error(
-				'Run `npm run patterns:localize` and commit the updated pattern files.'
+				'Run `npm run patterns:normalize` and commit the updated pattern files.'
 			);
 			process.exit(1);
 		}
 
 		if (overrides.check) {
 			// @debug-ignore — CLI status output for patterns:check
-			console.log('✅ Pattern files are localized.');
+			console.log('✅ Pattern files are normalized.');
 		} else {
-			// @debug-ignore — CLI status output for patterns:localize
+			// @debug-ignore — CLI status output for patterns:normalize
 			console.log(
-				`✅ Pattern localization complete (${result.changedFiles.length} file(s) updated).`
+				`✅ Pattern normalization complete (${result.changedFiles.length} file(s) updated).`
 			);
 		}
 
 		process.exit(0);
 	} catch (error) {
-		// @debug-ignore — CLI status output for patterns:localize
-		console.error(`❌ Pattern localization failed: ${error.message}`);
+		// @debug-ignore — CLI status output for patterns:normalize
+		console.error(`❌ Pattern normalization failed: ${error.message}`);
 		process.exit(1);
 	}
 }
