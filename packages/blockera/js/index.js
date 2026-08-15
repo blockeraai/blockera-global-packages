@@ -60,7 +60,7 @@ import { default as blockVariations } from './block-variations';
 addFilter(
 	'blockera.products.isCompanionPlugin',
 	'blockera/products.isCompanionPlugin',
-	() => true,
+	() => !window?.blockeraPluginData?.pluginURI?.includes('/themes/blockera-one'),
 	10
 );
 
