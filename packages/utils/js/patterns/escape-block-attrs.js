@@ -33,7 +33,8 @@ function stringifyBlockConfig(configPrefix, configJson, configSuffix) {
 
 /**
  * Escape selected string attributes inside a Gutenberg block comment JSON blob
- * and strip copied pattern metadata (`patternName`, `name`, …).
+ * and strip copied pattern metadata (`patternName`, `description`, …).
+ * Keeps `metadata.name` unless it was copied with `patternName`.
  *
  * @param {string} block Raw block comment text (without surrounding delimiters).
  * @param {string} textDomain Text domain.

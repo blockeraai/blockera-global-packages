@@ -5,8 +5,10 @@
  * Gutenberg writes `patternName`, `name`, `categories` (and sometimes
  * `description`) onto the root block at insert time. `patternName` also makes
  * the block a content-only section. Theme pattern sources already declare
- * Title / Description / Slug / Categories in the PHP file header; keep only
- * product-specific keys such as `blockeraOne`.
+ * Title / Description / Slug / Categories in the PHP file header.
+ *
+ * Keep `metadata.name` when it is a List View label (no `patternName`).
+ * Strip `name` only on a copied pattern root, where it is the pattern title.
  *
  * @see source-codes/block-editor/packages/block-library/src/pattern/edit.js
  * @see source-codes/block-editor/packages/block-editor/src/store/private-selectors.js
@@ -19,10 +21,17 @@
  */
 const COPIED_PATTERN_METADATA_KEYS = [
 	'patternName',
-	'name',
 	'description',
 	'categories',
 ];
+
+/**
+ * Copied onto the pattern root together with `patternName`. A lone `name`
+ * is the Gutenberg List View label and must be kept.
+ *
+ * @type {string}
+ */
+const COPIED_PATTERN_TITLE_KEY = 'name';
 
 /**
  * Detect copied pattern metadata without parsing every block comment.
@@ -40,7 +49,7 @@ function hasUnsanitizedPatternMetadata(content) {
 		return true;
 	}
 
-	return /"metadata"\s*:\s*\{[^{}]*"(?:name|description|categories)"/.test(
+	return /"metadata"\s*:\s*\{[^{}]*"(?:description|categories)"/.test(
 		content
 	);
 }
@@ -59,6 +68,10 @@ function stripCopiedPatternMetadata(configJson) {
 	}
 
 	let changed = false;
+	const isCopiedPatternRoot = Object.prototype.hasOwnProperty.call(
+		metadata,
+		'patternName'
+	);
 
 	for (let i = 0; i < COPIED_PATTERN_METADATA_KEYS.length; i++) {
 		const key = COPIED_PATTERN_METADATA_KEYS[i];
@@ -66,6 +79,14 @@ function stripCopiedPatternMetadata(configJson) {
 			continue;
 		}
 		delete metadata[key];
+		changed = true;
+	}
+
+	if (
+		isCopiedPatternRoot &&
+		Object.prototype.hasOwnProperty.call(metadata, COPIED_PATTERN_TITLE_KEY)
+	) {
+		delete metadata[COPIED_PATTERN_TITLE_KEY];
 		changed = true;
 	}
 

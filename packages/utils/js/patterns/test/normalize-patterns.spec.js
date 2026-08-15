@@ -108,12 +108,12 @@ describe('escapeBlockAttrs', () => {
 
 	it('strips Gutenberg copied pattern metadata and keeps blockeraOne', () => {
 		const block =
-			' wp:group {"metadata":{"blockeraOne":"section/page-title:default","patternName":"blockera-one/builder-archive-page-title","name":"Archive Page Title","description":"Simple archive page header with title and term description.","categories":["blockera-one/template-builder"]},"blockeraDisplay":{"value":"flex"},"align":"wide"} ';
+			' wp:group {"metadata":{"blockeraOne":"section/page-title:simple","patternName":"blockera-one/builder-archive-page-title-simple","name":"Archive Page Title","description":"Simple archive page header with title and term description.","categories":["blockera-one/template-builder"]},"blockeraDisplay":{"value":"flex"},"align":"wide"} ';
 
 		const result = escapeBlockAttrs(block, 'blockera-one');
 
 		expect(result).toContain(
-			'"metadata":{"blockeraOne":"section/page-title:default"}'
+			'"metadata":{"blockeraOne":"section/page-title:simple"}'
 		);
 		expect(result).not.toContain('"patternName"');
 		expect(result).not.toContain('"Archive Page Title"');
@@ -153,6 +153,17 @@ describe('escapeBlockAttrs', () => {
 		);
 		expect(result).not.toContain('"patternName"');
 		expect(result).not.toContain('"name":"Hero book"');
+	});
+
+	it('keeps a List View metadata.name when patternName is absent', () => {
+		const block =
+			' wp:group {"metadata":{"name":"Elements","blockeraOne":"container/elements"},"align":"wide"} ';
+
+		const result = escapeBlockAttrs(block, 'blockera-one');
+
+		expect(result).toContain(
+			'"metadata":{"name":"Elements","blockeraOne":"container/elements"}'
+		);
 	});
 });
 
@@ -504,6 +515,11 @@ describe('normalizePatterns / checkPatterns', () => {
 		expect(
 			hasUnsanitizedPatternMetadata(
 				'<!-- wp:group {"metadata":{"blockeraOne":"section/page-title:default"}} -->'
+			)
+		).toBe(false);
+		expect(
+			hasUnsanitizedPatternMetadata(
+				'<!-- wp:group {"metadata":{"name":"Elements","blockeraOne":"container/elements"}} -->'
 			)
 		).toBe(false);
 		expect(hasUnsanitizedPatternMetadata('<!-- wp:group -->')).toBe(false);
