@@ -2,7 +2,8 @@
 
 /**
  * Host-repo bootstrap: clean dist, materialize `.cursor` from shared templates,
- * and symlink `source-codes` from BLOCKERA_EXTERNAL_SOURCE_CODES_PATH.
+ * symlink `source-codes` from BLOCKERA_EXTERNAL_SOURCE_CODES_PATH, and
+ * sync-config (host files from shared templates; Flow is the first inner step).
  *
  * Run from the consuming project root:
  *   node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.js --project=<id>
@@ -10,6 +11,10 @@
 
 const fs = require( 'fs' );
 const path = require( 'path' );
+const {
+	writeFlowconfig,
+	writeFlowStubs,
+} = require( '../flow/write-flowconfig' );
 
 const PROJECT_IDS = [
 	'blockera',
@@ -24,7 +29,7 @@ const SHARED_TEMPLATES = 'shared';
 const ENV_SOURCE_CODES = 'BLOCKERA_EXTERNAL_SOURCE_CODES_PATH';
 const ENV_SOURCE_CODES_PLACEHOLDER =
 	'/absolute/path/to/shared/source-codes';
-const STEP_COUNT = 3;
+const STEP_COUNT = 4;
 
 const useColor =
 	Boolean( process.stdout.isTTY ) && process.env.NO_COLOR === undefined;
@@ -146,6 +151,23 @@ function logStep( index, name, detail ) {
 		) }`
 	);
 	printOut( `           ${ color.dim( detail ) }` );
+	printOut( '' );
+}
+
+function logStepWithInners( index, name, inners ) {
+	printOut(
+		`  ${ stepLabel( index ) }  ${ color.ok( '✔' ) }  ${ color.bold(
+			name
+		) }`
+	);
+
+	inners.forEach( ( inner ) => {
+		printOut(
+			`           ${ color.ok( '✔' ) }  ${ color.bold( inner.name ) }`
+		);
+		printOut( `              ${ color.dim( inner.detail ) }` );
+	} );
+
 	printOut( '' );
 }
 
@@ -308,6 +330,34 @@ function bootstrapSourceCodes( root, env ) {
 	logStep( 3, 'source-codes', `linked → ${ target }` );
 }
 
+function syncFlowconfig( root, projectId ) {
+	writeFlowconfig( { root, projectId } );
+	writeFlowStubs( { root } );
+
+	return [
+		{
+			name: '.flowconfig',
+			detail: `wrote from flow/flowconfig.base + overlays/${ projectId }`,
+		},
+		{
+			name: 'flow/',
+			detail: 'copied TypeScriptModule.js.flow, WebpackAsset.js.flow',
+		},
+	];
+}
+
+function bootstrapSyncConfig( root, projectId ) {
+	const inners = [];
+
+	try {
+		inners.push( ...syncFlowconfig( root, projectId ) );
+	} catch ( error ) {
+		fail( error.message || String( error ) );
+	}
+
+	logStepWithInners( 4, 'sync-config', inners );
+}
+
 function done() {
 	printOut( `  ${ color.ok( '✔' ) }  ${ color.bold( 'bootstrap complete' ) }` );
 	printOut( '' );
@@ -332,6 +382,7 @@ function main() {
 	cleanDist( root );
 	bootstrapCursor( root, projectId );
 	bootstrapSourceCodes( root, env );
+	bootstrapSyncConfig( root, projectId );
 	done();
 }
 
