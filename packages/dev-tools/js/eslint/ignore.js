@@ -27,6 +27,10 @@ module.exports = [
 	'vendor/*',
 	'assets/*',
 	'source-codes/**',
+	// Local / CI ephemeral trees (also gitignored).
+	'Scratch/**',
+	'artifacts/**',
+	'test-results/**',
 	'**/test/*',
 	'**/stories/*',
 	'/bin/plugin/**',
