@@ -2,8 +2,7 @@
 
 /**
  * Host-repo bootstrap: clean up generated state, materialize `.cursor` from shared templates,
- * symlink `source-codes` from BLOCKERA_EXTERNAL_SOURCE_CODES_PATH, and
- * sync-config (host files from shared templates in root-configs/).
+ * and sync-config (host files from root-configs/ plus the source-codes symlink).
  *
  * Run from the consuming project root:
  *   node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.js --project=<id>
@@ -28,7 +27,7 @@ const SHARED_TEMPLATES = 'shared';
 const ENV_SOURCE_CODES = 'BLOCKERA_EXTERNAL_SOURCE_CODES_PATH';
 const ENV_SOURCE_CODES_PLACEHOLDER =
 	'/absolute/path/to/shared/source-codes';
-const STEP_COUNT = 4;
+const STEP_COUNT = 3;
 
 const useColor =
 	Boolean( process.stdout.isTTY ) && process.env.NO_COLOR === undefined;
@@ -320,8 +319,16 @@ function sourceCodesGuide() {
 	];
 }
 
-function bootstrapSourceCodes( root, env ) {
+function syncSourceCodes( root, env ) {
 	const raw = ( env[ ENV_SOURCE_CODES ] || '' ).trim();
+
+	if ( ! raw || raw === ENV_SOURCE_CODES_PLACEHOLDER ) {
+		fail(
+			`${ ENV_SOURCE_CODES } is not set in .env`,
+			sourceCodesGuide()
+		);
+	}
+
 	const target = path.resolve( raw );
 
 	if ( ! fs.existsSync( target ) ) {
@@ -337,20 +344,25 @@ function bootstrapSourceCodes( root, env ) {
 
 	fs.rmSync( linkPath, { recursive: true, force: true } );
 	fs.symlinkSync( target, linkPath, 'dir' );
-	logStep( 3, 'source-codes', `linked → ${ target }` );
+
+	return {
+		name: 'source-codes',
+		detail: `linked → ${ target }`,
+	};
 }
 
-function bootstrapSyncConfig( root, projectId ) {
+function bootstrapSyncConfig( root, projectId, env ) {
 	const inners = [];
 
 	try {
+		inners.push( syncSourceCodes( root, env ) );
 		inners.push( ...writeRootConfigs( { root, projectId } ) );
 	} catch ( error ) {
 		fail( error.message || String( error ) );
 	}
 
 	logStepWithInners(
-		4,
+		3,
 		'sync-config',
 		'wrote host files from shared templates',
 		inners
@@ -366,22 +378,13 @@ function main() {
 	const projectId = parseProjectId( process.argv.slice( 2 ) );
 	const root = process.cwd();
 	const env = loadEnv( path.join( root, '.env' ) );
-	const raw = ( env[ ENV_SOURCE_CODES ] || '' ).trim();
 
 	printLogo( projectId );
 	banner( projectId );
 
-	if ( ! raw || raw === ENV_SOURCE_CODES_PLACEHOLDER ) {
-		fail(
-			`${ ENV_SOURCE_CODES } is not set in .env`,
-			sourceCodesGuide()
-		);
-	}
-
 	cleanUp( root );
 	bootstrapCursor( root, projectId );
-	bootstrapSourceCodes( root, env );
-	bootstrapSyncConfig( root, projectId );
+	bootstrapSyncConfig( root, projectId, env );
 	done();
 }
 
