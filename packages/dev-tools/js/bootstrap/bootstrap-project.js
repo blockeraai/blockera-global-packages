@@ -150,28 +150,35 @@ function stepLabel( index ) {
 	return color.dim( `[${ index }/${ STEP_COUNT }]` );
 }
 
+function logStepLine( name, detail ) {
+	return `${ color.bold( name ) }: ${ color.dim( detail ) }`;
+}
+
 function logStep( index, name, detail ) {
 	printOut(
-		`  ${ stepLabel( index ) }  ${ color.ok( '✔' ) }  ${ color.bold(
-			name
+		`  ${ stepLabel( index ) }  ${ color.ok( '✔' ) }  ${ logStepLine(
+			name,
+			detail
 		) }`
 	);
-	printOut( `           ${ color.dim( detail ) }` );
 	printOut( '' );
 }
 
-function logStepWithInners( index, name, inners ) {
+function logStepWithInners( index, name, detail, inners ) {
 	printOut(
-		`  ${ stepLabel( index ) }  ${ color.ok( '✔' ) }  ${ color.bold(
-			name
+		`  ${ stepLabel( index ) }  ${ color.ok( '✔' ) }  ${ logStepLine(
+			name,
+			detail
 		) }`
 	);
 
 	inners.forEach( ( inner ) => {
 		printOut(
-			`           ${ color.ok( '✔' ) }  ${ color.bold( inner.name ) }`
+			`           ${ color.ok( '✔' ) }  ${ logStepLine(
+				inner.name,
+				inner.detail
+			) }`
 		);
-		printOut( `              ${ color.dim( inner.detail ) }` );
 	} );
 
 	printOut( '' );
@@ -391,7 +398,12 @@ function bootstrapSyncConfig( root, projectId ) {
 		fail( error.message || String( error ) );
 	}
 
-	logStepWithInners( 4, 'sync-config', inners );
+	logStepWithInners(
+		4,
+		'sync-config',
+		'wrote host files from shared templates',
+		inners
+	);
 }
 
 function done() {
