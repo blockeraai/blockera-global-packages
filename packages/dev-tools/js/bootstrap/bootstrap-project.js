@@ -59,6 +59,16 @@ const color = {
 	star: ( text ) => paint( ansi.green, text ),
 };
 
+function printOut( message ) {
+	// @debug-ignore — CLI stdout for project bootstrap
+	console.log( message );
+}
+
+function printErr( message ) {
+	// @debug-ignore — CLI stderr for project bootstrap
+	console.error( message );
+}
+
 function printLogo() {
 	const art = [
 		'***********************************************************',
@@ -73,11 +83,11 @@ function printLogo() {
 		'***********************************************************',
 	];
 
-	console.log( '' );
+	printOut( '' );
 	art.forEach( ( line ) => {
-		console.log( line.replace( /\*/g, () => color.star( '*' ) ) );
+		printOut( line.replace( /\*/g, () => color.star( '*' ) ) );
 	} );
-	console.log( '' );
+	printOut( '' );
 }
 
 function banner( projectId ) {
@@ -86,20 +96,20 @@ function banner( projectId ) {
 	const width = Math.max( title.length, meta.length ) + 4;
 	const line = '─'.repeat( width );
 
-	console.log( '' );
-	console.log( color.cyan( `  ┌${ line }┐` ) );
-	console.log(
+	printOut( '' );
+	printOut( color.cyan( `  ┌${ line }┐` ) );
+	printOut(
 		color.cyan( '  │' ) +
 			color.title( `  ${ title.padEnd( width - 2 ) }` ) +
 			color.cyan( '│' )
 	);
-	console.log(
+	printOut(
 		color.cyan( '  │' ) +
 			color.dim( `  ${ meta.padEnd( width - 2 ) }` ) +
 			color.cyan( '│' )
 	);
-	console.log( color.cyan( `  └${ line }┘` ) );
-	console.log( '' );
+	printOut( color.cyan( `  └${ line }┘` ) );
+	printOut( '' );
 }
 
 function stepLabel( index ) {
@@ -107,40 +117,38 @@ function stepLabel( index ) {
 }
 
 function logStep( index, name, detail ) {
-	console.log(
+	printOut(
 		`  ${ stepLabel( index ) }  ${ color.ok( '✔' ) }  ${ color.bold(
 			name
 		) }`
 	);
-	console.log( `           ${ color.dim( detail ) }` );
-	console.log( '' );
+	printOut( `           ${ color.dim( detail ) }` );
+	printOut( '' );
 }
 
 function fail( message, guide ) {
-	console.error( '' );
-	console.error(
-		`  ${ color.err( '✖' ) }  ${ color.bold( 'bootstrap failed' ) }`
-	);
-	console.error( `           ${ color.red( message ) }` );
+	printErr( '' );
+	printErr( `  ${ color.err( '✖' ) }  ${ color.bold( 'bootstrap failed' ) }` );
+	printErr( `           ${ color.red( message ) }` );
 
 	if ( guide && guide.length ) {
-		console.error( '' );
-		console.error( `  ${ color.bold( 'How to fix' ) }` );
+		printErr( '' );
+		printErr( `  ${ color.bold( 'How to fix' ) }` );
 
 		guide.forEach( ( line, index ) => {
 			const parts = String( line ).split( '\n' );
 
-			console.error(
+			printErr(
 				`           ${ color.dim( `${ index + 1 }.` ) } ${ parts[ 0 ] }`
 			);
 
 			parts.slice( 1 ).forEach( ( extra ) => {
-				console.error( `              ${ color.dim( extra ) }` );
+				printErr( `              ${ color.dim( extra ) }` );
 			} );
 		} );
 	}
 
-	console.error( '' );
+	printErr( '' );
 	process.exit( 1 );
 }
 
@@ -166,10 +174,10 @@ function parseProjectId( argv ) {
 }
 
 function loadEnv( envPath ) {
-	const out = {};
+	const parsed = {};
 
 	if ( ! fs.existsSync( envPath ) ) {
-		return out;
+		return parsed;
 	}
 
 	const text = fs.readFileSync( envPath, 'utf8' );
@@ -197,10 +205,10 @@ function loadEnv( envPath ) {
 			value = value.slice( 1, -1 );
 		}
 
-		out[ key ] = value;
+		parsed[ key ] = value;
 	}
 
-	return out;
+	return parsed;
 }
 
 function skipGitkeep( src ) {
@@ -278,8 +286,8 @@ function bootstrapSourceCodes( root, env ) {
 }
 
 function done() {
-	console.log( `  ${ color.ok( '✔' ) }  ${ color.bold( 'bootstrap complete' ) }` );
-	console.log( '' );
+	printOut( `  ${ color.ok( '✔' ) }  ${ color.bold( 'bootstrap complete' ) }` );
+	printOut( '' );
 }
 
 function main() {
