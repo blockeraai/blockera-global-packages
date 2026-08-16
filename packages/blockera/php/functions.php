@@ -637,20 +637,20 @@ if (! function_exists('blockera_sb_get_product_details')) {
         );
 
 		return [
-			'name'        => $headers['Name'] ?: 'Blockera Site Builder',
-			'description' => $headers['Description'] ?: '',
+			'name'        => ! empty( $headers['Name'] ) ? $headers['Name'] : 'Blockera Site Builder',
+			'description' => ! empty( $headers['Description'] ) ? $headers['Description'] : '',
 			'slug'        => 'blockera',
-			'version'     => defined('BLOCKERA_SB_VERSION') ? BLOCKERA_SB_VERSION : '0.0.0',
+			'version'     => defined( 'BLOCKERA_SB_VERSION' ) ? BLOCKERA_SB_VERSION : '0.0.0',
 			'type'        => 'plugin',
 			// This code only runs while the plugin is active.
 			'status'      => 'active',
 			// The standalone site builder plugin is the companion product.
 			'isCompanion' => true,
-			'author'      => $headers['Author'] ?: '',
-			'homepage'    => $headers['PluginURI'] ?: '',
+			'author'      => ! empty( $headers['Author'] ) ? $headers['Author'] : '',
+			'homepage'    => ! empty( $headers['PluginURI'] ) ? $headers['PluginURI'] : '',
 			'requires'    => [
-				'wordpress' => $headers['RequiresWP'] ?: '',
-				'php'       => $headers['RequiresPHP'] ?: '',
+				'wordpress' => ! empty( $headers['RequiresWP'] ) ? $headers['RequiresWP'] : '',
+				'php'       => ! empty( $headers['RequiresPHP'] ) ? $headers['RequiresPHP'] : '',
 			],
 		];
 	}
