@@ -22,6 +22,10 @@ inputs:
         description: 'Composer options for setup-php'
         required: false
         default: '--no-dev -o --apcu-autoloader -a'
+    php-version:
+        description: 'PHP version for setup-php (and composer platform.php)'
+        required: false
+        default: '7.4'
     categories:
         description: 'PCP categories (multiline)'
         required: false
@@ -49,6 +53,7 @@ runs:
         - name: Setup PHP Composer install dependencies
           uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-php
           with:
+              php-version: ${{ inputs.php-version }}
               composer-options: ${{ inputs.composer-options }}
 
         - name: Build and extract plugin zip
