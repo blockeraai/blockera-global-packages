@@ -9,6 +9,7 @@ Shared development tooling for Blockera packages and themes:
 - Shared `git-conventional-commits.yaml` (husky `commit-msg` via `--config`)
 - Shared ambient TypeScript types (`types/blockera/`) loaded from host `tsconfig.json` via `tsconfig.base.json`
 - Shared husky pre-commit TypeScript/Flow typecheck (`github/scripts/run-typecheck-pre-commit.sh`)
+- Shared Code Lint TypeScript/Flow jobs (`github/scripts/jobs/code-lint/ts.sh`, `flow.sh`)
 
 ---
 
@@ -60,6 +61,17 @@ bash "$(dirname -- "$0")/../packages/global-packages/packages/dev-tools/github/s
 ```
 
 Runs `tsc --noEmit` when `tsconfig.json` exists and `flow status` when `.flowconfig` exists, only if staged files include `.ts`/`.tsx`/`.js`/`.jsx`. Skip with `BLOCKERA_SKIP_TYPECHECK=1`.
+
+### Code Lint CI typecheck
+
+Host `.github/workflows/code-lint.yml` matrix should include `suite: ts` and `suite: flow` (both `setup: node`). The workflow already runs:
+
+```sh
+bash packages/global-packages/packages/dev-tools/github/scripts/jobs/code-lint/${{ matrix.suite }}.sh
+```
+
+- `ts.sh` runs `npm run typecheck` when `tsconfig.json` exists (`BLOCKERA_TYPECHECK_TS_CMD` to override)
+- `flow.sh` runs `npm run flow` when `.flowconfig` exists (`BLOCKERA_TYPECHECK_FLOW_CMD` to override)
 
 ---
 
