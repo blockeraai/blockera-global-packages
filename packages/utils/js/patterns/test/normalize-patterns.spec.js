@@ -108,15 +108,15 @@ describe('escapeBlockAttrs', () => {
 
 	it('strips Gutenberg copied pattern metadata and keeps blockeraOne', () => {
 		const block =
-			' wp:group {"metadata":{"blockeraOne":"section/page-title:simple","patternName":"blockera-one/builder-archive-page-title-simple","name":"Archive Page Title","description":"Simple archive page header with title and term description.","categories":["blockera-one/template-builder"]},"blockeraDisplay":{"value":"flex"},"align":"wide"} ';
+			' wp:group {"metadata":{"blockeraOne":"section/page-header:simple","patternName":"blockera-one/builder-archive-page-header-simple","name":"Archive Page Header","description":"Simple archive page header with title and term description.","categories":["blockera-one/template-builder"]},"blockeraDisplay":{"value":"flex"},"align":"wide"} ';
 
 		const result = escapeBlockAttrs(block, 'blockera-one');
 
 		expect(result).toContain(
-			'"metadata":{"blockeraOne":"section/page-title:simple"}'
+			'"metadata":{"blockeraOne":"section/page-header:simple"}'
 		);
 		expect(result).not.toContain('"patternName"');
-		expect(result).not.toContain('"Archive Page Title"');
+		expect(result).not.toContain('"Archive Page Header"');
 		expect(result).not.toContain('"categories"');
 		expect(result).toContain('"blockeraDisplay":{"value":"flex"}');
 		expect(result).toContain('"align":"wide"');
@@ -514,7 +514,7 @@ describe('normalizePatterns / checkPatterns', () => {
 		).toBe(true);
 		expect(
 			hasUnsanitizedPatternMetadata(
-				'<!-- wp:group {"metadata":{"blockeraOne":"section/page-title:default"}} -->'
+				'<!-- wp:group {"metadata":{"blockeraOne":"section/page-header:default"}} -->'
 			)
 		).toBe(false);
 		expect(
