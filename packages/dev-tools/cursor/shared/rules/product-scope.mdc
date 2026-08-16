@@ -1,0 +1,56 @@
+---
+description: Product scope for the Blockera suite. Default to the blockera plugin; ask before editing other products.
+alwaysApply: true
+---
+
+# Product Scope
+
+This rule guides work across Blockera products. It does **not** lock the agent to a single repo.
+
+## Session start
+
+1. If the user named a product (or the open files/workspace make it obvious), that is the **active product**.
+2. If they did **not** specify, the active product is **blockera**.
+3. Start the first reply with: `Product: <id> (<path>).`
+4. If it is unclear, ask once, then continue with **blockera** until they say otherwise.
+
+## Products
+
+| Id | Path |
+| --- | --- |
+| `blockera` | `wp-content/plugins/blockera/` |
+| `blockera-pro` | `wp-content/plugins/blockera-pro/` |
+| `blockera-one` | `wp-content/themes/blockera-one/` |
+| `blockera-site-toolkit` | `wp-content/plugins/blockera-site-toolkit/` |
+
+`source-codes/` in each project root is read-only reference (symlink). Prefer it for Gutenberg / WordPress / Woo / Blocksy lookups.
+
+## How to work
+
+- Do the requested work in the **active product** first.
+- You may **read** other products when you need to understand compatibility, shared packages, or unlock/limit behavior.
+- Do **not** edit, stage, or commit another product until the user agrees.
+- Keep commits inside the active product unless scope was expanded. One repo per commit.
+- Pass the same active product (and any granted extras) to subagents.
+
+## Cross-product updates (always ask)
+
+If you discover another product also needs changes, **stop and ask** before editing it. Name the product, why, and what you would change.
+
+### blockera → blockera-pro
+
+While the active product is **blockera**, ask to continue in **blockera-pro** when:
+
+- A feature is limited, gated, or incomplete until Pro unlocks it
+- Pro must stay compatible with a free-plugin API, schema, or UI change
+- Pro would otherwise break or stay on old behavior
+
+Do not silently patch Pro. Ask, then only proceed if they say yes.
+
+### Other products
+
+Same rule for `blockera-one`, `blockera-site-toolkit`, or any other workspace repo (including APIs): ask first, then edit only what they approved.
+
+## Out of bounds without asking
+
+Unrelated site plugins/themes (`akismet`, `blockera-demo-*`, installed Blocksy, WordPress core outside `source-codes/`) stay off-limits unless the user explicitly includes them.
