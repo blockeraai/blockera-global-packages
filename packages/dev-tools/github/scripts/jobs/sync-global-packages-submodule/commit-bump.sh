@@ -7,7 +7,7 @@
 # Optional:
 #   COMMIT_SUBJECT                      full subject from the bump script
 #   COMMITS                             upstream commit count (used when COMMIT_SUBJECT is unset)
-#   BLOCKERA_SYNC_GP_COMMIT_MSG_PREFIX  default: submodule: bump global-packages to
+#   BLOCKERA_SYNC_GP_COMMIT_MSG_PREFIX  default: submodule: bump global-packages
 set -euo pipefail
 
 SHORT_SHA="${SHORT_SHA:-}"
@@ -16,16 +16,17 @@ if [[ -z "${SHORT_SHA}" ]]; then
 	exit 1
 fi
 
-PREFIX="${BLOCKERA_SYNC_GP_COMMIT_MSG_PREFIX:-submodule: bump global-packages to}"
+PREFIX="${BLOCKERA_SYNC_GP_COMMIT_MSG_PREFIX:-submodule: bump global-packages}"
 if [[ -n "${COMMIT_SUBJECT:-}" ]]; then
 	MSG="${COMMIT_SUBJECT}"
 else
-	MSG="${PREFIX} ${SHORT_SHA}"
 	COMMITS="${COMMITS:-0}"
 	if [[ "${COMMITS}" -eq 1 ]]; then
-		MSG="${MSG} (1 commit)"
+		MSG="${PREFIX} (1 commit) [${SHORT_SHA}]"
 	elif [[ "${COMMITS}" -gt 1 ]]; then
-		MSG="${MSG} (${COMMITS} commits)"
+		MSG="${PREFIX} (${COMMITS} commits) [${SHORT_SHA}]"
+	else
+		MSG="${PREFIX} [${SHORT_SHA}]"
 	fi
 fi
 

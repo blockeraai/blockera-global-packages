@@ -54,12 +54,13 @@ EOF
 if [[ -n "${COMMIT_SUBJECT:-}" ]]; then
 	TITLE="${COMMIT_SUBJECT}"
 else
-	TITLE="submodule: bump global-packages to ${SHORT_SHA}"
 	COMMITS="${COMMITS:-0}"
 	if [[ "${COMMITS}" -eq 1 ]]; then
-		TITLE="${TITLE} (1 commit)"
+		TITLE="submodule: bump global-packages (1 commit) [${SHORT_SHA}]"
 	elif [[ "${COMMITS}" -gt 1 ]]; then
-		TITLE="${TITLE} (${COMMITS} commits)"
+		TITLE="submodule: bump global-packages (${COMMITS} commits) [${SHORT_SHA}]"
+	else
+		TITLE="submodule: bump global-packages [${SHORT_SHA}]"
 	fi
 fi
 

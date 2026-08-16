@@ -86,13 +86,16 @@ emit_kv() {
 	printf '%s=%s\n' "$1" "$2"
 }
 
-# Subject suffix: " (1 commit)" / " (N commits)" / "" when the range is empty.
-format_commit_count_suffix() {
-	local n="${1:-0}"
+# "submodule: bump global-packages (N commit(s)) [sha]" — omit the count when empty.
+format_bump_subject() {
+	local short_sha="$1"
+	local n="${2:-0}"
 	if [ "${n}" -eq 1 ]; then
-		printf ' (1 commit)'
+		printf 'submodule: bump global-packages (1 commit) [%s]' "${short_sha}"
 	elif [ "${n}" -gt 1 ]; then
-		printf ' (%s commits)' "${n}"
+		printf 'submodule: bump global-packages (%s commits) [%s]' "${n}" "${short_sha}"
+	else
+		printf 'submodule: bump global-packages [%s]' "${short_sha}"
 	fi
 }
 
@@ -234,7 +237,7 @@ if [ -n "${PREV_SHA}" ] && [ "${PREV_SHA}" != "${RESOLVED_SHA}" ]; then
 	TOTAL="$(git -C "${SUBMODULE}" rev-list --count "${PREV_SHA}..${RESOLVED_SHA}" 2>/dev/null || echo 0)"
 fi
 
-COMMIT_SUBJECT="submodule: bump global-packages to ${SHORT_SHA}$(format_commit_count_suffix "${TOTAL}")"
+COMMIT_SUBJECT="$(format_bump_subject "${SHORT_SHA}" "${TOTAL}")"
 
 printf '\n%sOutputs%s\n' "${C_BOLD}" "${C_RESET}"
 log_kv "path" "${SUBMODULE_PATH}"
