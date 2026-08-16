@@ -3,7 +3,8 @@
 /**
  * Host-repo bootstrap: clean dist, materialize `.cursor` from shared templates,
  * symlink `source-codes` from BLOCKERA_EXTERNAL_SOURCE_CODES_PATH, and
- * sync-config (host files from shared templates: Flow, .cspell, .vscode).
+ * sync-config (host files from shared templates: Flow, .cspell, .vscode,
+ * Cypress component-index).
  *
  * Run from the consuming project root:
  *   node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.js --project=<id>
@@ -17,6 +18,9 @@ const {
 } = require( '../flow/write-flowconfig' );
 const { writeCspell } = require( '../cspell/write-cspell' );
 const { writeVscode } = require( '../vscode/write-vscode' );
+const {
+	writeCypressComponentIndex,
+} = require( '../cypress/write-component-index' );
 
 const PROJECT_IDS = [
 	'blockera',
@@ -366,6 +370,15 @@ function syncVscode( root ) {
 	};
 }
 
+function syncCypressComponentIndex( root ) {
+	writeCypressComponentIndex( { root } );
+
+	return {
+		name: 'cypress/support/component-index.html',
+		detail: 'copied Cypress component-test HTML shell',
+	};
+}
+
 function bootstrapSyncConfig( root, projectId ) {
 	const inners = [];
 
@@ -373,6 +386,7 @@ function bootstrapSyncConfig( root, projectId ) {
 		inners.push( ...syncFlowconfig( root, projectId ) );
 		inners.push( syncCspell( root ) );
 		inners.push( syncVscode( root ) );
+		inners.push( syncCypressComponentIndex( root ) );
 	} catch ( error ) {
 		fail( error.message || String( error ) );
 	}
