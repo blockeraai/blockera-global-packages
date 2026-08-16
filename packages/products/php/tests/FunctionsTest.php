@@ -16,17 +16,23 @@ use Blockera\Products\Registry;
 class FunctionsTest extends TestCase {
 
 	/**
-	 * The script handle localized by blockera_products_l10n().
+	 * The plain (unversioned) products script handle.
 	 */
 	private const SCRIPT_HANDLE = '@blockera/products';
 
 	/**
-	 * Clean the products script handle between tests.
+	 * The version-suffixed handle as registered by the blockera assets loader.
+	 */
+	private const VERSIONED_SCRIPT_HANDLE = '@blockera/products-1-0-0';
+
+	/**
+	 * Clean the products script handles between tests.
 	 *
 	 * @return void
 	 */
 	public function tear_down(): void {
 		wp_scripts()->remove( self::SCRIPT_HANDLE );
+		wp_scripts()->remove( self::VERSIONED_SCRIPT_HANDLE );
 
 		parent::tear_down();
 	}
@@ -105,8 +111,29 @@ class FunctionsTest extends TestCase {
 	}
 
 	/**
+	 * The handle resolver must find plain and version-suffixed registrations.
+	 *
+	 * @return void
+	 */
+	public function test_script_handle_resolver(): void {
+		// Nothing registered: empty handle.
+		$this->assertSame( '', blockera_products_script_handle() );
+
+		// Version-suffixed handle, as registered by the blockera assets loader.
+		wp_register_script( self::VERSIONED_SCRIPT_HANDLE, false, array(), '1.0.0', true );
+		$this->assertSame( self::VERSIONED_SCRIPT_HANDLE, blockera_products_script_handle() );
+
+		// Plain handle wins as the fast path when both are registered.
+		wp_register_script( self::SCRIPT_HANDLE, false, array(), '1.0.0', true );
+		$this->assertSame( self::SCRIPT_HANDLE, blockera_products_script_handle() );
+	}
+
+	/**
 	 * blockera_products_l10n() must attach the payload once, only when
 	 * the products script handle is registered.
+	 *
+	 * Uses the version-suffixed handle to exercise the real-world path
+	 * (the assets loader always registers versioned handles).
 	 *
 	 * Single test method because the function keeps a per-request static guard.
 	 *
@@ -117,13 +144,13 @@ class FunctionsTest extends TestCase {
 
 		// Handle not registered yet: no inline script and the guard stays open.
 		blockera_products_l10n();
-		$this->assertFalse( wp_scripts()->get_data( self::SCRIPT_HANDLE, 'before' ) );
+		$this->assertFalse( wp_scripts()->get_data( self::VERSIONED_SCRIPT_HANDLE, 'before' ) );
 
-		wp_register_script( self::SCRIPT_HANDLE, false, array(), '1.0.0', true );
+		wp_register_script( self::VERSIONED_SCRIPT_HANDLE, false, array(), '1.0.0', true );
 
 		blockera_products_l10n();
 
-		$before = wp_scripts()->get_data( self::SCRIPT_HANDLE, 'before' );
+		$before = wp_scripts()->get_data( self::VERSIONED_SCRIPT_HANDLE, 'before' );
 		$inline = implode( '', array_filter( (array) $before, 'is_string' ) );
 
 		$this->assertStringContainsString( 'var blockeraProductsData = ', $inline );
@@ -131,6 +158,6 @@ class FunctionsTest extends TestCase {
 
 		// A second call must not duplicate the payload (static guard).
 		blockera_products_l10n();
-		$this->assertSame( $before, wp_scripts()->get_data( self::SCRIPT_HANDLE, 'before' ) );
+		$this->assertSame( $before, wp_scripts()->get_data( self::VERSIONED_SCRIPT_HANDLE, 'before' ) );
 	}
 }
