@@ -4,7 +4,7 @@
  * External dependencies
  */
 import React from 'react';
-import { dispatch } from '@wordpress/data';
+import { dispatch, select } from '@wordpress/data';
 import { addFilter, applyFilters } from '@wordpress/hooks';
 
 // Useful to development environment, in production build process will be removed it!
@@ -56,11 +56,25 @@ import { default as blockVariations } from './block-variations';
 
 /**
  * This plugin defines the companion (Blockera Site Builder) plugin as installed.
+ *
+ * Prefers the `blockera/products` store api (registered by the products
+ * package) and only returns true when the companion product is registered and
+ * active.
  */
 addFilter(
 	'blockera.products.isCompanionPlugin',
 	'blockera/products.isCompanionPlugin',
-	() => !window?.blockeraPluginData?.pluginURI?.includes('/themes/blockera-one'),
+	() => {
+		// Resolved by store name (not a module import) so this shared bundle
+		// keeps building in repos where the products package is not wired up.
+		const companion = select('blockera/products')?.getCompanionProduct();
+
+		if (undefined !== companion && 'blockera' === companion.slug) {
+			return 'active' === companion.status;
+		}
+
+		return false;
+	},
 	10
 );
 
