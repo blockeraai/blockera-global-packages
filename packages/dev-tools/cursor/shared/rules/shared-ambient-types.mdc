@@ -1,16 +1,27 @@
 ---
-description: Shared ambient TypeScript declarations live in global-packages, not project-root types/
-globs: "**/*.{ts,tsx,d.ts}"
+description: Shared TypeScript and Flow type config lives in global-packages, not host-root copies
+globs: '**/*.{ts,tsx,d.ts,js.flow},**/.flowconfig,**/flowconfig.base,**/flow/overlays/**'
 alwaysApply: false
 ---
 
-# Shared ambient TypeScript types
+# Shared TypeScript and Flow types
+
+Edit files inside `packages/global-packages/packages/dev-tools/`, not host-root copies.
+
+## TypeScript
 
 Ambient / `declare module` types belong in:
 
 `packages/global-packages/packages/dev-tools/types/blockera/`
 
 - Never add or edit a project-root `types/` folder.
-- Edit the submodule only from the **blockera-one** checkout of `packages/global-packages`.
-- Other host repos get updates via a global-packages submodule bump.
 - Do not stub packages that already ship TypeScript types (for example `@dnd-kit/*` or `overlayscrollbars`).
+
+## Flow
+
+Templates and stubs belong in:
+
+`packages/global-packages/packages/dev-tools/flow/`
+
+- Never hand-edit the host-root `.flowconfig` or `flow/` stubs.
+- After changing a Flow template, run `npm run project:bootstrap` and commit the generated host `.flowconfig` and `flow/`.

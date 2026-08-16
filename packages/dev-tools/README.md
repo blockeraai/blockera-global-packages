@@ -8,6 +8,7 @@ Shared development tooling for Blockera packages and themes:
 - Block patterns normalize/check CLI
 - Shared `git-conventional-commits.yaml` (husky `commit-msg` via `--config`)
 - Shared ambient TypeScript types (`types/blockera/`) loaded from host `tsconfig.json` via `tsconfig.base.json`
+- Shared Flow templates (`flow/`) written to the host `.flowconfig` by `project:bootstrap`
 - Shared husky pre-commit TypeScript/Flow typecheck (`github/scripts/run-typecheck-pre-commit.sh`)
 - Shared Code Lint TypeScript/Flow jobs (`github/scripts/jobs/code-lint/ts.sh`, `flow.sh`)
 - Shared Cursor templates (`cursor/`) materialized by `project:bootstrap`
@@ -38,7 +39,13 @@ packages/dev-tools/
 │   ├── theme-json/              # merge-theme-json CLI
 │   ├── patterns/                # normalize-patterns CLI
 │   ├── typescript/              # shared tsconfig.base.json
+│   ├── flow/                    # write-flowconfig CLI
 │   └── bootstrap/               # project:bootstrap CLI
+├── flow/
+│   ├── flowconfig.base          # shared Flow ignore + name mappers
+│   ├── overlays/                # per-host extras (optional)
+│   ├── TypeScriptModule.js.flow
+│   └── WebpackAsset.js.flow
 ├── types/
 │   └── blockera/                # ambient .d.ts for all host repos
 ├── github/scripts/              # husky pre-commit typecheck, pre-push pin checks
@@ -97,6 +104,10 @@ Steps (cwd = host repo root):
 1. Remove `dist/`
 2. Wipe `.cursor/`, copy `cursor/shared/`, then copy `cursor/<project>/` (overlay add/overwrite). Skip `.gitkeep`.
 3. Symlink `source-codes` → `BLOCKERA_EXTERNAL_SOURCE_CODES_PATH` from host `.env`. Unset, placeholder, or missing path → **fail** with a setup guide. Existing `source-codes` (dir or symlink) is always removed first.
+4. `sync-config` — write host config files from shared templates. Inner steps:
+   - `.flowconfig` from `flow/flowconfig.base` + `flow/overlays/<project>`.
+   - `flow/` stubs (`TypeScriptModule.js.flow`, `WebpackAsset.js.flow`).
+   Commit both (CI needs them). Do not gitignore them. Edit the templates here, then re-run bootstrap.
 
 `.cursor/` and `source-codes/` are gitignored generated paths. Edit templates here, not in the host `.cursor` folder.
 
@@ -152,6 +163,7 @@ Supports `--check`, `--force`, `--debug`, `--quiet`, `--text-domain`, `--uri-php
 - Do not commit generated `theme.json` drift; run `--check` in CI.
 - Keep style-entry generation exclusions for `dev-*` packages.
 - Ambient TypeScript declarations belong in `types/blockera/`. Edit them only from the blockera-one global-packages checkout; never recreate a host-repo `types/` folder.
+- Flow templates belong in `dev-tools/flow/`. Never hand-edit the host `.flowconfig` or `flow/` stubs; run `project:bootstrap` and commit the generated files.
 
 ---
 
