@@ -8,6 +8,7 @@ Shared development tooling for Blockera packages and themes:
 - Block patterns normalize/check CLI
 - Shared `git-conventional-commits.yaml` (husky `commit-msg` via `--config`)
 - Shared ambient TypeScript types (`types/blockera/`) loaded from host `tsconfig.json` via `tsconfig.base.json`
+- Shared husky pre-commit TypeScript/Flow typecheck (`github/scripts/run-typecheck-pre-commit.sh`)
 
 ---
 
@@ -30,6 +31,7 @@ packages/dev-tools/
 │   └── typescript/              # shared tsconfig.base.json
 ├── types/
 │   └── blockera/                # ambient .d.ts for all host repos
+├── github/scripts/              # husky pre-commit typecheck, pre-push pin checks
 ├── php/
 │   └── functions.php            # Composer placeholder
 ├── git-conventional-commits.yaml # Shared conventional-commit types
@@ -48,6 +50,16 @@ node_modules/git-conventional-commits/cli.js commit-msg-hook \
 	--config packages/global-packages/packages/dev-tools/git-conventional-commits.yaml \
 	"$1"
 ```
+
+### Pre-commit typecheck
+
+After `npx lint-staged`, host `.husky/pre-commit` should call:
+
+```sh
+bash "$(dirname -- "$0")/../packages/global-packages/packages/dev-tools/github/scripts/run-typecheck-pre-commit.sh"
+```
+
+Runs `tsc --noEmit` when `tsconfig.json` exists and `flow status` when `.flowconfig` exists, only if staged files include `.ts`/`.tsx`/`.js`/`.jsx`. Skip with `BLOCKERA_SKIP_TYPECHECK=1`.
 
 ---
 
