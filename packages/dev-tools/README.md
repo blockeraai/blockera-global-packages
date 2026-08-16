@@ -8,8 +8,7 @@ Shared development tooling for Blockera packages and themes:
 - Block patterns normalize/check CLI
 - Shared `git-conventional-commits.yaml` (husky `commit-msg` via `--config`)
 - Shared ambient TypeScript types (`types/blockera/`) loaded from host `tsconfig.json` via `tsconfig.base.json`
-- Shared Flow templates (`flow/`) written to the host `.flowconfig` by `project:bootstrap`
-- Shared `.cspell/`, `.vscode/`, and `.husky/` templates written by `project:bootstrap` `sync-config`
+- Shared `root-configs/` templates written by `project:bootstrap` `sync-config`
 - Shared husky pre-commit TypeScript/Flow typecheck (`github/scripts/run-typecheck-pre-commit.sh`)
 - Shared Code Lint TypeScript/Flow jobs (`github/scripts/jobs/code-lint/ts.sh`, `flow.sh`)
 - Shared Cursor templates (`cursor/`) materialized by `project:bootstrap`
@@ -40,33 +39,10 @@ packages/dev-tools/
 │   ├── theme-json/              # merge-theme-json CLI
 │   ├── patterns/                # normalize-patterns CLI
 │   ├── typescript/              # shared tsconfig.base.json
-│   ├── flow/                    # write-flowconfig CLI
-│   ├── cspell/                  # write-cspell CLI
-│   ├── vscode/                  # write-vscode CLI
-│   ├── cypress/                 # write-component-index CLI
-│   ├── husky/                   # write-husky CLI
-│   ├── sync-config/             # copy-template-dir helper
+│   ├── root-configs/            # write-root-configs CLI
+│   ├── sync-config/             # copy-template-dir / copy-template-file
 │   └── bootstrap/               # project:bootstrap CLI
-├── husky/
-│   ├── pre-commit
-│   ├── commit-msg
-│   ├── pre-push
-│   ├── post-checkout
-│   └── internals/husky.sh       # host .husky/_/husky.sh
-├── cypress/
-│   └── support/
-│       └── component-index.html # host Cypress component-test shell
-├── cspell/
-│   └── words.txt                # host .cspell/words.txt
-├── vscode/
-│   ├── settings.json
-│   ├── extensions.json
-│   └── tasks.json
-├── flow/
-│   ├── flowconfig.base          # shared Flow ignore + name mappers
-│   ├── overlays/                # per-host extras (optional)
-│   ├── TypeScriptModule.js.flow
-│   └── WebpackAsset.js.flow
+├── root-configs/                # host-tree templates (files + folders)
 ├── types/
 │   └── blockera/                # ambient .d.ts for all host repos
 ├── github/scripts/              # husky pre-commit typecheck, pre-push pin checks
@@ -125,13 +101,7 @@ Steps (cwd = host repo root):
 1. Remove `dist/`
 2. Wipe `.cursor/`, copy `cursor/shared/`, then copy `cursor/<project>/` (overlay add/overwrite). Skip `.gitkeep`.
 3. Symlink `source-codes` → `BLOCKERA_EXTERNAL_SOURCE_CODES_PATH` from host `.env`. Unset, placeholder, or missing path → **fail** with a setup guide. Existing `source-codes` (dir or symlink) is always removed first.
-4. `sync-config` — write host config files from shared templates. Inner steps:
-   - `.flowconfig` from `flow/flowconfig.base` + `flow/overlays/<project>`.
-   - `flow/` stubs (`TypeScriptModule.js.flow`, `WebpackAsset.js.flow`).
-   - `.cspell/` from `cspell/words.txt` (overwrites the host folder).
-   - `.vscode/` from `vscode/` (overwrites the host folder).
-   - `cypress/support/component-index.html` from `cypress/support/` (does not wipe the rest of `cypress/`).
-   - `.husky/` from `husky/` (overwrites the host folder; hook scripts are chmod 0755).
+4. `sync-config` — write host config files from `root-configs/` (mirrors the host tree; each path is its own inner step). Folders (`.cspell/`, `.vscode/`, `.husky/`, `flow/`) overwrite the host folder. `cypress/support/component-index.html` does not wipe the rest of `cypress/`. Husky hook scripts are chmod 0755. `{{PROJECT_ID}}` is replaced with `--project`.
    Commit these files (CI / the editor need them). Do not gitignore them. Edit the templates here, then re-run bootstrap.
 
 `.cursor/` and `source-codes/` are gitignored generated paths. Edit templates here, not in the host `.cursor` folder.
@@ -188,9 +158,7 @@ Supports `--check`, `--force`, `--debug`, `--quiet`, `--text-domain`, `--uri-php
 - Do not commit generated `theme.json` drift; run `--check` in CI.
 - Keep style-entry generation exclusions for `dev-*` packages.
 - Ambient TypeScript declarations belong in `types/blockera/`. Edit them only from the blockera-one global-packages checkout; never recreate a host-repo `types/` folder.
-- Flow templates belong in `dev-tools/flow/`. Never hand-edit the host `.flowconfig` or `flow/` stubs; run `project:bootstrap` and commit the generated files.
-- `.cspell/` and `.vscode/` templates belong in `dev-tools/cspell/` and `dev-tools/vscode/`. Never hand-edit the host copies; run `project:bootstrap` and commit the generated folders.
-- Cypress `component-index.html` belongs in `dev-tools/cypress/support/`. Never hand-edit the host copy; run `project:bootstrap` and commit it.
+- Host config templates belong in `dev-tools/root-configs/` (including `.flowconfig` and `flow/` stubs). Never hand-edit the host copies; run `project:bootstrap` and commit the generated files.
 
 ---
 
