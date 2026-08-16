@@ -18,7 +18,12 @@ import { type VariableType } from './types';
  *
  */
 export function getAllVariableSlugs(
-	variables: Record<string, Array<VariableType & any>> | undefined
+	variables:
+		| Record<
+				string,
+				Array<VariableType & any> | (VariableType & any)
+		  >
+		| undefined
 ): string[] {
 	if (!variables) {
 		return [];

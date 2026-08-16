@@ -47,6 +47,7 @@ type LineHeightPreset = {
 	slug: string;
 	name: string;
 	size: string;
+	[key: string]: unknown;
 };
 
 interface LineHeightGroupProps {
@@ -127,8 +128,12 @@ function LineHeightGroupComponent({
 	return (
 		<PresetTaxonomyGroupLayout<LineHeightPreset & Record<string, unknown>>
 			origin={origin}
-			items={sizes}
-			baseItems={baseSizes}
+			items={sizes as Array<LineHeightPreset & Record<string, unknown>>}
+			baseItems={
+				baseSizes as
+					| Array<LineHeightPreset & Record<string, unknown>>
+					| undefined
+			}
 			controlName={controlName}
 			convertRepeaterToItems={convertRepeaterToItems}
 			onPersistItems={onPersistItems}
@@ -148,28 +153,28 @@ function LineHeightGroupComponent({
 const LineHeightGroup = memo(LineHeightGroupComponent);
 
 export function LineHeightsPresetContent() {
-	const [themeLineHeights, setThemeLineHeights] = useGlobalSetting(
-		BLOCKERA_GLOBAL_SETTING_PATH.LINE_HEIGHTS_THEME
-	);
+	const [themeLineHeights, setThemeLineHeights] = useGlobalSetting<
+		LineHeightPreset[]
+	>(BLOCKERA_GLOBAL_SETTING_PATH.LINE_HEIGHTS_THEME);
 
-	const [baseThemeLineHeights] = useGlobalSetting(
+	const [baseThemeLineHeights] = useGlobalSetting<LineHeightPreset[]>(
 		BLOCKERA_GLOBAL_SETTING_PATH.LINE_HEIGHTS_THEME,
 		'',
 		'base'
 	);
-	const [defaultLineHeights, setDefaultLineHeights] = useGlobalSetting(
-		BLOCKERA_GLOBAL_SETTING_PATH.LINE_HEIGHTS_DEFAULT
-	);
+	const [defaultLineHeights, setDefaultLineHeights] = useGlobalSetting<
+		LineHeightPreset[]
+	>(BLOCKERA_GLOBAL_SETTING_PATH.LINE_HEIGHTS_DEFAULT);
 
-	const [baseDefaultLineHeights] = useGlobalSetting(
+	const [baseDefaultLineHeights] = useGlobalSetting<LineHeightPreset[]>(
 		BLOCKERA_GLOBAL_SETTING_PATH.LINE_HEIGHTS_DEFAULT,
 		'',
 		'base'
 	);
 
-	const [customLineHeights = [], setCustomLineHeights] = useGlobalSetting(
-		BLOCKERA_GLOBAL_SETTING_PATH.LINE_HEIGHTS_CUSTOM
-	);
+	const [customLineHeights = [], setCustomLineHeights] = useGlobalSetting<
+		LineHeightPreset[]
+	>(BLOCKERA_GLOBAL_SETTING_PATH.LINE_HEIGHTS_CUSTOM);
 
 	const [defaultLineHeightsEnabled] = useGlobalSetting(
 		BLOCKERA_GLOBAL_SETTING_PATH.DEFAULT_LINE_HEIGHTS

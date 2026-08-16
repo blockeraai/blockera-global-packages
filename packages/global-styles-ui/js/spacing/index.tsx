@@ -47,6 +47,7 @@ type SpacingSizePreset = {
 	slug: string;
 	name: string;
 	size: string;
+	[key: string]: unknown;
 };
 
 const spacingPresetFieldsPropsResolver =
@@ -143,31 +144,28 @@ export function SpacingPresetContent({
 	/** When this screen is embedded (e.g. design system), sets row hover preview mode. */
 	previewUsage?: SpacingSizePresetUsage;
 } = {}) {
-	const [themeSpacingSizes, setThemeSpacingSizes] = useGlobalSetting(
-		'spacing.spacingSizes.theme',
-		''
-	);
+	const [themeSpacingSizes, setThemeSpacingSizes] = useGlobalSetting<
+		SpacingSizePreset[]
+	>('spacing.spacingSizes.theme', '');
 
-	const [baseThemeSpacingSizes] = useGlobalSetting(
+	const [baseThemeSpacingSizes] = useGlobalSetting<SpacingSizePreset[]>(
 		'spacing.spacingSizes.theme',
 		'',
 		'base'
 	);
-	const [defaultSpacingSizes, setDefaultSpacingSizes] = useGlobalSetting(
-		'spacing.spacingSizes.default',
-		''
-	);
+	const [defaultSpacingSizes, setDefaultSpacingSizes] = useGlobalSetting<
+		SpacingSizePreset[]
+	>('spacing.spacingSizes.default', '');
 
-	const [baseDefaultSpacingSizes] = useGlobalSetting(
+	const [baseDefaultSpacingSizes] = useGlobalSetting<SpacingSizePreset[]>(
 		'spacing.spacingSizes.default',
 		'',
 		'base'
 	);
 
-	const [customSpacingSizes = [], setCustomSpacingSizes] = useGlobalSetting(
-		'spacing.spacingSizes.custom',
-		''
-	);
+	const [customSpacingSizes = [], setCustomSpacingSizes] = useGlobalSetting<
+		SpacingSizePreset[]
+	>('spacing.spacingSizes.custom', '');
 
 	const [defaultSpacingSizesEnabled] = useGlobalSetting(
 		'spacing.defaultSpacingSizes',

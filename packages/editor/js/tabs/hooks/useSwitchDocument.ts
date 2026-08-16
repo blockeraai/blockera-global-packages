@@ -23,7 +23,7 @@ import { ensurePostEntityAccessible } from '../utils/ensurePostEntityAccessible'
  */
 type BlockeraReplaceGuard = { expectedFullUrl: string };
 let blockeraTabsReplaceGuard: BlockeraReplaceGuard | null = null;
-let replaceGuardClearTimer: ReturnType<typeof setTimeout> | undefined;
+let replaceGuardClearTimer: number | undefined;
 let replaceStateGuardInstalled = false;
 
 function installReplaceStateUrlSyncGuard(): void {

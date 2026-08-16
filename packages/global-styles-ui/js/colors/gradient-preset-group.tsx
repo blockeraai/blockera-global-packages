@@ -175,8 +175,12 @@ export function GradientPresetGroup({
 	return (
 		<PresetTaxonomyGroupLayout<Gradient & Record<string, unknown>>
 			origin={origin}
-			items={gradients}
-			baseItems={baseGradients}
+			items={gradients as Array<Gradient & Record<string, unknown>>}
+			baseItems={
+				baseGradients as
+					| Array<Gradient & Record<string, unknown>>
+					| undefined
+			}
 			controlName={`${slugKind}-gradient-presets-${origin}`}
 			convertRepeaterToItems={convertRepeaterToItems}
 			onPersistItems={onPersistItems}

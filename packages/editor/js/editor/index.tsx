@@ -199,7 +199,7 @@ export const registerBlockeraEditorInternalPlugins = () => {
 
 export const registerBlockeraStyleVariationBlocks = () => {
 	const setStyleVariationBlocks = (
-		dispatch('blockera/editor') as {
+		dispatch('blockera/editor') as unknown as {
 			setStyleVariationBlocks: (
 				styleName: string,
 				blockNames: string[]
@@ -207,11 +207,11 @@ export const registerBlockeraStyleVariationBlocks = () => {
 		}
 	).setStyleVariationBlocks;
 	const getStyleVariationBlocks = (
-		select('blockera/editor') as {
+		select('blockera/editor') as unknown as {
 			getStyleVariationBlocks: (styleName: string) => string[];
 		}
 	).getStyleVariationBlocks;
-	const { getBlockTypes, getBlockStyles } = select('core/blocks') as {
+	const { getBlockTypes, getBlockStyles } = select('core/blocks') as unknown as {
 		getBlockTypes: () => Array<{ name: string }>;
 		getBlockStyles: (blockName: string) => Array<{ name: string }>;
 	};

@@ -46,7 +46,6 @@ async function initializePersistence() {
 	// Create persistence layer
 	const persistenceLayer = createPersistenceLayer<StoreState>({
 		preloadedData,
-		metaKey: 'blockera_editor_persistence',
 		requestDebounceMS: 2500,
 	});
 

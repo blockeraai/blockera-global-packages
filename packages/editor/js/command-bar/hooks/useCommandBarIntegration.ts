@@ -175,7 +175,11 @@ export function useCommandBarIntegration({
 		let wrapped = false;
 
 		allLoaders.forEach((loader) => {
-			if (NAVIGATION_LOADER_NAMES.includes(loader.name)) {
+			if (
+				(NAVIGATION_LOADER_NAMES as readonly string[]).includes(
+					loader.name
+				)
+			) {
 				if (wrapLoader(loader)) {
 					wrapped = true;
 				}

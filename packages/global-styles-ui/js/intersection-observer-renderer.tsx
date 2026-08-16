@@ -91,7 +91,7 @@ export class IntersectionObserverRenderer {
 	resolveObserveTarget(): HTMLElement | Document | null {
 		if (this.observeRootSelector.trim()) {
 			const narrowed = document.querySelector(this.observeRootSelector);
-			if (narrowed) {
+			if (narrowed instanceof HTMLElement) {
 				return narrowed;
 			}
 		}
@@ -111,13 +111,15 @@ export class IntersectionObserverRenderer {
 		const root = this.observedAncestor;
 		let relevant = mutations;
 
+		if (root == null) {
+			return;
+		}
+
 		if (root instanceof Element || root instanceof Document) {
 			relevant = mutations.filter((mutation) => {
 				const { target } = mutation;
 				return target instanceof Node && root.contains(target);
 			});
-		} else if (!(root instanceof Node)) {
-			return;
 		}
 
 		if (relevant.length === 0) {

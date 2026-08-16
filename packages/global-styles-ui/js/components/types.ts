@@ -30,6 +30,7 @@ export interface VariableType {
 	 * Optional theme.json preset meta (e.g. `description`, taxonomy hints).
 	 */
 	meta?: Record<string, unknown>;
+	[key: string]: unknown;
 }
 
 export type VariablesType = Array<VariableType>;

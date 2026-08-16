@@ -18,7 +18,9 @@ function getCountablePresetItems<T extends Record<string, unknown>>(
 	const items =
 		set.presetKind === 'color'
 			? filterMainPaletteColors(
-					set.items as Parameters<typeof filterMainPaletteColors>[0]
+					set.items as unknown as Parameters<
+						typeof filterMainPaletteColors
+					>[0]
 				)
 			: set.items;
 
