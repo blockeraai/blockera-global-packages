@@ -36,6 +36,31 @@ const styleDependencies = require('./packages-styles');
 const MergeThemeJsonWebpackPlugin = require('./merge-theme-json-plugin');
 const NormalizePatternsWebpackPlugin = require('./normalize-patterns-plugin');
 
+/**
+ * Keep `*-styles` bundles only for packages this consumer is compiling.
+ * The glob in packages-styles.js sees every shared package; consumers such as
+ * site-toolkit do not depend on blockera-admin and should not compile it.
+ *
+ * @param {Object} styleEntry Style webpack entries from packages-styles.
+ * @param {string[]} jsEntryKeys Package slugs from the consumer JS entries.
+ * @return {Object} Filtered style entries.
+ */
+function filterStyleEntries(styleEntry, jsEntryKeys) {
+	const allowed = new Set(jsEntryKeys);
+
+	return Object.fromEntries(
+		Object.entries(styleEntry).filter(([key]) => {
+			const match = key.match(/^(.*)-styles$/);
+
+			if (!match) {
+				return true;
+			}
+
+			return allowed.has(match[1]);
+		})
+	);
+}
+
 dotenv.config({ path: resolve(process.cwd(), '.env') });
 
 /** Only theme products ship `theme-config/`; plugins skip the merge plugin. */
@@ -112,12 +137,17 @@ module.exports = (env, argv) => {
 			? experimentalConfigLocalPath
 			: experimentalConfigDefaultPath;
 
+	const styleEntry = filterStyleEntries(
+		styleDependencies.entry,
+		Object.keys(argv.entry || {})
+	);
+
 	return {
 		mode: argv.mode,
 		name: 'packages',
 		entry: {
 			...argv.entry,
-			...styleDependencies.entry,
+			...styleEntry,
 		},
 		output: {
 			devtoolNamespace: argv.devtoolNamespace,
