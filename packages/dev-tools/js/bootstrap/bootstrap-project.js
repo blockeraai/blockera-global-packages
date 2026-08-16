@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Host-repo bootstrap: clean up generated state, materialize `.cursor` from shared templates,
- * and sync-config (host files from root-configs/ plus the source-codes symlink).
+ * Host-repo bootstrap: clean up generated state, then sync-config
+ * (source-codes symlink, `.cursor` templates, and root-configs/).
  *
  * Run from the consuming project root:
  *   node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.js --project=<id>
@@ -27,7 +27,7 @@ const SHARED_TEMPLATES = 'shared';
 const ENV_SOURCE_CODES = 'BLOCKERA_EXTERNAL_SOURCE_CODES_PATH';
 const ENV_SOURCE_CODES_PLACEHOLDER =
 	'/absolute/path/to/shared/source-codes';
-const STEP_COUNT = 3;
+const STEP_COUNT = 2;
 
 const useColor =
 	Boolean( process.stdout.isTTY ) && process.env.NO_COLOR === undefined;
@@ -286,7 +286,7 @@ function cleanUp( root ) {
 	);
 }
 
-function bootstrapCursor( root, projectId ) {
+function syncCursor( root, projectId ) {
 	const templatesRoot = path.join( __dirname, '..', '..', 'cursor' );
 	const sharedDir = path.join( templatesRoot, SHARED_TEMPLATES );
 	const overlayDir = path.join( templatesRoot, projectId );
@@ -299,15 +299,17 @@ function bootstrapCursor( root, projectId ) {
 
 	if ( fs.existsSync( overlayDir ) ) {
 		copyTemplateTree( overlayDir, cursorDir );
-		logStep(
-			2,
-			'.cursor',
-			`copied shared templates + ${ projectId } overlay`
-		);
-		return;
+
+		return {
+			name: '.cursor/',
+			detail: `copied shared templates + ${ projectId } overlay`,
+		};
 	}
 
-	logStep( 2, '.cursor', 'copied shared templates' );
+	return {
+		name: '.cursor/',
+		detail: 'copied shared templates',
+	};
 }
 
 function sourceCodesGuide() {
@@ -356,13 +358,14 @@ function bootstrapSyncConfig( root, projectId, env ) {
 
 	try {
 		inners.push( syncSourceCodes( root, env ) );
+		inners.push( syncCursor( root, projectId ) );
 		inners.push( ...writeRootConfigs( { root, projectId } ) );
 	} catch ( error ) {
 		fail( error.message || String( error ) );
 	}
 
 	logStepWithInners(
-		3,
+		2,
 		'sync-config',
 		'wrote host files from shared templates',
 		inners
@@ -383,7 +386,6 @@ function main() {
 	banner( projectId );
 
 	cleanUp( root );
-	bootstrapCursor( root, projectId );
 	bootstrapSyncConfig( root, projectId, env );
 	done();
 }
