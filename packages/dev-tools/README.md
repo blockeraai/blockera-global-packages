@@ -9,7 +9,7 @@ Shared development tooling for Blockera packages and themes:
 - Shared `git-conventional-commits.yaml` (husky `commit-msg` via `--config`)
 - Shared ambient TypeScript types (`types/blockera/`) loaded from host `tsconfig.json` via `tsconfig.base.json`
 - Shared Flow templates (`flow/`) written to the host `.flowconfig` by `project:bootstrap`
-- Shared `.cspell/` and `.vscode/` templates written by `project:bootstrap` `sync-config`
+- Shared `.cspell/`, `.vscode/`, and `.husky/` templates written by `project:bootstrap` `sync-config`
 - Shared husky pre-commit TypeScript/Flow typecheck (`github/scripts/run-typecheck-pre-commit.sh`)
 - Shared Code Lint TypeScript/Flow jobs (`github/scripts/jobs/code-lint/ts.sh`, `flow.sh`)
 - Shared Cursor templates (`cursor/`) materialized by `project:bootstrap`
@@ -44,8 +44,15 @@ packages/dev-tools/
 │   ├── cspell/                  # write-cspell CLI
 │   ├── vscode/                  # write-vscode CLI
 │   ├── cypress/                 # write-component-index CLI
+│   ├── husky/                   # write-husky CLI
 │   ├── sync-config/             # copy-template-dir helper
 │   └── bootstrap/               # project:bootstrap CLI
+├── husky/
+│   ├── pre-commit
+│   ├── commit-msg
+│   ├── pre-push
+│   ├── post-checkout
+│   └── internals/husky.sh       # host .husky/_/husky.sh
 ├── cypress/
 │   └── support/
 │       └── component-index.html # host Cypress component-test shell
@@ -124,6 +131,7 @@ Steps (cwd = host repo root):
    - `.cspell/` from `cspell/words.txt` (overwrites the host folder).
    - `.vscode/` from `vscode/` (overwrites the host folder).
    - `cypress/support/component-index.html` from `cypress/support/` (does not wipe the rest of `cypress/`).
+   - `.husky/` from `husky/` (overwrites the host folder; hook scripts are chmod 0755).
    Commit these files (CI / the editor need them). Do not gitignore them. Edit the templates here, then re-run bootstrap.
 
 `.cursor/` and `source-codes/` are gitignored generated paths. Edit templates here, not in the host `.cursor` folder.
