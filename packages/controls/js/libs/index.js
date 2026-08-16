@@ -35,6 +35,7 @@ export { ColorPickerControl } from './color-picker-control';
 export { default as GroupControl } from './group-control';
 export { default as RangeControl } from './range-control';
 export { default as InputControl } from './input-control';
+export { default as StepperControl } from './stepper-control';
 export * from './input-control/utils';
 export { default as TextAreaControl } from './textarea-control';
 export {

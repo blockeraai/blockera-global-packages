@@ -14,6 +14,7 @@ import {
 	InputControl,
 	SearchControl,
 	SelectControl,
+	StepperControl,
 } from '../../libs';
 
 /**
@@ -105,6 +106,19 @@ export const RendererControl = ({
 		case 'search':
 			Component = (
 				<SearchControl
+					id={id}
+					singularId={id}
+					//
+					onChange={handleOnChange}
+					defaultValue={resolvedDefaultValue}
+					{...controlProps}
+				/>
+			);
+			break;
+
+		case 'stepper':
+			Component = (
+				<StepperControl
 					id={id}
 					singularId={id}
 					//
