@@ -17,6 +17,8 @@ const PROJECT_IDS = [
 	'blockera-one',
 	'blockera-site-toolkit',
 ];
+const FALLBACK_PROJECT_ID = 'blockera';
+const LOGO_ARTS_DIR = 'logo-arts';
 const SHARED_TEMPLATES = 'shared';
 
 const ENV_SOURCE_CODES = 'BLOCKERA_EXTERNAL_SOURCE_CODES_PATH';
@@ -69,19 +71,40 @@ function printErr( message ) {
 	console.error( message );
 }
 
-function printLogo() {
-	const art = [
-		'***********************************************************',
-		'*                                                         *',
-		'*  ____    _                  _                           *',
-		'* |  _ \\  | |                | |                          *',
-		'* | |_) | | |   ___     ___  | | __   ___   _ __    __ _  *',
-		'* |  _ <  | |  / _ \\   / __| | |/ /  / _ \\ | \'__|  / _` | *',
-		'* | |_) | | | | (_) | | (__  |   <  |  __/ | |    | (_| | *',
-		'* |____/  |_|  \\___/   \\___| |_|\\_\\  \\___| |_|     \\__,_| *',
-		'*                                                         *',
-		'***********************************************************',
-	];
+function readLogoLines( projectId ) {
+	const filePath = path.join( __dirname, LOGO_ARTS_DIR, `${ projectId }.txt` );
+
+	if ( ! fs.existsSync( filePath ) ) {
+		return null;
+	}
+
+	const lines = fs
+		.readFileSync( filePath, 'utf8' )
+		.replace( /\r\n/g, '\n' )
+		.replace( /\r/g, '\n' )
+		.split( '\n' );
+
+	while ( lines.length && lines[ lines.length - 1 ] === '' ) {
+		lines.pop();
+	}
+
+	return lines.length ? lines : null;
+}
+
+function loadLogoArt( projectId ) {
+	return (
+		readLogoLines( projectId ) ||
+		readLogoLines( FALLBACK_PROJECT_ID ) ||
+		[]
+	);
+}
+
+function printLogo( projectId ) {
+	const art = loadLogoArt( projectId );
+
+	if ( ! art.length ) {
+		return;
+	}
 
 	printOut( '' );
 	art.forEach( ( line ) => {
@@ -291,13 +314,12 @@ function done() {
 }
 
 function main() {
-	printLogo();
-
 	const projectId = parseProjectId( process.argv.slice( 2 ) );
 	const root = process.cwd();
 	const env = loadEnv( path.join( root, '.env' ) );
 	const raw = ( env[ ENV_SOURCE_CODES ] || '' ).trim();
 
+	printLogo( projectId );
 	banner( projectId );
 
 	if ( ! raw || raw === ENV_SOURCE_CODES_PLACEHOLDER ) {
