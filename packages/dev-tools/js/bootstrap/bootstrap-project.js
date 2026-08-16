@@ -3,7 +3,7 @@
 /**
  * Host-repo bootstrap: clean dist, materialize `.cursor` from shared templates,
  * symlink `source-codes` from BLOCKERA_EXTERNAL_SOURCE_CODES_PATH, and
- * sync-config (host files from shared templates; Flow is the first inner step).
+ * sync-config (host files from shared templates: Flow, .cspell, .vscode).
  *
  * Run from the consuming project root:
  *   node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.js --project=<id>
@@ -15,6 +15,8 @@ const {
 	writeFlowconfig,
 	writeFlowStubs,
 } = require( '../flow/write-flowconfig' );
+const { writeCspell } = require( '../cspell/write-cspell' );
+const { writeVscode } = require( '../vscode/write-vscode' );
 
 const PROJECT_IDS = [
 	'blockera',
@@ -346,11 +348,31 @@ function syncFlowconfig( root, projectId ) {
 	];
 }
 
+function syncCspell( root ) {
+	writeCspell( { root } );
+
+	return {
+		name: '.cspell/',
+		detail: 'copied words.txt',
+	};
+}
+
+function syncVscode( root ) {
+	writeVscode( { root } );
+
+	return {
+		name: '.vscode/',
+		detail: 'copied settings.json, extensions.json, tasks.json',
+	};
+}
+
 function bootstrapSyncConfig( root, projectId ) {
 	const inners = [];
 
 	try {
 		inners.push( ...syncFlowconfig( root, projectId ) );
+		inners.push( syncCspell( root ) );
+		inners.push( syncVscode( root ) );
 	} catch ( error ) {
 		fail( error.message || String( error ) );
 	}
