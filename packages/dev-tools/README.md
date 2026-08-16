@@ -10,6 +10,8 @@ Shared development tooling for Blockera packages and themes:
 - Shared ambient TypeScript types (`types/blockera/`) loaded from host `tsconfig.json` via `tsconfig.base.json`
 - Shared husky pre-commit TypeScript/Flow typecheck (`github/scripts/run-typecheck-pre-commit.sh`)
 - Shared Code Lint TypeScript/Flow jobs (`github/scripts/jobs/code-lint/ts.sh`, `flow.sh`)
+- Shared Cursor templates (`cursor/`) materialized by `project:bootstrap`
+- Host `project:bootstrap` (`js/bootstrap/bootstrap-project.js`)
 
 ---
 
@@ -23,13 +25,20 @@ Consumers must build packages and themes with the same webpack/SVGO/merge rules.
 
 ```text
 packages/dev-tools/
+├── cursor/
+│   ├── shared/                  # global shared templates (copy first)
+│   ├── blockera/                # overlay (.gitkeep until customized)
+│   ├── blockera-pro/            # overlay (.gitkeep until customized)
+│   ├── blockera-one/            # overlay
+│   └── blockera-site-toolkit/   # overlay (.gitkeep until customized)
 ├── js/
 │   ├── index.js                 # Factory: webpack + eslint resolver
 │   ├── webpack/                 # packages, styles, SVGO, plugins
 │   ├── eslint/import-resolver.js
 │   ├── theme-json/              # merge-theme-json CLI
 │   ├── patterns/                # normalize-patterns CLI
-│   └── typescript/              # shared tsconfig.base.json
+│   ├── typescript/              # shared tsconfig.base.json
+│   └── bootstrap/               # project:bootstrap CLI
 ├── types/
 │   └── blockera/                # ambient .d.ts for all host repos
 ├── github/scripts/              # husky pre-commit typecheck, pre-push pin checks
@@ -72,6 +81,30 @@ bash packages/global-packages/packages/dev-tools/github/scripts/jobs/code-lint/$
 
 - `ts.sh` runs `npm run typecheck` when `tsconfig.json` exists (`BLOCKERA_TYPECHECK_TS_CMD` to override)
 - `flow.sh` runs `npm run flow` when `.flowconfig` exists (`BLOCKERA_TYPECHECK_FLOW_CMD` to override)
+
+### Project bootstrap
+
+Host `npm run start` should run `project:bootstrap` first. Do not use npm lifecycle `prepare` (that stays `husky install`).
+
+```sh
+node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.js --project=<id>
+```
+
+`--project` must be one of: `blockera`, `blockera-pro`, `blockera-one`, `blockera-site-toolkit`.
+
+Steps (cwd = host repo root):
+
+1. Remove `dist/`
+2. Wipe `.cursor/`, copy `cursor/shared/`, then copy `cursor/<project>/` (overlay add/overwrite). Skip `.gitkeep`.
+3. Symlink `source-codes` → `BLOCKERA_EXTERNAL_SOURCE_CODES_PATH` from host `.env`. Unset, placeholder, or missing path → **fail** with a setup guide. Existing `source-codes` (dir or symlink) is always removed first.
+
+`.cursor/` and `source-codes/` are gitignored generated paths. Edit templates here, not in the host `.cursor` folder.
+
+`.env.example` should include:
+
+```
+BLOCKERA_EXTERNAL_SOURCE_CODES_PATH=/absolute/path/to/shared/source-codes
+```
 
 ---
 
