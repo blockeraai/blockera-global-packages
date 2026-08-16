@@ -29,11 +29,11 @@ const ROOT_CONFIGS = [
 	{ dest: 'phpcs.xml' },
 	{ dest: 'phpstan.neon' },
 	{ dest: 'svgo.config.js' },
-	{ dest: 'tsconfig.json' },
+	{ dest: 'tsconfig.json', src: 'tsconfig.json.template' },
 ];
 
-function writeConfigFile( root, dest, projectId ) {
-	const from = path.join( TEMPLATE_DIR, dest );
+function writeConfigFile( root, dest, projectId, src ) {
+	const from = path.join( TEMPLATE_DIR, src || dest );
 	const to = path.join( root, dest );
 
 	if ( ! fs.existsSync( from ) ) {
@@ -113,7 +113,7 @@ function entryDetail( entry ) {
 		return `copied from root-configs/${ entry.dest }/`;
 	}
 
-	return `copied from root-configs/${ entry.dest }`;
+	return `copied from root-configs/${ entry.src || entry.dest }`;
 }
 
 function writeRootConfigs( { root, projectId } ) {
@@ -126,7 +126,7 @@ function writeRootConfigs( { root, projectId } ) {
 		} else if ( entry.kind === 'husky' ) {
 			writeHusky( root );
 		} else {
-			writeConfigFile( root, entry.dest, projectId );
+			writeConfigFile( root, entry.dest, projectId, entry.src );
 		}
 
 		return {
