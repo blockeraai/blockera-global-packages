@@ -33,6 +33,11 @@
 		"noEmit": true,
 		"skipLibCheck": true,
 
-		"lib": ["ES2021", "DOM", "DOM.Iterable"]
+		"lib": ["ES2021", "DOM", "DOM.Iterable"],
+
+		"typeRoots": [
+			"${configDir}/node_modules/@types",
+			"${configDir}/packages/global-packages/packages/dev-tools/types"
+		]
 	}
 }

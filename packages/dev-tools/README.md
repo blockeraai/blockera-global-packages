@@ -7,6 +7,7 @@ Shared development tooling for Blockera packages and themes:
 - Modular `theme.json` merge/check CLI
 - Block patterns normalize/check CLI
 - Shared `git-conventional-commits.yaml` (husky `commit-msg` via `--config`)
+- Shared ambient TypeScript types (`types/blockera/`) loaded from host `tsconfig.json` via `tsconfig.base.json`
 
 ---
 
@@ -25,7 +26,10 @@ packages/dev-tools/
 │   ├── webpack/                 # packages, styles, SVGO, plugins
 │   ├── eslint/import-resolver.js
 │   ├── theme-json/              # merge-theme-json CLI
-│   └── patterns/                # normalize-patterns CLI
+│   ├── patterns/                # normalize-patterns CLI
+│   └── typescript/              # shared tsconfig.base.json
+├── types/
+│   └── blockera/                # ambient .d.ts for all host repos
 ├── php/
 │   └── functions.php            # Composer placeholder
 ├── git-conventional-commits.yaml # Shared conventional-commit types
@@ -90,6 +94,7 @@ Supports `--check`, `--force`, `--debug`, `--quiet`, `--text-domain`, `--uri-php
 - Always resolve webpack/eslint deps from the consuming project — never assume this package’s `node_modules`.
 - Do not commit generated `theme.json` drift; run `--check` in CI.
 - Keep style-entry generation exclusions for `dev-*` packages.
+- Ambient TypeScript declarations belong in `types/blockera/`. Edit them only from the blockera-one global-packages checkout; never recreate a host-repo `types/` folder.
 
 ---
 
