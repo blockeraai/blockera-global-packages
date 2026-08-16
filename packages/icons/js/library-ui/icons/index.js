@@ -265,6 +265,7 @@ export { default as MarginRight } from './margin-right.svg';
 export { default as MarginTop } from './margin-top.svg';
 export { default as MarginVertical } from './margin-vertical.svg';
 export { default as Maximize } from './maximize.svg';
+export { default as Minus } from './minus.svg';
 export { default as MoreHorizontal } from './more-horizontal.svg';
 export { default as MoreVertical } from './more-vertical.svg';
 export { default as MoreVerticalSmall } from './more-vertical-small.svg';
