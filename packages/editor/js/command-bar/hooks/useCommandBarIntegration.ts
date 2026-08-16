@@ -161,7 +161,7 @@ export function useCommandBarIntegration({
 	// Find and wrap all navigation loaders
 	const wrapNavigationLoaders = useCallback((): boolean => {
 		const select = (
-			window as {
+			window as unknown as {
 				wp?: {
 					data?: { select: (store: string) => CommandsStoreSelect };
 				};
