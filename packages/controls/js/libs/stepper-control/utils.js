@@ -16,7 +16,7 @@ export type StepValueOptions = {
 	float?: boolean,
 };
 
-export function isFiniteNumber(value: mixed): boolean {
+export function isFiniteNumber(value: mixed): boolean %checks {
 	return typeof value === 'number' && Number.isFinite(value);
 }
 
@@ -59,28 +59,30 @@ export function clampOrWrap(
 	value: number,
 	{ min, max, wrap = false }: ClampOrWrapOptions
 ): number {
-	const hasMin = isFiniteNumber(min);
-	const hasMax = isFiniteNumber(max);
+	const resolvedMin: number | null =
+		typeof min === 'number' && Number.isFinite(min) ? min : null;
+	const resolvedMax: number | null =
+		typeof max === 'number' && Number.isFinite(max) ? max : null;
 
 	// Wrap only when both ends exist; otherwise fall through to clamp.
-	if (wrap && hasMin && hasMax) {
-		if (value > max) {
-			return min;
+	if (wrap && resolvedMin !== null && resolvedMax !== null) {
+		if (value > resolvedMax) {
+			return resolvedMin;
 		}
 
-		if (value < min) {
-			return max;
+		if (value < resolvedMin) {
+			return resolvedMax;
 		}
 
 		return value;
 	}
 
-	if (hasMin && value < min) {
-		return min;
+	if (resolvedMin !== null && value < resolvedMin) {
+		return resolvedMin;
 	}
 
-	if (hasMax && value > max) {
-		return max;
+	if (resolvedMax !== null && value > resolvedMax) {
+		return resolvedMax;
 	}
 
 	return value;
