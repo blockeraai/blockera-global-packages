@@ -43,8 +43,12 @@ packages/dev-tools/
 │   ├── flow/                    # write-flowconfig CLI
 │   ├── cspell/                  # write-cspell CLI
 │   ├── vscode/                  # write-vscode CLI
+│   ├── cypress/                 # write-component-index CLI
 │   ├── sync-config/             # copy-template-dir helper
 │   └── bootstrap/               # project:bootstrap CLI
+├── cypress/
+│   └── support/
+│       └── component-index.html # host Cypress component-test shell
 ├── cspell/
 │   └── words.txt                # host .cspell/words.txt
 ├── vscode/
@@ -119,6 +123,7 @@ Steps (cwd = host repo root):
    - `flow/` stubs (`TypeScriptModule.js.flow`, `WebpackAsset.js.flow`).
    - `.cspell/` from `cspell/words.txt` (overwrites the host folder).
    - `.vscode/` from `vscode/` (overwrites the host folder).
+   - `cypress/support/component-index.html` from `cypress/support/` (does not wipe the rest of `cypress/`).
    Commit these files (CI / the editor need them). Do not gitignore them. Edit the templates here, then re-run bootstrap.
 
 `.cursor/` and `source-codes/` are gitignored generated paths. Edit templates here, not in the host `.cursor` folder.
@@ -177,6 +182,7 @@ Supports `--check`, `--force`, `--debug`, `--quiet`, `--text-domain`, `--uri-php
 - Ambient TypeScript declarations belong in `types/blockera/`. Edit them only from the blockera-one global-packages checkout; never recreate a host-repo `types/` folder.
 - Flow templates belong in `dev-tools/flow/`. Never hand-edit the host `.flowconfig` or `flow/` stubs; run `project:bootstrap` and commit the generated files.
 - `.cspell/` and `.vscode/` templates belong in `dev-tools/cspell/` and `dev-tools/vscode/`. Never hand-edit the host copies; run `project:bootstrap` and commit the generated folders.
+- Cypress `component-index.html` belongs in `dev-tools/cypress/support/`. Never hand-edit the host copy; run `project:bootstrap` and commit it.
 
 ---
 
