@@ -9,6 +9,7 @@ Shared development tooling for Blockera packages and themes:
 - Shared `git-conventional-commits.yaml` (husky `commit-msg` via `--config`)
 - Shared ambient TypeScript types (`types/blockera/`) loaded from host `tsconfig.json` via `tsconfig.base.json`
 - Shared Flow templates (`flow/`) written to the host `.flowconfig` by `project:bootstrap`
+- Shared `.cspell/` and `.vscode/` templates written by `project:bootstrap` `sync-config`
 - Shared husky pre-commit TypeScript/Flow typecheck (`github/scripts/run-typecheck-pre-commit.sh`)
 - Shared Code Lint TypeScript/Flow jobs (`github/scripts/jobs/code-lint/ts.sh`, `flow.sh`)
 - Shared Cursor templates (`cursor/`) materialized by `project:bootstrap`
@@ -40,7 +41,16 @@ packages/dev-tools/
 │   ├── patterns/                # normalize-patterns CLI
 │   ├── typescript/              # shared tsconfig.base.json
 │   ├── flow/                    # write-flowconfig CLI
+│   ├── cspell/                  # write-cspell CLI
+│   ├── vscode/                  # write-vscode CLI
+│   ├── sync-config/             # copy-template-dir helper
 │   └── bootstrap/               # project:bootstrap CLI
+├── cspell/
+│   └── words.txt                # host .cspell/words.txt
+├── vscode/
+│   ├── settings.json
+│   ├── extensions.json
+│   └── tasks.json
 ├── flow/
 │   ├── flowconfig.base          # shared Flow ignore + name mappers
 │   ├── overlays/                # per-host extras (optional)
@@ -107,7 +117,9 @@ Steps (cwd = host repo root):
 4. `sync-config` — write host config files from shared templates. Inner steps:
    - `.flowconfig` from `flow/flowconfig.base` + `flow/overlays/<project>`.
    - `flow/` stubs (`TypeScriptModule.js.flow`, `WebpackAsset.js.flow`).
-   Commit both (CI needs them). Do not gitignore them. Edit the templates here, then re-run bootstrap.
+   - `.cspell/` from `cspell/words.txt` (overwrites the host folder).
+   - `.vscode/` from `vscode/` (overwrites the host folder).
+   Commit these files (CI / the editor need them). Do not gitignore them. Edit the templates here, then re-run bootstrap.
 
 `.cursor/` and `source-codes/` are gitignored generated paths. Edit templates here, not in the host `.cursor` folder.
 
@@ -164,6 +176,7 @@ Supports `--check`, `--force`, `--debug`, `--quiet`, `--text-domain`, `--uri-php
 - Keep style-entry generation exclusions for `dev-*` packages.
 - Ambient TypeScript declarations belong in `types/blockera/`. Edit them only from the blockera-one global-packages checkout; never recreate a host-repo `types/` folder.
 - Flow templates belong in `dev-tools/flow/`. Never hand-edit the host `.flowconfig` or `flow/` stubs; run `project:bootstrap` and commit the generated files.
+- `.cspell/` and `.vscode/` templates belong in `dev-tools/cspell/` and `dev-tools/vscode/`. Never hand-edit the host copies; run `project:bootstrap` and commit the generated folders.
 
 ---
 

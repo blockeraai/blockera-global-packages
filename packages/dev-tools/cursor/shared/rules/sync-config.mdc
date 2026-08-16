@@ -1,0 +1,32 @@
+---
+description: Shared host config (types, Flow, cspell, vscode) lives in dev-tools, not host-root copies
+globs: "**/*.{ts,tsx,d.ts,js.flow},**/.flowconfig,**/flowconfig.base,**/flow/overlays/**,**/.cspell/**,**/.vscode/**,**/cspell/**,**/vscode/**"
+alwaysApply: false
+---
+
+# sync-config
+
+Edit files inside `packages/global-packages/packages/dev-tools/`, not host-root copies. After a template change, run `npm run project:bootstrap` and commit the generated host files.
+
+## TypeScript
+
+Ambient / `declare module` types belong in:
+
+`packages/global-packages/packages/dev-tools/types/blockera/`
+
+- Never add or edit a project-root `types/` folder.
+- Do not stub packages that already ship TypeScript types (for example `@dnd-kit/*` or `overlayscrollbars`).
+
+## Flow
+
+Templates and stubs belong in:
+
+`packages/global-packages/packages/dev-tools/flow/`
+
+- Never hand-edit the host-root `.flowconfig` or `flow/` stubs.
+
+## Editor config
+
+Templates belong in `packages/global-packages/packages/dev-tools/cspell/` and `.../vscode/`.
+
+- Never hand-edit host-root `.cspell/` or `.vscode/`.
