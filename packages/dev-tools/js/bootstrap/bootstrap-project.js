@@ -4,7 +4,7 @@
  * Host-repo bootstrap: clean dist, materialize `.cursor` from shared templates,
  * symlink `source-codes` from BLOCKERA_EXTERNAL_SOURCE_CODES_PATH, and
  * sync-config (host files from shared templates: Flow, .cspell, .vscode,
- * Cypress component-index).
+ * Cypress component-index, .husky).
  *
  * Run from the consuming project root:
  *   node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.js --project=<id>
@@ -21,6 +21,7 @@ const { writeVscode } = require( '../vscode/write-vscode' );
 const {
 	writeCypressComponentIndex,
 } = require( '../cypress/write-component-index' );
+const { writeHusky } = require( '../husky/write-husky' );
 
 const PROJECT_IDS = [
 	'blockera',
@@ -386,6 +387,15 @@ function syncCypressComponentIndex( root ) {
 	};
 }
 
+function syncHusky( root ) {
+	writeHusky( { root } );
+
+	return {
+		name: '.husky/',
+		detail: 'copied hooks + _/ and chmod 0755 hook scripts',
+	};
+}
+
 function bootstrapSyncConfig( root, projectId ) {
 	const inners = [];
 
@@ -394,6 +404,7 @@ function bootstrapSyncConfig( root, projectId ) {
 		inners.push( syncCspell( root ) );
 		inners.push( syncVscode( root ) );
 		inners.push( syncCypressComponentIndex( root ) );
+		inners.push( syncHusky( root ) );
 	} catch ( error ) {
 		fail( error.message || String( error ) );
 	}
