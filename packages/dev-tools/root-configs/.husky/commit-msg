@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Edit packages/global-packages/packages/dev-tools/husky/commit-msg
+# Edit packages/global-packages/packages/dev-tools/root-configs/.husky/commit-msg
 # project:bootstrap copies this to the host .husky/ folder.
 
 commit_message="$1"

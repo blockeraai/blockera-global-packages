@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Edit packages/global-packages/packages/dev-tools/husky/internals/husky.sh
+# Edit packages/global-packages/packages/dev-tools/root-configs/.husky/internals/husky.sh
 # project:bootstrap copies this to the host .husky/_/ folder.
 if [ -z "$husky_skip_init" ]; then
   debug () {

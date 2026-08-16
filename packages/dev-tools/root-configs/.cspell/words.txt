@@ -1,4 +1,4 @@
-# Edit this file in packages/global-packages/packages/dev-tools/cspell/words.txt
+# Edit this file in packages/global-packages/packages/dev-tools/root-configs/.cspell/words.txt
 # (not the host-root .cspell/ copy). project:bootstrap copies it to the repo.
 ABSPATH
 autoloader

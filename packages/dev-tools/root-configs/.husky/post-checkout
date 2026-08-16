@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Edit packages/global-packages/packages/dev-tools/husky/post-checkout
+# Edit packages/global-packages/packages/dev-tools/root-configs/.husky/post-checkout
 # project:bootstrap copies this to the host .husky/ folder.
 . "$(dirname -- "$0")/_/husky.sh"
 
