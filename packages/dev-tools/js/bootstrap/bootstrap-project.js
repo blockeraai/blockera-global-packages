@@ -3,8 +3,7 @@
 /**
  * Host-repo bootstrap: clean dist, materialize `.cursor` from shared templates,
  * symlink `source-codes` from BLOCKERA_EXTERNAL_SOURCE_CODES_PATH, and
- * sync-config (host files from shared templates: Flow, .cspell, .vscode,
- * Cypress component-index, .husky).
+ * sync-config (host files from shared templates in root-configs/).
  *
  * Run from the consuming project root:
  *   node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.js --project=<id>
@@ -13,15 +12,8 @@
 const fs = require( 'fs' );
 const path = require( 'path' );
 const {
-	writeFlowconfig,
-	writeFlowStubs,
-} = require( '../flow/write-flowconfig' );
-const { writeCspell } = require( '../cspell/write-cspell' );
-const { writeVscode } = require( '../vscode/write-vscode' );
-const {
-	writeCypressComponentIndex,
-} = require( '../cypress/write-component-index' );
-const { writeHusky } = require( '../husky/write-husky' );
+	writeRootConfigs,
+} = require( '../root-configs/write-root-configs' );
 
 const PROJECT_IDS = [
 	'blockera',
@@ -344,67 +336,11 @@ function bootstrapSourceCodes( root, env ) {
 	logStep( 3, 'source-codes', `linked → ${ target }` );
 }
 
-function syncFlowconfig( root, projectId ) {
-	writeFlowconfig( { root, projectId } );
-	writeFlowStubs( { root } );
-
-	return [
-		{
-			name: '.flowconfig',
-			detail: `wrote from flow/flowconfig.base + overlays/${ projectId }`,
-		},
-		{
-			name: 'flow/',
-			detail: 'copied TypeScriptModule.js.flow, WebpackAsset.js.flow',
-		},
-	];
-}
-
-function syncCspell( root ) {
-	writeCspell( { root } );
-
-	return {
-		name: '.cspell/',
-		detail: 'copied words.txt',
-	};
-}
-
-function syncVscode( root ) {
-	writeVscode( { root } );
-
-	return {
-		name: '.vscode/',
-		detail: 'copied settings.json, extensions.json, tasks.json',
-	};
-}
-
-function syncCypressComponentIndex( root ) {
-	writeCypressComponentIndex( { root } );
-
-	return {
-		name: 'cypress/support/component-index.html',
-		detail: 'copied Cypress component-test HTML shell',
-	};
-}
-
-function syncHusky( root ) {
-	writeHusky( { root } );
-
-	return {
-		name: '.husky/',
-		detail: 'copied hooks + _/ and chmod 0755 hook scripts',
-	};
-}
-
 function bootstrapSyncConfig( root, projectId ) {
 	const inners = [];
 
 	try {
-		inners.push( ...syncFlowconfig( root, projectId ) );
-		inners.push( syncCspell( root ) );
-		inners.push( syncVscode( root ) );
-		inners.push( syncCypressComponentIndex( root ) );
-		inners.push( syncHusky( root ) );
+		inners.push( ...writeRootConfigs( { root, projectId } ) );
 	} catch ( error ) {
 		fail( error.message || String( error ) );
 	}
