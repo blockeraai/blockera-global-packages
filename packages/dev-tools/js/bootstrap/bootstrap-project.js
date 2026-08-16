@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Host-repo bootstrap: clean dist, materialize `.cursor` from shared templates,
+ * Host-repo bootstrap: clean up generated state, materialize `.cursor` from shared templates,
  * symlink `source-codes` from BLOCKERA_EXTERNAL_SOURCE_CODES_PATH, and
  * sync-config (host files from shared templates in root-configs/).
  *
@@ -277,10 +277,14 @@ function copyTemplateTree( fromDir, toDir ) {
 	} );
 }
 
-function cleanDist( root ) {
+function cleanUp( root ) {
 	const dist = path.join( root, 'dist' );
 	fs.rmSync( dist, { recursive: true, force: true } );
-	logStep( 1, 'dist', 'removed dist/' );
+	logStep(
+		1,
+		'clean up',
+		'cleared generated state for a clean development start'
+	);
 }
 
 function bootstrapCursor( root, projectId ) {
@@ -374,7 +378,7 @@ function main() {
 		);
 	}
 
-	cleanDist( root );
+	cleanUp( root );
 	bootstrapCursor( root, projectId );
 	bootstrapSourceCodes( root, env );
 	bootstrapSyncConfig( root, projectId );
