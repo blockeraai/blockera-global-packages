@@ -120,6 +120,40 @@ if ( ! function_exists( 'blockera_products_localize' ) ) {
 	}
 }
 
+if ( ! function_exists( 'blockera_products_script_handle' ) ) {
+
+	/**
+	 * Find the registered "@blockera/products" script handle.
+	 *
+	 * The blockera assets loader registers package scripts with version-suffixed
+	 * handles (e.g. `@blockera/products-1-0-0` — see AssetsLoader::enqueue()),
+	 * so after checking the plain handle the exact handle is discovered by a
+	 * prefix scan over the registered scripts.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string the registered handle or empty string when not registered.
+	 */
+	function blockera_products_script_handle(): string {
+
+		// Fast path: plain (unversioned) registration.
+		if ( wp_script_is( '@blockera/products', 'registered' ) ) {
+
+			return '@blockera/products';
+		}
+
+		foreach ( wp_scripts()->registered as $handle => $script ) {
+
+			if ( 0 === strpos( $handle, '@blockera/products-' ) ) {
+
+				return $handle;
+			}
+		}
+
+		return '';
+	}
+}
+
 if ( ! function_exists( 'blockera_products_l10n' ) ) {
 
 	/**
@@ -138,7 +172,15 @@ if ( ! function_exists( 'blockera_products_l10n' ) ) {
 		// Static guard: "admin_enqueue_scripts" can run for multiple contexts in one request.
 		static $localized = false;
 
-		if ( $localized || ! wp_script_is( '@blockera/products', 'registered' ) ) {
+		if ( $localized ) {
+
+			return;
+		}
+
+		$handle = blockera_products_script_handle();
+
+		// Keep the guard open until the handle is registered.
+		if ( ! $handle ) {
 
 			return;
 		}
@@ -146,7 +188,7 @@ if ( ! function_exists( 'blockera_products_l10n' ) ) {
 		$localized = true;
 
 		wp_add_inline_script(
-			'@blockera/products',
+			$handle,
 			'var blockeraProductsData = ' . wp_json_encode( blockera_products_localize() ) . ';',
 			'before'
 		);

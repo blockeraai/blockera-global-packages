@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Bug Fixes:
+
+- Fixed products localization never attaching: the assets loader registers version-suffixed script handles (e.g. `@blockera/products-1-0-0`), so `blockera_products_l10n()` now resolves the exact registered handle via the new `blockera_products_script_handle()` helper.
+
 ## 1.0.0 (2026-08-15)
 
 ### New Features:
