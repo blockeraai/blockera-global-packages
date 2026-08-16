@@ -98,7 +98,7 @@ node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.
 
 Steps (cwd = host repo root):
 
-1. Remove `dist/`
+1. `clean up` — remove generated state (`dist/`) so development starts clean.
 2. Wipe `.cursor/`, copy `cursor/shared/`, then copy `cursor/<project>/` (overlay add/overwrite). Skip `.gitkeep`.
 3. Symlink `source-codes` → `BLOCKERA_EXTERNAL_SOURCE_CODES_PATH` from host `.env`. Unset, placeholder, or missing path → **fail** with a setup guide. Existing `source-codes` (dir or symlink) is always removed first.
 4. `sync-config` — write host config files from `root-configs/` (mirrors the host tree; each path is its own inner step). Folders (`.cspell/`, `.vscode/`, `.husky/`, `flow/`) overwrite the host folder. `cypress/support/component-index.html` does not wipe the rest of `cypress/`. Husky hook scripts are chmod 0755. `{{PROJECT_ID}}` is replaced with `--project`.
