@@ -1,3 +1,5 @@
+# Edit packages/global-packages/packages/dev-tools/root-configs/.flowconfig
+# project:bootstrap copies this to the host repo root.
 [ignore]
 <PROJECT_ROOT>/app/.*
 <PROJECT_ROOT>/node_modules/eslint-plugin-import/.*
