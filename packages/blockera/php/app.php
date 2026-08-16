@@ -11,6 +11,12 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+// Lazily register the site builder as the companion product on first registry
+// read. Hooked before the request-type guard so any context (rest, cron, ...)
+// reading the registry still sees the companion. Self-guards when the
+// blockera/products package is absent or blockera runs embedded in a theme.
+add_action('blockera/products/registry/init', 'blockera_sb_register_product');
+
 // Blockera should be loaded only on frontend, editor and admin requests.
 if (! blockera_is_frontend_request() && ! blockera_is_editor_request() && ! blockera_is_admin_request()) {
     return;
