@@ -7,6 +7,10 @@
 #   SOURCE_MESSAGE   (multiline OK)
 #
 # Optional:
+#   COMMIT_SUBJECT   full title from the bump script
+#   COMMITS          upstream commit count (used when COMMIT_SUBJECT is unset)
+#
+# Optional:
 #   BLOCKERA_SYNC_GP_PR_BRANCH              default: chore/bump-global-packages
 #   BLOCKERA_SYNC_GP_PR_LABEL               default: dependencies
 #   BLOCKERA_SYNC_GP_GLOBAL_PACKAGES_REPO   default: blockeraai/blockera-global-packages
@@ -47,7 +51,17 @@ ${SOURCE_MESSAGE}
 EOF
 )"
 
-TITLE="submodule: bump global-packages to ${SHORT_SHA}"
+if [[ -n "${COMMIT_SUBJECT:-}" ]]; then
+	TITLE="${COMMIT_SUBJECT}"
+else
+	TITLE="submodule: bump global-packages to ${SHORT_SHA}"
+	COMMITS="${COMMITS:-0}"
+	if [[ "${COMMITS}" -eq 1 ]]; then
+		TITLE="${TITLE} (1 commit)"
+	elif [[ "${COMMITS}" -gt 1 ]]; then
+		TITLE="${TITLE} (${COMMITS} commits)"
+	fi
+fi
 
 EXISTING_PR="$(gh pr list --head "${PR_BRANCH}" --base "${BASE_BRANCH}" --json number --jq '.[0].number // empty')"
 if [[ -n "${EXISTING_PR}" ]]; then

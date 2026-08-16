@@ -42,8 +42,12 @@ echo "${OUTPUT}"
 
 SHORT_SHA="$(echo "${OUTPUT}" | sed -n 's/^short_sha=//p' | tail -n1)"
 FULL_SHA="$(echo "${OUTPUT}" | sed -n 's/^sha=//p' | tail -n1)"
+COMMITS="$(echo "${OUTPUT}" | sed -n 's/^commits=//p' | tail -n1)"
+COMMIT_SUBJECT="$(echo "${OUTPUT}" | sed -n 's/^commit_subject=//p' | tail -n1)"
 echo "short_sha=${SHORT_SHA}" >>"${GITHUB_OUTPUT}"
 echo "sha=${FULL_SHA}" >>"${GITHUB_OUTPUT}"
+echo "commits=${COMMITS}" >>"${GITHUB_OUTPUT}"
+echo "commit_subject=${COMMIT_SUBJECT}" >>"${GITHUB_OUTPUT}"
 
 if git diff --cached --quiet -- "${SUBMODULE_PATH}"; then
 	echo "changed=false" >>"${GITHUB_OUTPUT}"

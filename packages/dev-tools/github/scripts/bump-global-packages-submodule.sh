@@ -18,7 +18,7 @@
 # Compatible with SSH or HTTPS .gitmodules urls (CI rewrites to HTTPS + PAT).
 #
 # Machine-readable lines (plain, uncolored; parsed by CI helpers):
-#   sha=…  short_sha=…  target_ref=…  changed=true|false  commit=…
+#   sha=…  short_sha=…  target_ref=…  commits=…  commit_subject=…  changed=true|false  commit=…
 set -euo pipefail
 
 EXPLICIT_REF="${1:-}"
@@ -84,6 +84,16 @@ log_kv() {
 # Plain key=value for CI parsers (run-bump.sh sed). Never color these.
 emit_kv() {
 	printf '%s=%s\n' "$1" "$2"
+}
+
+# Subject suffix: " (1 commit)" / " (N commits)" / "" when the range is empty.
+format_commit_count_suffix() {
+	local n="${1:-0}"
+	if [ "${n}" -eq 1 ]; then
+		printf ' (1 commit)'
+	elif [ "${n}" -gt 1 ]; then
+		printf ' (%s commits)' "${n}"
+	fi
 }
 
 cd "${ROOT}"
@@ -219,6 +229,13 @@ git add "${SUBMODULE_PATH}"
 
 SHORT_SHA="$(git -C "${SUBMODULE}" rev-parse --short HEAD)"
 
+TOTAL=0
+if [ -n "${PREV_SHA}" ] && [ "${PREV_SHA}" != "${RESOLVED_SHA}" ]; then
+	TOTAL="$(git -C "${SUBMODULE}" rev-list --count "${PREV_SHA}..${RESOLVED_SHA}" 2>/dev/null || echo 0)"
+fi
+
+COMMIT_SUBJECT="submodule: bump global-packages to ${SHORT_SHA}$(format_commit_count_suffix "${TOTAL}")"
+
 printf '\n%sOutputs%s\n' "${C_BOLD}" "${C_RESET}"
 log_kv "path" "${SUBMODULE_PATH}"
 log_kv "ref" "${TARGET_REF}"
@@ -226,6 +243,7 @@ log_kv "sha" "${RESOLVED_SHA}"
 log_kv "short_sha" "${SHORT_SHA}"
 if [[ -n "${PREV_SHA}" && "${PREV_SHA}" != "${RESOLVED_SHA}" ]]; then
 	log_kv "previous" "${PREV_SHORT:-${PREV_SHA}}"
+	log_kv "commits" "${TOTAL}"
 fi
 printf '\n'
 
@@ -233,6 +251,8 @@ printf '\n'
 emit_kv "sha" "${RESOLVED_SHA}"
 emit_kv "short_sha" "${SHORT_SHA}"
 emit_kv "target_ref" "${TARGET_REF}"
+emit_kv "commits" "${TOTAL}"
+emit_kv "commit_subject" "${COMMIT_SUBJECT}"
 
 if git diff --cached --quiet -- "${SUBMODULE_PATH}"; then
 	emit_kv "changed" "false"
@@ -249,18 +269,14 @@ if [ "${CI:-}" = "true" ]; then
 	exit 0
 fi
 
-COMMIT_SUBJECT="submodule: bump global-packages to ${SHORT_SHA}"
 COMMIT_BODY=""
 
-if [ -n "${PREV_SHA}" ] && [ "${PREV_SHA}" != "${RESOLVED_SHA}" ]; then
-	TOTAL="$(git -C "${SUBMODULE}" rev-list --count "${PREV_SHA}..${RESOLVED_SHA}" 2>/dev/null || echo 0)"
-	if [ "${TOTAL}" -gt 0 ]; then
-		log_step "Including ${TOTAL} upstream commit(s) in message…"
-		COMMIT_BODY="$(git -C "${SUBMODULE}" log --pretty=format:'- %s' -n "${MAX_COMMITS}" "${PREV_SHA}..${RESOLVED_SHA}")"
-		if [ "${TOTAL}" -gt "${MAX_COMMITS}" ]; then
-			MORE=$((TOTAL - MAX_COMMITS))
-			COMMIT_BODY="${COMMIT_BODY}"$'\n'"- ...and ${MORE} more commits"
-		fi
+if [ "${TOTAL}" -gt 0 ]; then
+	log_step "Including ${TOTAL} upstream commit(s) in message…"
+	COMMIT_BODY="$(git -C "${SUBMODULE}" log --pretty=format:'- %s' -n "${MAX_COMMITS}" "${PREV_SHA}..${RESOLVED_SHA}")"
+	if [ "${TOTAL}" -gt "${MAX_COMMITS}" ]; then
+		MORE=$((TOTAL - MAX_COMMITS))
+		COMMIT_BODY="${COMMIT_BODY}"$'\n'"- ...and ${MORE} more commits"
 	fi
 fi
 
