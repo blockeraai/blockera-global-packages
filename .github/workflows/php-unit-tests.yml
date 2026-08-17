@@ -31,7 +31,7 @@ jobs:
             BLOCKERA_PHP_UNIT_MULTISITE: 'false'
             BLOCKERA_PHP_UNIT_SKIP_IF_NO_TESTS: 'true'
             BLOCKERA_PHP_UNIT_TEST_ROOTS: packages/autoloader-coordinator
-            BLOCKERA_PHP_UNIT_MIN_TESTS: '42'
+            BLOCKERA_PHP_UNIT_MIN_TESTS: '43'
             BLOCKERA_PHP_UNIT_BUILD_CMD: 'true'
             BLOCKERA_PHP_UNIT_WP_ENV_START_CMD: 'true'
             BLOCKERA_PHP_UNIT_TEST_CMD: npm run test:unit:php

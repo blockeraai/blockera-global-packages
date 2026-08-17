@@ -734,16 +734,19 @@ class CoordinatorTest extends TestCase {
     }
 
     /**
-     * Test selectBestPathForPrefix prefers preferred plugin.
+     * Test selectBestPathForPrefix prefers preferred plugin on version tie.
      *
      * @test
      */
-    public function test_select_best_path_prefers_preferred_plugin(): void {
+    public function test_select_best_path_prefers_preferred_plugin_on_version_tie(): void {
         $coordinator = Coordinator::getInstance();
 
         $this->setPrivateProperty($coordinator, 'plugins', [
             'preferred-plugin' => [
                 'plugin_dir' => '/preferred/path',
+            ],
+            'other-plugin' => [
+                'plugin_dir' => '/other/path',
             ],
         ]);
 
@@ -759,6 +762,60 @@ class CoordinatorTest extends TestCase {
         );
 
         $this->assertEquals(['/preferred/path/package'], $result);
+    }
+
+    /**
+     * Test selectBestPathForPrefix prefers higher version over preferred plugin.
+     *
+     * @test
+     */
+    public function test_select_best_path_prefers_higher_version_over_preferred_plugin(): void {
+        $coordinator = Coordinator::getInstance();
+
+        $preferredDir = $this->tempDir . '/preferred-plugin';
+        $otherDir = $this->tempDir . '/other-plugin';
+        $preferredPackageDir = $preferredDir . '/vendor/blockera/name-utils';
+        $otherPackageDir = $otherDir . '/vendor/blockera/name-utils';
+
+        mkdir($preferredPackageDir, 0777, true);
+        mkdir($otherPackageDir, 0777, true);
+
+        file_put_contents(
+            $preferredPackageDir . '/composer.json',
+            json_encode([
+                'name' => 'blockera/name-utils',
+                'version' => '1.0.0',
+            ])
+        );
+        file_put_contents(
+            $otherPackageDir . '/composer.json',
+            json_encode([
+                'name' => 'blockera/name-utils',
+                'version' => '2.0.0',
+            ])
+        );
+
+        $this->setPrivateProperty($coordinator, 'plugins', [
+            'preferred-plugin' => [
+                'plugin_dir' => $preferredDir,
+            ],
+            'other-plugin' => [
+                'plugin_dir' => $otherDir,
+            ],
+        ]);
+
+        $paths = [
+            $preferredPackageDir . '/src',
+            $otherPackageDir . '/src',
+        ];
+
+        $result = $this->invokePrivateMethod(
+            $coordinator,
+            'selectBestPathForPrefix',
+            ['Blockera\\NameUtils\\', $paths, [], 'preferred-plugin']
+        );
+
+        $this->assertEquals([ $otherPackageDir . '/src' ], $result);
     }
 
     // =========================================================================
