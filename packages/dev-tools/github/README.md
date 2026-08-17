@@ -143,12 +143,49 @@ Matrix stays in the consumer workflow; suite logic lives in
 PHP matrix: build product zip → stage Cypress fixtures under `build/<slug>/` →
 run `*.build.e2e.cy.js` against wp-env.
 
+Staging is one script (`prepare-build-env.sh`). Consumers pass dest/path/wp-env
+knobs — there are no `prepare-pro` / `prepare-theme` / `prepare-toolkit` recipes.
+
+```yaml
+# Theme-style example
+env:
+    BLOCKERA_BUILD_ZIP_TESTS_SPECS_ROOTS: ./packages
+    BLOCKERA_BUILD_ZIP_TESTS_SPECS_PATH: '*-one*'
+```
+
+```yaml
+# Pro-style example
+env:
+    GITHUB_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+    BLOCKERA_BUILD_ZIP_TESTS_USE_CREATE_WP_ENV: 'true'
+    BLOCKERA_BUILD_ZIP_TESTS_WP_ENV_CATEGORY: general
+    BLOCKERA_WP_ENV_FALLBACK_CONFIG: general
+    BLOCKERA_WP_ENV_DEFAULT_PLUGIN: https://github.com/blockeraai/blockera/tree/master
+    BLOCKERA_BUILD_ZIP_TESTS_SPECS_ROOTS: ./packages
+    BLOCKERA_BUILD_ZIP_TESTS_SPECS_PATH: '*-pro*'
+    BLOCKERA_BUILD_ZIP_TESTS_SPECS_DEST: packages/blockera-pro/tests
+```
+
+```yaml
+# Toolkit-style example
+env:
+    BLOCKERA_BUILD_ZIP_TESTS_SPECS_ROOTS: ./packages
+    BLOCKERA_BUILD_ZIP_TESTS_SPECS_PATH: '*toolkit*'
+    BLOCKERA_BUILD_ZIP_TESTS_SPECS_DEST: packages/site-toolkit/js/test
+    BLOCKERA_BUILD_ZIP_TESTS_CYPRESS_SPEC_PATTERN: packages/**/*toolkit*.build.e2e.cy.js,packages/site-toolkit/**/*.build.e2e.cy.js
+```
+
 | Input / env | Default (Blockera base) |
 | --- | --- |
 | `php-version` | matrix PHP |
 | `zip-file` / `build-dir` | `blockera.zip` / `./build/blockera` |
 | `skip-if-no-specs` | `false` (`true` for empty suites) |
-| `BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD` | empty (default fixture staging; Pro/theme/toolkit pass `prepare-pro.sh` / `prepare-theme.sh` / `prepare-toolkit.sh`) |
+| `BLOCKERA_BUILD_ZIP_TESTS_SPECS_ROOTS` | `./packages/global-packages/packages` (find-specs default: `.`) |
+| `BLOCKERA_BUILD_ZIP_TESTS_SPECS_PATH` | empty (any path) |
+| `BLOCKERA_BUILD_ZIP_TESTS_SPECS_DEST` | `packages/global-packages/packages/blockera/tests` |
+| `BLOCKERA_BUILD_ZIP_TESTS_CYPRESS_SPEC_PATTERN` | `packages/**/*.build.e2e.cy.js` |
+| `BLOCKERA_BUILD_ZIP_TESTS_USE_CREATE_WP_ENV` | `false` |
+| `BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD` | empty (optional extra hook after default staging) |
 | `BLOCKERA_BUILD_ZIP_TESTS_START_CMD` | `bash packages/global-packages/packages/dev-tools/github/scripts/retry-wp-env-start.sh` |
 
 ## Build plugin zip (release)

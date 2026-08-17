@@ -16,6 +16,7 @@ ROOTS="${BLOCKERA_BUILD_ZIP_TESTS_SPECS_ROOTS:-.}"
 PATH_GLOB="${BLOCKERA_BUILD_ZIP_TESTS_SPECS_PATH:-}"
 NAME="${BLOCKERA_BUILD_ZIP_TESTS_SPECS_NAME:-*.build.e2e.cy.js}"
 
+ROOTS="${ROOTS//,/ }"
 # Expand globs; drop unmatched patterns so missing roots do not fail find
 # under `set -o pipefail`.
 shopt -s nullglob

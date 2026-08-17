@@ -1,5 +1,5 @@
 # Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO.
-# Other products: set BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD to prepare-pro.sh / prepare-theme.sh / prepare-toolkit.sh.
+# Other products: set SPECS_ROOTS / SPECS_PATH / SPECS_DEST / USE_CREATE_WP_ENV (no product recipes).
 name: Build Blockera Plugin Tests
 
 on:
