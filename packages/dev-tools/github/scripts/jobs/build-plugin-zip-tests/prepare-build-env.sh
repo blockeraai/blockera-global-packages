@@ -84,6 +84,11 @@ cp "${TOOLKIT_SCRIPTS}/setup-wp-env.js" \
 cp "${TOOLKIT_SCRIPTS}/retry-wp-env-start.sh" \
 	"${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts/"
 chmod +x "${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts/retry-wp-env-start.sh"
+# retry-wp-env-start.sh runs lib/retry.sh relative to its own directory.
+mkdir -p "${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts/lib"
+cp "${TOOLKIT_SCRIPTS}/lib/retry.sh" \
+	"${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts/lib/"
+chmod +x "${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts/lib/retry.sh"
 
 if [[ "${USE_CREATE_WP_ENV}" == "true" ]]; then
 	if [[ -f "${WORKSPACE}/.github/wp-env-configs/${WP_ENV_CATEGORY}.json" ]]; then
