@@ -31,7 +31,7 @@ blockera_register_product(
 	]
 );
 
-// Or lazily, fired once on first read access of the registry.
+// Or lazily, fired once on `wp_loaded` (and on first read if that has not run yet):
 add_action(
 	'blockera/products/registry/init',
 	static function ( \Blockera\Products\Registry $registry ): void {
@@ -52,7 +52,9 @@ $registry->get( 'blockera' );       // ?\Blockera\Products\Product
 
 ### Localization
 
-`blockera_products_l10n()` (hooked on `admin_enqueue_scripts`) exposes the registered products as `window.blockeraProductsData` before the `@blockera/products` script handle, and the javascript package bootstraps it into the store on dom ready. The payload is filterable via `blockera/products/localize`.
+`blockera_products_l10n()` (hooked on `admin_enqueue_scripts` and `enqueue_block_editor_assets`) exposes the registered products as `window.blockeraProductsData` before the `@blockera/products` script handle, and the javascript package bootstraps it into the store on dom ready. The payload is filterable via `blockera/products/localize`.
+
+PHP registration does not wait for that script: `blockera_products_bootstrap()` runs on `wp_loaded` and fires `blockera/products/registry/init`.
 
 ## JavaScript usage
 
