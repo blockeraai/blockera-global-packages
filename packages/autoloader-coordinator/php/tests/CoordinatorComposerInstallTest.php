@@ -7,7 +7,6 @@
 
 namespace Blockera\SharedAutoload\Tests;
 
-use Blockera\Dev\PHPUnit\AppTestCase;
 use Blockera\SharedAutoload\Coordinator;
 use ReflectionClass;
 use ReflectionProperty;
@@ -15,7 +14,7 @@ use ReflectionProperty;
 /**
  * Covers Coordinator policy for composer install vs composer install --no-dev.
  */
-class CoordinatorComposerInstallTest extends AppTestCase {
+class CoordinatorComposerInstallTest extends TestCase {
 
 	/**
 	 * Fixture product root created for the current test.
@@ -29,12 +28,12 @@ class CoordinatorComposerInstallTest extends AppTestCase {
 	 *
 	 * @return void
 	 */
-	public function tear_down(): void {
+	public function tearDown(): void {
 		if ( '' !== $this->fixture_root && is_dir( $this->fixture_root ) ) {
 			$this->removeDirectory( $this->fixture_root );
 		}
 
-		parent::tear_down();
+		parent::tearDown();
 	}
 
 	/**
@@ -49,7 +48,7 @@ class CoordinatorComposerInstallTest extends AppTestCase {
 
 		$fixture     = $this->createComposerFixture( true );
 		$coordinator = $this->newCoordinator();
-		$policy      = $this->invokeMethod(
+		$policy      = $this->invokePrivateMethod(
 			$coordinator,
 			'getAutoloadPolicy',
 			array( $fixture['vendor_dir'], $fixture['plugin_dir'] )
@@ -61,7 +60,7 @@ class CoordinatorComposerInstallTest extends AppTestCase {
 		$this->assertArrayHasKey( 'phpunit/phpunit', $policy['allowed_packages'] );
 		$this->assertArrayHasKey( $fixture['helper_path'], $policy['runtime_excluded_files'] );
 		$this->assertTrue(
-			$this->invokeMethod( $coordinator, 'shouldIncludeDevDependencies', array( $fixture['vendor_dir'] ) )
+			$this->invokePrivateMethod( $coordinator, 'shouldIncludeDevDependencies', array( $fixture['vendor_dir'] ) )
 		);
 		$this->assertFalse(
 			$this->invokeCanUseNative( $coordinator, $fixture )
@@ -76,7 +75,7 @@ class CoordinatorComposerInstallTest extends AppTestCase {
 	public function test_no_dev_install_loads_production_packages_only(): void {
 		$fixture     = $this->createComposerFixture( false );
 		$coordinator = $this->newCoordinator();
-		$policy      = $this->invokeMethod(
+		$policy      = $this->invokePrivateMethod(
 			$coordinator,
 			'getAutoloadPolicy',
 			array( $fixture['vendor_dir'], $fixture['plugin_dir'] )
@@ -88,7 +87,7 @@ class CoordinatorComposerInstallTest extends AppTestCase {
 		$this->assertArrayNotHasKey( 'phpunit/phpunit', $policy['allowed_packages'] );
 		$this->assertSame( array(), $policy['runtime_excluded_files'] );
 		$this->assertFalse(
-			$this->invokeMethod( $coordinator, 'shouldIncludeDevDependencies', array( $fixture['vendor_dir'] ) )
+			$this->invokePrivateMethod( $coordinator, 'shouldIncludeDevDependencies', array( $fixture['vendor_dir'] ) )
 		);
 		$this->assertTrue(
 			$this->invokeCanUseNative( $coordinator, $fixture )
@@ -152,7 +151,7 @@ class CoordinatorComposerInstallTest extends AppTestCase {
 			)
 		);
 
-		return (bool) $this->invokeMethod( $coordinator, 'canUseNativeComposerAutoload' );
+		return (bool) $this->invokePrivateMethod( $coordinator, 'canUseNativeComposerAutoload' );
 	}
 
 	/**
@@ -178,7 +177,7 @@ class CoordinatorComposerInstallTest extends AppTestCase {
 		file_put_contents( $helper_path, "<?php\n" );
 		file_put_contents(
 			$plugin_dir . '/composer.json',
-			wp_json_encode(
+			json_encode(
 				array(
 					'name'         => 'blockera/theme',
 					'autoload-dev' => array(
