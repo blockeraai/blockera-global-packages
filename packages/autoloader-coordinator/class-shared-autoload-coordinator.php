@@ -382,13 +382,15 @@ if (! \class_exists(Coordinator::class)) {
 
 			$context = $this->getInstalledPackagesContext($plugin['vendor_dir']);
 
-			// Production install (`composer install --no-dev`): Composer autoload matches runtime.
+			// `composer install --no-dev` (or missing installed.php): vendor/autoload.php is production-only.
 			if (null === $context || empty($context['include_dev'])) {
 				return true;
 			}
 
-			// Dev install: native autoload only when dev runtime explicitly allows dev deps.
-			return $this->isBlockeraDevelopmentRuntime();
+			// `composer install` with require-dev: Composer's autoload also registers root
+			// autoload-dev (PHPUnit helpers). Stay coordinated so require-dev packages load
+			// while those test paths stay off the WordPress runtime.
+			return false;
 		}
 
 		/**
@@ -492,53 +494,14 @@ if (! \class_exists(Coordinator::class)) {
 		}
 
 		/**
-		 * Whether Blockera is running in an explicit development runtime.
-		 * Defaults to production-safe behavior during WordPress bootstrap.
-		 */
-		private function isBlockeraDevelopmentRuntime(): bool {
-			if (defined('BLOCKERA_SB_MODE') && 'production' === BLOCKERA_SB_MODE) {
-				return false;
-			}
-
-			if (defined('BLOCKERA_PRO_APP_MODE') && 'production' === BLOCKERA_PRO_APP_MODE) {
-				return false;
-			}
-
-			$app_mode = null;
-
-			if (isset($_ENV['APP_MODE'])) {
-				$app_mode = sanitize_text_field(wp_unslash($_ENV['APP_MODE']));
-			} elseif (isset($_SERVER['APP_MODE'])) {
-				$app_mode = sanitize_text_field(wp_unslash($_SERVER['APP_MODE']));
-			} else {
-				$env_value = getenv('APP_MODE');
-
-				if (false !== $env_value && is_string($env_value)) {
-					$app_mode = sanitize_text_field($env_value);
-				}
-			}
-
-			if (null !== $app_mode && 'development' === $app_mode) {
-				return true;
-			}
-
-			if (defined('BLOCKERA_SB_MODE') && 'development' === BLOCKERA_SB_MODE) {
-				return true;
-			}
-
-			if (defined('BLOCKERA_PRO_APP_MODE') && 'development' === BLOCKERA_PRO_APP_MODE) {
-				return true;
-			}
-
-			return false;
-		}
-
-		/**
 		 * Resolve autoload policy for a plugin vendor tree (computed once, cached per request).
 		 *
-		 * Production installs (`composer install --no-dev`) already omit dev autoload entries
-		 * from vendor/composer/autoload_*.php. When Composer was installed with dev dependencies
-		 * but Blockera is running in production mode, dev paths are filtered at runtime.
+		 * Composer install is the source of truth — not APP_MODE / BLOCKERA_SB_MODE:
+		 * - `composer install` (require + require-dev) → load both package sets
+		 * - `composer install --no-dev` → load production packages only
+		 *
+		 * Root `autoload-dev` (PHPUnit helpers) is still kept off the WordPress runtime;
+		 * PHPUnit bootstraps those paths itself.
 		 *
 		 * @param string $vendorDir Vendor directory path.
 		 * @param string $pluginDir Plugin root directory path.
@@ -553,7 +516,7 @@ if (! \class_exists(Coordinator::class)) {
 
 			$context             = $this->getInstalledPackagesContext($vendorDir);
 			$composerIncludesDev = $context['include_dev'] ?? false;
-			$includeDev          = $composerIncludesDev && $this->isBlockeraDevelopmentRuntime();
+			$includeDev          = $composerIncludesDev;
 
 			$allowedPackages = null;
 			$devDirPrefixes  = [];
@@ -563,8 +526,7 @@ if (! \class_exists(Coordinator::class)) {
 				'dirs'  => [],
 			];
 
-			// Root autoload-dev paths are only relevant when dev packages remain in vendor metadata.
-			if ($composerIncludesDev && ! $includeDev) {
+			if ($composerIncludesDev) {
 				$runtimeExcluded = $this->getRootAutoloadDevPathRules($pluginDir);
 			}
 
@@ -634,7 +596,7 @@ if (! \class_exists(Coordinator::class)) {
 				return false;
 			}
 
-			$includeDev = $context['include_dev'] && $this->isBlockeraDevelopmentRuntime();
+			$includeDev = $context['include_dev'];
 
 			$this->include_dev_dependencies_by_vendor[ $vendorDir ] = $includeDev;
 
@@ -701,8 +663,8 @@ if (! \class_exists(Coordinator::class)) {
 
 		/**
 		 * Resolve root-project autoload-dev path rules from composer.json.
-		 * These paths are excluded from WordPress runtime autoloading in all modes.
-		 * PHPUnit bootstraps load them explicitly.
+		 * These paths are excluded from WordPress runtime even when Composer installed
+		 * require-dev packages. PHPUnit bootstraps load them explicitly.
 		 *
 		 * @param string $pluginDir Plugin root directory path.
 		 * @return array{files:array<string,bool>,dirs:array<int,string>}
