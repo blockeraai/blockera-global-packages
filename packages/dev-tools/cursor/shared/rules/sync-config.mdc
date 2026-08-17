@@ -1,6 +1,6 @@
 ---
 description: Shared host config (types, Flow, root-configs) lives in dev-tools, not host-root copies
-globs: "**/*.{ts,tsx,d.ts,js.flow},**/.flowconfig,**/root-configs/**,**/.cspell/**,**/.vscode/**"
+globs: "**/*.{ts,tsx,d.ts,js.flow},**/.flowconfig,**/.nvmrc,**/root-configs/**,**/.cspell/**,**/.vscode/**"
 alwaysApply: false
 ---
 
@@ -21,4 +21,4 @@ Ambient / `declare module` types belong in:
 
 Templates belong in `packages/global-packages/packages/dev-tools/root-configs/`.
 
-- Never hand-edit host-root copies (`.flowconfig`, `flow/` stubs, `.cspell/`, `.vscode/`, `.husky/`, root config files).
+- Never hand-edit host-root copies (`.flowconfig`, `flow/` stubs, `.cspell/`, `.vscode/`, `.husky/`, `.nvmrc`, root config files).

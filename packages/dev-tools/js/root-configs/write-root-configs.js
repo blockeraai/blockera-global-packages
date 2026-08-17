@@ -19,6 +19,7 @@ const ROOT_CONFIGS = [
 	{ dest: 'flow', kind: 'dir' },
 	{ dest: '.gitattributes' },
 	{ dest: '.husky', kind: 'husky' },
+	{ dest: '.nvmrc' },
 	{ dest: '.prettierignore' },
 	{ dest: '.prettierrc.js' },
 	{ dest: '.stylelintrc.js' },
