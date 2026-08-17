@@ -41,7 +41,13 @@ packages/autoloader-coordinator/
 ├── bootstrap.php
 ├── class-shared-autoload-coordinator.php   # Blockera\SharedAutoload\Coordinator
 ├── composer.json                           # blockera/autoloader-coordinator
-├── php/tests/                              # PHPUnit (run in this repo's CI, not consumers)
+├── php/tests/                              # Tests for this repo's CI, not consumers
+│   ├── bootstrap.php
+│   ├── TestCase.php
+│   ├── CoordinatorComposerInstallTest.php
+│   ├── Unit/CoordinatorTest.php
+│   ├── Integration/CoordinatorIntegrationTest.php
+│   └── fixtures/                           # wp-env version-resolution scenarios
 └── blockera-folder-sync.json
 ```
 
@@ -90,7 +96,9 @@ Call this **at product bootstrap**, after WordPress is available (`ABSPATH` requ
 - After plugin activation, deactivation, or update, invalidate the package manifest cache.
 - Do not hard-code Pro/companion slugs inside this package; pass them via options/filters.
 - Prefer keeping this package free of feature logic — it is infrastructure only.
-- PHPUnit for this package lives in `php/tests/` and runs in **blockera-global-packages** CI (`.github/workflows/php-unit-tests.yml`). Do not add these tests to consumer `phpunit.xml.dist` suites.
+- PHPUnit for this package lives in `php/tests/` (Brain Monkey unit + integration + Composer-install policy) and runs in **blockera-global-packages** CI job `test-php`.
+- wp-env version-resolution scenarios live in `php/tests/fixtures/` and run in the same workflow as job `coordinator-wp-env`.
+- Do not add these tests to consumer `phpunit.xml.dist` suites.
 
 ---
 
