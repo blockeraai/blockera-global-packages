@@ -16,7 +16,20 @@ Multiple Blockera products may ship the same Composer packages. Without coordina
 2. Merges package manifests when multiple products are active
 3. Selects preferred / highest compatible versions
 4. Caches the resolved map (WordPress transients; APCu when available)
-5. Uses the fast native Composer path for single-product installs
+5. Uses the fast native Composer path for single-product `--no-dev` installs
+
+## Composer install vs WordPress runtime
+
+The coordinator follows **what Composer actually installed**, not `APP_MODE` / `BLOCKERA_SB_MODE`:
+
+| Composer command | `vendor/composer/installed.php` `root.dev` | Packages loaded |
+| --- | --- | --- |
+| `composer install` | `true` | `require` **and** `require-dev` |
+| `composer install --no-dev` | `false` | `require` only |
+
+That decision happens at product entry (`functions.php` / plugin bootstrap) **before** dotenv loads, so env flags are not a reliable signal.
+
+Root `autoload-dev` (PHPUnit helpers under `tests/`) is still kept off the WordPress request path; PHPUnit bootstraps those files itself.
 
 ---
 
@@ -28,6 +41,7 @@ packages/autoloader-coordinator/
 ├── bootstrap.php
 ├── class-shared-autoload-coordinator.php   # Blockera\SharedAutoload\Coordinator
 ├── composer.json                           # blockera/autoloader-coordinator
+├── php/tests/                              # PHPUnit (run in this repo's CI, not consumers)
 └── blockera-folder-sync.json
 ```
 
@@ -76,6 +90,7 @@ Call this **at product bootstrap**, after WordPress is available (`ABSPATH` requ
 - After plugin activation, deactivation, or update, invalidate the package manifest cache.
 - Do not hard-code Pro/companion slugs inside this package; pass them via options/filters.
 - Prefer keeping this package free of feature logic — it is infrastructure only.
+- PHPUnit for this package lives in `php/tests/` and runs in **blockera-global-packages** CI (`.github/workflows/php-unit-tests.yml`). Do not add these tests to consumer `phpunit.xml.dist` suites.
 
 ---
 
