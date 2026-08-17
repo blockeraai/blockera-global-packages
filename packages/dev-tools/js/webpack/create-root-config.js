@@ -2,6 +2,10 @@ const path = require('path');
 const {
 	camelCaseDash,
 } = require('@wordpress/dependency-extraction-webpack-plugin/lib/util');
+const {
+	shouldUseQuietWatchLogging,
+	withQuietWatchLogging,
+} = require('./watch-status-plugin');
 
 /**
  * Shared root webpack.config.js factory for Blockera plugin/theme consumers.
@@ -105,7 +109,7 @@ function createRootWebpackConfig(options) {
 			};
 		}, {});
 
-		return packagesConfig(env, {
+		const config = packagesConfig(env, {
 			...argv,
 			projectRoot: process.cwd(),
 			entry: blockeraEntries,
@@ -113,6 +117,13 @@ function createRootWebpackConfig(options) {
 			mode: argv?.mode || 'production',
 			externals: getExternals(blockeraPackagesVersion),
 		});
+
+		// `npm start` only (`--mode development`). Skip build and start:debug.
+		if (shouldUseQuietWatchLogging(argv)) {
+			return withQuietWatchLogging(config);
+		}
+
+		return config;
 	};
 }
 
