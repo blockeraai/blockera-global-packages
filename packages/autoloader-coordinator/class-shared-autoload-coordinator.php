@@ -1429,25 +1429,10 @@ if (! \class_exists(Coordinator::class)) {
 			// Request-level cache for realpath() calls to reduce filesystem overhead.
 			static $realpathCache = [];
 
-			// Find which package this prefix belongs to.
-			$bestPath    = null;
-			$bestVersion = '0.0.0';
-
-			// Cache preferred plugin real path if needed.
-			$preferredRealDir = null;
-			if (null !== $preferredPlugin && isset($this->plugins[ $preferredPlugin ])) {
-				$preferredDir = $this->plugins[ $preferredPlugin ]['plugin_dir'] . '/';
-				if (! isset($realpathCache[ $preferredDir ])) {
-					$realpathCache[ $preferredDir ] = realpath($preferredDir);
-				}
-				$preferredRealDir = ( false !== $realpathCache[ $preferredDir ] ) 
-					? $realpathCache[ $preferredDir ] . '/' 
-					: $preferredDir;
-			}
+			$pathEntries = [];
 
 			foreach ($paths as $path) {
 				$pathStr = (string) $path;
-				// Resolve symlinks to real path for comparison (cached).
 				if (! isset($realpathCache[ $pathStr ])) {
 					$realpathCache[ $pathStr ] = realpath($pathStr);
 				}
@@ -1455,35 +1440,76 @@ if (! \class_exists(Coordinator::class)) {
 					$pathStr = $realpathCache[ $pathStr ];
 				}
 
-				// Check if this path belongs to the preferred plugin.
-				if (null !== $preferredRealDir && 0 === strpos($pathStr, $preferredRealDir)) {
-					return [ $path ];
+				$pluginSlug = null;
+				foreach ($this->plugins as $slug => $plugin) {
+					$pluginDir = $plugin['plugin_dir'] . '/';
+					if (! isset($realpathCache[ $pluginDir ])) {
+						$realpathCache[ $pluginDir ] = realpath($pluginDir);
+					}
+					$pluginRealDir = ( false !== $realpathCache[ $pluginDir ] )
+						? $realpathCache[ $pluginDir ] . '/'
+						: $pluginDir;
+
+					if (0 === strpos($pathStr, $pluginRealDir)) {
+						$pluginSlug = $slug;
+						break;
+					}
 				}
 
-				// Find version from package manifest.
-				foreach ($packageVersions as $packageName => $meta) {
-					if (isset($meta['vendor_dir'])) {
+				$packageInfo = $this->detectPackageFromPath((string) $path);
+				$version     = $packageInfo['version'] ?? '0.0.0';
+
+				if ('0.0.0' === $version) {
+					foreach ($packageVersions as $meta) {
+						if (! isset($meta['vendor_dir'])) {
+							continue;
+						}
+
 						$vendorPrefix = $meta['vendor_dir'] . '/';
-						// Cache vendor prefix realpath.
 						if (! isset($realpathCache[ $vendorPrefix ])) {
 							$realpathCache[ $vendorPrefix ] = realpath($vendorPrefix);
 						}
-						$vendorRealPrefix = ( false !== $realpathCache[ $vendorPrefix ] ) 
-							? $realpathCache[ $vendorPrefix ] . '/' 
+						$vendorRealPrefix = ( false !== $realpathCache[ $vendorPrefix ] )
+							? $realpathCache[ $vendorPrefix ] . '/'
 							: $vendorPrefix;
-						
+
 						if (0 === strpos($pathStr, $vendorRealPrefix)) {
-							if (version_compare($meta['version'], $bestVersion) > 0) {
-								$bestVersion = $meta['version'];
-								$bestPath    = $path;
-							}
+							$version = $meta['version'];
 							break;
 						}
 					}
 				}
+
+				$pathEntries[] = [
+					'path'    => $path,
+					'version' => $version,
+					'plugin'  => $pluginSlug,
+				];
 			}
 
-			return null !== $bestPath ? [ $bestPath ] : [ $paths[0] ];
+			usort(
+				$pathEntries,
+				function ( $a, $b) use ( $preferredPlugin) {
+					$version_compare = version_compare($a['version'], $b['version']);
+
+					if (0 !== $version_compare) {
+						return $version_compare < 0 ? 1 : -1;
+					}
+
+					if (null !== $preferredPlugin) {
+						if ($a['plugin'] === $preferredPlugin) {
+							return -1;
+						}
+						if ($b['plugin'] === $preferredPlugin) {
+							return 1;
+						}
+					}
+
+					return 0;
+				}
+			);
+
+			return [ $pathEntries[0]['path'] ];
 		}
 
 		/**
@@ -1531,18 +1557,6 @@ if (! \class_exists(Coordinator::class)) {
 
 			// Request-level cache for realpath() calls to reduce filesystem overhead.
 			static $realpathCache = [];
-
-			// Cache preferred plugin real path if needed (calculated once per method call).
-			$preferredDirForComparison = null;
-			if (null !== $preferredPlugin && isset($this->plugins[ $preferredPlugin ])) {
-				$preferredDir = $this->plugins[ $preferredPlugin ]['plugin_dir'] . '/';
-				if (! isset($realpathCache[ $preferredDir ])) {
-					$realpathCache[ $preferredDir ] = realpath($preferredDir);
-				}
-				$preferredDirForComparison = ( false !== $realpathCache[ $preferredDir ] ) 
-					? $realpathCache[ $preferredDir ] . '/' 
-					: $preferredDir;
-			}
 
 			// Collect all classmap entries with their package info.
 			$classmapEntries = [];
@@ -1601,30 +1615,30 @@ if (! \class_exists(Coordinator::class)) {
                 );
 
 				if (! empty($blockeraEntries)) {
-					// Prefer preferred plugin if set.
-					if (null !== $preferredDirForComparison) {
-						foreach ($blockeraEntries as $entry) {
-							if (0 === strpos($entry['real_path'], $preferredDirForComparison)) {
-								$deduplicated[ $className ] = $entry['file'];
-								continue 2;
+					usort(
+						$blockeraEntries,
+						function ( $a, $b) use ( $preferredPlugin) {
+							$version_compare = version_compare($a['version'], $b['version']);
+
+							if (0 !== $version_compare) {
+								return $version_compare < 0 ? 1 : -1;
 							}
-						}
-					}
 
-					// Select best version.
-					$bestEntry   = null;
-					$bestVersion = '0.0.0';
-					foreach ($blockeraEntries as $entry) {
-						if (version_compare($entry['version'], $bestVersion) > 0) {
-							$bestVersion = $entry['version'];
-							$bestEntry   = $entry;
-						}
-					}
+							if (null !== $preferredPlugin) {
+								if ($a['plugin'] === $preferredPlugin) {
+									return -1;
+								}
+								if ($b['plugin'] === $preferredPlugin) {
+									return 1;
+								}
+							}
 
-					if (null !== $bestEntry) {
-						$deduplicated[ $className ] = $bestEntry['file'];
-						continue;
-					}
+							return 0;
+						}
+					);
+
+					$deduplicated[ $className ] = $blockeraEntries[0]['file'];
+					continue;
 				}
 
 				// For non-Blockera packages or if no Blockera entries, use first entry.
