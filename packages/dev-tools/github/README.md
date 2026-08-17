@@ -51,7 +51,7 @@ github/
     build-plugin-zip-tests/   # setup + zip + stage fixtures + Cypress build E2E
   scripts/
     jobs/code-lint/      # js.sh | css.sh | php.sh
-    jobs/bundle-size/    # paths.default | should-run.sh | prepare.sh | comment-title.sh
+    jobs/bundle-size/    # paths.default | should-run.sh | prepare.sh | comment-title.sh | truncate-comment-body.js
     jobs/check-debugging-code/  # run.sh
     jobs/check-pr-config-files/ # run.sh
     jobs/remove-pr-config-files/ # run.sh
@@ -543,6 +543,11 @@ env:
 PR path filters cannot live outside workflow YAML in GitHub, so the toolkit
 stores them in `scripts/jobs/bundle-size/paths.default` and gates the job via
 `should-run.sh` (no `on.pull_request.paths` in the consumer workflow).
+
+The size comment must stay under GitHub's 65536-character limit. The report
+still includes every matched file; `comment-title.sh` truncates the markdown
+(keeping totals, changed rows, and the `compressed-size-action` marker) and
+posts or updates the PR comment. The workflow log keeps the full table.
 
 Blockera workflow:
 
