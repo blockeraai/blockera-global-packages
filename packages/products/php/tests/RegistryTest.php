@@ -137,4 +137,34 @@ class RegistryTest extends TestCase {
 			remove_action( 'blockera/products/registry/init', $registrant );
 		}
 	}
+
+	/**
+	 * boot() must fire the init action once, same as first read access.
+	 *
+	 * @return void
+	 */
+	public function test_boot_fires_init_action_once(): void {
+		$calls = 0;
+
+		$registrant = static function () use ( &$calls ): void {
+			++$calls;
+		};
+
+		add_action( 'blockera/products/registry/init', $registrant );
+
+		try {
+			$registry = Registry::getInstance();
+
+			$this->assertSame( 0, $calls );
+
+			$registry->boot();
+			$this->assertSame( 1, $calls );
+
+			$registry->boot();
+			$registry->all();
+			$this->assertSame( 1, $calls );
+		} finally {
+			remove_action( 'blockera/products/registry/init', $registrant );
+		}
+	}
 }

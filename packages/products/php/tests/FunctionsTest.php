@@ -108,6 +108,8 @@ class FunctionsTest extends TestCase {
 		require dirname( __DIR__ ) . '/hooks.php';
 
 		$this->assertSame( 100, has_action( 'admin_enqueue_scripts', 'blockera_products_l10n' ) );
+		$this->assertSame( 100, has_action( 'enqueue_block_editor_assets', 'blockera_products_l10n' ) );
+		$this->assertSame( 0, has_action( 'wp_loaded', 'blockera_products_bootstrap' ) );
 	}
 
 	/**
