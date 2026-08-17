@@ -1,33 +1,58 @@
+#!/usr/bin/env node
 /**
- * External dependencies
+ * Build Fuse.js icon search indexes.
+ *
+ * Usage:
+ *   node create-icon-search-index.js           # both indexes
+ *   node create-icon-search-index.js --index 1
+ *   node create-icon-search-index.js --index 2
  */
-const path = require('path');
-const { spawn } = require('child_process');
+const { buildIconSearchIndex } = require('./create-icon-search-index-lib');
 
-// Run both scripts sequentially without requiring a script type argument
-const scriptPaths = [
-	path.resolve(__dirname, './create-icon-search-index-1.js'),
-	path.resolve(__dirname, './create-icon-search-index-2.js'),
-];
+const INDEXES = {
+	1: {
+		librariesFileName: 'search-libraries.json',
+		destinationFileName: 'search-index.json',
+	},
+	2: {
+		librariesFileName: 'search-libraries-2.json',
+		destinationFileName: 'search-index-2.json',
+	},
+};
 
-// Pass through any additional args (if provided)
-const remainingArgs = process.argv.slice(2);
+function parseIndexes(argv) {
+	const selected = [];
 
-function runScript(scriptPath) {
-	return new Promise((resolve) => {
-		const child = spawn('node', [scriptPath, ...remainingArgs], {
-			stdio: 'inherit',
-		});
-		child.on('exit', (code) => resolve(code));
-	});
-}
-
-(async () => {
-	for (const scriptPath of scriptPaths) {
-		const code = await runScript(scriptPath);
-		if (code !== 0) {
-			process.exit(code);
+	for (let i = 0; i < argv.length; i++) {
+		const arg = argv[i];
+		if (arg === '--index') {
+			selected.push(String(argv[++i]));
+		} else if (arg.startsWith('--index=')) {
+			selected.push(arg.slice('--index='.length));
+		} else if (arg === '--help' || arg === '-h') {
+			process.stdout.write(`Usage:
+  node create-icon-search-index.js
+  node create-icon-search-index.js --index 1
+  node create-icon-search-index.js --index 2
+`);
+			process.exit(0);
+		} else {
+			throw new Error(`Unknown argument: ${arg}`);
 		}
 	}
-	process.exit(0);
-})();
+
+	return selected.length ? selected : Object.keys(INDEXES);
+}
+
+try {
+	for (const id of parseIndexes(process.argv.slice(2))) {
+		const config = INDEXES[id];
+		if (!config) {
+			throw new Error(`Unknown --index ${id}. Expected 1 or 2.`);
+		}
+		buildIconSearchIndex(config);
+	}
+} catch (error) {
+	console.error(error.message || error);
+	process.exit(1);
+}
