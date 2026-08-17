@@ -21,6 +21,11 @@
 			"loader.php"
 		]
 	},
+	"autoload-dev": {
+		"psr-4": {
+			"Blockera\\SharedAutoload\\Tests\\": "php/tests/"
+		}
+	},
 	"config": {
 		"optimize-autoloader": true,
 		"sort-packages": true

@@ -2,10 +2,14 @@
 	PHPUnit config for this monorepo (blockeraai/blockera-global-packages).
 	Runs shared-package tests that must not live in consumer suites
 	(e.g. autoloader-coordinator). Consumer phpunit.xml.dist files stay product-local.
-	@see https://github.com/wp-phpunit/docs
+
+	Coordinator tests are Brain Monkey / plain PHPUnit (no wp-env). They stub the
+	few WordPress APIs Coordinator calls from the global namespace.
 -->
 <phpunit
-        bootstrap="./packages/dev-phpunit/php/bootstrap.php"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.6/phpunit.xsd"
+        bootstrap="./packages/autoloader-coordinator/php/tests/bootstrap.php"
         backupGlobals="false"
         colors="true"
         convertErrorsToExceptions="true"
@@ -16,19 +20,16 @@
 >
     <testsuites>
         <testsuite name="units">
-            <directory suffix=".php">./packages/dev-phpunit/php/</directory>
-            <directory suffix=".php">./packages/autoloader-coordinator/php/tests/</directory>
-            <exclude>./node_modules/</exclude>
-            <exclude>./vendor/</exclude>
+            <directory suffix="Test.php">./packages/autoloader-coordinator/php/tests/</directory>
         </testsuite>
     </testsuites>
 
     <php>
+        <const name="ABSPATH" value="/tmp/wordpress/"/>
+        <const name="HOUR_IN_SECONDS" value="3600"/>
         <env name="VERSION" value="1.0-beta" />
         <const name="PHPUNIT_PLUGIN_TEST" value="true"/>
         <env name="__BLOCKERA_DIR__" value="blockera-global-packages" />
-        <env name="WP_PHPUNIT__TESTS_CONFIG" value="./packages/dev-phpunit/php/config.php" />
-        <env name="WP_TESTS_CONFIG_FILE_PATH" value="./packages/dev-phpunit/php/config.php" />
     </php>
 
 </phpunit>
