@@ -38,15 +38,14 @@ RELEASE_TITLE="${BLOCKERA_DEMO_RELEASE_TITLE:-CI Artifacts}"
 RELEASE_NOTES="${BLOCKERA_DEMO_RELEASE_NOTES:-Public PR build zips for WordPress Playground demos. Not a product release.}"
 
 SHORT_SHA="${SHORT_SHA:0:7}"
-ASSET_NAME="${SLUG}-pr-${PR_NUMBER}.zip"
+STABLE_ASSET_NAME="${SLUG}-pr-${PR_NUMBER}.zip"
+ASSET_NAME="${STABLE_ASSET_NAME}"
 PUBLIC_URL="https://github.com/${REPO}/releases/download/${RELEASE_TAG}/${ASSET_NAME}?v=${SHORT_SHA}"
 
 if [[ ! -f "${ZIP_FILE}" ]]; then
 	echo "create-demo/publish-zip: missing zip file '${ZIP_FILE}'" >&2
 	exit 1
 fi
-
-cp "${ZIP_FILE}" "${ASSET_NAME}"
 
 if ! gh release view "${RELEASE_TAG}" --repo "${REPO}" >/dev/null 2>&1; then
 	gh_retry "gh release create" gh release create "${RELEASE_TAG}" \
@@ -56,20 +55,44 @@ if ! gh release view "${RELEASE_TAG}" --repo "${REPO}" >/dev/null 2>&1; then
 		--prerelease
 fi
 
+release_has_asset() {
+	local name="$1"
+	gh release view "${RELEASE_TAG}" --repo "${REPO}" --json assets \
+		| jq -e --arg name "${name}" '.assets | map(.name) | index($name) != null' >/dev/null
+}
+
+# --clobber DELETEs the previous asset first. GitHub can 503 that DELETE forever
+# for a stuck asset id; fall back to a unique name so the job can still publish.
+if release_has_asset "${ASSET_NAME}"; then
+	echo "Replacing existing release asset: ${ASSET_NAME}"
+	if ! gh_retry "gh release delete-asset" \
+		gh release delete-asset "${RELEASE_TAG}" "${ASSET_NAME}" --repo "${REPO}" --yes; then
+		echo "create-demo/publish-zip: could not replace ${ASSET_NAME}; uploading ${SLUG}-pr-${PR_NUMBER}-${SHORT_SHA}.zip instead" >&2
+		ASSET_NAME="${SLUG}-pr-${PR_NUMBER}-${SHORT_SHA}.zip"
+		PUBLIC_URL="https://github.com/${REPO}/releases/download/${RELEASE_TAG}/${ASSET_NAME}"
+	fi
+fi
+
+cp "${ZIP_FILE}" "${ASSET_NAME}"
+
 gh_retry "gh release upload" gh release upload "${RELEASE_TAG}" "${ASSET_NAME}" \
-	--repo "${REPO}" \
-	--clobber
+	--repo "${REPO}"
 
 LEGACY_PREFIX="${SLUG}-pr-${PR_NUMBER}-"
 while IFS= read -r legacy_asset; do
 	[[ -z "${legacy_asset}" ]] && continue
+	[[ "${legacy_asset}" == "${ASSET_NAME}" ]] && continue
 	echo "Deleting legacy release asset: ${legacy_asset}"
-	gh_retry "gh release delete-asset" gh release delete-asset "${RELEASE_TAG}" "${legacy_asset}" --repo "${REPO}" --yes
+	if ! gh_retry "gh release delete-asset" \
+		gh release delete-asset "${RELEASE_TAG}" "${legacy_asset}" --repo "${REPO}" --yes; then
+		echo "create-demo/publish-zip: leaving ${legacy_asset} in place after delete failures" >&2
+	fi
 done < <(
 	gh release view "${RELEASE_TAG}" --repo "${REPO}" --json assets \
-		| jq -r --arg prefix "${LEGACY_PREFIX}" '
+		| jq -r --arg prefix "${LEGACY_PREFIX}" --arg keep "${ASSET_NAME}" '
 			.assets
 			| map(select(.name | startswith($prefix)))
+			| map(select(.name != $keep))
 			| .[].name
 		'
 )
