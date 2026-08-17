@@ -32,33 +32,22 @@ export default function BaseControl({
 		columns = 'columns-custom';
 	}
 
-	const dataAttrs: any = {};
-	const labelProps: any = {};
-	Object.keys(props).forEach((key) => {
-		if (key.startsWith('data-')) {
-			dataAttrs[key] = props[key];
-		} else {
-			labelProps[key] = props[key];
-		}
-	});
-
-	const fieldProps = {
-		className: fieldsClassNames(controlName, columns, className),
-		style: { ...style, gridTemplateColumns: cssColumns || '' },
-		'data-cy': 'base-control',
-		...dataAttrs,
-	};
-
 	if (label === '' && columns === '') {
 		const shouldWrapControl =
-			controlName === 'empty' ||
-			!!className ||
-			Object.keys(dataAttrs).length > 0 ||
-			(style && Object.keys(style).length > 0);
+			controlName === 'empty' || (style && Object.keys(style).length > 0);
 
 		if (shouldWrapControl) {
 			return (
-				<div {...fieldProps}>
+				<div
+					className={fieldsClassNames(
+						controlName,
+						columns,
+						className
+					)}
+					style={{ ...style, gridTemplateColumns: cssColumns || '' }}
+					data-cy="base-control"
+					{...props}
+				>
 					<div
 						className={fieldsInnerClassNames('control')}
 						{...controlProps}
@@ -73,10 +62,14 @@ export default function BaseControl({
 	}
 
 	return (
-		<div {...fieldProps}>
+		<div
+			className={fieldsClassNames(controlName, columns, className)}
+			style={{ ...style, gridTemplateColumns: cssColumns || '' }}
+			data-cy="base-control"
+		>
 			{label !== '' && (
 				<div className={fieldsClassNames('label')}>
-					<LabelControl label={label} {...labelProps} />
+					<LabelControl label={label} {...props} />
 				</div>
 			)}
 

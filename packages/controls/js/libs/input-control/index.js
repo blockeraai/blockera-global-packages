@@ -61,7 +61,6 @@ export default function InputControl({
 	variableTypes,
 	//
 	children,
-	'data-test': dataTest,
 	...props
 }: InputControlProps): MixedElement {
 	let isValidValue = true;
@@ -187,7 +186,6 @@ export default function InputControl({
 				columns={columns}
 				controlName={field}
 				className={className}
-				data-test={dataTest}
 				{...labelProps}
 				{...props}
 			>
@@ -214,7 +212,6 @@ export default function InputControl({
 			columns={columns}
 			controlName={field}
 			className={className + ' ' + valueAddonClassNames}
-			data-test={dataTest}
 			{...labelProps}
 		>
 			{!isEmpty(units) ? (
