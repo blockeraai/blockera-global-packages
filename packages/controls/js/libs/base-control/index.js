@@ -32,8 +32,8 @@ export default function BaseControl({
 		columns = 'columns-custom';
 	}
 
-	const dataAttrs: { [string]: mixed } = {};
-	const labelProps: { [string]: mixed } = {};
+	const dataAttrs: any = {};
+	const labelProps: any = {};
 	Object.keys(props).forEach((key) => {
 		if (key.startsWith('data-')) {
 			dataAttrs[key] = props[key];
