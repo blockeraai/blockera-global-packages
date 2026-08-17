@@ -7,7 +7,8 @@ namespace Blockera\Products;
  *
  * Products (blockera, blockera-pro, blockera-one theme, ...) register themselves
  * either directly through blockera_register_product() or lazily on the
- * "blockera/products/registry/init" action which fires once, on first read access.
+ * "blockera/products/registry/init" action which fires once on `wp_loaded`
+ * (and on first read access if that hook has not run yet).
  *
  * @since 1.0.0
  *
@@ -49,6 +50,20 @@ final class Registry {
 		}
 
 		return self::$instance;
+	}
+
+	/**
+	 * Run lazy registrants exactly once.
+	 *
+	 * Called from `wp_loaded` via blockera_products_bootstrap() so PHP
+	 * registrants do not depend on script localization. Also called before
+	 * any read access if bootstrap has not run yet.
+	 *
+	 * @return void
+	 */
+	public function boot(): void {
+
+		$this->init();
 	}
 
 	/**

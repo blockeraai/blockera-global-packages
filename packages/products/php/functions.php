@@ -23,6 +23,28 @@ if ( ! function_exists( 'blockera_products_registry' ) ) {
 	}
 }
 
+if ( ! function_exists( 'blockera_products_bootstrap' ) ) {
+
+	/**
+	 * Fire lazy product registrants once WordPress has finished `init`.
+	 *
+	 * The registry action is otherwise lazy on first read. Localization only
+	 * reads when the JS handle is registered, so PHP registration would never
+	 * run on requests that do not enqueue `@blockera/products`.
+	 *
+	 * Hooked on `wp_loaded` (after `blockera_init` loads app.php and attaches
+	 * `blockera_sb_register_product`).
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	function blockera_products_bootstrap(): void {
+
+		Registry::getInstance()->boot();
+	}
+}
+
 if ( ! function_exists( 'blockera_register_product' ) ) {
 
 	/**
