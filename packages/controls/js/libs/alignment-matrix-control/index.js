@@ -41,6 +41,7 @@ export default function AlignmentMatrixControl({
 	repeaterItem,
 	//
 	className,
+	fieldProps,
 }: Props): MixedElement {
 	const {
 		value,
@@ -78,6 +79,7 @@ export default function AlignmentMatrixControl({
 				columns={columns}
 				controlName={field}
 				className={className}
+				fieldProps={fieldProps}
 				{...labelProps}
 			>
 				<div className={controlClassNames('alignment-matrix')}>
@@ -107,6 +109,7 @@ export default function AlignmentMatrixControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<Flex

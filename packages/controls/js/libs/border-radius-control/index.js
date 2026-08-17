@@ -50,11 +50,18 @@ export default function BorderRadiusControl({
 	onChange,
 	//
 	className,
+	fieldProps = {},
 	withoutValueAddons = false,
 	showLinkedSidesToggle = true,
 	controlAddonTypes,
 	variableTypes,
 }: BorderRadiusControlProps): MixedElement {
+	const {
+		className: fieldClassName,
+		style: fieldStyle,
+		'data-cy': fieldDataCy,
+		...restFieldProps
+	} = fieldProps;
 	const resolvedControlAddonTypes: AddonTypes = withoutValueAddons
 		? ([]: AddonTypes)
 		: (controlAddonTypes ?? ['variable']);
@@ -113,7 +120,16 @@ export default function BorderRadiusControl({
 	};
 
 	return (
-		<div className={controlClassNames('border-radius', className)}>
+		<div
+			className={controlClassNames(
+				'border-radius',
+				className,
+				fieldClassName
+			)}
+			style={fieldStyle}
+			data-cy={fieldDataCy}
+			{...restFieldProps}
+		>
 			<div
 				className={controlInnerClassNames('border-header')}
 				style={{

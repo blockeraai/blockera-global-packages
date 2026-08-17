@@ -230,6 +230,7 @@ const CodeControl = ({
 	field = 'code',
 	//
 	className,
+	fieldProps,
 }: CodeControlProps): MixedElement => {
 	const {
 		value,
@@ -341,7 +342,7 @@ const CodeControl = ({
 	}
 
 	return (
-		<BaseControl columns={columns} controlName={field} {...labelProps}>
+		<BaseControl columns={columns} controlName={field} fieldProps={fieldProps} {...labelProps}>
 			<div className={controlClassNames('code', className)}>
 				<Editor
 					width={width || '100%'}

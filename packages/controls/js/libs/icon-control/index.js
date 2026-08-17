@@ -50,6 +50,7 @@ function IconControl({
 	onChange,
 	//
 	className,
+	fieldProps,
 }: IconControlProps): MixedElement {
 	const { value, setValue, attribute, blockName, resetToDefault } =
 		useControlContext({
@@ -176,6 +177,7 @@ function IconControl({
 				columns={columns}
 				controlName={field}
 				className={className}
+				fieldProps={fieldProps}
 				{...{
 					attribute,
 					blockName,

@@ -25,6 +25,7 @@ export default function NoticeControl({
 	columns,
 	field,
 	className,
+	fieldProps,
 	icon,
 	showIcon = true,
 	type = 'warning',
@@ -58,6 +59,7 @@ export default function NoticeControl({
 				columns={columns}
 				controlName={field}
 				className={className}
+				fieldProps={fieldProps}
 			>
 				<Flex
 					alignItems="flex-start"

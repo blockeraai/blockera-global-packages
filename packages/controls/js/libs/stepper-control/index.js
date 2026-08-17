@@ -74,6 +74,7 @@ export default function StepperControl({
 	placeholder,
 	validator,
 	sideEffect = true,
+	fieldProps,
 	...props
 }: TStepperControlProps): MixedElement {
 	const {
@@ -301,6 +302,7 @@ export default function StepperControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<div

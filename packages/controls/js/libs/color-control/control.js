@@ -50,6 +50,7 @@ export default function ColorControl({
 	colorIndicatorSize = 16,
 	tooltip,
 	children,
+	fieldProps,
 	//
 	...props
 }: ColorControlProps): MixedElement {
@@ -117,6 +118,7 @@ export default function ColorControl({
 				columns={columns}
 				controlName={field}
 				className={className}
+				fieldProps={fieldProps}
 				{...labelProps}
 			>
 				<div
@@ -160,6 +162,7 @@ export default function ColorControl({
 			columns={columns}
 			controlName={field}
 			className={className + ' ' + valueAddonClassNames}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<Button

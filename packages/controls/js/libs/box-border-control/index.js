@@ -71,6 +71,7 @@ export default function BoxBorderControl({
 	field = 'box-border',
 	//
 	className,
+	fieldProps,
 	withoutValueAddons = false,
 	showLinkedSidesToggle = true,
 	controlAddonTypes,
@@ -157,6 +158,7 @@ export default function BoxBorderControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 		>
 			<div className={controlClassNames('box-border', className)}>
 				<div className={controlInnerClassNames('border-header')}>

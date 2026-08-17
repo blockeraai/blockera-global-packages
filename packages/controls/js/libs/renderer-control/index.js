@@ -34,6 +34,7 @@ export const RendererControl = ({
 	defaultValue,
 	conditions = [],
 	parentDefaultValue,
+	fieldProps,
 	...props
 }: RendererControlProps): MixedElement => {
 	const {
@@ -131,7 +132,7 @@ export const RendererControl = ({
 	}
 
 	return (
-		<BaseControl label={label} columns="columns-2">
+		<BaseControl label={label} columns="columns-2" fieldProps={fieldProps}>
 			{Component}
 		</BaseControl>
 	);

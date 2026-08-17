@@ -23,6 +23,7 @@ export default function RangeControl({
 	min,
 	max,
 	className,
+	fieldProps,
 	withInputField = true,
 	initialPosition,
 	//
@@ -105,6 +106,7 @@ export default function RangeControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<WordPressRangeControl

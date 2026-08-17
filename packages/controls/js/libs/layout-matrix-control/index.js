@@ -317,6 +317,7 @@ export default function LayoutMatrixControl({
 	//
 	className,
 	children,
+	fieldProps,
 }: Props): MixedElement {
 	const {
 		value,
@@ -456,6 +457,7 @@ export default function LayoutMatrixControl({
 			controlName={field}
 			className={className}
 			style={style}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<Flex gap="10px" direction="column">

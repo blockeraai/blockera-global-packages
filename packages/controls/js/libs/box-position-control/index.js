@@ -53,8 +53,15 @@ const BoxPositionControl = ({
 	onChange,
 	//
 	className,
+	fieldProps = {},
 	...props
 }: BoxPositionControlProps): MixedElement => {
+	const {
+		className: fieldClassName,
+		style: fieldStyle,
+		'data-cy': fieldDataCy,
+		...restFieldProps
+	} = fieldProps;
 	const {
 		value,
 		setValue,
@@ -191,8 +198,14 @@ const BoxPositionControl = ({
 
 	return (
 		<div
-			className={controlClassNames('box-position', className)}
-			data-cy="box-position-control"
+			className={controlClassNames(
+				'box-position',
+				className,
+				fieldClassName
+			)}
+			style={fieldStyle}
+			data-cy={fieldDataCy || 'box-position-control'}
+			{...restFieldProps}
 			{...props}
 		>
 			<div

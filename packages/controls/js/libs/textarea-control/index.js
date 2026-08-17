@@ -42,6 +42,7 @@ export default function TextAreaControl({
 	onChange,
 	field = 'textarea',
 	className,
+	fieldProps,
 	disabled = false,
 	height = 55,
 	rows,
@@ -103,6 +104,7 @@ export default function TextAreaControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<textarea

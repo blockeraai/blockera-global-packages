@@ -42,6 +42,7 @@ export default function PositionButtonControl({
 	columns,
 	field = 'position-button',
 	className,
+	fieldProps,
 	...props
 }: TPositionButtonProps): MixedElement {
 	const {
@@ -79,6 +80,7 @@ export default function PositionButtonControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<Button

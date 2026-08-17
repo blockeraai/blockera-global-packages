@@ -35,6 +35,7 @@ export default function ToggleSelectControl({
 	//
 	className,
 	children,
+	fieldProps,
 	...props
 }: ToggleSelectControlProps): MixedElement {
 	const {
@@ -91,6 +92,7 @@ export default function ToggleSelectControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...{
 				value,
 				singularId,
