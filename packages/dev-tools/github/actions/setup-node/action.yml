@@ -1,8 +1,8 @@
 name: 'Setup Node.js and install npm dependencies'
 description: >
-    Shared Node setup for Blockera consumers. Call after checkout +
-    ensure-global-packages-sparse.sh so this action path exists under
-    packages/global-packages/packages/dev-tools/github/actions/setup-node.
+    Shared Node setup for Blockera consumers and the global-packages monorepo.
+    Resolves retry-npm-ci.sh from this action directory so both layouts work:
+    packages/dev-tools/... (this repo) and packages/global-packages/packages/dev-tools/... (consumers).
 inputs:
     node-version:
         description: 'Optional Node.js version. Defaults to .nvmrc via setup-node.'
@@ -47,4 +47,4 @@ runs:
               if [ -n "${{ inputs.chdir }}" ]; then
                 cd "${{ inputs.chdir }}"
               fi
-              bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/retry-npm-ci.sh"
+              bash "${GITHUB_ACTION_PATH}/../../scripts/retry-npm-ci.sh"
