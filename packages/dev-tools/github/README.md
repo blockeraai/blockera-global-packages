@@ -8,6 +8,10 @@ filters, and other knobs via `with:` / `env:` / CLI flags. Generic defaults
 (e.g. scan `packages` + `tests`) are runner conventions, not plugin/pro/theme
 presets.
 
+This repository also runs its own PHPUnit workflow (`.github/workflows/php-unit-tests.yml`)
+for shared-package tests that must not live in consumer suites (currently
+`packages/autoloader-coordinator/php/tests`).
+
 ## Consumer keeps
 
 1. **Thin workflows** — triggers, concurrency, repository guard
