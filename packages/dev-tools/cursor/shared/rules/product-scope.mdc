@@ -5,14 +5,24 @@ alwaysApply: true
 
 # Product Scope
 
-This rule guides work across Blockera products. It does **not** lock the agent to a single repo.
+This rule sets the **active product**. You may switch products when the user asks. You may **not** write every workspace repo in one turn.
 
 ## Session start
 
 1. If the user named a product (or the open files/workspace make it obvious), that is the **active product**.
 2. If they did **not** specify, the active product is **blockera**.
-3. Start the first reply with: `Product: <id> (<path>).`
-4. If it is unclear, ask once, then continue with **blockera** until they say otherwise.
+3. If it is unclear, ask once, then continue with **blockera** until they say otherwise.
+4. When the user names a new product, that becomes active immediately. Chat history in another checkout does **not** authorize continuing there.
+
+## Every reply
+
+Start **every** reply (not only the first) with:
+
+`Product: <id> (<path>). GP writes: <active-product>/packages/global-packages/.`
+
+Example when active is `blockera-one`:
+
+`Product: blockera-one (wp-content/themes/blockera-one/). GP writes: wp-content/themes/blockera-one/packages/global-packages/.`
 
 ## Products
 
@@ -25,17 +35,28 @@ This rule guides work across Blockera products. It does **not** lock the agent t
 
 `source-codes/` in each project root is read-only reference (symlink). Prefer it for Gutenberg / WordPress / Woo / Blocksy lookups.
 
+## global-packages (write root)
+
+`packages/global-packages/` is a **submodule checkout inside each product**, not a fifth product and not a shared write target. Same remote, separate working trees.
+
+- **All GP edits, stages, and commits** go only to `<active-product>/packages/global-packages/`.
+- Never write another product’s GP. Example: if active is `blockera-one`, do **not** edit `wp-content/plugins/blockera/packages/global-packages/`.
+- Even if the change is a shared API (e.g. `BaseControl`), write **only** the active product’s GP. Do not edit, stage, commit, or **offer to copy** into another product’s GP unless the user expands scope.
+- You may **read** another product’s GP to compare. You may **not** write it.
+- Resolve `Read`, `Grep`, `Glob`, `Shell`, and `git -C` against the **active product root**. Relative paths like `packages/global-packages/packages/controls/...` mean that path **under the active product**. If search hits another product’s GP, ignore it for writes.
+- Pass the active product **and** its GP path to subagents.
+
 ## How to work
 
-- Do the requested work in the **active product** first.
-- You may **read** other products when you need to understand compatibility, shared packages, or unlock/limit behavior.
+- Do the requested work in the **active product** first (including its `packages/global-packages/`).
+- You may **read** other products when you need to understand compatibility, unlock/limit behavior, or compare GP.
 - Do **not** edit, stage, or commit another product until the user agrees.
-- Keep commits inside the active product unless scope was expanded. One repo per commit.
+- Keep commits inside the active product unless scope was expanded. One repo per commit (GP submodule commits stay in that product’s GP checkout).
 - Pass the same active product (and any granted extras) to subagents.
 
 ## Cross-product updates (always ask)
 
-If you discover another product also needs changes, **stop and ask** before editing it. Name the product, why, and what you would change.
+If you discover another product also needs changes, **stop and ask** before editing it. Name the product, why, and what you would change. Do not volunteer copying GP into other products unless the user expands scope.
 
 ### blockera → blockera-pro
 
