@@ -8,6 +8,14 @@
 #   GITHUB_TOKEN or BLOCKERA_GLOBAL_PACKAGES_TOKEN  required for API
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../../lib/retry.sh
+RETRY_SH="${SCRIPT_DIR}/../../lib/retry.sh"
+
+gh_api() {
+	bash "${RETRY_SH}" --label "gh api" --max 5 --delay 15 -- gh api "$@"
+}
+
 TITLE="${BLOCKERA_BUNDLE_SIZE_COMMENT_TITLE:-# 📦 Bundle Size Report}"
 MARKER="${BLOCKERA_BUNDLE_SIZE_COMMENT_MARKER:-compressed-size-action}"
 TOKEN="${GITHUB_TOKEN:-${BLOCKERA_GLOBAL_PACKAGES_TOKEN:-}}"
@@ -36,7 +44,7 @@ fi
 echo "bundle-size/comment-title: looking for comment marker '${MARKER}' on PR #${PR_NUMBER}"
 
 mapfile -t COMMENT_IDS < <(
-	gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+	gh_api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
 		--jq ".[] | select(.body != null and (.body | contains(\"${MARKER}\"))) | .id"
 )
 
@@ -57,7 +65,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-gh api "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" --jq .body >"${BODY_FILE}"
+gh_api "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" --jq .body >"${BODY_FILE}"
 
 if [[ "$(head -c "${#TITLE}" "${BODY_FILE}")" == "${TITLE}" ]]; then
 	echo "bundle-size/comment-title: title already present"
@@ -72,7 +80,7 @@ fi
 # --rawfile reads the body from disk (no argv size limit).
 jq -n --rawfile body "${NEW_BODY_FILE}" '{body: $body}' >"${PAYLOAD_FILE}"
 
-gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" \
+gh_api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" \
 	--input "${PAYLOAD_FILE}" >/dev/null
 
 echo "bundle-size/comment-title: updated comment ${COMMENT_ID}"
