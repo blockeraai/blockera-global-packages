@@ -1456,7 +1456,7 @@ if (! \class_exists(Coordinator::class)) {
 					}
 				}
 
-				$packageInfo = $this->detectPackageFromPath((string) $path);
+				$packageInfo = $this->detectPackageFromPath( (string) $path );
 				$version     = $packageInfo['version'] ?? '0.0.0';
 
 				if ('0.0.0' === $version) {
