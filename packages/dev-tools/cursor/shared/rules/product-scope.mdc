@@ -18,19 +18,21 @@ This rule sets the **active product**. You may switch products when the user ask
 
 Start **every** reply (not only the first) with:
 
-`Product: <id> (<path>). GP writes: <active-product>/packages/global-packages/.`
+`Product: <id> (<path>). 
+GP writes: <active-product>/packages/global-packages/.`
 
 Example when active is `blockera-one`:
 
-`Product: blockera-one (wp-content/themes/blockera-one/). GP writes: wp-content/themes/blockera-one/packages/global-packages/.`
+`Product: blockera-one (wp-content/themes/blockera-one/). 
+GP writes: wp-content/themes/blockera-one/packages/global-packages/.`
 
 ## Products
 
-| Id | Path |
-| --- | --- |
-| `blockera` | `wp-content/plugins/blockera/` |
-| `blockera-pro` | `wp-content/plugins/blockera-pro/` |
-| `blockera-one` | `wp-content/themes/blockera-one/` |
+| Id                      | Path                                        |
+| ----------------------- | ------------------------------------------- |
+| `blockera`              | `wp-content/plugins/blockera/`              |
+| `blockera-pro`          | `wp-content/plugins/blockera-pro/`          |
+| `blockera-one`          | `wp-content/themes/blockera-one/`           |
 | `blockera-site-toolkit` | `wp-content/plugins/blockera-site-toolkit/` |
 
 `source-codes/` in each project root is read-only reference (symlink). Prefer it for Gutenberg / WordPress / Woo / Blocksy lookups.
