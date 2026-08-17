@@ -1,6 +1,5 @@
 # Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO.
-# Theme: BLOCKERA_E2E_PRODUCT_STYLE=theme
-# Pro: PRODUCT_STYLE=pro, GENERAL_CATEGORY=general, LIST/PREPARE/PRE_TEST overrides.
+# Consumers pass discovery filters via BLOCKERA_E2E_* env (scan roots, package suffix, …).
 name: Cypress E2E Tests
 
 on:
@@ -12,14 +11,25 @@ concurrency:
     group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
     cancel-in-progress: true
 
+env:
+    BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+    # Example consumer filters (omit for default packages+tests scan):
+    # BLOCKERA_E2E_SCAN_ROOTS: packages
+    # BLOCKERA_E2E_PACKAGE_SUFFIX: -one
+    # BLOCKERA_E2E_PACKAGE_PREFIX: blockera-one-
+    # BLOCKERA_E2E_PACKAGE_GLOB: 'packages/**-one(-**|)/**'
+    # BLOCKERA_E2E_USE_CREATE_WP_ENV: 'true'
+    # BLOCKERA_E2E_CI_ENV: 'true'
+    # BLOCKERA_E2E_WRITE_CYPRESS_ENV: 'true'
+    # BLOCKERA_E2E_PRE_TEST_CMD: npm run test:e2e -- --spec "packages/.../license.e2e.cy.js"
+    # GITHUB_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+
 jobs:
     detect_categories:
         name: Detecting E2E Test Categories
         runs-on: ubuntu-latest
         outputs:
             categories: ${{ steps.detect.outputs.categories }}
-        env:
-            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
         steps:
             - uses: actions/checkout@v5
               with:
@@ -43,19 +53,7 @@ jobs:
             matrix:
                 category: ${{ fromJson(needs.detect_categories.outputs.categories) }}
         env:
-            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
             BLOCKERA_E2E_CATEGORY: ${{ matrix.category }}
-            # Theme overrides:
-            # BLOCKERA_E2E_PRODUCT_STYLE: theme
-            # BLOCKERA_E2E_PREPARE_CMD: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/cypress-e2e-tests/prepare-theme.sh
-            # GITHUB_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}  # .pr-env.json tree/artifact downloads
-            # Pro overrides:
-            # BLOCKERA_E2E_PRODUCT_STYLE: pro
-            # BLOCKERA_E2E_GENERAL_CATEGORY: general
-            # BLOCKERA_E2E_LIST_CATEGORIES_CMD: node packages/global-packages/packages/dev-tools/github/scripts/list-e2e-test-categories-pro.js
-            # BLOCKERA_E2E_PREPARE_CMD: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/cypress-e2e-tests/prepare-pro.sh
-            # GITHUB_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
-            # BLOCKERA_E2E_PRE_TEST_CMD: npm run test:e2e -- --spec "packages/.../license.e2e.cy.js"
         steps:
             - uses: actions/checkout@v5
               with:

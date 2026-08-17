@@ -10,20 +10,17 @@
  *
  * Usage: node create-wp-env.js <category> [pluginDownloadUrl]
  *
- * Env:
- *   BLOCKERA_E2E_PRODUCT_STYLE / BLOCKERA_WP_ENV_PRODUCT_STYLE
- *     plugin | theme | pro (default: plugin)
- *   BLOCKERA_E2E_WP_ENV_CONFIG_DIR
- *     default: .github/wp-env-configs
- *   BLOCKERA_WP_ENV_FALLBACK_CONFIG
- *     default: general (pro) or base (plugin/theme)
- *   BLOCKERA_WP_ENV_PR_ENV_FILE
- *     default: .pr-env.json
- *   BLOCKERA_WP_ENV_PR_PLUGIN_CATEGORIES
- *     comma-separated categories that receive `.pr-env.json` plugins, or *
- *     default: * (pro/plugin), companion-plugin (theme)
- *   GITHUB_TOKEN
- *     required to download GitHub tree/artifact/branch plugin sources
+ * Env (no product styles — consumers set these):
+ *   BLOCKERA_E2E_WP_ENV_CONFIG_DIR          default: .github/wp-env-configs
+ *   BLOCKERA_WP_ENV_FALLBACK_CONFIG         default: base
+ *   BLOCKERA_WP_ENV_PR_ENV_FILE             default: .pr-env.json
+ *   BLOCKERA_WP_ENV_PR_PLUGIN_CATEGORIES    comma list or * (default: *)
+ *   BLOCKERA_WP_ENV_FREE_EXTRACT_DIR        default: .github/cache/blockera-free
+ *   BLOCKERA_WP_ENV_DEFAULT_PLUGIN          tree/artifact/branch added when plugins are empty
+ *   BLOCKERA_WP_ENV_DEFAULT_PLUGIN_CATEGORIES  comma list or * (default: *)
+ *   BLOCKERA_WP_ENV_STRIP_DOT_PLUGINS       true = drop `.` plugin entries
+ *   BLOCKERA_WP_ENV_DEFAULT_THEME           e.g. `.` when themes is missing
+ *   GITHUB_TOKEN                            required for GitHub tree/artifact downloads
  */
 const fs = require('fs');
 const path = require('path');
@@ -37,28 +34,33 @@ if (!category) {
 	process.exit(1);
 }
 
-const productStyle = (
-	process.env.BLOCKERA_WP_ENV_PRODUCT_STYLE ||
-	process.env.BLOCKERA_E2E_PRODUCT_STYLE ||
-	'plugin'
-).toLowerCase();
-
 const configDir =
 	process.env.BLOCKERA_E2E_WP_ENV_CONFIG_DIR || '.github/wp-env-configs';
 
-const fallbackName =
-	process.env.BLOCKERA_WP_ENV_FALLBACK_CONFIG ||
-	(productStyle === 'pro' ? 'general' : 'base');
+const fallbackName = process.env.BLOCKERA_WP_ENV_FALLBACK_CONFIG || 'base';
 
 const prEnvFile = process.env.BLOCKERA_WP_ENV_PR_ENV_FILE || '.pr-env.json';
 
 const prPluginCategories = (
-	process.env.BLOCKERA_WP_ENV_PR_PLUGIN_CATEGORIES ||
-	(productStyle === 'theme' ? 'companion-plugin' : '*')
+	process.env.BLOCKERA_WP_ENV_PR_PLUGIN_CATEGORIES || '*'
 )
 	.split(',')
 	.map((item) => item.trim())
 	.filter(Boolean);
+
+const defaultPlugin = process.env.BLOCKERA_WP_ENV_DEFAULT_PLUGIN || '';
+
+const defaultPluginCategories = (
+	process.env.BLOCKERA_WP_ENV_DEFAULT_PLUGIN_CATEGORIES || '*'
+)
+	.split(',')
+	.map((item) => item.trim())
+	.filter(Boolean);
+
+const stripDotPlugins =
+	process.env.BLOCKERA_WP_ENV_STRIP_DOT_PLUGINS === 'true';
+
+const defaultTheme = process.env.BLOCKERA_WP_ENV_DEFAULT_THEME || '';
 
 const ARTIFACT_URL_PATTERN =
 	/^https:\/\/github\.com\/[^/]+\/[^/]+\/actions\/runs\/\d+\/artifacts\/\d+\/?$/;
@@ -79,12 +81,9 @@ const DEFAULT_CONFIG = {
 };
 
 // wp-env uses the last path segment as the plugin directory name.
-// Theme CI runs `wp plugin activate blockera`, so the extract dir must
-// be `blockera`. Pro keeps `blockera-free` to avoid colliding with `blockera-pro`.
 const FREE_EXTRACT_DIR =
-	productStyle === 'theme'
-		? '.github/cache/blockera'
-		: '.github/cache/blockera-free';
+	process.env.BLOCKERA_WP_ENV_FREE_EXTRACT_DIR ||
+	'.github/cache/blockera-free';
 const DOWNLOAD_SCRIPT = path.join(__dirname, 'download-artifact.sh');
 
 function requireGitHubToken() {
@@ -148,12 +147,12 @@ function downloadFreeArtifact(args, label) {
 	).trim();
 
 	if (!resolvedPath) {
-		throw new Error(`Failed to download Blockera plugin artifact: ${label}`);
+		throw new Error(
+			`Failed to download Blockera plugin artifact: ${label}`
+		);
 	}
 
-	console.log(
-		`create-wp-env: resolved plugin (${label}) to ${resolvedPath}`
-	);
+	console.log(`create-wp-env: resolved plugin (${label}) to ${resolvedPath}`);
 	return resolvedPath;
 }
 
@@ -217,7 +216,9 @@ function mergeWpEnv(base, overlay) {
 	}
 
 	const basePlugins = Array.isArray(base.plugins) ? base.plugins : [];
-	const overlayPlugins = Array.isArray(overlay.plugins) ? overlay.plugins : [];
+	const overlayPlugins = Array.isArray(overlay.plugins)
+		? overlay.plugins
+		: [];
 
 	result.plugins = uniqueList([
 		...basePlugins,
@@ -231,24 +232,27 @@ function hasNonDotPlugin(plugins) {
 	return plugins.some((pluginSource) => pluginSource && pluginSource !== '.');
 }
 
-function ensureDependencyPlugin(plugins) {
-	if (hasNonDotPlugin(plugins)) {
-		return plugins;
-	}
-
-	const shouldDefault =
-		productStyle === 'pro' ||
-		(productStyle === 'theme' && category === 'companion-plugin');
-
-	if (!shouldDefault) {
-		return plugins;
-	}
-
-	const defaultTreeUrl = `https://github.com/${DEFAULT_FREE_REPO.owner}/${DEFAULT_FREE_REPO.repo}/tree/${DEFAULT_FREE_REPO.branch}`;
-	console.log(
-		`create-wp-env: no companion plugin source; defaulting to ${defaultTreeUrl}`
+function shouldApplyDefaultPlugin() {
+	return (
+		defaultPluginCategories.includes('*') ||
+		defaultPluginCategories.includes('all') ||
+		defaultPluginCategories.includes(category)
 	);
-	return uniqueList([...plugins, defaultTreeUrl]);
+}
+
+function ensureDependencyPlugin(plugins) {
+	if (
+		!defaultPlugin ||
+		hasNonDotPlugin(plugins) ||
+		!shouldApplyDefaultPlugin()
+	) {
+		return plugins;
+	}
+
+	console.log(
+		`create-wp-env: no companion plugin source; defaulting to ${defaultPlugin}`
+	);
+	return uniqueList([...plugins, defaultPlugin]);
 }
 
 let prEnv = {};
@@ -267,7 +271,7 @@ if (!fs.existsSync(wpEnvFilePath)) {
 	process.exit(1);
 }
 
-console.log(`create-wp-env: base config ${wpEnvFilePath} (${productStyle})`);
+console.log(`create-wp-env: base config ${wpEnvFilePath}`);
 const categoryConfig = JSON.parse(fs.readFileSync(wpEnvFilePath, 'utf-8'));
 
 const merged = mergeWpEnv(categoryConfig, prEnv);
@@ -278,7 +282,7 @@ if (pluginDownloadUrl) {
 
 merged.plugins = ensureDependencyPlugin(merged.plugins || []);
 
-if (productStyle === 'theme') {
+if (stripDotPlugins) {
 	merged.plugins = merged.plugins.filter(
 		(pluginSource) => pluginSource && pluginSource !== '.'
 	);
@@ -291,8 +295,8 @@ merged.config = {
 
 merged.plugins = uniqueList(merged.plugins.map(resolvePluginSource));
 
-if (productStyle === 'theme' && !Array.isArray(merged.themes)) {
-	merged.themes = ['.'];
+if (defaultTheme && !Array.isArray(merged.themes)) {
+	merged.themes = [defaultTheme];
 }
 
 if (Array.isArray(merged.plugins) && merged.plugins.length === 0) {

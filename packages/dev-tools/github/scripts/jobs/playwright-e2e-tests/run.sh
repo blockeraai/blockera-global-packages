@@ -4,23 +4,24 @@
 # Required env:
 #   BLOCKERA_PLAYWRIGHT_CATEGORY
 #
-# Defaults match the Blockera plugin base. Override via env:
-#   BLOCKERA_PLAYWRIGHT_PRODUCT_STYLE      plugin|theme (default: plugin)
+# Optional:
+#   BLOCKERA_PLAYWRIGHT_PACKAGE_SUFFIX / _PREFIX   limit package specs
+#   BLOCKERA_PLAYWRIGHT_EXCLUDE_FILES              comma-separated paths to skip
 #   BLOCKERA_PLAYWRIGHT_INSTALL_CMD
 #   BLOCKERA_PLAYWRIGHT_COMPOSER_INSTALL / BLOCKERA_PLAYWRIGHT_COMPOSER_CMD
 #   BLOCKERA_PLAYWRIGHT_WP_ENV_CONFIG_DIR
 #   BLOCKERA_PLAYWRIGHT_WP_ENV_START_CMD
 #   BLOCKERA_PLAYWRIGHT_BUILD_CMD
-#   BLOCKERA_PLAYWRIGHT_TEST_CMD           default: npx playwright test --config playwright.config.js
+#   BLOCKERA_PLAYWRIGHT_TEST_CMD
 #   BLOCKERA_PLAYWRIGHT_STOP_CMD
 #   BLOCKERA_PLAYWRIGHT_PR_ENV_FILE
 #   BLOCKERA_PLAYWRIGHT_GENERAL_CATEGORY
-#   BLOCKERA_PLAYWRIGHT_VISUAL_SPEC        plugin visual entry (default: tests/visual.block-screenshots.ply.js)
+#   BLOCKERA_PLAYWRIGHT_VISUAL_SPEC        default: tests/visual.block-screenshots.ply.js
 #   BLOCKERA_PLAYWRIGHT_VISUAL_BATCHES_CMD
 #   BLOCKERA_PLAYWRIGHT_WP_READY_URL
-#   BLOCKERA_PLAYWRIGHT_VERIFY_MU_PLUGINS  true|false (default: true)
-#   BLOCKERA_PLAYWRIGHT_MU_PLUGIN_PREFIX   path under ABSPATH (default: wp-content/plugins/blockera/)
-#   BLOCKERA_PLAYWRIGHT_MU_PLUGIN_FIXTURES comma-separated relative fixture paths
+#   BLOCKERA_PLAYWRIGHT_VERIFY_MU_PLUGINS
+#   BLOCKERA_PLAYWRIGHT_MU_PLUGIN_PREFIX
+#   BLOCKERA_PLAYWRIGHT_MU_PLUGIN_FIXTURES
 #   VISUAL_SNAPSHOT_BATCH_SIZE
 set -euo pipefail
 
@@ -30,7 +31,6 @@ if [[ -z "${CATEGORY}" ]]; then
 	exit 1
 fi
 
-PRODUCT_STYLE="${BLOCKERA_PLAYWRIGHT_PRODUCT_STYLE:-plugin}"
 INSTALL_CMD="${BLOCKERA_PLAYWRIGHT_INSTALL_CMD:-npx playwright install chromium --with-deps}"
 COMPOSER_INSTALL="${BLOCKERA_PLAYWRIGHT_COMPOSER_INSTALL:-true}"
 COMPOSER_CMD="${BLOCKERA_PLAYWRIGHT_COMPOSER_CMD:-composer install --no-dev -o --apcu-autoloader -a}"
@@ -48,10 +48,9 @@ VERIFY_MU="${BLOCKERA_PLAYWRIGHT_VERIFY_MU_PLUGINS:-true}"
 MU_PREFIX="${BLOCKERA_PLAYWRIGHT_MU_PLUGIN_PREFIX:-wp-content/plugins/blockera/}"
 DEFAULT_MU_FIXTURES='packages/global-packages/packages/editor/js/extensions/libs/background/test/global-styles/fixtures/background-color-setup-1.php,packages/global-packages/packages/blocks-core/js/libs/wordpress/group/test/global-styles/fixtures/link-inner-blocks-simple-color.php,packages/global-packages/packages/editor/js/extensions/libs/block-card/inner-blocks/test/global-styles/fixtures/link-color-simple.php'
 MU_FIXTURES="${BLOCKERA_PLAYWRIGHT_MU_PLUGIN_FIXTURES:-${DEFAULT_MU_FIXTURES}}"
-
-if [[ "${PRODUCT_STYLE}" == "theme" && -z "${BLOCKERA_PLAYWRIGHT_MU_PLUGIN_PREFIX:-}" ]]; then
-	MU_PREFIX="wp-content/themes/blockera-one/"
-fi
+PACKAGE_SUFFIX="${BLOCKERA_PLAYWRIGHT_PACKAGE_SUFFIX:-}"
+PACKAGE_PREFIX="${BLOCKERA_PLAYWRIGHT_PACKAGE_PREFIX:-}"
+EXCLUDE_FILES="${BLOCKERA_PLAYWRIGHT_EXCLUDE_FILES:-}"
 
 cleanup() {
 	echo "playwright-e2e/run: ${STOP_CMD}"
@@ -59,7 +58,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "playwright-e2e/run: category=${CATEGORY} style=${PRODUCT_STYLE}"
+echo "playwright-e2e/run: category=${CATEGORY}"
 
 echo "playwright-e2e/run: ${INSTALL_CMD}"
 eval "${INSTALL_CMD}"
@@ -102,7 +101,6 @@ eval "${BUILD_CMD}"
 npx wp-env run cli -- wp eval 'if (!file_exists(WPMU_PLUGIN_DIR)) { wp_mkdir_p(WPMU_PLUGIN_DIR); }'
 
 if [[ "${VERIFY_MU}" == "true" ]]; then
-	# Build a PHP foreach list from comma-separated fixture paths.
 	php_list=""
 	IFS=',' read -r -a fixture_arr <<<"${MU_FIXTURES}"
 	for f in "${fixture_arr[@]}"; do
@@ -129,13 +127,57 @@ curl -sf -o /dev/null "${WP_READY_URL}" || {
 	exit 1
 }
 
+is_excluded_file() {
+	local path="$1"
+	local item
+	IFS=',' read -r -a items <<<"${EXCLUDE_FILES}"
+	for item in "${items[@]}"; do
+		item="${item#"${item%%[![:space:]]*}"}"
+		item="${item%"${item##*[![:space:]]}"}"
+		[[ -z "${item}" ]] && continue
+		if [[ "${path}" == "${item}" || "$(basename "${path}")" == "$(basename "${item}")" ]]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
 is_allowed_playwright_path() {
 	local path="$1"
-	if [[ "${PRODUCT_STYLE}" != "theme" ]]; then
+	is_excluded_file "${path}" && return 1
+	if [[ -z "${PACKAGE_SUFFIX}" && -z "${PACKAGE_PREFIX}" ]]; then
 		return 0
 	fi
 	[[ "${path}" =~ ^tests/ ]] && return 0
-	[[ "${path}" =~ ^packages/(blockera-one-[^/]+|[^/]+-one)/ ]]
+	local pkg
+	pkg="$(echo "${path}" | sed -nE 's|^packages/([^/]+)/.*|\1|p')"
+	[[ -z "${pkg}" ]] && return 1
+	[[ -n "${PACKAGE_SUFFIX}" && "${pkg}" == *"${PACKAGE_SUFFIX}" ]] && return 0
+	[[ -n "${PACKAGE_PREFIX}" && "${pkg}" == "${PACKAGE_PREFIX}"* ]] && return 0
+	return 1
+}
+
+find_package_specs() {
+	local name_pattern="$1"
+	shift
+	if [[ ! -d packages ]]; then
+		return
+	fi
+	if [[ -z "${PACKAGE_SUFFIX}" && -z "${PACKAGE_PREFIX}" ]]; then
+		find packages -type f -name "${name_pattern}" "$@" -print0 2>/dev/null
+		return
+	fi
+	local find_pred=()
+	if [[ -n "${PACKAGE_SUFFIX}" ]]; then
+		find_pred+=( -path "packages/*${PACKAGE_SUFFIX}/*" )
+	fi
+	if [[ -n "${PACKAGE_PREFIX}" ]]; then
+		if [[ ${#find_pred[@]} -gt 0 ]]; then
+			find_pred+=( -o )
+		fi
+		find_pred+=( -path "packages/${PACKAGE_PREFIX}*/*" )
+	fi
+	find packages \( "${find_pred[@]}" \) -type f -name "${name_pattern}" "$@" -print0 2>/dev/null
 }
 
 expand_glob_to_files() {
@@ -145,19 +187,16 @@ expand_glob_to_files() {
 		base_dir="$(echo "${pattern}" | sed -E 's|/\*\*.*||')"
 		file_pattern="$(echo "${pattern}" | sed -E 's|.*\*\*/||')"
 		while IFS= read -r -d '' file; do
-			if [[ "${PRODUCT_STYLE}" == "theme" && "$(basename "${file}")" == "visual.block-screenshots.ply.js" ]]; then
-				continue
-			fi
+			is_excluded_file "${file}" && continue
 			test_files+=("${file}")
 		done < <(find "${base_dir}" -type f -name "${file_pattern}" -print0 2>/dev/null)
-	elif [[ -f "${pattern}" ]]; then
+	elif [[ -f "${pattern}" ]] && ! is_excluded_file "${pattern}"; then
 		test_files+=("${pattern}")
 	fi
 }
 
 test_files=()
 
-# Visual snapshot batches: synthetic categories block-screenshots-1..N.
 if [[ "${CATEGORY}" =~ ^block-screenshots-([0-9]+)$ ]]; then
 	batch_num="${BASH_REMATCH[1]}"
 	fixtures_csv="$(eval "${BATCHES_CMD} --batch \"${batch_num}\" --fixtures-csv")"
@@ -171,12 +210,12 @@ if [[ "${CATEGORY}" =~ ^block-screenshots-([0-9]+)$ ]]; then
 		exit 0
 	fi
 
-	if [[ "${PRODUCT_STYLE}" == "theme" ]]; then
+	if [[ -n "${PACKAGE_SUFFIX}" || -n "${PACKAGE_PREFIX}" ]]; then
 		while IFS= read -r -d '' file; do
 			test_files+=("${file}")
-		done < <(find packages \( -path 'packages/*-one/*' -o -path 'packages/blockera-one-*/*' \) -type f -name '*.block-screenshots.ply.js' -print0 2>/dev/null)
+		done < <(find_package_specs '*.block-screenshots.ply.js')
 		if [[ ${#test_files[@]} -eq 0 ]]; then
-			echo "No -one package block-screenshots specs; skipping."
+			echo "No package block-screenshots specs; skipping."
 			exit 0
 		fi
 	else
@@ -186,9 +225,6 @@ elif [[ -f "${PR_ENV_FILE}" ]]; then
 	while IFS= read -r pattern; do
 		[[ -z "${pattern}" ]] && continue
 		is_allowed_playwright_path "${pattern}" || continue
-		if [[ "${PRODUCT_STYLE}" == "theme" && "${pattern}" == "tests/visual.block-screenshots.ply.js" ]]; then
-			continue
-		fi
 
 		base="$(basename "${pattern}" .ply.js)"
 		if [[ "${base}" == *.* ]]; then
@@ -197,7 +233,6 @@ elif [[ -f "${PR_ENV_FILE}" ]]; then
 			file_category="${GENERAL_CATEGORY}"
 		fi
 
-		# Batched block-screenshots-* jobs are handled above.
 		if [[ "${file_category}" == "block-screenshots" ]]; then
 			continue
 		fi
@@ -238,14 +273,11 @@ elif [[ "${CATEGORY}" != "${GENERAL_CATEGORY}" ]]; then
 		test_patterns+=("tests/e2e/specs/**/*.${CATEGORY}.ply.js")
 	fi
 
-	if [[ "${PRODUCT_STYLE}" == "theme" ]]; then
-		if find tests -type f -name "*.${CATEGORY}.ply.js" ! -name 'visual.block-screenshots.ply.js' 2>/dev/null | grep -q .; then
-			test_patterns+=("tests/**/*.${CATEGORY}.ply.js")
-		fi
-	else
-		if find tests -type f -name "*.${CATEGORY}.ply.js" 2>/dev/null | grep -q .; then
-			test_patterns+=("tests/**/*.${CATEGORY}.ply.js")
-		fi
+	if find tests -type f -name "*.${CATEGORY}.ply.js" 2>/dev/null | grep -q .; then
+		test_patterns+=("tests/**/*.${CATEGORY}.ply.js")
+	fi
+
+	if [[ -z "${PACKAGE_SUFFIX}" && -z "${PACKAGE_PREFIX}" ]]; then
 		if find packages -type f -name "*.${CATEGORY}.ply.js" 2>/dev/null | grep -q .; then
 			test_patterns+=("packages/**/*.${CATEGORY}.ply.js")
 		fi
@@ -255,35 +287,27 @@ elif [[ "${CATEGORY}" != "${GENERAL_CATEGORY}" ]]; then
 		expand_glob_to_files "${pattern}"
 	done
 
-	if [[ "${PRODUCT_STYLE}" == "theme" ]]; then
+	if [[ -n "${PACKAGE_SUFFIX}" || -n "${PACKAGE_PREFIX}" ]]; then
 		while IFS= read -r -d '' file; do
+			is_excluded_file "${file}" && continue
 			test_files+=("${file}")
-		done < <(find packages \( -path 'packages/*-one/*' -o -path 'packages/blockera-one-*/*' \) -type f -name "*.${CATEGORY}.ply.js" -print0 2>/dev/null)
+		done < <(find_package_specs "*.${CATEGORY}.ply.js")
 	fi
 else
-	# general: files without a category segment in the name
 	while IFS= read -r -d '' file; do
+		is_excluded_file "${file}" && continue
 		test_files+=("${file}")
 	done < <(find tests/e2e/specs -type f -name "*.ply.js" ! -name "*.*.ply.js" -print0 2>/dev/null)
 
-	if [[ "${PRODUCT_STYLE}" == "theme" ]]; then
-		while IFS= read -r -d '' file; do
-			[[ "$(basename "${file}")" == "visual.block-screenshots.ply.js" ]] && continue
-			test_files+=("${file}")
-		done < <(find tests -type f -name "*.ply.js" ! -name "*.*.ply.js" ! -path "tests/e2e/specs/*" -print0 2>/dev/null)
+	while IFS= read -r -d '' file; do
+		is_excluded_file "${file}" && continue
+		test_files+=("${file}")
+	done < <(find tests -type f -name "*.ply.js" ! -name "*.*.ply.js" ! -path "tests/e2e/specs/*" -print0 2>/dev/null)
 
-		while IFS= read -r -d '' file; do
-			test_files+=("${file}")
-		done < <(find packages \( -path 'packages/*-one/*' -o -path 'packages/blockera-one-*/*' \) -type f -name "*.ply.js" ! -name "*.*.ply.js" -print0 2>/dev/null)
-	else
-		while IFS= read -r -d '' file; do
-			test_files+=("${file}")
-		done < <(find packages -type f -name "*.ply.js" ! -name "*.*.ply.js" -print0 2>/dev/null)
-
-		while IFS= read -r -d '' file; do
-			test_files+=("${file}")
-		done < <(find tests -type f -name "*.ply.js" ! -name "*.*.ply.js" ! -path "tests/e2e/specs/*" -print0 2>/dev/null)
-	fi
+	while IFS= read -r -d '' file; do
+		is_excluded_file "${file}" && continue
+		test_files+=("${file}")
+	done < <(find_package_specs "*.ply.js" ! -name "*.*.ply.js")
 fi
 
 if [[ ${#test_files[@]} -eq 0 ]]; then
@@ -305,7 +329,6 @@ if ! eval "${TEST_CMD} ${quoted_files[*]}"; then
 	test_exit_code=1
 fi
 
-# Flaky tests that pass after retries must not fail the job.
 if [[ "${test_exit_code}" -ne 0 && -f artifacts/playwright-e2e-summary.json ]]; then
 	if node -e "
 		const fs = require('fs');

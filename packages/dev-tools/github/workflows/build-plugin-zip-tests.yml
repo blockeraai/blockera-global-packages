@@ -1,5 +1,5 @@
 # Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO.
-# Pro: skip-if-no-specs=true, zip/build-dir overrides, SPECS_PATH='*-pro*', PRODUCT_STYLE=pro.
+# Other products: set BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD to prepare-pro.sh / prepare-theme.sh / prepare-toolkit.sh.
 name: Build Blockera Plugin Tests
 
 on:

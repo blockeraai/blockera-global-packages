@@ -6,14 +6,13 @@
 #   BLOCKERA_BUILD_ZIP_TESTS_BUILD_DIR      default: ./build/blockera
 #   BLOCKERA_BUILD_ZIP_TESTS_PHP_VERSION    required (matrix.php)
 #   BLOCKERA_BUILD_ZIP_TESTS_WP_ENV_CONFIG  default: .github/wp-env-configs/base.json
-#   BLOCKERA_BUILD_ZIP_TESTS_PRODUCT_STYLE  plugin|pro|theme|toolkit (default: plugin)
+#   BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD    optional custom staging after unzip
 set -euo pipefail
 
 ZIP_FILE="${BLOCKERA_BUILD_ZIP_TESTS_ZIP:-blockera.zip}"
 BUILD_DIR="${BLOCKERA_BUILD_ZIP_TESTS_BUILD_DIR:-./build/blockera}"
 PHP_VERSION="${BLOCKERA_BUILD_ZIP_TESTS_PHP_VERSION:-}"
 WP_ENV_CONFIG="${BLOCKERA_BUILD_ZIP_TESTS_WP_ENV_CONFIG:-.github/wp-env-configs/base.json}"
-PRODUCT_STYLE="${BLOCKERA_BUILD_ZIP_TESTS_PRODUCT_STYLE:-plugin}"
 
 if [[ -z "${PHP_VERSION}" ]]; then
 	echo "build-zip-tests/prepare: BLOCKERA_BUILD_ZIP_TESTS_PHP_VERSION is required" >&2
@@ -36,27 +35,7 @@ if [[ -n "${BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD:-}" ]]; then
 	exit 0
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-if [[ "${PRODUCT_STYLE}" == "pro" ]]; then
-	echo "build-zip-tests/prepare: pro style → prepare-pro.sh"
-	bash "${SCRIPT_DIR}/prepare-pro.sh"
-	exit 0
-fi
-
-if [[ "${PRODUCT_STYLE}" == "theme" ]]; then
-	echo "build-zip-tests/prepare: theme style → prepare-theme.sh"
-	bash "${SCRIPT_DIR}/prepare-theme.sh"
-	exit 0
-fi
-
-if [[ "${PRODUCT_STYLE}" == "toolkit" ]]; then
-	echo "build-zip-tests/prepare: toolkit style → prepare-toolkit.sh"
-	bash "${SCRIPT_DIR}/prepare-toolkit.sh"
-	exit 0
-fi
-
-echo "build-zip-tests/prepare: staging Blockera plugin fixtures (php=${PHP_VERSION})"
+echo "build-zip-tests/prepare: staging fixtures (php=${PHP_VERSION})"
 (
 	cd "${BUILD_DIR}"
 	mkdir -p packages/blockera/tests
