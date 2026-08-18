@@ -1,6 +1,7 @@
 /**
  * Copy host configs from `root-configs/` (mirrors the host tree).
  * Replaces `{{PROJECT_ID}}` when present. Husky hook scripts get chmod 0755.
+ * Optional `projects` on an entry limits the copy to those `--project` ids.
  */
 
 const fs = require( 'fs' );
@@ -20,6 +21,9 @@ const ROOT_CONFIGS = [
 	{ dest: '.gitattributes' },
 	{ dest: '.husky', kind: 'husky' },
 	{ dest: '.nvmrc' },
+	{ dest: '.pr-cypress.env-example.json' },
+	{ dest: '.pr-env.example.json', projects: [ 'blockera-one' ] },
+	{ dest: '.pr-playwright.env-example.json' },
 	{ dest: '.pr-workflows.example.json' },
 	{ dest: '.prettierignore' },
 	{ dest: '.prettierrc.js' },
@@ -30,6 +34,8 @@ const ROOT_CONFIGS = [
 	{ dest: 'cypress-image-diff.config.js' },
 	{ dest: 'phpcs.xml' },
 	{ dest: 'phpstan.neon' },
+	{ dest: 'playwright.config.js' },
+	{ dest: 'playwright.env.example.json' },
 	{ dest: 'svgo.config.js' },
 	{ dest: 'tsconfig.json', src: 'tsconfig.json.template' },
 ];
@@ -118,8 +124,18 @@ function entryDetail( entry ) {
 	return `copied from root-configs/${ entry.src || entry.dest }`;
 }
 
+function matchesProject( entry, projectId ) {
+	if ( ! entry.projects ) {
+		return true;
+	}
+
+	return Boolean( projectId ) && entry.projects.includes( projectId );
+}
+
 function writeRootConfigs( { root, projectId } ) {
-	return ROOT_CONFIGS.map( ( entry ) => {
+	return ROOT_CONFIGS.filter( ( entry ) =>
+		matchesProject( entry, projectId )
+	).map( ( entry ) => {
 		if ( entry.kind === 'dir' ) {
 			copyTemplateDir(
 				path.join( TEMPLATE_DIR, entry.dest ),
