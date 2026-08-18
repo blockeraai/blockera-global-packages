@@ -1,8 +1,8 @@
 name: 'Setup PHP and install Composer dependencies'
 description: >
-    Shared PHP/Composer setup for Blockera consumers. Call after checkout +
-    ensure-global-packages-sparse.sh so this action path exists under
-    packages/global-packages/packages/dev-tools/github/actions/setup-php.
+    Shared PHP/Composer setup for Blockera consumers and the global-packages monorepo.
+    Resolves wp-cli helper scripts from this action directory so both layouts work:
+    packages/dev-tools/... (this repo) and packages/global-packages/packages/dev-tools/... (consumers).
 inputs:
     php-version:
         description: 'PHP version for the runner (and composer platform.php).'
@@ -31,7 +31,7 @@ runs:
 
         - name: Remove wp-cli bundle from composer files
           shell: bash
-          run: bash packages/global-packages/packages/dev-tools/github/scripts/lib/strip-wp-cli-composer-files.sh
+          run: bash "${GITHUB_ACTION_PATH}/../../scripts/lib/strip-wp-cli-composer-files.sh"
 
         - name: Install Composer dependencies
           uses: ramsey/composer-install@v4
@@ -43,4 +43,4 @@ runs:
           shell: bash
           env:
               BLOCKERA_COMPOSER_INSTALL_OPTS: '${{ inputs.composer-options }}'
-          run: bash packages/global-packages/packages/dev-tools/github/scripts/lib/remove-wp-cli-vendor.sh
+          run: bash "${GITHUB_ACTION_PATH}/../../scripts/lib/remove-wp-cli-vendor.sh"
