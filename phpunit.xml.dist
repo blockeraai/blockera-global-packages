@@ -1,7 +1,8 @@
 <!--
 	PHPUnit config for this monorepo (blockeraai/blockera-global-packages).
 	Runs shared-package tests that must not live in consumer suites
-	(e.g. autoloader-coordinator). Consumer phpunit.xml.dist files stay product-local.
+	(e.g. autoloader-coordinator). Products wp-env tests use phpunit.products.xml.dist.
+	Consumer phpunit.xml.dist files stay product-local.
 
 	Coordinator tests are Brain Monkey / plain PHPUnit (no wp-env). They stub the
 	few WordPress APIs Coordinator calls from the global namespace.

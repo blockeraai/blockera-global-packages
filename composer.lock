@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "388da3db969be01f64df39e94b8e5845",
+    "content-hash": "bbe2bdde3d40705b26e0235f4355ca45",
     "packages": [],
     "packages-dev": [
         {
@@ -116,29 +116,58 @@
             }
         },
         {
+            "name": "blockera/products",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/products",
+                "reference": "b2a7a7fa544181705a3d5e245b32ac6813496fa1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Blockera\\Products\\": "php/"
+                },
+                "files": [
+                    "php/functions.php",
+                    "php/hooks.php"
+                ]
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Blockera\\Products\\Tests\\": "php/tests/"
+                }
+            },
+            "description": "The Blockera products details registry, providing an object store api and localization for javascript consumers.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "brain/monkey",
-            "version": "2.7.0",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Brain-WP/BrainMonkey.git",
-                "reference": "ea3aeb3d559ba3c0930b3f4d210b665a4c044d83"
+                "reference": "44a768192873e04fe868403c278b6e5cbfb13e65"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Brain-WP/BrainMonkey/zipball/ea3aeb3d559ba3c0930b3f4d210b665a4c044d83",
-                "reference": "ea3aeb3d559ba3c0930b3f4d210b665a4c044d83",
+                "url": "https://api.github.com/repos/Brain-WP/BrainMonkey/zipball/44a768192873e04fe868403c278b6e5cbfb13e65",
+                "reference": "44a768192873e04fe868403c278b6e5cbfb13e65",
                 "shasum": ""
             },
             "require": {
-                "antecedent/patchwork": "^2.1.17",
+                "antecedent/patchwork": "^2.2.3",
                 "mockery/mockery": "~1.3.6 || ~1.4.4 || ~1.5.1 || ^1.6.10",
-                "php": ">=5.6.0"
+                "php": ">=7.2.0"
             },
             "require-dev": {
-                "dealerdirect/phpcodesniffer-composer-installer": "^1.0.0",
-                "phpcompatibility/php-compatibility": "^9.3.0",
-                "phpunit/phpunit": "^5.7.27 || ^6.5.14 || ^7.5.20 || ^8.5.49 || ^9.6.30"
+                "phpcompatibility/php-compatibility": "^10.0.0@alpha",
+                "phpunit/phpunit": "^8.5.52 || ^9.6.34"
             },
+            "default-branch": true,
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -183,7 +212,7 @@
                 "issues": "https://github.com/Brain-WP/BrainMonkey/issues",
                 "source": "https://github.com/Brain-WP/BrainMonkey"
             },
-            "time": "2026-02-05T09:22:14+00:00"
+            "time": "2026-08-04T11:50:24+00:00"
         },
         {
             "name": "dealerdirect/phpcodesniffer-composer-installer",
@@ -416,21 +445,19 @@
         },
         {
             "name": "hamcrest/hamcrest-php",
-            "version": "v3.0.0",
+            "version": "v2.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/hamcrest/hamcrest-php.git",
-                "reference": "b61cd040da1a4925bc90a51c074f5297e7c0fa52"
+                "reference": "f8b1c0173b22fa6ec77a81fe63e5b01eba7e6487"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hamcrest/hamcrest-php/zipball/b61cd040da1a4925bc90a51c074f5297e7c0fa52",
-                "reference": "b61cd040da1a4925bc90a51c074f5297e7c0fa52",
+                "url": "https://api.github.com/repos/hamcrest/hamcrest-php/zipball/f8b1c0173b22fa6ec77a81fe63e5b01eba7e6487",
+                "reference": "f8b1c0173b22fa6ec77a81fe63e5b01eba7e6487",
                 "shasum": ""
             },
             "require": {
-                "ext-ctype": "*",
-                "ext-dom": "*",
                 "php": "^7.4|^8.0"
             },
             "replace": {
@@ -439,15 +466,13 @@
                 "kodova/hamcrest-php": "*"
             },
             "require-dev": {
-                "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-phpunit": "^2.0",
                 "phpunit/php-file-iterator": "^1.4 || ^2.0 || ^3.0",
                 "phpunit/phpunit": "^4.8.36 || ^5.7 || ^6.5 || ^7.0 || ^8.0 || ^9.0"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "3.0-dev"
+                    "dev-master": "2.1-dev"
                 }
             },
             "autoload": {
@@ -465,34 +490,34 @@
             ],
             "support": {
                 "issues": "https://github.com/hamcrest/hamcrest-php/issues",
-                "source": "https://github.com/hamcrest/hamcrest-php/tree/v3.0.0"
+                "source": "https://github.com/hamcrest/hamcrest-php/tree/v2.1.1"
             },
-            "time": "2026-03-17T11:56:53+00:00"
+            "time": "2025-04-30T06:54:44+00:00"
         },
         {
             "name": "mockery/mockery",
-            "version": "1.6.13",
+            "version": "1.7.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mockery/mockery.git",
-                "reference": "9cb54414cdcd2ec5ca292e7ba19dba3a3444885d"
+                "reference": "3f8d3ff1ffe4c552d45c5690c6d825e9310769bf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mockery/mockery/zipball/9cb54414cdcd2ec5ca292e7ba19dba3a3444885d",
-                "reference": "9cb54414cdcd2ec5ca292e7ba19dba3a3444885d",
+                "url": "https://api.github.com/repos/mockery/mockery/zipball/3f8d3ff1ffe4c552d45c5690c6d825e9310769bf",
+                "reference": "3f8d3ff1ffe4c552d45c5690c6d825e9310769bf",
                 "shasum": ""
             },
             "require": {
-                "hamcrest/hamcrest-php": "^2.0 || ^3.0",
+                "hamcrest/hamcrest-php": "^2.0.1",
+                "lib-pcre": ">=7.0",
                 "php": ">=7.3"
             },
             "conflict": {
                 "phpunit/phpunit": "<8.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^9.6.36",
-                "symplify/easy-coding-standard": "^13.2.17"
+                "phpunit/phpunit": ">=9.6.11 <10.4"
             },
             "type": "library",
             "autoload": {
@@ -549,7 +574,7 @@
                 "security": "https://github.com/mockery/mockery/security/advisories",
                 "source": "https://github.com/mockery/mockery"
             },
-            "time": "2026-08-15T03:07:32+00:00"
+            "time": "2023-10-01T17:31:30+00:00"
         },
         {
             "name": "myclabs/deep-copy",
@@ -1090,12 +1115,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPCSStandards/PHPCSUtils.git",
-                "reference": "1e7fd8f572e65b67427806cee47247872d83bbdb"
+                "reference": "9cb28234cb75d4b09a5227fb591bb4b3e7bd39c5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPCSStandards/PHPCSUtils/zipball/1e7fd8f572e65b67427806cee47247872d83bbdb",
-                "reference": "1e7fd8f572e65b67427806cee47247872d83bbdb",
+                "url": "https://api.github.com/repos/PHPCSStandards/PHPCSUtils/zipball/9cb28234cb75d4b09a5227fb591bb4b3e7bd39c5",
+                "reference": "9cb28234cb75d4b09a5227fb591bb4b3e7bd39c5",
                 "shasum": ""
             },
             "require": {
@@ -1176,7 +1201,7 @@
                     "type": "thanks_dev"
                 }
             ],
-            "time": "2026-08-07T18:51:55+00:00"
+            "time": "2026-08-14T23:44:47+00:00"
         },
         {
             "name": "phpoption/phpoption",
@@ -2686,12 +2711,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPCSStandards/PHP_CodeSniffer.git",
-                "reference": "3d9e4c698ffb5204a0cc017bb81656fb67488ad5"
+                "reference": "2d143e9441ea0d3df5ec79b50179fa2f2a78b2aa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPCSStandards/PHP_CodeSniffer/zipball/3d9e4c698ffb5204a0cc017bb81656fb67488ad5",
-                "reference": "3d9e4c698ffb5204a0cc017bb81656fb67488ad5",
+                "url": "https://api.github.com/repos/PHPCSStandards/PHP_CodeSniffer/zipball/2d143e9441ea0d3df5ec79b50179fa2f2a78b2aa",
+                "reference": "2d143e9441ea0d3df5ec79b50179fa2f2a78b2aa",
                 "shasum": ""
             },
             "require": {
@@ -2757,7 +2782,7 @@
                     "type": "thanks_dev"
                 }
             ],
-            "time": "2026-08-06T02:44:48+00:00"
+            "time": "2026-08-17T00:58:01+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -3270,12 +3295,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Yoast/PHPUnit-Polyfills.git",
-                "reference": "299897d1dc34469cfc58033db378886b2f1f2ac3"
+                "reference": "4fad816e80049765d3748efc217be3212f68ea46"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Yoast/PHPUnit-Polyfills/zipball/299897d1dc34469cfc58033db378886b2f1f2ac3",
-                "reference": "299897d1dc34469cfc58033db378886b2f1f2ac3",
+                "url": "https://api.github.com/repos/Yoast/PHPUnit-Polyfills/zipball/4fad816e80049765d3748efc217be3212f68ea46",
+                "reference": "4fad816e80049765d3748efc217be3212f68ea46",
                 "shasum": ""
             },
             "require": {
@@ -3325,7 +3350,7 @@
                 "security": "https://github.com/Yoast/PHPUnit-Polyfills/security/policy",
                 "source": "https://github.com/Yoast/PHPUnit-Polyfills"
             },
-            "time": "2026-08-07T00:30:00+00:00"
+            "time": "2026-08-17T12:35:38+00:00"
         }
     ],
     "aliases": [],
@@ -3335,7 +3360,7 @@
         "wp-phpunit/wp-phpunit": 20,
         "yoast/phpunit-polyfills": 20
     },
-    "prefer-stable": true,
+    "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": ">=7.4"

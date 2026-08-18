@@ -23,12 +23,14 @@
 	},
 	"autoload-dev": {
 		"psr-4": {
-			"Blockera\\SharedAutoload\\Tests\\": "packages/autoloader-coordinator/php/tests/"
+			"Blockera\\SharedAutoload\\Tests\\": "packages/autoloader-coordinator/php/tests/",
+			"Blockera\\Products\\Tests\\": "packages/products/php/tests/"
 		}
 	},
 	"require-dev": {
 		"blockera/autoloader-coordinator": "*",
 		"blockera/dev-phpunit": "*",
+		"blockera/products": "*",
 		"brain/monkey": "^2.6.1",
 		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
 		"mockery/mockery": "^1.6.12",

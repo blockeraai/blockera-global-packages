@@ -10,7 +10,7 @@ presets.
 
 This repository also runs its own PHPUnit workflow (`.github/workflows/php-unit-tests.yml`)
 for shared-package tests that must not live in consumer suites (currently
-`packages/autoloader-coordinator/php/tests`).
+`packages/autoloader-coordinator/php/tests` and `packages/products/php/tests`).
 
 ## Consumer keeps
 
