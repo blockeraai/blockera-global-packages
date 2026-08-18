@@ -95,6 +95,13 @@ export type * from './border-radius-control';
 export { default as AspectRatioControl } from './aspect-ratio-control';
 export * from './aspect-ratio-control/utils';
 export type * from './aspect-ratio-control';
+export {
+	default as ResolutionControl,
+	DEFAULT_RESOLUTION_OPTIONS,
+	DEFAULT_RESOLUTION_VALUE,
+	mapImageSizesToResolutionOptions,
+} from './resolution-control';
+export type * from './resolution-control';
 export { default as MediaImageControl } from './media-image-control';
 export { default as BoxSpacingControl } from './box-spacing-control';
 export { default as BoxPositionControl } from './box-position-control';
