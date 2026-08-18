@@ -107,8 +107,9 @@ describe('aspect-ratio-control component testing', () => {
 		cy.getByDataTest('aspect-ratio-height').type('9', { force: true });
 
 		cy.getByDataTest('aspect-ratio-width').then(() => {
-			expect(getControlValue(name).width).to.equal('21');
-			expect(getControlValue(name).height).to.equal('9');
+			// InputControl type="number" stores numeric values (same as Size e2e).
+			expect(getControlValue(name).width).to.equal(21);
+			expect(getControlValue(name).height).to.equal(9);
 		});
 	});
 
