@@ -564,6 +564,10 @@ export function openTemplatesPartArea(area) {
 /**
  * Assert Area Hub chrome for a part area.
  *
+ * Preview / empty modes also assert the Templates Builder sidebar (purpose-nav
+ * is unmounted). Edit mode only checks hub chrome because the canvas hides
+ * the sidebar.
+ *
  * @param {{
  *   area: 'header' | 'footer' | 'sidebar',
  *   mode?: 'preview' | 'empty' | 'edit',
@@ -579,13 +583,12 @@ export function assertTemplatesAreaHub({ area, mode = 'preview' }) {
 		.should('be.visible')
 		.and('have.attr', 'data-area', area);
 
+	// Header / Footer / Sidebar drill into the Templates Builder (purpose-nav
+	// unmounts). Full-canvas edit hides the sidebar entirely.
 	if (mode !== 'edit') {
-		cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNav).should(
+		cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNav).should('not.exist');
+		cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesBuilderShell).should(
 			'be.visible'
-		);
-		cy.getByDataTest(TEMPLATES_PART_AREA_NAV[area]).should(
-			'have.class',
-			'is-active'
 		);
 	}
 
