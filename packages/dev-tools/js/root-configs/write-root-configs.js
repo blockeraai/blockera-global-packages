@@ -20,6 +20,7 @@ const ROOT_CONFIGS = [
 	{ dest: '.gitattributes' },
 	{ dest: '.husky', kind: 'husky' },
 	{ dest: '.nvmrc' },
+	{ dest: '.pr-workflows.example.json' },
 	{ dest: '.prettierignore' },
 	{ dest: '.prettierrc.js' },
 	{ dest: '.stylelintrc.js' },
