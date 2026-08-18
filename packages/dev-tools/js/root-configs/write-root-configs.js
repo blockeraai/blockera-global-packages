@@ -2,7 +2,7 @@
  * Copy host configs from `root-configs/` (mirrors the host tree).
  * Replaces `{{PROJECT_ID}}` when present. Husky hook scripts get chmod 0755.
  * Optional `projects` on an entry limits the copy to those `--project` ids.
- * `kind: 'append'` concatenates onto a dest already written earlier in this list.
+ * `kind: 'gitignore'` writes shared `.gitignore`, then prepends `.gitignore.<project>` when present.
  */
 
 const fs = require( 'fs' );
@@ -48,25 +48,7 @@ const ROOT_CONFIGS = [
 	{ dest: '.flowconfig' },
 	{ dest: 'flow', kind: 'dir' },
 	{ dest: '.gitattributes' },
-	{ dest: '.gitignore' },
-	{
-		dest: '.gitignore',
-		src: '.gitignore.blockera',
-		kind: 'append',
-		projects: [ 'blockera' ],
-	},
-	{
-		dest: '.gitignore',
-		src: '.gitignore.blockera-one',
-		kind: 'append',
-		projects: [ 'blockera-one' ],
-	},
-	{
-		dest: '.gitignore',
-		src: '.gitignore.blockera-site-toolkit',
-		kind: 'append',
-		projects: [ 'blockera-site-toolkit' ],
-	},
+	{ dest: '.gitignore', kind: 'gitignore' },
 	{ dest: '.husky', kind: 'husky' },
 	{ dest: '.nvmrc' },
 	{ dest: '.pr-cypress.env-example.json' },
@@ -131,34 +113,67 @@ function writeConfigFile( root, dest, projectId, src ) {
 	return to;
 }
 
-function appendConfigFile( root, dest, src ) {
-	const from = path.join( TEMPLATE_DIR, src || dest );
-	const to = path.join( root, dest );
+function ensureTrailingNewline( text ) {
+	return text.endsWith( '\n' ) ? text : `${ text }\n`;
+}
 
-	if ( ! fs.existsSync( from ) ) {
-		throw new Error( `missing template file: ${ from }` );
+function gitignoreOverlaySrc( projectId ) {
+	return `.gitignore.${ projectId }`;
+}
+
+function writeGitignore( root, projectId ) {
+	const sharedFrom = path.join( TEMPLATE_DIR, '.gitignore' );
+	const to = path.join( root, '.gitignore' );
+
+	if ( ! fs.existsSync( sharedFrom ) ) {
+		throw new Error( `missing template file: ${ sharedFrom }` );
 	}
 
-	const extra = fs.readFileSync( from, 'utf8' ).replace( /^\uFEFF/, '' );
+	const sharedBody = fs
+		.readFileSync( sharedFrom, 'utf8' )
+		.replace( /^\uFEFF/, '' )
+		.replace( /^\n+/, '' );
+	const overlayFrom = projectId
+		? path.join( TEMPLATE_DIR, gitignoreOverlaySrc( projectId ) )
+		: '';
+	const hasOverlay = Boolean( overlayFrom && fs.existsSync( overlayFrom ) );
+
+	let content;
+
+	if ( hasOverlay ) {
+		const overlayBody = fs
+			.readFileSync( overlayFrom, 'utf8' )
+			.replace( /^\uFEFF/, '' )
+			.replace( /^\n+/, '' );
+
+		content = [
+			`# Edit packages/global-packages/packages/dev-tools/root-configs/${ gitignoreOverlaySrc( projectId ) }`,
+			'# project:bootstrap prepends these extras, then the shared gitignore.',
+			'',
+			overlayBody.trimEnd(),
+			'',
+			'# Shared gitignore — edit packages/global-packages/packages/dev-tools/root-configs/.gitignore',
+			'# project:bootstrap copies this section to every product.',
+			'',
+			sharedBody.trimEnd(),
+			'',
+		].join( '\n' );
+	} else {
+		content = [
+			'# Edit packages/global-packages/packages/dev-tools/root-configs/.gitignore',
+			'# project:bootstrap copies this to the host repo root.',
+			'',
+			sharedBody.trimEnd(),
+			'',
+		].join( '\n' );
+	}
 
 	fs.mkdirSync( path.dirname( to ), { recursive: true } );
+	fs.writeFileSync( to, ensureTrailingNewline( content ) );
 
-	if ( ! fs.existsSync( to ) ) {
-		fs.writeFileSync( to, extra.endsWith( '\n' ) ? extra : `${ extra }\n` );
-
-		return to;
-	}
-
-	const existing = fs.readFileSync( to, 'utf8' );
-	const base = existing.endsWith( '\n' ) ? existing : `${ existing }\n`;
-	const addition = extra.replace( /^\n+/, '' );
-
-	fs.writeFileSync(
-		to,
-		`${ base }\n${ addition.endsWith( '\n' ) ? addition : `${ addition }\n` }`
-	);
-
-	return to;
+	return hasOverlay
+		? `shared + root-configs/${ gitignoreOverlaySrc( projectId ) }`
+		: 'copied from root-configs/.gitignore';
 }
 
 function writeHusky( root ) {
@@ -216,8 +231,8 @@ function entryDetail( entry ) {
 		return `copied from root-configs/${ entry.dest }/`;
 	}
 
-	if ( entry.kind === 'append' ) {
-		return `appended from root-configs/${ entry.src || entry.dest }`;
+	if ( entry.kind === 'gitignore' ) {
+		return 'shared gitignore (product extras prepended when present)';
 	}
 
 	return `copied from root-configs/${ entry.src || entry.dest }`;
@@ -242,8 +257,11 @@ function writeRootConfigs( { root, projectId } ) {
 			);
 		} else if ( entry.kind === 'husky' ) {
 			writeHusky( root );
-		} else if ( entry.kind === 'append' ) {
-			appendConfigFile( root, entry.dest, entry.src );
+		} else if ( entry.kind === 'gitignore' ) {
+			return {
+				name: entryName( entry ),
+				detail: writeGitignore( root, projectId ),
+			};
 		} else {
 			writeConfigFile( root, entry.dest, projectId, entry.src );
 		}
