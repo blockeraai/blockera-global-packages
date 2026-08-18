@@ -61,4 +61,6 @@ runs:
 
         - name: Remove Composer wp-cli from vendor
           shell: bash
+          env:
+              BLOCKERA_COMPOSER_INSTALL_OPTS: '${{ inputs.composer-options }}'
           run: bash packages/global-packages/packages/dev-tools/github/scripts/lib/remove-wp-cli-vendor.sh
