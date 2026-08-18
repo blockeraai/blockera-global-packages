@@ -6,7 +6,7 @@
 #   BLOCKERA_PHPCS_REPORT=./.cache/phpcs-report.xml
 #
 # On PHPCS failure, prints annotations via cs2pr when available, then exits non-zero.
-# Always fails if version-controlled files were modified during the run.
+# Fails if non-composer version-controlled files were modified (setup-php may rewrite composer files).
 set -euo pipefail
 
 CMD="${BLOCKERA_PHPCS_CMD:-phpcs --report-full --report-checkstyle=./.cache/phpcs-report.xml --standard=phpcs.xml}"
@@ -41,13 +41,14 @@ if [[ -f composer.json ]]; then
 		echo "code-lint/php: wp-cli/wp-cli-bundle must be absent from composer.json after setup-php" >&2
 		exit 1
 	fi
-	if [[ -f composer.lock ]] && ! composer validate --no-check-publish; then
+	if [[ -f composer.lock ]] && ! composer validate --no-check-publish --quiet; then
 		echo "code-lint/php: composer.json and composer.lock are out of sync after setup-php" >&2
+		composer validate --no-check-publish || true
 		exit 1
 	fi
 fi
 
-if [[ -f composer.lock ]] && rg -q '"name": "wp-cli/wp-cli-bundle"' composer.lock; then
+if [[ -f composer.lock ]] && grep -Fq '"name": "wp-cli/wp-cli-bundle"' composer.lock; then
 	echo "code-lint/php: wp-cli/wp-cli-bundle must be absent from composer.lock after setup-php" >&2
 	exit 1
 fi

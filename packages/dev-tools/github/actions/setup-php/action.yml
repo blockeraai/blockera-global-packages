@@ -29,29 +29,9 @@ runs:
           shell: bash
           run: composer config platform.php ${{ inputs.php-version }}
 
-        - name: Remove wp-cli bundle from composer.json
+        - name: Remove wp-cli bundle from composer files
           shell: bash
-          run: |
-              if [[ ! -f composer.json ]]; then
-                  exit 0
-              fi
-              if ! jq -e '.["require-dev"]["wp-cli/wp-cli-bundle"]' composer.json >/dev/null 2>&1; then
-                  exit 0
-              fi
-              tmp=$(mktemp)
-              jq 'del(.["require-dev"]["wp-cli/wp-cli-bundle"])' composer.json >"$tmp"
-              mv "$tmp" composer.json
-
-        - name: Sync composer.lock after wp-cli removal
-          shell: bash
-          run: |
-              if [[ ! -f composer.lock ]]; then
-                  exit 0
-              fi
-              if ! rg -q '"name": "wp-cli/wp-cli-bundle"' composer.lock; then
-                  exit 0
-              fi
-              composer remove wp-cli/wp-cli-bundle --dev --no-install || true
+          run: bash packages/global-packages/packages/dev-tools/github/scripts/lib/strip-wp-cli-composer-files.sh
 
         - name: Install Composer dependencies
           uses: ramsey/composer-install@v4
