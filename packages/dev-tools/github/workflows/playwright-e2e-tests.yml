@@ -19,8 +19,28 @@ env:
     # BLOCKERA_PLAYWRIGHT_MU_PLUGIN_PREFIX: wp-content/themes/blockera-one/
 
 jobs:
+    pr-workflow-gate:
+        name: PR workflow filter
+        runs-on: ubuntu-latest
+        outputs:
+            run: ${{ steps.gate.outputs.run }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - id: gate
+              uses: ./packages/global-packages/packages/dev-tools/github/actions/pr-workflow-gate
+              with:
+                  workflow-file: playwright-e2e-tests.yml
+
     detect_categories:
         name: Detecting Playwright E2E Test Categories
+        needs: pr-workflow-gate
+        if: ${{ needs.pr-workflow-gate.outputs.run == 'true' }}
         runs-on: ubuntu-latest
         timeout-minutes: 10
         outputs:
@@ -40,12 +60,13 @@ jobs:
             - id: detect
               run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/playwright-e2e-tests/detect-categories.sh
 
+
     playwright_e2e_tests:
         name: Test
-        needs: detect_categories
+        needs: [pr-workflow-gate, detect_categories]
+        if: ${{ needs.pr-workflow-gate.outputs.run == 'true' && (github.repository == 'OWNER/REPO' || github.event_name == 'pull_request') }}
         runs-on: ubuntu-latest
         timeout-minutes: 60
-        if: ${{ github.repository == 'OWNER/REPO' || github.event_name == 'pull_request' }}
         strategy:
             fail-fast: false
             matrix:
