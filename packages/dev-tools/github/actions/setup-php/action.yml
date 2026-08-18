@@ -58,3 +58,7 @@ runs:
           with:
               custom-cache-suffix: $(/bin/date -u --date='last Mon' "+%F")
               composer-options: '${{ inputs.composer-options }}'
+
+        - name: Remove Composer wp-cli from vendor
+          shell: bash
+          run: bash packages/global-packages/packages/dev-tools/github/scripts/lib/remove-wp-cli-vendor.sh
