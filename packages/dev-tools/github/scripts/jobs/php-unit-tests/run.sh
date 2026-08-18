@@ -17,6 +17,9 @@
 #   BLOCKERA_PHP_UNIT_DEBUG_INFO         true|false (default: true)
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REMOVE_WP_CLI_VENDOR="${SCRIPT_DIR}/../../lib/remove-wp-cli-vendor.sh"
+
 PHP_VERSION="${BLOCKERA_PHP_UNIT_PHP_VERSION:-8.2}"
 MULTISITE="${BLOCKERA_PHP_UNIT_MULTISITE:-false}"
 BUILD_CMD="${BLOCKERA_PHP_UNIT_BUILD_CMD:-npm run build}"
@@ -72,6 +75,12 @@ cat .wp-env.json
 	echo "DB=wp_tests"
 } >.env
 cat .env
+
+if [[ ! -f "${REMOVE_WP_CLI_VENDOR}" ]]; then
+	echo "php-unit: missing ${REMOVE_WP_CLI_VENDOR}" >&2
+	exit 1
+fi
+bash "${REMOVE_WP_CLI_VENDOR}"
 
 echo "php-unit: ${WP_ENV_START_CMD}"
 eval "${WP_ENV_START_CMD}"
