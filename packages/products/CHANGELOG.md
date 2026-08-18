@@ -6,6 +6,10 @@
 - Fixed products localization never attaching on the block editor: `blockera_products_l10n()` now also runs on `enqueue_block_editor_assets` (editor scripts are not registered on `admin_enqueue_scripts`).
 - Fixed products localization never attaching: the assets loader registers version-suffixed script handles (e.g. `@blockera/products-1-0-0`), so `blockera_products_l10n()` now resolves the exact registered handle via the new `blockera_products_script_handle()` helper.
 
+### Automated Tests
+
+- Changed the "Tests" folder name to "tests" so everything works smoothly behind the scenes.
+
 ## 1.0.0 (2026-08-15)
 
 ### New Features:

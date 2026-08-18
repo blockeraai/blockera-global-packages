@@ -1,6 +1,8 @@
 <?php
 /**
  * The Blockera products registry hooks.
+ * 
+ * This file is used to hook into the WordPress lifecycle to ensure the products registry is properly initialized and ready to use.
  *
  * @package blockera/products/php/hooks.php
  */
