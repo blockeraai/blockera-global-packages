@@ -11,7 +11,7 @@ inputs:
     composer-options:
         description: 'Extra options passed to composer install.'
         required: false
-        default: ''
+        default: '--no-dev -o --apcu-autoloader -a'
 
 runs:
     using: 'composite'
