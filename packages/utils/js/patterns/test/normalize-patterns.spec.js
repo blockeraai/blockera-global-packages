@@ -157,12 +157,12 @@ describe('escapeBlockAttrs', () => {
 
 	it('keeps a List View metadata.name when patternName is absent', () => {
 		const block =
-			' wp:group {"metadata":{"name":"Elements","blockeraOne":"container/elements"},"align":"wide"} ';
+			' wp:group {"metadata":{"name":"Body","blockeraOne":"container/body"},"align":"wide"} ';
 
 		const result = escapeBlockAttrs(block, 'blockera-one');
 
 		expect(result).toContain(
-			'"metadata":{"name":"Elements","blockeraOne":"container/elements"}'
+			'"metadata":{"name":"Body","blockeraOne":"container/body"}'
 		);
 	});
 });
@@ -519,7 +519,7 @@ describe('normalizePatterns / checkPatterns', () => {
 		).toBe(false);
 		expect(
 			hasUnsanitizedPatternMetadata(
-				'<!-- wp:group {"metadata":{"name":"Elements","blockeraOne":"container/elements"}} -->'
+				'<!-- wp:group {"metadata":{"name":"Body","blockeraOne":"container/body"}} -->'
 			)
 		).toBe(false);
 		expect(hasUnsanitizedPatternMetadata('<!-- wp:group -->')).toBe(false);
