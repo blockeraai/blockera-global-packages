@@ -348,10 +348,12 @@ function cleanUp(root) {
 	const started = Date.now();
 	const dist = path.join(root, 'dist');
 	const cacheDir = path.join(root, '.cache');
+	const cursorDir = path.join(root, '.cursor');
 	const logPath = path.join(cacheDir, 'watch-bootstrap.log');
 
 	fs.rmSync(dist, { recursive: true, force: true });
 	fs.rmSync(cacheDir, { recursive: true, force: true });
+	fs.rmSync(cursorDir, { recursive: true, force: true });
 	fs.mkdirSync(cacheDir, { recursive: true });
 	writeSectionHeadingWidth(root, logoWidth);
 	openBootstrapLog(logPath);
@@ -359,6 +361,7 @@ function cleanUp(root) {
 	logStepWithCompactInners(1, 'clean up', Date.now() - started, [
 		{ name: 'dist/' },
 		{ name: '.cache/' },
+		{ name: '.cursor/' },
 	]);
 }
 
