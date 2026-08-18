@@ -344,25 +344,49 @@ function copyTemplateTree(fromDir, toDir) {
 	});
 }
 
+const CLEANUP_PATHS = [
+	{ name: 'dist/', rel: 'dist' },
+	{ name: '.cache/', rel: '.cache' },
+	{ name: '.cursor/', rel: '.cursor' },
+	{
+		name: 'cypress-image-diff-html-report/',
+		rel: 'cypress-image-diff-html-report',
+	},
+	{ name: 'visual-screenshots/diff/', rel: 'visual-screenshots/diff' },
+	{
+		name: 'visual-screenshots/comparison/',
+		rel: 'visual-screenshots/comparison',
+	},
+	{ name: '.phpunit.result.cache', rel: '.phpunit.result.cache' },
+	{ name: '.jest-test-results.json', rel: '.jest-test-results.json' },
+	{ name: 'php-coverage/', rel: 'php-coverage' },
+	{ name: 'artifacts/', rel: 'artifacts' },
+	{ name: 'test-results/', rel: 'test-results' },
+	{ name: 'playwright-report/', rel: 'playwright-report' },
+	{ name: '.nyc_output/', rel: '.nyc_output' },
+	{ name: 'html-report/', rel: 'html-report' },
+	{ name: 'cypress/downloads/', rel: 'cypress/downloads' },
+];
+
 function cleanUp(root) {
 	const started = Date.now();
-	const dist = path.join(root, 'dist');
 	const cacheDir = path.join(root, '.cache');
-	const cursorDir = path.join(root, '.cursor');
 	const logPath = path.join(cacheDir, 'watch-bootstrap.log');
 
-	fs.rmSync(dist, { recursive: true, force: true });
-	fs.rmSync(cacheDir, { recursive: true, force: true });
-	fs.rmSync(cursorDir, { recursive: true, force: true });
+	CLEANUP_PATHS.forEach((item) => {
+		fs.rmSync(path.join(root, item.rel), { recursive: true, force: true });
+	});
+
 	fs.mkdirSync(cacheDir, { recursive: true });
 	writeSectionHeadingWidth(root, logoWidth);
 	openBootstrapLog(logPath);
 
-	logStepWithCompactInners(1, 'clean up', Date.now() - started, [
-		{ name: 'dist/' },
-		{ name: '.cache/' },
-		{ name: '.cursor/' },
-	]);
+	logStepWithCompactInners(
+		1,
+		'clean up',
+		Date.now() - started,
+		CLEANUP_PATHS.map((item) => ({ name: item.name }))
+	);
 }
 
 function syncCursor(root, projectId) {

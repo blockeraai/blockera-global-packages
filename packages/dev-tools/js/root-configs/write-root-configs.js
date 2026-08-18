@@ -2,6 +2,7 @@
  * Copy host configs from `root-configs/` (mirrors the host tree).
  * Replaces `{{PROJECT_ID}}` when present. Husky hook scripts get chmod 0755.
  * Optional `projects` on an entry limits the copy to those `--project` ids.
+ * `kind: 'append'` concatenates onto a dest already written earlier in this list.
  */
 
 const fs = require( 'fs' );
@@ -16,9 +17,56 @@ const HOOK_MODE = 0o755;
 const ROOT_CONFIGS = [
 	{ dest: '.browserslistrc' },
 	{ dest: '.cspell', kind: 'dir' },
+	{ dest: '.editorconfig', src: '../editorconfig' },
+	{ dest: '.env.example' },
+	{
+		dest: '.env.example',
+		src: '.env.example.blockera-pro',
+		projects: [ 'blockera-pro' ],
+	},
+	{
+		dest: '.env.example',
+		src: '.env.example.blockera-site-toolkit',
+		projects: [ 'blockera-site-toolkit' ],
+	},
+	{ dest: '.eslintrc.js' },
+	{
+		dest: '.eslintrc.js',
+		src: '.eslintrc.blockera-one.js',
+		projects: [ 'blockera-one' ],
+	},
+	{
+		dest: '.eslintrc.js',
+		src: '.eslintrc.blockera-pro.js',
+		projects: [ 'blockera-pro' ],
+	},
+	{
+		dest: '.eslintrc.js',
+		src: '.eslintrc.blockera-site-toolkit.js',
+		projects: [ 'blockera-site-toolkit' ],
+	},
 	{ dest: '.flowconfig' },
 	{ dest: 'flow', kind: 'dir' },
 	{ dest: '.gitattributes' },
+	{ dest: '.gitignore' },
+	{
+		dest: '.gitignore',
+		src: '.gitignore.blockera',
+		kind: 'append',
+		projects: [ 'blockera' ],
+	},
+	{
+		dest: '.gitignore',
+		src: '.gitignore.blockera-one',
+		kind: 'append',
+		projects: [ 'blockera-one' ],
+	},
+	{
+		dest: '.gitignore',
+		src: '.gitignore.blockera-site-toolkit',
+		kind: 'append',
+		projects: [ 'blockera-site-toolkit' ],
+	},
 	{ dest: '.husky', kind: 'husky' },
 	{ dest: '.nvmrc' },
 	{ dest: '.pr-cypress.env-example.json' },
@@ -32,6 +80,23 @@ const ROOT_CONFIGS = [
 	{ dest: 'babel.config.js' },
 	{ dest: 'cypress/support/component-index.html' },
 	{ dest: 'cypress-image-diff.config.js' },
+	{ dest: 'cypress.config.js' },
+	{
+		dest: 'cypress.config.js',
+		src: 'cypress.config.blockera-one.js',
+		projects: [ 'blockera-one' ],
+	},
+	{
+		dest: 'cypress.config.js',
+		src: 'cypress.config.blockera-site-toolkit.js',
+		projects: [ 'blockera-site-toolkit' ],
+	},
+	{ dest: 'cypress.env-example.json' },
+	{
+		dest: 'cypress.env-example.json',
+		src: 'cypress.env-example.simple.json',
+		projects: [ 'blockera-pro', 'blockera-site-toolkit' ],
+	},
 	{ dest: 'phpcs.xml' },
 	{ dest: 'phpstan.neon' },
 	{ dest: 'playwright.config.js' },
@@ -62,6 +127,36 @@ function writeConfigFile( root, dest, projectId, src ) {
 
 	fs.mkdirSync( path.dirname( to ), { recursive: true } );
 	fs.writeFileSync( to, content.split( PROJECT_ID_TOKEN ).join( projectId ) );
+
+	return to;
+}
+
+function appendConfigFile( root, dest, src ) {
+	const from = path.join( TEMPLATE_DIR, src || dest );
+	const to = path.join( root, dest );
+
+	if ( ! fs.existsSync( from ) ) {
+		throw new Error( `missing template file: ${ from }` );
+	}
+
+	const extra = fs.readFileSync( from, 'utf8' ).replace( /^\uFEFF/, '' );
+
+	fs.mkdirSync( path.dirname( to ), { recursive: true } );
+
+	if ( ! fs.existsSync( to ) ) {
+		fs.writeFileSync( to, extra.endsWith( '\n' ) ? extra : `${ extra }\n` );
+
+		return to;
+	}
+
+	const existing = fs.readFileSync( to, 'utf8' );
+	const base = existing.endsWith( '\n' ) ? existing : `${ existing }\n`;
+	const addition = extra.replace( /^\n+/, '' );
+
+	fs.writeFileSync(
+		to,
+		`${ base }\n${ addition.endsWith( '\n' ) ? addition : `${ addition }\n` }`
+	);
 
 	return to;
 }
@@ -121,6 +216,10 @@ function entryDetail( entry ) {
 		return `copied from root-configs/${ entry.dest }/`;
 	}
 
+	if ( entry.kind === 'append' ) {
+		return `appended from root-configs/${ entry.src || entry.dest }`;
+	}
+
 	return `copied from root-configs/${ entry.src || entry.dest }`;
 }
 
@@ -143,6 +242,8 @@ function writeRootConfigs( { root, projectId } ) {
 			);
 		} else if ( entry.kind === 'husky' ) {
 			writeHusky( root );
+		} else if ( entry.kind === 'append' ) {
+			appendConfigFile( root, entry.dest, entry.src );
 		} else {
 			writeConfigFile( root, entry.dest, projectId, entry.src );
 		}
