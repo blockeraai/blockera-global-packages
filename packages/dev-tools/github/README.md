@@ -39,6 +39,7 @@ github/
     setup-php/               # after ensure
     update-assets/           # WordPress.org asset/readme update
     jest-unit-tests/
+    pr-workflow-gate/        # .pr-workflows.json allowedActions filter
     bundle-size/         # path gate + setup + prepare + report + title
     create-demo-attachments/  # zip + playground comment
     performance-benchmark/    # setup + server-timing/editor suites
@@ -55,6 +56,7 @@ github/
     jobs/check-debugging-code/  # run.sh
     jobs/check-pr-config-files/ # run.sh
     jobs/remove-pr-config-files/ # run.sh
+    jobs/pr-workflows/          # should-run.sh (allowedActions gate)
     jobs/create-demo-attachments/ # build/publish/encode/comment/cleanup
     jobs/cypress-components-tests/ # run.sh
     jobs/cypress-e2e-tests/      # detect | run | prepare.sh
@@ -537,6 +539,52 @@ env:
     BLOCKERA_PR_CONFIG_NAME: .pr-env.json
     BLOCKERA_PR_CONFIG_COMMIT_MSG: 'chore: remove .pr-env.json redundant file'
 ```
+
+## PR workflow filter
+
+Limit which GitHub Actions workflows run on a pull request by adding
+`.pr-workflows.json` at the repository root (copy from
+`.pr-workflows.example.json` via `project:bootstrap`).
+
+```json
+{
+    "allowedActions": [
+        "code-lint.yml",
+        "jest-unit-tests.yml",
+        "php-unit-tests.yml"
+    ]
+}
+```
+
+Each `allowedActions` entry is a workflow **filename** under
+`.github/workflows/`. Workflows not listed are skipped on `pull_request`
+(the gate job succeeds; downstream jobs are skipped). When the file is
+absent, all workflows run. Non-PR events (`workflow_dispatch`, `push`,
+`schedule`, `release`, …) always run.
+
+Toolkit workflow templates include a `pr-workflow-gate` job that calls
+`github/actions/pr-workflow-gate` with the matching filename.
+
+| Env | Default |
+| --- | --- |
+| `BLOCKERA_PR_WORKFLOWS_FILE` | `.pr-workflows.json` |
+| `BLOCKERA_PR_WORKFLOW_FILE` | set per workflow template (`workflow-file` input) |
+| `BLOCKERA_PR_WORKFLOWS_FORCE` | `false` (always run when `true`) |
+
+`.pr-workflows.json` is a PR-only file — remove it before merge (caught by
+Check PR config files). `.pr-workflows.example.json` is the committed template.
+
+Available toolkit workflow filenames:
+
+`build-plugin-zip-tests.yml`, `build-plugin-zip.yml`, `bundle-size.yml`,
+`check-debugging-code.yml`, `check-pr-config-files.yml`, `code-lint.yml`,
+`create-demo-attachments.yml`, `cypress-components-tests.yml`,
+`cypress-e2e-tests.yml`, `jest-unit-tests.yml`, `performance-benchmark.yml`,
+`php-snapshots.yml`, `php-unit-tests.yml`, `playwright-e2e-tests.yml`,
+`plugin-check.yml`, `remove-pr-config-files.yml`, `remove-pr-env-json.yml`,
+`sync-global-packages-submodule.yml`, `upload-release-to-blockeraai.yml`,
+`upload-release-to-plugin-repo.yml`, `virus-total.yml`,
+`wp-tested-up-to-update.yml`
 
 ## Bundle size
 
