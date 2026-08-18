@@ -80,7 +80,7 @@ if [[ ! -f "${REMOVE_WP_CLI_VENDOR}" ]]; then
 	echo "php-unit: missing ${REMOVE_WP_CLI_VENDOR}" >&2
 	exit 1
 fi
-bash "${REMOVE_WP_CLI_VENDOR}"
+BLOCKERA_COMPOSER_INSTALL_OPTS="${BLOCKERA_COMPOSER_INSTALL_OPTS:-}" bash "${REMOVE_WP_CLI_VENDOR}"
 
 echo "php-unit: ${WP_ENV_START_CMD}"
 eval "${WP_ENV_START_CMD}"
