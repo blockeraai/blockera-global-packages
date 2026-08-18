@@ -24,7 +24,9 @@
 	"autoload-dev": {
 		"psr-4": {
 			"Blockera\\SharedAutoload\\Tests\\": "packages/autoloader-coordinator/php/tests/",
-			"Blockera\\Products\\Tests\\": "packages/products/php/tests/"
+			"Blockera\\Products\\Tests\\": "packages/products/php/tests/",
+			"Blockera\\Dev\\PHPUnit\\": "packages/dev-phpunit/php/",
+			"Blockera\\Dev\\PhpUnit\\": "packages/dev-phpunit/php/"
 		}
 	},
 	"require-dev": {
