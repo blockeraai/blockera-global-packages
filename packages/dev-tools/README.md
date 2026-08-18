@@ -8,7 +8,7 @@ Shared development tooling for Blockera packages and themes:
 - Block patterns normalize/check CLI
 - Shared `git-conventional-commits.yaml` (husky `commit-msg` via `--config`)
 - Shared ambient TypeScript types (`types/blockera/`) loaded from host `tsconfig.json` via `tsconfig.base.json`
-- Shared `root-configs/` templates written by `project:bootstrap` `sync-config`
+- Shared `root-configs/` templates written by `project:bootstrap` (`Configure project files`)
 - Shared husky pre-commit TypeScript/Flow typecheck (`github/scripts/run-typecheck-pre-commit.sh`)
 - Shared Code Lint TypeScript/Flow jobs (`github/scripts/jobs/code-lint/ts.sh`, `flow.sh`)
 - Shared Cursor templates (`cursor/`) materialized by `project:bootstrap`
@@ -98,8 +98,8 @@ node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.
 
 Steps (cwd = host repo root):
 
-1. `clean up` — remove generated state (`dist/`, `.cache/`, `.cursor/`, Cypress/Playwright reports, coverage, snapshot diffs, test caches).
-2. `sync-config` — write host files. Inner steps: symlink `source-codes` → `BLOCKERA_EXTERNAL_SOURCE_CODES_PATH` from host `.env` (unset, placeholder, or missing path → **fail** with a setup guide; existing `source-codes` is always removed first); wipe `.cursor/` and copy `cursor/shared/` then `cursor/<project>/` (overlay add/overwrite, skip `.gitkeep`); then copy `root-configs/` (mirrors the host tree; each path is its own inner step). Folders (`.cspell/`, `.vscode/`, `.husky/`, `flow/`) overwrite the host folder. `cypress/support/component-index.html` does not wipe the rest of `cypress/`. Husky hook scripts are chmod 0755. `{{PROJECT_ID}}` is replaced with `--project`. Entries with `projects` write only for those `--project` ids (later entries with the same `dest` overwrite; `kind: 'append'` concatenates — used for `.gitignore` overlays). Shared + overlay: `.editorconfig`, `.env.example`, `.eslintrc.js`, `.gitignore`, `cypress.config.js`, `cypress.env-example.json`, Playwright examples, `.pr-cypress.env-example.json`, `.pr-env.example.json` (`blockera-one` only), `.pr-workflows.example.json`.
+1. `Prepare workspace` — remove generated state (`dist/`, `.cache/`, `.cursor/`, Cypress/Playwright reports, coverage, snapshot diffs, test caches). Stdout is one count line; path names go to `.cache/watch-bootstrap.log`.
+2. `Configure project files` — write host files. Inner steps: symlink `source-codes` → `BLOCKERA_EXTERNAL_SOURCE_CODES_PATH` from host `.env` (unset, placeholder, or missing path → **fail** with a setup guide; existing `source-codes` is always removed first); wipe `.cursor/` and copy `cursor/shared/` then `cursor/<project>/` (overlay add/overwrite, skip `.gitkeep`); then copy `root-configs/` (mirrors the host tree; each path is its own inner step). Folders (`.cspell/`, `.vscode/`, `.husky/`, `flow/`) overwrite the host folder. `cypress/support/component-index.html` does not wipe the rest of `cypress/`. Husky hook scripts are chmod 0755. `{{PROJECT_ID}}` is replaced with `--project`. Entries with `projects` write only for those `--project` ids (later entries with the same `dest` overwrite; `kind: 'append'` concatenates — used for `.gitignore` overlays). Shared + overlay: `.editorconfig`, `.env.example`, `.eslintrc.js`, `.gitignore`, `cypress.config.js`, `cypress.env-example.json`, Playwright examples, `.pr-cypress.env-example.json`, `.pr-env.example.json` (`blockera-one` only), `.pr-workflows.example.json`.
    Commit these files (CI / the editor need them). Do not gitignore them. Edit the templates here, then re-run bootstrap.
 
 `.cursor/` and `source-codes/` are gitignored generated paths. Edit templates here, not in the host `.cursor` folder.

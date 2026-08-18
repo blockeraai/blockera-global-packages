@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Host-repo bootstrap: clean up generated state, then sync-config
+ * Host-repo bootstrap: prepare workspace, then configure project files
  * (source-codes symlink, `.cursor` templates, and root-configs/).
  *
  * Run from the consuming project root:
@@ -89,9 +89,16 @@ function openBootstrapLog(logPath) {
 	pendingBootstrapLog.length = 0;
 }
 
+const displayLines = [];
+
 function printOut(message) {
 	// @debug-ignore — CLI stdout for project bootstrap
 	console.log(message);
+	writeBootstrapLog(message);
+	displayLines.push(message);
+}
+
+function logDetail(message) {
 	writeBootstrapLog(message);
 }
 
@@ -166,9 +173,14 @@ function finishBootstrap() {
 			.replace(/^.*[─━]{2} Bootstrap[^\n]*/m, greenHeading);
 
 		fs.writeFileSync(bootstrapLogPath, text);
-		process.stdout.write('\x1b[2J\x1b[3J\x1b[H');
-		process.stdout.write(text.endsWith('\n') ? text : `${text}\n`);
 	}
+
+	const display = displayLines
+		.join('\n')
+		.replace(/^.*[─━]{2} Bootstrap[^\n]*/m, greenHeading);
+
+	process.stdout.write('\x1b[2J\x1b[3J\x1b[H');
+	process.stdout.write(display.endsWith('\n') ? display : `${display}\n`);
 
 	printOut('');
 }
@@ -178,31 +190,30 @@ function stepLabel(index) {
 }
 
 const ANSI_PATTERN = /\u001b\[[0-9;]*m/g;
-const COMPACT_INNER_COLUMNS = 3;
-const INNER_INDENT = '           ';
+const DETAIL_INDENT = '           ';
 
 function visibleLength(text) {
 	return String(text).replace(ANSI_PATTERN, '').length;
 }
 
-function padVisible(text, width) {
-	const extra = width - visibleLength(text);
-
-	return extra > 0 ? `${text}${' '.repeat(extra)}` : text;
+function countLabel(count, singular, plural) {
+	return `${count} ${count === 1 ? singular : plural}`;
 }
 
 /**
- * Compact inner names into a 3-column table that stays within the logo width.
- * Names wider than one column print on their own line.
+ * One stdout line per step (`15 paths · 37ms`). Item names go to the log only.
  *
  * @param {number} index Step number.
  * @param {string} name Step title.
  * @param {number} durationMs Step duration.
- * @param {{ name: string }[]} inners Completed items.
+ * @param {{ name: string, detail?: string }[]} inners Completed items.
+ * @param {{ singular: string, plural: string }} unit Count noun.
  */
-function logStepWithCompactInners(index, name, durationMs, inners) {
+function logStepWithCounts(index, name, durationMs, inners, unit) {
 	const left = `  ${stepLabel(index)}  ${color.ok('✔')}  ${color.bold(name)}`;
-	const right = color.dim(formatDuration(durationMs));
+	const right = color.dim(
+		`${countLabel(inners.length, unit.singular, unit.plural)} · ${formatDuration(durationMs)}`
+	);
 	const width = logoWidth || DEFAULT_LOGO_WIDTH;
 	const pad = Math.max(
 		1,
@@ -211,43 +222,11 @@ function logStepWithCompactInners(index, name, durationMs, inners) {
 
 	printOut(`${left}${' '.repeat(pad)}${right}`);
 
-	const available = Math.max(8, width - INNER_INDENT.length);
-	const columnWidth = Math.max(
-		1,
-		Math.floor(available / COMPACT_INNER_COLUMNS)
-	);
-	const short = [];
-	const long = [];
-
 	inners.forEach((inner) => {
-		const cell = `${color.ok('✔')} ${color.bold(inner.name)}`;
+		const extra = inner.detail ? `  ${inner.detail}` : '';
 
-		if (visibleLength(cell) > columnWidth) {
-			long.push(cell);
-			return;
-		}
-
-		short.push(cell);
+		logDetail(`${DETAIL_INDENT}${inner.name}${extra}`);
 	});
-
-	for (let i = 0; i < short.length; i += COMPACT_INNER_COLUMNS) {
-		const row = short
-			.slice(i, i + COMPACT_INNER_COLUMNS)
-			.map((cell, offset, cells) =>
-				offset === cells.length - 1
-					? cell
-					: padVisible(cell, columnWidth)
-			)
-			.join('');
-
-		printOut(`${INNER_INDENT}${row}`);
-	}
-
-	long.forEach((cell) => {
-		printOut(`${INNER_INDENT}${cell}`);
-	});
-
-	printOut('');
 }
 
 function fail(message, guide) {
@@ -381,11 +360,12 @@ function cleanUp(root) {
 	writeSectionHeadingWidth(root, logoWidth);
 	openBootstrapLog(logPath);
 
-	logStepWithCompactInners(
+	logStepWithCounts(
 		1,
-		'clean up',
+		'Prepare workspace',
 		Date.now() - started,
-		CLEANUP_PATHS.map((item) => ({ name: item.name }))
+		CLEANUP_PATHS.map((item) => ({ name: item.name })),
+		{ singular: 'path', plural: 'paths' }
 	);
 }
 
@@ -465,7 +445,10 @@ function bootstrapSyncConfig(root, projectId, env) {
 		fail(error.message || String(error));
 	}
 
-	logStepWithCompactInners(2, 'sync-config', Date.now() - started, inners);
+	logStepWithCounts(2, 'Configure project files', Date.now() - started, inners, {
+		singular: 'file',
+		plural: 'files',
+	});
 }
 
 function main() {
