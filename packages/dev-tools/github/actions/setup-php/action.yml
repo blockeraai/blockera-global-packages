@@ -11,7 +11,7 @@ inputs:
     composer-options:
         description: 'Extra options passed to composer install.'
         required: false
-        default: '--no-dev -o --apcu-autoloader -a'
+        default: ''
 
 runs:
     using: 'composite'
@@ -28,6 +28,10 @@ runs:
         - name: Override PHP version in composer.json
           shell: bash
           run: composer config platform.php ${{ inputs.php-version }}
+
+        - name: Remove wp-cli bundle from require-dev
+          shell: bash
+          run: composer remove wp-cli/wp-cli-bundle --dev --no-update
 
         - name: Install Composer dependencies
           uses: ramsey/composer-install@v4
