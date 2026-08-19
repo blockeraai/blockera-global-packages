@@ -22,11 +22,11 @@ if [[ -n "${COMMIT_SUBJECT:-}" ]]; then
 else
 	COMMITS="${COMMITS:-0}"
 	if [[ "${COMMITS}" -eq 1 ]]; then
-		MSG="${PREFIX} (1 commit) [${SHORT_SHA}]"
+		MSG="${PREFIX} (1 commit) [\`${SHORT_SHA}\`]"
 	elif [[ "${COMMITS}" -gt 1 ]]; then
-		MSG="${PREFIX} (${COMMITS} commits) [${SHORT_SHA}]"
+		MSG="${PREFIX} (${COMMITS} commits) [\`${SHORT_SHA}\`]"
 	else
-		MSG="${PREFIX} [${SHORT_SHA}]"
+		MSG="${PREFIX} [\`${SHORT_SHA}\`]"
 	fi
 fi
 

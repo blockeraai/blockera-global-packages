@@ -86,16 +86,16 @@ emit_kv() {
 	printf '%s=%s\n' "$1" "$2"
 }
 
-# "submodule: bump global-packages (N commit(s)) [sha]" — omit the count when empty.
+# "submodule: bump global-packages (N commit(s)) [`sha`]" — omit the count when empty.
 format_bump_subject() {
 	local short_sha="$1"
 	local n="${2:-0}"
 	if [ "${n}" -eq 1 ]; then
-		printf 'submodule: bump global-packages (1 commit) [%s]' "${short_sha}"
+		printf 'submodule: bump global-packages (1 commit) [`%s`]' "${short_sha}"
 	elif [ "${n}" -gt 1 ]; then
-		printf 'submodule: bump global-packages (%s commits) [%s]' "${n}" "${short_sha}"
+		printf 'submodule: bump global-packages (%s commits) [`%s`]' "${n}" "${short_sha}"
 	else
-		printf 'submodule: bump global-packages [%s]' "${short_sha}"
+		printf 'submodule: bump global-packages [`%s`]' "${short_sha}"
 	fi
 }
 
