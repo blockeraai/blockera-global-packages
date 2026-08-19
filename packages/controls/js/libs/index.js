@@ -46,6 +46,17 @@ export {
 export type { LabelControlProps } from './label-control';
 export { default as ToggleControl } from './toggle-control';
 export { default as SelectControl } from './select-control';
+export { default as FontFamilyControl } from './font-family-control';
+export * from './font-family-control/utils';
+export type * from './font-family-control';
+export { DEFAULT_FONT_FAMILY_VALUE } from './font-family-control';
+export { default as TextAlignControl } from './text-align-control';
+export * from './text-align-control/utils';
+export type * from './text-align-control';
+export {
+	DEFAULT_TEXT_ALIGN_VALUE,
+	TEXT_ALIGN_VALUES,
+} from './text-align-control';
 export {
 	normalizeSelectControlValue,
 	getSelectedSelectOption,
