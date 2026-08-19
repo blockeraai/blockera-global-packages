@@ -8,49 +8,33 @@
  * @param {number} maxChars
  * @return {string}
  */
+const { splitMarker: splitMarkerBase, truncateCommentBody: truncateBase } = require( '../../lib/truncate-comment-body' );
+
 const MARKER_RE =
 	/\n\n[ \t]*compressed-size-action(?:::\S+)?[ \t]*(?:\n|$)/;
 
 const DEFAULT_MARKER = '\n\n compressed-size-action ';
 
-function splitMarker(body) {
-	const text = body || '';
-	const match = text.match(MARKER_RE);
-	if (!match || match.index === undefined) {
-		return { core: text, marker: DEFAULT_MARKER };
-	}
-	return {
-		core: text.slice(0, match.index),
-		marker: match[0].startsWith('\n') ? match[0] : `\n\n${match[0]}`,
-	};
+const NOTICE =
+	'\n\n---\n_Report truncated to fit GitHub\'s 65536-character comment limit. See this workflow\'s **Size Differences** log for the full table._\n';
+
+function splitMarker( body ) {
+	return splitMarkerBase( body, MARKER_RE, DEFAULT_MARKER );
 }
 
 function truncateCommentBody(
 	title,
 	body,
-	maxChars = Number(process.env.BLOCKERA_BUNDLE_SIZE_MAX_COMMENT_CHARS || 64000)
+	maxChars = Number( process.env.BLOCKERA_BUNDLE_SIZE_MAX_COMMENT_CHARS || 64000 )
 ) {
-	const notice =
-		'\n\n---\n_Report truncated to fit GitHub\'s 65536-character comment limit. See this workflow\'s **Size Differences** log for the full table._\n';
-
-	const { core, marker } = splitMarker(body);
-	let next = core;
-	if (title && !next.startsWith(title)) {
-		next = `${title}\n\n${next}`;
-	}
-
-	if (next.length + marker.length <= maxChars) {
-		return `${next}${marker}`;
-	}
-
-	const budget = Math.max(0, maxChars - notice.length - marker.length);
-	let cut = next.slice(0, budget);
-	const lastNewline = cut.lastIndexOf('\n');
-	if (lastNewline > title.length + 2) {
-		cut = cut.slice(0, lastNewline);
-	}
-
-	return `${cut}${notice}${marker}`;
+	return truncateBase( {
+		body,
+		title,
+		maxChars,
+		markerRegex: MARKER_RE,
+		defaultMarker: DEFAULT_MARKER,
+		notice: NOTICE,
+	} );
 }
 
 module.exports = { truncateCommentBody, splitMarker };

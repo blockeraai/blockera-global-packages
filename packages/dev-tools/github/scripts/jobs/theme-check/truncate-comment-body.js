@@ -5,42 +5,30 @@
  * @param {number} maxChars
  * @return {string}
  */
+const { splitMarker: splitMarkerBase, truncateCommentBody: truncateBase } = require( '../../lib/truncate-comment-body' );
+
 const MARKER_RE = /\n\n[ \t]*blockera-theme-check[ \t]*(?:\n|$)/;
 const DEFAULT_MARKER = '\n\n blockera-theme-check ';
 
-function splitMarker(body) {
-	const text = body || '';
-	const match = text.match(MARKER_RE);
-	if (!match || match.index === undefined) {
-		return { core: text, marker: DEFAULT_MARKER };
-	}
+const NOTICE =
+	'\n\n---\n_Report truncated to fit GitHub\'s 65536-character comment limit. See the workflow log for full details._\n';
 
-	return {
-		core: text.slice(0, match.index),
-		marker: match[0].startsWith('\n') ? match[0] : `\n\n${match[0]}`,
-	};
+function splitMarker( body ) {
+	return splitMarkerBase( body, MARKER_RE, DEFAULT_MARKER );
 }
 
 function truncateCommentBody(
 	body,
-	maxChars = Number(process.env.BLOCKERA_THEME_CHECK_MAX_COMMENT_CHARS || 64000)
+	maxChars = Number( process.env.BLOCKERA_THEME_CHECK_MAX_COMMENT_CHARS || 64000 )
 ) {
-	const notice =
-		'\n\n---\n_Report truncated to fit GitHub\'s 65536-character comment limit. See the workflow log for full details._\n';
-	const { core, marker } = splitMarker(body);
-
-	if (core.length + marker.length <= maxChars) {
-		return `${core}${marker}`;
-	}
-
-	const budget = Math.max(0, maxChars - notice.length - marker.length);
-	let cut = core.slice(0, budget);
-	const lastNewline = cut.lastIndexOf('\n');
-	if (lastNewline > 0) {
-		cut = cut.slice(0, lastNewline);
-	}
-
-	return `${cut}${notice}${marker}`;
+	return truncateBase( {
+		body,
+		title: undefined,
+		maxChars,
+		markerRegex: MARKER_RE,
+		defaultMarker: DEFAULT_MARKER,
+		notice: NOTICE,
+	} );
 }
 
 module.exports = { truncateCommentBody, splitMarker };
