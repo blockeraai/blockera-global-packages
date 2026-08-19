@@ -86,16 +86,51 @@ emit_kv() {
 	printf '%s=%s\n' "$1" "$2"
 }
 
-# "submodule: bump global-packages (N commit(s)) [`sha`]" — omit the count when empty.
+# owner/repo from .gitmodules (no .git suffix). Used for compare/commit URLs.
+global_packages_github_repo() {
+	local raw path
+	raw="$(git config -f .gitmodules --get "submodule.${SUBMODULE_PATH}.url" 2>/dev/null || true)"
+	case "${raw}" in
+		git@github.com:*)
+			path="${raw#git@github.com:}"
+			;;
+		ssh://git@github.com/*)
+			path="${raw#ssh://git@github.com/}"
+			;;
+		https://github.com/*)
+			path="${raw#https://github.com/}"
+			;;
+		http://github.com/*)
+			path="${raw#http://github.com/}"
+			;;
+		*)
+			path="blockeraai/blockera-global-packages.git"
+			;;
+	esac
+	printf '%s\n' "${path%.git}"
+}
+
+# "submodule: update global-packages (N commit(s)) <compare-or-commit URL>"
+# Omit the count when empty. Prefer compare(old...new) so GitHub autolinks the range.
 format_bump_subject() {
-	local short_sha="$1"
+	local new_sha="$1"
 	local n="${2:-0}"
-	if [ "${n}" -eq 1 ]; then
-		printf 'submodule: bump global-packages (1 commit) [`%s`]' "${short_sha}"
-	elif [ "${n}" -gt 1 ]; then
-		printf 'submodule: bump global-packages (%s commits) [`%s`]' "${n}" "${short_sha}"
+	local old_sha="${3:-}"
+	local repo="${4:-blockeraai/blockera-global-packages}"
+	local range_url
+
+	if [[ -n "${old_sha}" && "${old_sha}" != "${new_sha}" ]]; then
+		range_url="https://github.com/${repo}/compare/${old_sha}...${new_sha}"
 	else
-		printf 'submodule: bump global-packages [`%s`]' "${short_sha}"
+		range_url="https://github.com/${repo}/commit/${new_sha}"
+	fi
+
+	if [ "${n}" -eq 1 ]; then
+		printf 'submodule: update global-packages (1 commit) %s' "${range_url}"
+	elif [ "${n}" -gt 1 ]; then
+		printf 'submodule: update global-packages (%s commits) %s' "${n}" "${range_url}"
+	else
+		printf 'submodule: update global-packages %s' "${range_url}"
 	fi
 }
 
@@ -237,7 +272,8 @@ if [ -n "${PREV_SHA}" ] && [ "${PREV_SHA}" != "${RESOLVED_SHA}" ]; then
 	TOTAL="$(git -C "${SUBMODULE}" rev-list --count "${PREV_SHA}..${RESOLVED_SHA}" 2>/dev/null || echo 0)"
 fi
 
-COMMIT_SUBJECT="$(format_bump_subject "${SHORT_SHA}" "${TOTAL}")"
+GP_GITHUB_REPO="$(global_packages_github_repo)"
+COMMIT_SUBJECT="$(format_bump_subject "${SHORT_SHA}" "${TOTAL}" "${PREV_SHORT}" "${GP_GITHUB_REPO}")"
 
 printf '\n%sOutputs%s\n' "${C_BOLD}" "${C_RESET}"
 log_kv "path" "${SUBMODULE_PATH}"

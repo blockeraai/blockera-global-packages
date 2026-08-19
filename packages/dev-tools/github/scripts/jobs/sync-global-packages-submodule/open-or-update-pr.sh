@@ -55,12 +55,13 @@ if [[ -n "${COMMIT_SUBJECT:-}" ]]; then
 	TITLE="${COMMIT_SUBJECT}"
 else
 	COMMITS="${COMMITS:-0}"
+	RANGE_URL="https://github.com/${GP_REPO}/commit/${SHORT_SHA}"
 	if [[ "${COMMITS}" -eq 1 ]]; then
-		TITLE="submodule: bump global-packages (1 commit) [\`${SHORT_SHA}\`]"
+		TITLE="submodule: update global-packages (1 commit) ${RANGE_URL}"
 	elif [[ "${COMMITS}" -gt 1 ]]; then
-		TITLE="submodule: bump global-packages (${COMMITS} commits) [\`${SHORT_SHA}\`]"
+		TITLE="submodule: update global-packages (${COMMITS} commits) ${RANGE_URL}"
 	else
-		TITLE="submodule: bump global-packages [\`${SHORT_SHA}\`]"
+		TITLE="submodule: update global-packages ${RANGE_URL}"
 	fi
 fi
 

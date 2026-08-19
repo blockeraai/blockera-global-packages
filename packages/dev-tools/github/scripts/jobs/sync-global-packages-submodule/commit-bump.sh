@@ -7,7 +7,8 @@
 # Optional:
 #   COMMIT_SUBJECT                      full subject from the bump script
 #   COMMITS                             upstream commit count (used when COMMIT_SUBJECT is unset)
-#   BLOCKERA_SYNC_GP_COMMIT_MSG_PREFIX  default: submodule: bump global-packages
+#   BLOCKERA_SYNC_GP_COMMIT_MSG_PREFIX  default: submodule: update global-packages
+#   BLOCKERA_SYNC_GP_GLOBAL_PACKAGES_REPO  default: blockeraai/blockera-global-packages
 set -euo pipefail
 
 SHORT_SHA="${SHORT_SHA:-}"
@@ -16,17 +17,19 @@ if [[ -z "${SHORT_SHA}" ]]; then
 	exit 1
 fi
 
-PREFIX="${BLOCKERA_SYNC_GP_COMMIT_MSG_PREFIX:-submodule: bump global-packages}"
+PREFIX="${BLOCKERA_SYNC_GP_COMMIT_MSG_PREFIX:-submodule: update global-packages}"
+GP_REPO="${BLOCKERA_SYNC_GP_GLOBAL_PACKAGES_REPO:-blockeraai/blockera-global-packages}"
+RANGE_URL="https://github.com/${GP_REPO}/commit/${SHORT_SHA}"
 if [[ -n "${COMMIT_SUBJECT:-}" ]]; then
 	MSG="${COMMIT_SUBJECT}"
 else
 	COMMITS="${COMMITS:-0}"
 	if [[ "${COMMITS}" -eq 1 ]]; then
-		MSG="${PREFIX} (1 commit) [\`${SHORT_SHA}\`]"
+		MSG="${PREFIX} (1 commit) ${RANGE_URL}"
 	elif [[ "${COMMITS}" -gt 1 ]]; then
-		MSG="${PREFIX} (${COMMITS} commits) [\`${SHORT_SHA}\`]"
+		MSG="${PREFIX} (${COMMITS} commits) ${RANGE_URL}"
 	else
-		MSG="${PREFIX} [\`${SHORT_SHA}\`]"
+		MSG="${PREFIX} ${RANGE_URL}"
 	fi
 fi
 
