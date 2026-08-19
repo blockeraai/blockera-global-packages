@@ -20,7 +20,7 @@ gh_api() {
 	bash "${RETRY_SH}" --label "gh api" --max 5 --delay 15 -- gh api "$@"
 }
 
-TITLE="${BLOCKERA_THEME_CHECK_COMMENT_TITLE:-# 🎨 WordPress Theme Review Report}"
+TITLE="${BLOCKERA_THEME_CHECK_COMMENT_TITLE:-# 🧱 WordPress Theme Review Report}"
 MARKER="${BLOCKERA_THEME_CHECK_COMMENT_MARKER:-blockera-theme-check}"
 MAX_CHARS="${BLOCKERA_THEME_CHECK_MAX_COMMENT_CHARS:-64000}"
 LOGS_DIR="${BLOCKERA_THEME_CHECK_LOGS_DIR:-${GITHUB_WORKSPACE:-}/theme-review-action/logs}"
