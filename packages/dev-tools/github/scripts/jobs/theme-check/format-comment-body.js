@@ -112,17 +112,28 @@ function formatCommentBody(logsDir, options = {}) {
 			`| ${section.label} | ${errorCount || '0'} | ${warningCount || '0'} |`
 		);
 
+		// Keep clean passes to the summary table only — no empty detail headings.
+		if (errorCount === 0 && warningCount === 0) {
+			continue;
+		}
+
 		sectionBlocks.push(`## ${section.label}\n`);
-		sectionBlocks.push(formatBlock('Errors', errors));
-		sectionBlocks.push(formatBlock('Warnings', warnings));
+		if (errorCount > 0) {
+			sectionBlocks.push(formatBlock('Errors', errors));
+		}
+		if (warningCount > 0) {
+			sectionBlocks.push(formatBlock('Warnings', warnings));
+		}
 	}
 
 	let body = `${title}\n\n`;
 	body += `${formatStatus(totalErrors, totalWarnings)}\n\n`;
 	body += '| Section | Errors | Warnings |\n';
 	body += '| --- | ---: | ---: |\n';
-	body += `${rows.join('\n')}\n\n`;
-	body += sectionBlocks.join('\n');
+	body += `${rows.join('\n')}\n`;
+	if (sectionBlocks.length > 0) {
+		body += `\n${sectionBlocks.join('\n')}`;
+	}
 
 	if (runUrl) {
 		body += `\n---\n[View workflow run](${runUrl})\n`;
