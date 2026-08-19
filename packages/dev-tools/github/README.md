@@ -85,6 +85,24 @@ Consumer has **no** `.github/scripts/`. The only consumer-local bootstrap is
 available until ensure runs). Everything else is invoked from
 `packages/global-packages/packages/dev-tools/github/…`.
 
+## Local wp-env (`setup-wp-env.js`)
+
+Used by consumer `npm run env:start` (local only). Copies
+`.github/wp-env-configs/<name>.json` → `.wp-env.json`. No-op when `CI` is set.
+
+| Env (host `.env`) | Default |
+| --- | --- |
+| `WP_ENV_CONFIG` | `development` (file: `.github/wp-env-configs/development.json`) |
+| `WP_ENV_PORT` | unset — wp-env default `8888`; set unique values when multiple local envs run on one machine |
+| `WP_ENV_TESTS_PORT` | unset — wp-env default `8889` |
+
+Example (host `.env`, local only):
+
+```env
+WP_ENV_PORT=8890
+WP_ENV_TESTS_PORT=8891
+```
+
 
 ## Code lint
 
