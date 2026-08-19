@@ -129,6 +129,7 @@
 		"shadow": ".wp-block-avatar img"
 	},
 	"core/post-featured-image": {
+		"dimensions": ".wp-block-post-featured-image",
 		"border": ".wp-block-post-featured-image img",
 		"shadow": ".wp-block-post-featured-image img",
 		"filter": ".wp-block-post-featured-image img",

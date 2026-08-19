@@ -15,6 +15,7 @@ return array_merge(
 		'selectors' => array_merge(
 			$args['selectors'] ?? [],
 			[
+				'dimensions'                => '.wp-block-post-featured-image',
 				'border'                    => $sizeSelector,
 				'shadow'                    => $sizeSelector,
 				'filter'                    => $sizeSelector,
