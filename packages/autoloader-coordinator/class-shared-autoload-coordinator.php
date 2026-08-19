@@ -503,6 +503,10 @@ if (! \class_exists(Coordinator::class)) {
 		 * Root `autoload-dev` (PHPUnit helpers) is still kept off the WordPress runtime;
 		 * PHPUnit bootstraps those paths itself.
 		 *
+		 * `wp-cli/*` vendor packages are also kept off the WordPress runtime. WP-CLI's
+		 * phar already ships those libraries; loading plugin copies (especially
+		 * php-cli-tools `files` autoload) fatals with "Cannot redeclare cli\\render()".
+		 *
 		 * @param string $vendorDir Vendor directory path.
 		 * @param string $pluginDir Plugin root directory path.
 		 * @return array{include_dev:bool,skip_vendor_dev_filter:bool,allowed_packages:?array<string,bool>,dev_dir_prefixes:array<int,string>,dev_exact_paths:array<string,bool>,runtime_excluded_files:array<string,bool>,runtime_excluded_dirs:array<int,string>}
@@ -531,24 +535,25 @@ if (! \class_exists(Coordinator::class)) {
 			}
 
 			if (null !== $context) {
-				if ($includeDev) {
-					$allowedPackages = array_fill_keys(array_keys($context['packages']), true);
-				} else {
-					$allowedPackages = [];
+				$allowedPackages = [];
 
-					foreach ($context['packages'] as $name => $package) {
-						if (empty($package['dev_requirement'])) {
-							$allowedPackages[ $name ] = true;
-							continue;
-						}
+				foreach ($context['packages'] as $name => $package) {
+					$installPath = ! empty($package['install_path'])
+						? $this->normalizePath(rtrim( (string) $package['install_path'], '/\\'))
+						: '';
 
-						if (empty($package['install_path'])) {
-							continue;
-						}
+					// WP-CLI vendor copies collide with the WP-CLI phar (`cli\render()`).
+					if (is_string($name) && 0 === strpos($name, 'wp-cli/') && '' !== $installPath) {
+						$runtimeExcluded['dirs'][] = $installPath . '/';
+					}
 
-						$prefix = $this->normalizePath(rtrim($package['install_path'], '/\\'));
+					if ($includeDev || empty($package['dev_requirement'])) {
+						$allowedPackages[ $name ] = true;
+						continue;
+					}
 
-						$devDirPrefixes[] = $prefix . '/';
+					if ('' !== $installPath) {
+						$devDirPrefixes[] = $installPath . '/';
 					}
 				}
 			}

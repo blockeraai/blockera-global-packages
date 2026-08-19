@@ -31,6 +31,8 @@ That decision happens at product entry (`functions.php` / plugin bootstrap) **be
 
 Root `autoload-dev` (PHPUnit helpers under `tests/`) is still kept off the WordPress request path; PHPUnit bootstraps those files itself.
 
+`wp-cli/*` vendor packages are also kept off the WordPress request path. They exist as a CLI binary (`vendor/bin/wp`); loading their `files` autoload inside WordPress collides with the WP-CLI phar (`Cannot redeclare cli\render()`).
+
 ---
 
 ## Package layout
