@@ -417,7 +417,11 @@ Discovery env: `SCAN_ROOTS`, `PACKAGE_SUFFIX` / `PACKAGE_PREFIX`,
 by `create-wp-env.js`. Scalars replace, `config` / `lifecycleScripts`
 shallow-merge, and `plugins` / `themes` concatenate. Restrict overlay plugins
 with `BLOCKERA_WP_ENV_PR_PLUGIN_CATEGORIES`. Add a companion plugin source with
-`BLOCKERA_WP_ENV_DEFAULT_PLUGIN`.
+`BLOCKERA_WP_ENV_DEFAULT_PLUGIN`. Optional third CLI arg `pluginDownloadUrl`
+pins that companion: default `BLOCKERA_WP_ENV_PLUGIN_URL_MODE=append`; set
+`replace` to drop other companion sources (same GitHub owner/repo as
+`DEFAULT_PLUGIN` / `COMPANION_OWNER`+`COMPANION_REPO`, extract dir, or
+wordpress.org slug) so wp-env does not mount two copies of the companion.
 
 ## Cypress component tests
 
@@ -562,8 +566,25 @@ Each `allowedActions` entry is a workflow **filename** under
 absent, all workflows run. Non-PR events (`workflow_dispatch`, `push`,
 `schedule`, `release`, …) always run.
 
-Toolkit workflow templates include a `pr-workflow-gate` job that calls
-`github/actions/pr-workflow-gate` with the matching filename.
+Toolkit workflow templates include a `pr-workflow-gate` job that runs
+`ensure-global-packages`, then calls
+`packages/global-packages/packages/dev-tools/github/actions/pr-workflow-gate`.
+Set `BLOCKERA_GLOBAL_PACKAGES_TOKEN` on the gate job (same PAT as checkout).
+
+```yaml
+    pr-workflow-gate:
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+            - uses: ./.github/actions/ensure-global-packages
+            - id: gate
+              uses: ./packages/global-packages/packages/dev-tools/github/actions/pr-workflow-gate
+              with:
+                  workflow-file: php-unit-tests.yml
+```
 
 | Env | Default |
 | --- | --- |
@@ -641,6 +662,11 @@ Other consumers override only what differs:
 ```bash
 bash packages/global-packages/packages/dev-tools/github/scripts/sync-consumer-bootstrap.sh
 ```
+
+Syncs the consumer-local bootstrap action that must exist before the submodule
+is available:
+
+- `.github/actions/ensure-global-packages/`
 
 ## Why not reusable workflows from the submodule?
 
