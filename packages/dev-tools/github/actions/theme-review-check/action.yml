@@ -34,9 +34,12 @@ runs:
         - name: Install dependencies and run theme review
           shell: bash
           working-directory: theme-review-action
-          env:
-              GITHUB_ACTION_PATH: ${{ github.workspace }}/theme-review-action
           run: |
+              # `theme-review-action` uses `process.env.GITHUB_ACTION_PATH` to find
+              # its internal `actions/` directory. In composite actions GitHub may
+              # set `GITHUB_ACTION_PATH` to the composite action root, which breaks
+              # that lookup. Export it explicitly for this step.
+              export GITHUB_ACTION_PATH="${{ github.workspace }}/theme-review-action"
               npm install
               # theme-review-action allows ^10.1.0; ensure wp-env supports destroy --force.
               npm install @wordpress/env@^10.39.0
