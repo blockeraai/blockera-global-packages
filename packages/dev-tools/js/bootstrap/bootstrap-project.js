@@ -167,17 +167,13 @@ function finishBootstrap() {
 		formatIndentedSectionHeading('Bootstrap', logoWidth)
 	);
 
-	if (bootstrapLogPath && fs.existsSync(bootstrapLogPath)) {
-		const text = fs
-			.readFileSync(bootstrapLogPath, 'utf8')
-			.replace(/^.*[─━]{2} Bootstrap[^\n]*/m, greenHeading);
-
-		fs.writeFileSync(bootstrapLogPath, text);
-	}
-
 	const display = displayLines
 		.join('\n')
 		.replace(/^.*[─━]{2} Bootstrap[^\n]*/m, greenHeading);
+
+	if (bootstrapLogPath) {
+		fs.writeFileSync(bootstrapLogPath, display.endsWith('\n') ? display : `${display}\n`);
+	}
 
 	process.stdout.write('\x1b[2J\x1b[3J\x1b[H');
 	process.stdout.write(display.endsWith('\n') ? display : `${display}\n`);
