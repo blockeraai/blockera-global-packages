@@ -417,7 +417,11 @@ Discovery env: `SCAN_ROOTS`, `PACKAGE_SUFFIX` / `PACKAGE_PREFIX`,
 by `create-wp-env.js`. Scalars replace, `config` / `lifecycleScripts`
 shallow-merge, and `plugins` / `themes` concatenate. Restrict overlay plugins
 with `BLOCKERA_WP_ENV_PR_PLUGIN_CATEGORIES`. Add a companion plugin source with
-`BLOCKERA_WP_ENV_DEFAULT_PLUGIN`.
+`BLOCKERA_WP_ENV_DEFAULT_PLUGIN`. Optional third CLI arg `pluginDownloadUrl`
+pins that companion: default `BLOCKERA_WP_ENV_PLUGIN_URL_MODE=append`; set
+`replace` to drop other companion sources (same GitHub owner/repo as
+`DEFAULT_PLUGIN` / `COMPANION_OWNER`+`COMPANION_REPO`, extract dir, or
+wordpress.org slug) so wp-env does not mount two copies of the companion.
 
 ## Cypress component tests
 
