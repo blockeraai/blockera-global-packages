@@ -35,6 +35,13 @@ describe( 'formatCommentBody', () => {
 		} );
 
 		expect( body ).toContain( '✅ **Passed**' );
+		expect( body ).toContain( '| Structure check | 0 | 0 |' );
+		expect( body ).toContain( '| Theme Check plugin | 0 | 0 |' );
+		expect( body ).toContain( '| UI & accessibility | 0 | 0 |' );
+		expect( body ).not.toContain( '## Structure check' );
+		expect( body ).not.toContain( '## Theme Check plugin' );
+		expect( body ).not.toContain( '## UI & accessibility' );
+		expect( body ).not.toContain( '_none_' );
 		expect( body ).toContain( '[View workflow run](https://example.com/run/1)' );
 		expect( body ).toContain( 'blockera-theme-check' );
 	} );
@@ -50,7 +57,33 @@ describe( 'formatCommentBody', () => {
 		const body = formatCommentBody( tmpDir );
 
 		expect( body ).toContain( '❌ **Failed**' );
+		expect( body ).toContain( '## Structure check' );
+		expect( body ).toContain( '### Errors' );
 		expect( body ).toContain( 'Missing screenshot.png' );
+		expect( body ).not.toContain( '### Warnings' );
+		expect( body ).not.toContain( '## Theme Check plugin' );
+		expect( body ).not.toContain( '## UI & accessibility' );
+		expect( body ).not.toContain( '_none_' );
+	} );
+
+	test( 'includes detail only for sections with warnings', () => {
+		writeLog( 'structure-check-errors.txt', '' );
+		writeLog( 'structure-check-warnings.txt', '' );
+		writeLog( 'theme-check/errors.txt', '' );
+		writeLog( 'theme-check/warnings.txt', 'Avoid hard-coded colors' );
+		writeLog( 'ui-check-errors.txt', '' );
+		writeLog( 'ui-check-warnings.txt', '' );
+
+		const body = formatCommentBody( tmpDir );
+
+		expect( body ).toContain( '⚠️ **Passed with warnings**' );
+		expect( body ).toContain( '| Theme Check plugin | 0 | 1 |' );
+		expect( body ).toContain( '## Theme Check plugin' );
+		expect( body ).toContain( '### Warnings' );
+		expect( body ).toContain( 'Avoid hard-coded colors' );
+		expect( body ).not.toContain( '### Errors' );
+		expect( body ).not.toContain( '## Structure check' );
+		expect( body ).not.toContain( '## UI & accessibility' );
 	} );
 
 	test( 'handles missing logs directory', () => {
