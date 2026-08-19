@@ -19,6 +19,13 @@ inputs:
         description: 'Whether to run the full accessibility tests'
         required: false
         default: 'true'
+    repo-token:
+        description: 'GitHub token for PR comment updates (secrets.BLOCKERABOT_PAT)'
+        required: true
+    comment-title:
+        description: 'H1 prepended to the theme review PR comment'
+        required: false
+        default: '# 🎨 WordPress Theme Review Report'
 
 runs:
     using: 'composite'
@@ -43,3 +50,12 @@ runs:
           with:
               root-folder: ${{ inputs.build-dir }}
               accessible-ready: ${{ inputs.accessible-ready }}
+
+        - name: Post theme review PR comment
+          if: always() && github.event_name == 'pull_request'
+          shell: bash
+          env:
+              GITHUB_TOKEN: ${{ inputs.repo-token }}
+              BLOCKERA_THEME_CHECK_LOGS_DIR: ${{ github.workspace }}/theme-review-action/logs
+              BLOCKERA_THEME_CHECK_COMMENT_TITLE: ${{ inputs.comment-title }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/theme-check/post-comment.sh"
