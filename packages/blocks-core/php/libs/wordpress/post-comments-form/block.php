@@ -36,7 +36,12 @@ return array_merge(
 						'root' => '.comment-form-cookies-consent',
 					],
 					'blockera/core/button' => [
-						'root' => ':is(.wp-block-button > .wp-element-button, button[type="submit"])',
+						'root'       => ':is(.wp-block-button > .wp-element-button, button[type="submit"])',
+						// Fix the core button width selector override for the button block.
+						'dimensions' => [
+							'root'  => ':is(.wp-block-button > .wp-element-button, button[type="submit"])',
+							'width' => ':is(.wp-block-button > .wp-element-button, button[type="submit"])',
+						],
 					],
 				],
 				blockera_load( 'inners.link', dirname( __DIR__ ) ),
