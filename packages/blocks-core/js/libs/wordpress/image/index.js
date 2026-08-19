@@ -66,5 +66,7 @@ export const Image: BlockType = {
 		},
 		'object-fit': imageSelector,
 		'box-sizing': imageSelector,
+		// Keep overflow on the figure; size fallback is overflow → dimensions (img).
+		overflow: '.wp-block-image',
 	},
 };

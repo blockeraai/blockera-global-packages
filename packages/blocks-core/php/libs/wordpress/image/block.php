@@ -16,6 +16,10 @@ return array_merge(
 			$args['selectors'] ?? [],
 			[
 				// Feature selectors.
+				'dimensions' => $sizeSelector,
+				// Keep overflow on the figure. Size fallback is ["overflow","dimensions"];
+				// without this, overflow inherits the img $sizeSelector.
+				'overflow' => '.wp-block-image',
 				'width' => $sizeSelector,
 				'object-fit' => $sizeSelector,
 				'box-sizing' => $sizeSelector,

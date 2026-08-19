@@ -6,9 +6,11 @@
 		}
 	},
 	"core/image": {
+		"dimensions": ".wp-block-image :is(img:not([src=\"\"]),svg:not(:empty))",
 		"border": ".wp-block-image :is(img, svg, .wp-block-image__crop-area, .components-placeholder, .block-editor-media-placeholder::before, .components-resizable-box__container::before)",
 		"shadow": ".wp-block-image :is(img, svg, .wp-block-image__crop-area, .components-placeholder, .block-editor-media-placeholder::before, .components-resizable-box__container::before)",
 		"filter": ".wp-block-image :is(img, svg, .wp-block-image__crop-area, .components-placeholder, .block-editor-media-placeholder::before, .components-resizable-box__container::before)",
+		"overflow": ".wp-block-image",
 		"width": ".wp-block-image :is(img, svg, .wp-block-image__crop-area, .components-placeholder, .block-editor-media-placeholder::before, .components-resizable-box__container::before)",
 		"object-fit": ".wp-block-image :is(img, svg, .wp-block-image__crop-area, .components-placeholder, .block-editor-media-placeholder::before, .components-resizable-box__container::before)",
 		"box-sizing": ".wp-block-image :is(img, svg, .wp-block-image__crop-area, .components-placeholder, .block-editor-media-placeholder::before, .components-resizable-box__container::before)",
