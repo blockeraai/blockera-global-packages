@@ -31,7 +31,11 @@ if [[ -z "${CATEGORY}" ]]; then
 	exit 1
 fi
 
-INSTALL_CMD="${BLOCKERA_PLAYWRIGHT_INSTALL_CMD:-npx playwright install chromium --with-deps}"
+# GitHub ubuntu-latest already ships Chromium system libs (and Google Chrome).
+# `--with-deps` runs `sudo apt-get update`, which often hangs for hours on
+# azure.archive.ubuntu.com (Ign: retries) until the job timeout cancels it.
+# Override with BLOCKERA_PLAYWRIGHT_INSTALL_CMD if a job truly needs apt.
+INSTALL_CMD="${BLOCKERA_PLAYWRIGHT_INSTALL_CMD:-npx playwright install chromium}"
 COMPOSER_INSTALL="${BLOCKERA_PLAYWRIGHT_COMPOSER_INSTALL:-true}"
 COMPOSER_CMD="${BLOCKERA_PLAYWRIGHT_COMPOSER_CMD:-composer install --no-dev -o --apcu-autoloader -a}"
 WP_ENV_CONFIG_DIR="${BLOCKERA_PLAYWRIGHT_WP_ENV_CONFIG_DIR:-.github/wp-env-configs}"
@@ -60,8 +64,43 @@ trap cleanup EXIT
 
 echo "playwright-e2e/run: category=${CATEGORY}"
 
-echo "playwright-e2e/run: ${INSTALL_CMD}"
-eval "${INSTALL_CMD}"
+# Apt on GitHub-hosted Ubuntu uses azure.archive.ubuntu.com first. When that
+# mirror stalls, `playwright install --with-deps` never finishes (see
+# actions/runner-images#11347). Point sources at archive.ubuntu.com and cap
+# fetch time so a bad mirror fails fast instead of burning the job budget.
+prepare_github_apt_for_playwright_deps() {
+	[[ "${GITHUB_ACTIONS:-}" == "true" ]] || return 0
+	[[ "${INSTALL_CMD}" == *"--with-deps"* || "${INSTALL_CMD}" == *"install-deps"* ]] || return 0
+
+	echo "playwright-e2e/run: rewriting Azure apt mirrors before --with-deps"
+	if [[ -f /etc/apt/apt-mirrors.txt ]]; then
+		sudo sed -i 's/azure\.archive\.ubuntu\.com/archive.ubuntu.com/g' /etc/apt/apt-mirrors.txt
+	fi
+	if [[ -f /etc/apt/sources.list.d/ubuntu.sources ]]; then
+		sudo sed -i 's/azure\.archive\.ubuntu\.com/archive.ubuntu.com/g' /etc/apt/sources.list.d/ubuntu.sources
+	fi
+	if [[ -f /etc/apt/sources.list ]]; then
+		sudo sed -i 's/azure\.archive\.ubuntu\.com/archive.ubuntu.com/g' /etc/apt/sources.list
+	fi
+	sudo tee /etc/apt/apt.conf.d/99blockera-ci-timeout >/dev/null <<'EOF'
+Acquire::http::Timeout "20";
+Acquire::https::Timeout "20";
+Acquire::Retries "2";
+EOF
+}
+
+run_playwright_install() {
+	prepare_github_apt_for_playwright_deps
+	echo "playwright-e2e/run: ${INSTALL_CMD}"
+	if [[ "${GITHUB_ACTIONS:-}" == "true" ]] && command -v timeout >/dev/null 2>&1; then
+		# Browser download is normally <2m. Five minutes is a hang, not slowness.
+		timeout --signal=KILL 300 bash -c "${INSTALL_CMD}"
+	else
+		eval "${INSTALL_CMD}"
+	fi
+}
+
+run_playwright_install
 
 if [[ "${COMPOSER_INSTALL}" == "true" ]]; then
 	echo "playwright-e2e/run: ${COMPOSER_CMD}"
