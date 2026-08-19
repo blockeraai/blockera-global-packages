@@ -110,6 +110,18 @@ steps:
 | `BLOCKERA_PHPCS_CMD` | `phpcs --report-full --report-checkstyle=./.cache/phpcs-report.xml --standard=phpcs.xml` |
 | `BLOCKERA_PHPCS_REPORT` | `./.cache/phpcs-report.xml` |
 
+## Setup PHP
+
+Strips `wp-cli/wp-cli-bundle` from composer files before `ramsey/composer-install`
+(wp-env images ship WP-CLI globally). Uses `composer remove --no-update` (json only,
+no dependency resolution) and jq lock pruning — safe after `platform.php` is raised
+for the matrix PHP version.
+
+| Input | Default |
+| --- | --- |
+| `php-version` | `7.4` |
+| `composer-options` | empty |
+
 ## PHP unit tests
 
 Reuses `php-snapshots/compute-previous-wordpress-version.sh` for optional previous-WP matrix rows.
