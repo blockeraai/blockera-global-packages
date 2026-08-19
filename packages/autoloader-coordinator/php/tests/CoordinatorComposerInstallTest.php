@@ -68,6 +68,40 @@ class CoordinatorComposerInstallTest extends TestCase {
 	}
 
 	/**
+	 * WP-CLI vendor copies must not autoload on WordPress runtime — they collide
+	 * with the WP-CLI phar (`Cannot redeclare cli\render()`).
+	 *
+	 * @return void
+	 */
+	public function test_with_dev_install_excludes_wp_cli_vendor_from_wordpress_runtime(): void {
+		$fixture     = $this->createComposerFixture( true );
+		$coordinator = $this->newCoordinator();
+		$policy      = $this->invokePrivateMethod(
+			$coordinator,
+			'getAutoloadPolicy',
+			array( $fixture['vendor_dir'], $fixture['plugin_dir'] )
+		);
+
+		$wp_cli_dir = $fixture['wp_cli_path'] . '/';
+
+		$this->assertContains( $wp_cli_dir, $policy['runtime_excluded_dirs'] );
+		$this->assertTrue(
+			$this->invokePrivateMethod(
+				$coordinator,
+				'shouldSkipAutoloadPath',
+				array( $fixture['wp_cli_path'] . '/lib/cli/cli.php', $policy )
+			)
+		);
+		$this->assertFalse(
+			$this->invokePrivateMethod(
+				$coordinator,
+				'shouldSkipAutoloadPath',
+				array( $fixture['vendor_dir'] . '/phpunit/phpunit/src/Framework/Assert/Functions.php', $policy )
+			)
+		);
+	}
+
+	/**
 	 * `composer install --no-dev` must load production packages only.
 	 *
 	 * @return void
@@ -158,7 +192,7 @@ class CoordinatorComposerInstallTest extends TestCase {
 	 * Build a mini product tree with Composer installed.php metadata.
 	 *
 	 * @param bool $include_dev Whether installed.php root.dev is true.
-	 * @return array{plugin_dir:string,vendor_dir:string,helper_path:string}
+	 * @return array{plugin_dir:string,vendor_dir:string,helper_path:string,wp_cli_path:string}
 	 */
 	private function createComposerFixture( bool $include_dev ): array {
 		$this->fixture_root = sys_get_temp_dir() . '/blockera-autoload-' . uniqid( '', true );
@@ -194,11 +228,19 @@ class CoordinatorComposerInstallTest extends TestCase {
 			),
 		);
 
+		$wp_cli_path = $vendor_dir . '/wp-cli/php-cli-tools';
+
 		if ( $include_dev ) {
 			mkdir( $vendor_dir . '/phpunit/phpunit', 0777, true );
+			mkdir( $wp_cli_path . '/lib/cli', 0777, true );
+			file_put_contents( $wp_cli_path . '/lib/cli/cli.php', "<?php\n" );
 			$versions['phpunit/phpunit'] = array(
 				'dev_requirement' => true,
 				'install_path'    => $vendor_dir . '/phpunit/phpunit',
+			);
+			$versions['wp-cli/php-cli-tools'] = array(
+				'dev_requirement' => true,
+				'install_path'    => $wp_cli_path,
 			);
 		}
 
@@ -215,11 +257,13 @@ class CoordinatorComposerInstallTest extends TestCase {
 		file_put_contents( $composer_dir . '/installed.php', "<?php\nreturn {$installed};\n" );
 
 		$realpath_helper = realpath( $helper_path );
+		$realpath_wp_cli = realpath( $wp_cli_path );
 
 		return array(
 			'plugin_dir'  => $plugin_dir,
 			'vendor_dir'  => $vendor_dir,
 			'helper_path' => ( false !== $realpath_helper ) ? $realpath_helper : $helper_path,
+			'wp_cli_path' => ( false !== $realpath_wp_cli ) ? $realpath_wp_cli : $wp_cli_path,
 		);
 	}
 
