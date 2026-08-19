@@ -107,6 +107,16 @@
 		"root": ".wp-block-table > table",
 		"spacing": ".wp-block-table"
 	},
+	"core/tab-list": {
+		"border": ".wp-block-tab-list button",
+		"color": {
+			"background": ".wp-block-tab-list button",
+			"text": ".wp-block-tab-list button"
+		},
+		"spacing": {
+			"padding": ".wp-block-tab-list button"
+		}
+	},
 	"core/tag-cloud": {
 		"layout": " .wp-block-tag-cloud"
 	},
