@@ -57,6 +57,10 @@
 		"typography": {
 			"writingMode": ".wp-block-button"
 		},
+		"dimensions": {
+			"root": ".wp-block-button",
+			"width": ".wp-block-button"
+		},
 		"color": {
 			"root": " .wp-block-button__link"
 		},
