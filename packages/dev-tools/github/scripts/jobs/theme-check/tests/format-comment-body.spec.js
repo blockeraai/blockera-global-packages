@@ -34,8 +34,8 @@ describe( 'formatCommentBody', () => {
 			runUrl: 'https://example.com/run/1',
 		} );
 
-		expect( body ).toMatch( /✅ \\*\\*Passed\\*\\*/ );
-		expect( body ).toMatch( /\\[View workflow run\\]\\(https:\\/\\/example\\.com\\/run\\/1\\)/ );
+		expect( body ).toContain( '✅ **Passed**' );
+		expect( body ).toContain( '[View workflow run](https://example.com/run/1)' );
 		expect( body ).toContain( 'blockera-theme-check' );
 	} );
 
@@ -49,7 +49,7 @@ describe( 'formatCommentBody', () => {
 
 		const body = formatCommentBody( tmpDir );
 
-		expect( body ).toMatch( /❌ \\*\\*Failed\\*\\*/ );
+		expect( body ).toContain( '❌ **Failed**' );
 		expect( body ).toContain( 'Missing screenshot.png' );
 	} );
 
@@ -63,12 +63,12 @@ describe( 'formatCommentBody', () => {
 
 describe( 'truncateCommentBody', () => {
 	test( 'preserves marker when under limit', () => {
-		const body = '# Title\\n\\nHello\\n\\n blockera-theme-check ';
+		const body = '# Title\n\nHello\n\n blockera-theme-check ';
 		expect( truncateCommentBody( body, 1000 ) ).toBe( body );
 	} );
 
 	test( 'truncates oversized reports and keeps marker', () => {
-		const body = `# Title\\n\\n${ 'x'.repeat( 70000 ) }\\n\\n blockera-theme-check `;
+		const body = `# Title\n\n${ 'x'.repeat( 70000 ) }\n\n blockera-theme-check `;
 		const next = truncateCommentBody( body, 64000 );
 
 		expect( next.length ).toBeLessThanOrEqual( 64000 );

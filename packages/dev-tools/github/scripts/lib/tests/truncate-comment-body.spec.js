@@ -21,7 +21,7 @@ describe( 'truncate-comment-body helper', () => {
 		const markerRegex = /\n\n[ \t]*compressed-size-action(?:::\S+)?[ \t]*(?:\n|$)/;
 		const defaultMarker = '\n\n compressed-size-action ';
 		const notice =
-			'\n\n---\n_Report truncated to fit GitHub\\'s 65536-character comment limit. See this workflow\\'s **Size Differences** log for the full table._\n';
+			'\n\n---\n_Report truncated to fit GitHub\'s 65536-character comment limit. See this workflow\'s **Size Differences** log for the full table._\n';
 
 		const out = truncateCommentBody( {
 			body,
@@ -43,7 +43,7 @@ describe( 'truncate-comment-body helper', () => {
 		const markerRegex = /\n\n[ \t]*blockera-theme-check[ \t]*(?:\n|$)/;
 		const defaultMarker = '\n\n blockera-theme-check ';
 		const notice =
-			'\n\n---\n_Report truncated to fit GitHub\\'s 65536-character comment limit. See the workflow log for full details._\n';
+			'\n\n---\n_Report truncated to fit GitHub\'s 65536-character comment limit. See the workflow log for full details._\n';
 
 		const out = truncateCommentBody( {
 			body,
