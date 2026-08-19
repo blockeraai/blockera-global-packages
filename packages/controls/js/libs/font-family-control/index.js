@@ -60,6 +60,7 @@ export default function FontFamilyControl({
 	// (presets/slugs). It intentionally does NOT use the generic ValueAddon UI.
 	controlAddonTypes: _controlAddonTypes,
 	variableTypes: _variableTypes,
+	dynamicValueTypes: _dynamicValueTypes,
 	fieldProps = EMPTY_FIELD_PROPS,
 	labelProps: propsForLabelControl = {},
 	singularId,
