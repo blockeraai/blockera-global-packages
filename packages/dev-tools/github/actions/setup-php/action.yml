@@ -25,13 +25,13 @@ runs:
               tools: cs2pr
               ini-values: memory_limit=128M, max_execution_time=30, max_input_time=60, max_input_vars=1000
 
-        - name: Override PHP version in composer.json
-          shell: bash
-          run: composer config platform.php ${{ inputs.php-version }}
-
         - name: Remove wp-cli bundle from composer files
           shell: bash
           run: bash "${GITHUB_ACTION_PATH}/../../scripts/lib/strip-wp-cli-composer-files.sh"
+
+        - name: Override PHP version in composer.json
+          shell: bash
+          run: composer config platform.php ${{ inputs.php-version }}
 
         - name: Install Composer dependencies
           uses: ramsey/composer-install@v4

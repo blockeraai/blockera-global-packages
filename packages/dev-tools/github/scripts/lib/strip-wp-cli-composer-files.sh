@@ -2,9 +2,9 @@
 # Drop wp-cli/wp-cli-bundle from composer.json and composer.lock without installing.
 # Used by setup-php (before composer install) and remove-wp-cli-vendor (safety net).
 #
-# Uses composer remove --no-update (json only, no resolution) then jq lock pruning.
-# Do not use --no-install here: it still resolves dependencies and can fail when
-# platform.php was raised above a locked transitive constraint (e.g. lcobucci/jwt).
+# setup-php runs this before platform.php is overridden so composer remove --no-install
+# resolves against the lock's default platform. Do not jq-prune composer.lock: removing
+# wp-cli/* entries without their transitive deps orphans packages like composer/composer.
 set -euo pipefail
 
 json_has_wp_cli_bundle() {
@@ -22,24 +22,21 @@ strip_wp_cli_from_json_jq() {
 	mv "$tmp" composer.json
 }
 
-strip_wp_cli_from_lock_jq() {
-	local tmp
-	tmp=$(mktemp)
-	jq '
-		if .["packages-dev"] then
-			.["packages-dev"] = [ .["packages-dev"][] | select(.name | test("^wp-cli/") | not) ]
-		else . end
-	' composer.lock >"$tmp"
-	mv "$tmp" composer.lock
-}
-
 strip_wp_cli_composer_files() {
+	if ! json_has_wp_cli_bundle && ! lock_has_wp_cli_bundle; then
+		return 0
+	fi
+
+	echo "strip-wp-cli-composer-files: removing wp-cli/wp-cli-bundle from composer files"
+
 	if json_has_wp_cli_bundle; then
-		echo "strip-wp-cli-composer-files: removing wp-cli/wp-cli-bundle from composer.json"
-		if ! composer remove wp-cli/wp-cli-bundle --dev --no-update 2>/dev/null; then
-			echo "strip-wp-cli-composer-files: composer remove --no-update failed; stripping composer.json with jq"
-			strip_wp_cli_from_json_jq
-		fi
+		# composer remove may print "Removal failed" and exit non-zero even after updating the lock.
+		composer remove wp-cli/wp-cli-bundle --dev --no-install || true
+	fi
+
+	if json_has_wp_cli_bundle; then
+		echo "strip-wp-cli-composer-files: retrying composer remove with --ignore-platform-reqs"
+		composer remove wp-cli/wp-cli-bundle --dev --no-install --ignore-platform-reqs || true
 	fi
 
 	if json_has_wp_cli_bundle; then
@@ -48,17 +45,12 @@ strip_wp_cli_composer_files() {
 	fi
 
 	if lock_has_wp_cli_bundle; then
-		echo "strip-wp-cli-composer-files: pruning wp-cli packages from composer.lock"
-		strip_wp_cli_from_lock_jq
+		echo "strip-wp-cli-composer-files: syncing composer.lock after json strip"
+		composer remove wp-cli/wp-cli-bundle --dev --no-install --ignore-platform-reqs || true
 	fi
 
-	if json_has_wp_cli_bundle; then
-		echo "strip-wp-cli-composer-files: composer.json still lists wp-cli/wp-cli-bundle" >&2
-		return 1
-	fi
-
-	if lock_has_wp_cli_bundle; then
-		echo "strip-wp-cli-composer-files: composer.lock still lists wp-cli/wp-cli-bundle" >&2
+	if json_has_wp_cli_bundle || lock_has_wp_cli_bundle; then
+		echo "strip-wp-cli-composer-files: failed to remove wp-cli/wp-cli-bundle from composer files" >&2
 		return 1
 	fi
 
