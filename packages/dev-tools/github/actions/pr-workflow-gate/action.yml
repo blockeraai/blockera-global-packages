@@ -1,7 +1,8 @@
 name: 'PR workflow gate'
 description: >
     Skip pull_request runs when .pr-workflows.json allowedActions excludes this workflow file.
-    Non-PR events always proceed. Requires checkout + ensure-global-packages before use.
+    Non-PR events always proceed. Requires checkout, ensure-global-packages, and
+    BLOCKERA_GLOBAL_PACKAGES_TOKEN (or GITHUB_TOKEN) on the job.
 inputs:
     workflow-file:
         description: 'Workflow filename (e.g. php-unit-tests.yml)'
@@ -22,4 +23,4 @@ runs:
           env:
               BLOCKERA_PR_WORKFLOW_FILE: ${{ inputs.workflow-file }}
               BLOCKERA_PR_WORKFLOWS_FORCE: ${{ inputs.force }}
-          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/pr-workflows/should-run.sh"
+          run: bash "${GITHUB_ACTION_PATH}/should-run.sh"
