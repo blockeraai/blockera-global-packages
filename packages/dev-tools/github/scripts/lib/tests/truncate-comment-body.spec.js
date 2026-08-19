@@ -16,8 +16,10 @@ describe( 'truncate-comment-body helper', () => {
 
 	test( 'truncateCommentBody with title keeps title and re-appends marker/notice', () => {
 		const title = '# Title';
-		const body = `${ title }\n\nbody-line-1\nbody-line-2\n\n compressed-size-action `;
-		const maxChars = title.length + 10; // force truncation
+		// Use a realistic maxChars so the helper's "budget" still includes the title.
+		// When maxChars is too small, budget becomes 0 and the output intentionally drops core content.
+		const body = `${ title }\n\n${ 'a'.repeat( 5000 ) }\n\n compressed-size-action `;
+		const maxChars = 2000; // force truncation, but keep title in the cut
 		const markerRegex = /\n\n[ \t]*compressed-size-action(?:::\S+)?[ \t]*(?:\n|$)/;
 		const defaultMarker = '\n\n compressed-size-action ';
 		const notice =
