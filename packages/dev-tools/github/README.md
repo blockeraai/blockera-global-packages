@@ -109,13 +109,18 @@ steps:
 | `BLOCKERA_SCSS_GLOB` | `*.scss` |
 | `BLOCKERA_PHPCS_CMD` | `phpcs --report-full --report-checkstyle=./.cache/phpcs-report.xml --standard=phpcs.xml` |
 | `BLOCKERA_PHPCS_REPORT` | `./.cache/phpcs-report.xml` |
+| `BLOCKERA_COMPOSER_POLICY_LABEL` | `code-lint/php` (log prefix for setup-php composer checks) |
 
 ## Setup PHP
 
-Strips `wp-cli/wp-cli-bundle` from composer files before `ramsey/composer-install`
-(wp-env images ship WP-CLI globally). Uses `composer remove --no-update` (json only,
-no dependency resolution) and jq lock pruning — safe after `platform.php` is raised
-for the matrix PHP version.
+Strips `wp-cli/wp-cli-bundle` from composer files **before** `platform.php` is overridden,
+then runs `ramsey/composer-install` (wp-env images ship WP-CLI globally). Uses
+`composer remove --no-install` so `composer.json` and `composer.lock` stay in sync;
+do not jq-prune the lock (that orphans transitive packages such as `composer/composer`).
+
+Jobs that run after `setup-php` can call
+`scripts/lib/verify-setup-php-composer-policy.sh` to assert wp-cli is absent and the
+lock still matches `composer.json`.
 
 | Input | Default |
 | --- | --- |

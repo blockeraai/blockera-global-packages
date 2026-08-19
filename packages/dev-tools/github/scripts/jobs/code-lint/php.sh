@@ -4,13 +4,19 @@
 # Defaults:
 #   BLOCKERA_PHPCS_CMD=phpcs --report-full --report-checkstyle=./.cache/phpcs-report.xml --standard=phpcs.xml
 #   BLOCKERA_PHPCS_REPORT=./.cache/phpcs-report.xml
+#   BLOCKERA_COMPOSER_POLICY_LABEL=code-lint/php
 #
 # On PHPCS failure, prints annotations via cs2pr when available, then exits non-zero.
 # Fails if non-composer version-controlled files were modified (setup-php may rewrite composer files).
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../../lib/verify-setup-php-composer-policy.sh
+source "${SCRIPT_DIR}/../../lib/verify-setup-php-composer-policy.sh"
+
 CMD="${BLOCKERA_PHPCS_CMD:-phpcs --report-full --report-checkstyle=./.cache/phpcs-report.xml --standard=phpcs.xml}"
 REPORT="${BLOCKERA_PHPCS_REPORT:-./.cache/phpcs-report.xml}"
+export BLOCKERA_COMPOSER_POLICY_LABEL="${BLOCKERA_COMPOSER_POLICY_LABEL:-code-lint/php}"
 
 export PATH="${PWD}/vendor/bin:${PATH}"
 mkdir -p .cache
@@ -35,20 +41,5 @@ if ! git diff --exit-code -- . ':(exclude)composer.json' ':(exclude)composer.loc
 	exit 1
 fi
 
-if [[ -f composer.json ]]; then
-	echo "code-lint/php: verifying composer files match setup-php CI policy"
-	if jq -e '.["require-dev"]["wp-cli/wp-cli-bundle"]' composer.json >/dev/null 2>&1; then
-		echo "code-lint/php: wp-cli/wp-cli-bundle must be absent from composer.json after setup-php" >&2
-		exit 1
-	fi
-	if [[ -f composer.lock ]] && ! composer validate --no-check-publish --quiet; then
-		echo "code-lint/php: composer.json and composer.lock are out of sync after setup-php" >&2
-		composer validate --no-check-publish || true
-		exit 1
-	fi
-fi
-
-if [[ -f composer.lock ]] && grep -Fq '"name": "wp-cli/wp-cli-bundle"' composer.lock; then
-	echo "code-lint/php: wp-cli/wp-cli-bundle must be absent from composer.lock after setup-php" >&2
-	exit 1
-fi
+echo "code-lint/php: verifying composer files match setup-php CI policy"
+verify_setup_php_composer_policy
