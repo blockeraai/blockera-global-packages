@@ -103,6 +103,9 @@
 		"layout": " .wp-block-tag-cloud"
 	},
 	"core/navigation-link": {
+		"states": {
+			"-current": ".wp-block-navigation .current-menu-item"
+		},
 		"root": ".wp-block-navigation-link",
 		"htmlEditable": {
 			"root": " .wp-block-navigation-item__content .wp-block-navigation-item__label"
