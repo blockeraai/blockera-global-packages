@@ -1,10 +1,10 @@
 {
 	"$schema": "./schemas/blocks.schema.json",
 	"data": {
-		"total": 109,
+		"total": 115,
 		"supported": 94,
 		"soft-supported": 109,
-		"not-supported": 0,
+		"not-supported": 6,
 		"no-need-to-support": 15
 	},
 	"supported": [
@@ -463,6 +463,36 @@
 			"name": "core/terms-query",
 			"title": "Terms Query",
 			"note": "No supported for front end needed but we can add some custom functionality like advanced query filters."
+		},
+		{
+			"name": "core/playlist",
+			"title": "Playlist",
+			"note": "Investigate if this block can be supported."
+		},
+		{
+			"name": "core/playlist-track",
+			"title": "Playlist Track",
+			"note": "Investigate if this block can be supported."
+		},
+		{
+			"name": "core/tabs",
+			"title": "Tabs",
+			"note": "Investigate if this block can be supported."
+		},
+		{
+			"name": "core/tab-panels",
+			"title": "Tab Panels",
+			"note": "Investigate if this block can be supported."
+		},
+		{
+			"name": "core/tab-panel",
+			"title": "Tab Panel",
+			"note": "Investigate if this block can be supported."
+		},
+		{
+			"name": "core/tab-list",
+			"title": "Tab List",
+			"note": "Investigate if this block can be supported."
 		}
 	],
 	"not-supported": []
