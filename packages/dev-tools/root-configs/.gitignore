@@ -95,9 +95,6 @@ cypress/downloads
 Scratch
 .jest-test-results.json
 
-# .github some subdirectories
-.github/wp-env-configs/development.json
-
 # development helper folders
 .cursor
 source-codes
