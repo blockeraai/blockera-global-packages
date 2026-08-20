@@ -438,8 +438,9 @@ env:
 | `BLOCKERA_E2E_USE_CREATE_WP_ENV` | `false` (also runs when `.pr-env.json` exists) |
 | `BLOCKERA_E2E_WRITE_CYPRESS_ENV` | `false` |
 | `BLOCKERA_E2E_CI_ENV` | `false` |
-| `BLOCKERA_E2E_PRE_TEST_CMD` | empty |
+| `BLOCKERA_E2E_PRE_TEST_CMD` | empty (runs before category specs; when `.pr-cypress.env.json` exists, `run.sh` sets `BLOCKERA_CYPRESS_IGNORE_PR_FILTER=true` for that invocation so `--spec` is not blocked by the PR filter) |
 | `BLOCKERA_E2E_PR_ENV_FILE` | `.pr-cypress.env.json` |
+| `BLOCKERA_CYPRESS_IGNORE_PR_FILTER` | unset (`true` skips loading `.pr-cypress.env.json` in Cypress config; set automatically during `BLOCKERA_E2E_PRE_TEST_CMD`) |
 | `BLOCKERA_E2E_WP_ENV_START_CMD` | `bash packages/global-packages/packages/dev-tools/github/scripts/retry-wp-env-start.sh` |
 | `BLOCKERA_E2E_COMPOSER_INSTALL` | `true` |
 | `BLOCKERA_E2E_BUILD_CMD` / `_TEST_CMD` / `_STOP_CMD` | `npm run build` / `test:e2e` / `env:stop` |
