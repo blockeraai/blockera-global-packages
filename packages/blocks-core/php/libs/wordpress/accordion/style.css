@@ -3,6 +3,7 @@
 	overflow: visible;
 }
 
+.blockera-block.wp-block-accordion .wp-block-accordion-panel[hidden],
 .blockera-block.wp-block-accordion-item .wp-block-accordion-panel[hidden] {
 	display: none;
 }
