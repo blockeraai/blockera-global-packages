@@ -121,8 +121,15 @@ if [[ -f "${PR_ENV_FILE}" ]]; then
 fi
 
 if [[ -n "${PRE_TEST_CMD}" ]]; then
-	echo "cypress-e2e/run: pre-test via BLOCKERA_E2E_PRE_TEST_CMD"
-	eval "${PRE_TEST_CMD}"
+	if [[ -f "${PR_ENV_FILE}" ]]; then
+		# .pr-cypress.env.json becomes Cypress specPattern. PRE_TEST_CMD usually
+		# targets a license/account spec outside that list, so Cypress 15 reports
+		# "no spec files were found" and the category job never runs.
+		echo "cypress-e2e/run: skipping BLOCKERA_E2E_PRE_TEST_CMD (${PR_ENV_FILE} spec filter)"
+	else
+		echo "cypress-e2e/run: pre-test via BLOCKERA_E2E_PRE_TEST_CMD"
+		eval "${PRE_TEST_CMD}"
+	fi
 fi
 
 echo "cypress-e2e/run: spec=${spec_pattern}"
