@@ -21,6 +21,7 @@
  *   FILE_PATTERN           regex; when set, only matching files are scanned
  *   CATEGORY_MODE          dot-prefix (default) | last-segment
  */
+const fs = require('fs');
 const path = require('path');
 const { walkFiles } = require('./walk-files');
 const { isMatchingPackage } = require('./package-match');
@@ -240,6 +241,69 @@ function isGeneralSpec(filePath, suffix) {
 	return new RegExp(`^[\\w-]+\\.${escapeRegExp(suffix)}$`).test(base);
 }
 
+/**
+ * Category for one spec path using the same rules as the full-tree scan.
+ * Uncategorized `name.{suffix}` files map to the synthetic general category.
+ *
+ * @param {string} filePath
+ * @param {Object} options resolveOptions() result
+ * @return {string|null}
+ */
+function categoryForSpecFile(filePath, options) {
+	if (isGeneralSpec(filePath, options.suffix)) {
+		return options.generalCategory;
+	}
+
+	const category = categorizedFrom(
+		filePath,
+		options.suffix,
+		options.categoryMode
+	);
+
+	if (!category || matchesExclude(category, options.excludeCategories)) {
+		return null;
+	}
+
+	return category;
+}
+
+function readPrCypressSpecs(prEnvFile, root) {
+	const abs = path.isAbsolute(prEnvFile)
+		? prEnvFile
+		: path.join(root || process.cwd(), prEnvFile);
+	const json = JSON.parse(fs.readFileSync(abs, 'utf8'));
+	const specs = json?.e2e?.specPattern;
+
+	if (!Array.isArray(specs)) {
+		throw new Error(
+			'list-test-categories: --pr-env e2e.specPattern must be an array'
+		);
+	}
+
+	return specs.filter((spec) => typeof spec === 'string' && spec.trim());
+}
+
+function listCategoriesFromSpecPaths(paths, overrides = {}) {
+	const options = resolveOptions(overrides);
+	const categories = new Set();
+
+	for (const spec of paths) {
+		const category = categoryForSpecFile(spec, options);
+		if (category) {
+			categories.add(category);
+		}
+	}
+
+	return sortCategories(Array.from(categories));
+}
+
+function specsForCategory(paths, category, overrides = {}) {
+	const options = resolveOptions(overrides);
+	return paths.filter(
+		(spec) => categoryForSpecFile(spec, options) === category
+	);
+}
+
 function collectFiles(options, filter) {
 	const files = [];
 
@@ -322,7 +386,7 @@ function listCategories(overrides = {}) {
 }
 
 function parseArgs(argv) {
-	const args = { help: false, envPrefix: null };
+	const args = { help: false, envPrefix: null, prEnv: null };
 
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i];
@@ -381,6 +445,14 @@ function parseArgs(argv) {
 			args.envPrefix = next();
 		} else if (arg.startsWith('--env-prefix=')) {
 			args.envPrefix = arg.slice('--env-prefix='.length);
+		} else if (arg === '--pr-env') {
+			args.prEnv = next();
+		} else if (arg.startsWith('--pr-env=')) {
+			args.prEnv = arg.slice('--pr-env='.length);
+		} else if (arg === '--specs-for-category') {
+			args.specsForCategory = next();
+		} else if (arg.startsWith('--specs-for-category=')) {
+			args.specsForCategory = arg.slice('--specs-for-category='.length);
 		} else {
 			throw new Error(`Unknown argument: ${arg}`);
 		}
@@ -410,6 +482,8 @@ Options / env (BLOCKERA_TEST_* or --env-prefix):
   --file-pattern / FILE_PATTERN
   --category-mode / CATEGORY_MODE         dot-prefix | last-segment
   --env-prefix                            e.g. BLOCKERA_E2E
+  --pr-env FILE                           Cypress .pr-cypress.env.json
+  --specs-for-category CAT                with --pr-env, print matching spec paths
 `);
 }
 
@@ -422,6 +496,30 @@ function runCli() {
 			return;
 		}
 
+		if (args.specsForCategory && !args.prEnv) {
+			throw new Error(
+				'list-test-categories: --specs-for-category requires --pr-env'
+			);
+		}
+
+		if (args.prEnv) {
+			const specs = readPrCypressSpecs(args.prEnv, process.cwd());
+
+			if (args.specsForCategory) {
+				process.stdout.write(
+					specsForCategory(specs, args.specsForCategory, args).join(
+						','
+					)
+				);
+				return;
+			}
+
+			process.stdout.write(
+				JSON.stringify(listCategoriesFromSpecPaths(specs, args))
+			);
+			return;
+		}
+
 		const categories = listCategories(args);
 		process.stdout.write(JSON.stringify(categories));
 	} catch (error) {
@@ -431,9 +529,13 @@ function runCli() {
 }
 
 module.exports = {
+	categoryForSpecFile,
 	listCategories,
+	listCategoriesFromSpecPaths,
 	parseArgs,
+	readPrCypressSpecs,
 	resolveOptions,
 	runCli,
+	specsForCategory,
 	sortCategories,
 };

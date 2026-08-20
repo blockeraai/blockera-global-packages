@@ -32,6 +32,7 @@ STOP_CMD="${BLOCKERA_E2E_STOP_CMD:-npm run env:stop}"
 PR_ENV_FILE="${BLOCKERA_E2E_PR_ENV_FILE:-.pr-cypress.env.json}"
 GENERAL_CATEGORY="${BLOCKERA_E2E_GENERAL_CATEGORY:-general-1}"
 PACKAGE_GLOB="${BLOCKERA_E2E_PACKAGE_GLOB:-}"
+LIST_CMD="${BLOCKERA_E2E_LIST_CATEGORIES_CMD:-node packages/global-packages/packages/dev-tools/github/scripts/list-test-categories.js --suffix e2e.cy.js --env-prefix BLOCKERA_E2E}"
 PREPARE_CMD="${BLOCKERA_E2E_PREPARE_CMD:-}"
 PRE_TEST_CMD="${BLOCKERA_E2E_PRE_TEST_CMD:-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -104,20 +105,12 @@ build_spec_pattern() {
 spec_pattern="$(build_spec_pattern "${CATEGORY}")"
 
 if [[ -f "${PR_ENV_FILE}" ]]; then
-	spec_patterns="$(jq -r '.e2e.specPattern[]' "${PR_ENV_FILE}")"
-	filtered_categories="$(
-		echo "${spec_patterns}" \
-			| sed -E 's|.*/([^/]+)\..*|\1|' \
-			| sed -E 's|\.e2e\.cy$||' \
-			| sort -u
-	)"
-	echo "cypress-e2e/run: PR filtered categories: ${filtered_categories}"
-	for category in ${filtered_categories}; do
-		if [[ "${CATEGORY}" == "${category}" ]]; then
-			spec_pattern="$(build_spec_pattern "${CATEGORY}")"
-			break
-		fi
-	done
+	spec_pattern="$(eval "${LIST_CMD} --pr-env \"${PR_ENV_FILE}\" --specs-for-category \"${CATEGORY}\"")"
+	echo "cypress-e2e/run: PR spec filter (${PR_ENV_FILE}) category=${CATEGORY}"
+	if [[ -z "${spec_pattern}" ]]; then
+		echo "cypress-e2e/run: no specs in ${PR_ENV_FILE} for category ${CATEGORY}" >&2
+		exit 1
+	fi
 fi
 
 if [[ -n "${PRE_TEST_CMD}" ]]; then
