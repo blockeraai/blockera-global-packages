@@ -68,7 +68,7 @@ describe('Inner Blocks Functionality Tests ...', () => {
 						.within(() => {
 							cy.get('.blockera-feature-type').should(
 								'have.length',
-								91
+								93
 							);
 
 							// Searching verse block type.
