@@ -11,7 +11,7 @@ import { resolveDimensionValueFromWP } from './dimension-variable-from-wp';
 const BUTTON_WIDTH_CLASS_REGEXP = /(?:^|\s)wp-block-button__width-(\d+)(?:\s|$)/;
 
 function getButtonWidthFromClassName(className: mixed): string | null {
-	if (!isString(className) || className === '') {
+	if (typeof className !== 'string' || className === '') {
 		return null;
 	}
 
