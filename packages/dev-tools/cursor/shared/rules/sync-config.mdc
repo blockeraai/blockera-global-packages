@@ -6,7 +6,7 @@ alwaysApply: false
 
 # sync-config
 
-Edit files inside `packages/global-packages/packages/dev-tools/`, not host-root copies. After a template change, run `npm run project:bootstrap` and commit the generated host files.
+Edit files inside `packages/global-packages/packages/dev-tools/`, not host-root copies. During `npm start`, template edits sync automatically. When webpack is not running, run `npm run project:bootstrap` and commit the generated host files.
 
 ## TypeScript
 

@@ -88,7 +88,7 @@ bash packages/global-packages/packages/dev-tools/github/scripts/jobs/code-lint/$
 
 ### Project bootstrap
 
-Host `npm run start` should run `project:bootstrap` first. Do not use npm lifecycle `prepare` (that stays `husky install`).
+Host `npm run start` should run `project:bootstrap --watch` (then webpack). Do not use npm lifecycle `prepare` (that stays `husky install`).
 
 ```sh
 node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.js --project=<id>

@@ -6,13 +6,16 @@
  *
  * Run from the consuming project root:
  *   node packages/global-packages/packages/dev-tools/js/bootstrap/bootstrap-project.js --project=<id>
+ *   node .../bootstrap-project.js --project=<id> --watch -- wp-scripts start --mode development
  */
 
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 const { writeRootConfigs } = require('../root-configs/write-root-configs');
 const {
 	DEFAULT_LOGO_WIDTH,
+	formatHeadingRight,
 	formatIndentedSectionHeading,
 	measureArtWidth,
 	writeSectionHeadingWidth,
@@ -32,6 +35,12 @@ const SHARED_TEMPLATES = 'shared';
 const ENV_SOURCE_CODES = 'BLOCKERA_EXTERNAL_SOURCE_CODES_PATH';
 const ENV_SOURCE_CODES_PLACEHOLDER = '/absolute/path/to/shared/source-codes';
 const STEP_COUNT = 2;
+const WATCH_DEBOUNCE_MS = 200;
+const DEV_TOOLS_ROOT = path.join(__dirname, '..', '..');
+const WATCH_DIRS = [
+	path.join(DEV_TOOLS_ROOT, 'root-configs'),
+	path.join(DEV_TOOLS_ROOT, 'cursor'),
+];
 
 const useColor =
 	process.env.NO_COLOR === undefined &&
@@ -90,9 +99,17 @@ function openBootstrapLog(logPath) {
 }
 
 const displayLines = [];
+let watchMode = false;
+let syncCount = 1;
+let quietStdout = false;
+let keepProcessAlive = false;
 
 function printOut(message) {
 	// @debug-ignore — CLI stdout for project bootstrap
+	if (quietStdout) {
+		return;
+	}
+
 	console.log(message);
 	writeBootstrapLog(message);
 	displayLines.push(message);
@@ -154,31 +171,105 @@ function banner() {
 	printOut('');
 	printOut(
 		color.cyan(
-			formatIndentedSectionHeading('Bootstrap', logoWidth, {
-				weight: 'heavy',
-			})
+			formatIndentedSectionHeading(
+				'Bootstrap',
+				logoWidth,
+				bootstrapHeadingOptions({ done: false })
+			)
 		)
 	);
 	printOut('');
 }
 
-function finishBootstrap() {
-	const greenHeading = color.ok(
-		formatIndentedSectionHeading('Bootstrap', logoWidth)
+function isBootstrapHeadingLine(line) {
+	const plain = String(line).replace(ANSI_PATTERN, '');
+
+	return /Bootstrap/.test(plain) && /[─━]/.test(plain);
+}
+
+function bootstrapHeadingOptions({ done }) {
+	const options = {
+		weight: done ? 'light' : 'heavy',
+		right: formatHeadingRight(
+			done
+				? watchMode && syncCount > 1
+					? 'watching'
+					: 'booted'
+				: 'booting'
+		),
+	};
+
+	if (watchMode) {
+		options.meta = `#${syncCount}`;
+	}
+
+	return options;
+}
+
+function replaceDisplayLine(test, message) {
+	const index = displayLines.findIndex((line) => test(line));
+
+	if (index >= 0) {
+		displayLines[index] = message;
+		return;
+	}
+
+	displayLines.push(message);
+}
+
+function persistBootstrapLog() {
+	const heading = color.ok(
+		formatIndentedSectionHeading(
+			'Bootstrap',
+			logoWidth,
+			bootstrapHeadingOptions({ done: true })
+		)
 	);
 
-	const display = displayLines
-		.join('\n')
-		.replace(/^.*[─━]{2} Bootstrap[^\n]*/m, greenHeading);
+	const headingIndexes = displayLines
+		.map((line, index) => (isBootstrapHeadingLine(line) ? index : -1))
+		.filter((index) => index >= 0);
+
+	if (headingIndexes.length) {
+		displayLines[headingIndexes[0]] = heading;
+
+		for (let i = headingIndexes.length - 1; i >= 1; i--) {
+			displayLines.splice(headingIndexes[i], 1);
+		}
+	} else {
+		displayLines.push(heading);
+	}
+
+	while (
+		displayLines.length &&
+		displayLines[displayLines.length - 1] === ''
+	) {
+		displayLines.pop();
+	}
+
+	const display = displayLines.join('\n');
+	const text = display.endsWith('\n') ? display : `${display}\n`;
 
 	if (bootstrapLogPath) {
-		fs.writeFileSync(bootstrapLogPath, display.endsWith('\n') ? display : `${display}\n`);
+		fs.writeFileSync(bootstrapLogPath, text);
+	}
+
+	return text;
+}
+
+function finishBootstrap({ clearScreen = true } = {}) {
+	const text = persistBootstrapLog();
+
+	if (!clearScreen) {
+		return;
 	}
 
 	process.stdout.write('\x1b[2J\x1b[3J\x1b[H');
-	process.stdout.write(display.endsWith('\n') ? display : `${display}\n`);
+	process.stdout.write(text);
 
-	printOut('');
+	if (!watchMode) {
+		printOut('');
+	}
 }
 
 function stepLabel(index) {
@@ -215,8 +306,18 @@ function logStepWithCounts(index, name, durationMs, inners, unit) {
 		1,
 		width - visibleLength(left) - visibleLength(right)
 	);
+	const line = `${left}${' '.repeat(pad)}${right}`;
 
-	printOut(`${left}${' '.repeat(pad)}${right}`);
+	if (quietStdout) {
+		replaceDisplayLine((item) => {
+			const plain = String(item).replace(ANSI_PATTERN, '');
+
+			return plain.includes(`[${index}/${STEP_COUNT}]`);
+		}, line);
+		return;
+	}
+
+	printOut(line);
 
 	inners.forEach((inner) => {
 		const extra = inner.detail ? `  ${inner.detail}` : '';
@@ -246,7 +347,24 @@ function fail(message, guide) {
 	}
 
 	printErr('');
+
+	if (keepProcessAlive) {
+		throw new Error(message);
+	}
+
 	process.exit(1);
+}
+
+function parseArgs(argv) {
+	const separator = argv.indexOf('--');
+	const own = separator === -1 ? argv : argv.slice(0, separator);
+	const followOn = separator === -1 ? [] : argv.slice(separator + 1);
+
+	return {
+		projectId: parseProjectId(own),
+		watch: own.includes('--watch'),
+		followOn,
+	};
 }
 
 function parseProjectId(argv) {
@@ -447,8 +565,131 @@ function bootstrapSyncConfig(root, projectId, env) {
 	});
 }
 
+function shouldIgnoreWatchPath(filename) {
+	if (!filename) {
+		return false;
+	}
+
+	const base = path.basename(filename);
+
+	return (
+		base === '.DS_Store' ||
+		base.startsWith('.#') ||
+		base.endsWith('~') ||
+		base.endsWith('.swp') ||
+		base.endsWith('.swo')
+	);
+}
+
+function watchSyncSources(root, projectId, env) {
+	let debounceTimer = null;
+	let running = false;
+	let queued = false;
+
+	const rerun = () => {
+		if (running) {
+			queued = true;
+			return;
+		}
+
+		running = true;
+		quietStdout = true;
+
+		try {
+			bootstrapSyncConfig(root, projectId, env);
+			syncCount += 1;
+			persistBootstrapLog();
+		} catch (error) {
+			if (!error.message) {
+				printErr(
+					`  ${color.err('✖')}  ${color.bold('sync-config failed')}  ${color.red(String(error))}`
+				);
+			}
+		} finally {
+			quietStdout = false;
+			running = false;
+
+			if (queued) {
+				queued = false;
+				rerun();
+			}
+		}
+	};
+
+	WATCH_DIRS.forEach((dir) => {
+		if (!fs.existsSync(dir)) {
+			return;
+		}
+
+		fs.watch(dir, { recursive: true }, (event, filename) => {
+			if (shouldIgnoreWatchPath(filename)) {
+				return;
+			}
+
+			clearTimeout(debounceTimer);
+			debounceTimer = setTimeout(rerun, WATCH_DEBOUNCE_MS);
+		});
+	});
+}
+
+function spawnFollowOn(args) {
+	const child = spawn(args[0], args.slice(1), {
+		stdio: 'inherit',
+		env: process.env,
+		cwd: process.cwd(),
+	});
+
+	let exiting = false;
+
+	const exitWith = (code) => {
+		if (exiting) {
+			return;
+		}
+
+		exiting = true;
+		process.exit(code);
+	};
+
+	const shutdown = (signal) => {
+		if (exiting) {
+			return;
+		}
+
+		if (child.exitCode === null && child.signalCode === null) {
+			child.kill(signal);
+		}
+
+		const forceTimer = setTimeout(() => {
+			child.kill('SIGKILL');
+			exitWith(1);
+		}, 2000);
+
+		if (typeof forceTimer.unref === 'function') {
+			forceTimer.unref();
+		}
+	};
+
+	process.on('SIGINT', () => shutdown('SIGINT'));
+	process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+	child.on('exit', (code, signal) => {
+		if (signal === 'SIGINT') {
+			exitWith(130);
+			return;
+		}
+
+		if (signal === 'SIGTERM') {
+			exitWith(143);
+			return;
+		}
+
+		exitWith(code ?? 0);
+	});
+}
+
 function main() {
-	const projectId = parseProjectId(process.argv.slice(2));
+	const { projectId, watch, followOn } = parseArgs(process.argv.slice(2));
+	watchMode = watch;
 	const root = process.cwd();
 	const env = loadEnv(path.join(root, '.env'));
 
@@ -458,6 +699,17 @@ function main() {
 	cleanUp(root);
 	bootstrapSyncConfig(root, projectId, env);
 	finishBootstrap();
+
+	if (!watchMode) {
+		return;
+	}
+
+	keepProcessAlive = true;
+	watchSyncSources(root, projectId, env);
+
+	if (followOn.length) {
+		spawnFollowOn(followOn);
+	}
 }
 
 main();

@@ -17,6 +17,7 @@ const { basename, isAbsolute, join, relative, resolve } = require('path');
 const consumerRequire = createRequire(join(process.cwd(), 'package.json'));
 const webpack = consumerRequire('webpack');
 const {
+	formatHeadingRight,
 	formatIndentedSectionHeading,
 	readSectionHeadingWidth,
 	SECTION_HEADING_INDENT,
@@ -40,6 +41,9 @@ const STATUS_INDENT = SECTION_HEADING_INDENT;
 const BOOTSTRAP_LOG = join(process.cwd(), '.cache/watch-bootstrap.log');
 const PROJECT_ROOT = process.cwd();
 const LOGO_WIDTH = readSectionHeadingWidth();
+/** Blank lines between the Bootstrap group and the Build group. */
+const BUILD_GROUP_GAP = '\n\n';
+const BUILD_GROUP_GAP_LINES = 2;
 const STATS_ISSUES = {
 	all: false,
 	errors: true,
@@ -69,13 +73,10 @@ function formatSessionClock(startedAt) {
 }
 
 /**
- * @param {number} startedAt Session start timestamp.
- * @return {string} Dim watching footer with session clock.
+ * @return {string} Dim stop hint (session clock lives on the group headings).
  */
-function formatReadyFooter(startedAt) {
-	return `${STATUS_INDENT}${ANSI.dim}watching  ·  ${formatSessionClock(
-		startedAt
-	)}  ·  Ctrl+C to stop${ANSI.reset}`;
+function formatReadyFooter() {
+	return `${STATUS_INDENT}${ANSI.dim}Ctrl+C to stop${ANSI.reset}`;
 }
 
 /**
@@ -108,14 +109,99 @@ function paint(color, text) {
  * @param {number} rebuildCount 1-based compile count.
  * @return {string} Colored Build heading.
  */
-function formatBuildHeading(color, rebuildCount) {
+function formatBuildHeading(
+	color,
+	rebuildCount,
+	frame = 0,
+	status = 'watching',
+	clock = ''
+) {
 	return paint(
 		color,
 		formatIndentedSectionHeading('Build', LOGO_WIDTH, {
 			meta: `#${rebuildCount}`,
-			weight: color === ANSI.green ? 'light' : 'heavy',
+			weight: status === 'building' ? 'heavy' : 'light',
+			right: formatHeadingRight(status, frame, clock),
 		})
 	);
+}
+
+/**
+ * @param {number} syncCount Bootstrap sync-config run count.
+ * @param {number} [frame] Pulse frame.
+ * @param {string} [status] Right-slot status.
+ * @return {string} Colored Bootstrap heading.
+ */
+function formatBootstrapHeading(syncCount, frame = 0, status = 'watching') {
+	return paint(
+		ANSI.green,
+		formatIndentedSectionHeading('Bootstrap', LOGO_WIDTH, {
+			meta: `#${syncCount}`,
+			weight: 'light',
+			right: formatHeadingRight(status, frame),
+		})
+	);
+}
+
+/**
+ * Drop extra Bootstrap heading lines so a re-sync cannot stack two banners.
+ *
+ * @param {string} prefix Bootstrap log text.
+ * @return {string} Prefix with at most one heading.
+ */
+function collapseDuplicateBootstrapHeadings(prefix) {
+	const lines = String(prefix).split('\n');
+	let seenHeading = false;
+	const next = [];
+
+	lines.forEach((line) => {
+		const plain = line.replace(ANSI_PATTERN, '');
+		const isHeading = /Bootstrap/.test(plain) && /[─━]/.test(plain);
+
+		if (isHeading) {
+			if (seenHeading) {
+				return;
+			}
+
+			seenHeading = true;
+		}
+
+		next.push(line);
+	});
+
+	return next.join('\n');
+}
+
+/**
+ * @return {{ lineCount: number, headingIndex: number, syncCount: number }|null}
+ */
+function readBootstrapHeadingState() {
+	try {
+		const prefix = collapseDuplicateBootstrapHeadings(
+			fs.readFileSync(BOOTSTRAP_LOG, 'utf8')
+		);
+		const lines = prefix.replace(/\n+$/, '').split('\n');
+		const headingIndex = lines.findIndex((line) => {
+			const plain = line.replace(ANSI_PATTERN, '');
+
+			return /Bootstrap/.test(plain) && /[─━]/.test(plain);
+		});
+
+		if (headingIndex < 0) {
+			return null;
+		}
+
+		const plain = lines[headingIndex].replace(ANSI_PATTERN, '');
+		const countMatch = plain.match(/#(\d+)/);
+
+		return {
+			lineCount: lines.length,
+			headingIndex,
+			syncCount: countMatch ? Number(countMatch[1]) : 1,
+		};
+	} catch (error) {
+		return null;
+	}
 }
 
 /**
@@ -138,7 +224,7 @@ function formatBar(percent, width) {
  */
 function barWidthFor(label) {
 	const prefix = STATUS_INDENT.length + 1 + 1 + 4 + 1;
-	const suffix = 1 + label.length;
+	const suffix = label ? 1 + label.length : 0;
 
 	return Math.max(10, LOGO_WIDTH - prefix - suffix);
 }
@@ -300,6 +386,10 @@ function createBuildStatusPlugin() {
 			let causeLine = '';
 			const sessionStartedAt = Date.now();
 			let footerTimer = null;
+			let pulseFrame = 0;
+			let compiling = false;
+			let watchLive = false;
+			let lastReadyDurationMs = 0;
 
 			const stopSpinner = () => {
 				if (timer) {
@@ -314,14 +404,13 @@ function createBuildStatusPlugin() {
 
 			const writeBuilding = () => {
 				const spinner = SPINNER_FRAMES[frame % SPINNER_FRAMES.length];
-				const label = 'Building';
 				writeStatus(
 					paint(
 						ANSI.cyan,
 						`${formatMeterPrefix(spinner, percent)}${formatBar(
 							percent,
-							barWidthFor(label)
-						)} ${label}`
+							barWidthFor('')
+						)}`
 					)
 				);
 			};
@@ -364,20 +453,63 @@ function createBuildStatusPlugin() {
 				}
 			};
 
+			const currentBuildStatus = () => {
+				if (compiling) {
+					return 'building';
+				}
+
+				if (!watchLive) {
+					return 'built';
+				}
+
+				return 'watching';
+			};
+
 			const refreshFooter = () => {
 				if (!hasFooter) {
 					return;
 				}
 
+				pulseFrame += 1;
+				const causeLines = hasCauseLine ? 2 : 0;
+				const buildUp = 2 + causeLines + 1 + 3;
+				const boot = readBootstrapHeadingState();
+
+				process.stdout.write('\x1b[s');
+
+				if (boot) {
+					const linesAboveHeading =
+						BUILD_GROUP_GAP_LINES +
+						Math.max(0, boot.lineCount - boot.headingIndex);
+					const bootUp = buildUp + linesAboveHeading;
+					process.stdout.write(
+						`\x1b[${bootUp}A${ANSI.clearLine}${formatBootstrapHeading(
+							boot.syncCount,
+							pulseFrame,
+							'watching'
+						)}`
+					);
+					process.stdout.write('\x1b[u\x1b[s');
+				}
+
 				process.stdout.write(
-					`\x1b[2A${ANSI.clearLine}${formatReadyFooter(
-						sessionStartedAt
-					)}\n\n`
+					`\x1b[${buildUp}A${ANSI.clearLine}${formatBuildHeading(
+						ANSI.green,
+						rebuildCount,
+						pulseFrame,
+						'watching',
+						formatSessionClock(sessionStartedAt)
+					)}`
+				);
+				process.stdout.write('\x1b[u');
+				process.stdout.write(
+					`\x1b[2A${ANSI.clearLine}${formatReadyFooter()}\n\n`
 				);
 			};
 
 			const startFooterClock = () => {
 				stopFooterClock();
+				refreshFooter();
 				footerTimer = setInterval(refreshFooter, 1000);
 
 				if (typeof footerTimer.unref === 'function') {
@@ -400,12 +532,15 @@ function createBuildStatusPlugin() {
 				);
 
 				writeStatus(
-					`${paint(ANSI.green, `${left}${' '.repeat(pad)}${right}`)}\n`
+					`${paint(ANSI.green, left)}${' '.repeat(pad)}${paint(
+						ANSI.dim,
+						right
+					)}\n`
 				);
-				process.stdout.write(
-					`\n${formatReadyFooter(sessionStartedAt)}\n\n`
-				);
+				process.stdout.write(`\n${formatReadyFooter()}\n\n`);
 				hasFooter = true;
+				lastReadyDurationMs = durationMs;
+				watchLive = true;
 				startFooterClock();
 			};
 
@@ -447,8 +582,18 @@ function createBuildStatusPlugin() {
 			};
 
 			const writeHeading = (color) => {
+				if (!printedMarker) {
+					process.stdout.write(BUILD_GROUP_GAP);
+				}
+
 				process.stdout.write(
-					`${ANSI.clearLine}${formatBuildHeading(color, rebuildCount)}\n\n`
+					`${ANSI.clearLine}${formatBuildHeading(
+						color,
+						rebuildCount,
+						pulseFrame,
+						currentBuildStatus(),
+						formatSessionClock(sessionStartedAt)
+					)}\n\n`
 				);
 			};
 
@@ -502,7 +647,9 @@ function createBuildStatusPlugin() {
 				let prefix = '';
 
 				try {
-					prefix = fs.readFileSync(BOOTSTRAP_LOG, 'utf8');
+					prefix = collapseDuplicateBootstrapHeadings(
+						fs.readFileSync(BOOTSTRAP_LOG, 'utf8')
+					);
 				} catch (error) {
 					prefix = '';
 				}
@@ -514,6 +661,8 @@ function createBuildStatusPlugin() {
 						prefix.endsWith('\n') ? prefix : `${prefix}\n`
 					);
 				}
+
+				process.stdout.write(BUILD_GROUP_GAP);
 
 				stopFooterClock();
 				hasCauseLine = false;
@@ -530,6 +679,7 @@ function createBuildStatusPlugin() {
 			compiler.hooks.watchRun.tap('BuildStatus', (watchingCompiler) => {
 				stopSpinner();
 				stopFooterClock();
+				compiling = true;
 				frame = 0;
 				percent = 0;
 				rebuildCount += 1;
@@ -556,6 +706,7 @@ function createBuildStatusPlugin() {
 
 			compiler.hooks.done.tap('BuildStatus', (stats) => {
 				stopSpinner();
+				compiling = false;
 				process.stdout.write(ANSI.showCursor);
 
 				const durationMs =
@@ -599,6 +750,7 @@ function createBuildStatusPlugin() {
 
 			compiler.hooks.failed.tap('BuildStatus', (error) => {
 				stopSpinner();
+				compiling = false;
 				process.stdout.write(ANSI.showCursor);
 				restoreScroll();
 				const punchline = firstErrorPunchline(null, error);
@@ -618,8 +770,24 @@ function createBuildStatusPlugin() {
 			compiler.hooks.shutdown.tap('BuildStatus', () => {
 				stopSpinner();
 				stopFooterClock();
+				fs.unwatchFile(BOOTSTRAP_LOG);
 				process.stdout.write(ANSI.showCursor);
 				restoreScroll();
+			});
+
+			fs.watchFile(BOOTSTRAP_LOG, { interval: 400, persistent: false }, (curr, prev) => {
+				if (
+					curr.mtimeMs === prev.mtimeMs ||
+					compiling ||
+					lastHadErrors ||
+					!printedMarker ||
+					!hasFooter
+				) {
+					return;
+				}
+
+				reprintAfterErrors();
+				writeReady(lastReadyDurationMs, false);
 			});
 		},
 	};

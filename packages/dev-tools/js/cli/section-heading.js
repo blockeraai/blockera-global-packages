@@ -2,9 +2,11 @@
  * Shared section rule used by bootstrap and webpack watch.
  * Total printed width matches the product logo art (including indent).
  *
- *   ── Bootstrap ─────────────────────────────────────────  (done)
- *   ━━ Build · #1 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  (live)
+ *   ── Bootstrap ─────────────────────────────────────────  booting
+ *   ━━ Build · #1 ━━━━━━━━━━━━━━━━━━━━━━━━━  13s  ● watching
  */
+
+const ANSI_PATTERN = /\u001b\[[0-9;]*m/g;
 
 const fs = require('fs');
 const path = require('path');
@@ -29,22 +31,48 @@ function measureArtWidth(lines) {
 }
 
 /**
+ * @param {string} text Text that may include ANSI.
+ * @return {number} Visible length.
+ */
+function visibleLength(text) {
+	return String(text).replace(ANSI_PATTERN, '').length;
+}
+
+/**
+ * @param {string} status Right-slot label (`booting`, `booted`, `building`, `built`, `watching`).
+ * @param {number} [frame] Pulse frame; used only for `watching`.
+ * @param {string} [clock] Elapsed session clock; shown before `watching`.
+ * @return {string} Right-slot text.
+ */
+function formatHeadingRight(status, frame = 0, clock = '') {
+	if (status === 'watching') {
+		const mark = `${frame % 2 === 0 ? '●' : '○'} watching`;
+
+		return clock ? `${clock}  ${mark}` : mark;
+	}
+
+	return String(status);
+}
+
+/**
  * @param {string} title Section name (e.g. Bootstrap, Build).
  * @param {Object} [options]
  * @param {string} [options.meta] Optional suffix after a middle dot.
  * @param {number} [options.width] Rule width (not including indent).
  * @param {'light'|'heavy'} [options.weight] Light `──` when done, heavy `━━` when live.
+ * @param {string} [options.right] Right-aligned suffix (e.g. `● watching`).
  * @return {string} Padded rule line without indent or color.
  */
 function formatSectionHeading(title, options = {}) {
-	const { meta, width = DEFAULT_LOGO_WIDTH, weight = 'light' } = options;
+	const { meta, width = DEFAULT_LOGO_WIDTH, weight = 'light', right } = options;
 	const label = meta ? `${title} · ${meta}` : title;
 	const dash = weight === 'heavy' ? '━' : '─';
 	const prefix = `${dash}${dash} `;
-	const used = prefix.length + label.length + 1;
+	const rightText = right ? `  ${right}` : '';
+	const used = prefix.length + label.length + 1 + visibleLength(rightText);
 	const dashes = Math.max(2, width - used);
 
-	return `${prefix}${label} ${dash.repeat(dashes)}`;
+	return `${prefix}${label} ${dash.repeat(dashes)}${rightText}`;
 }
 
 /**
@@ -101,6 +129,7 @@ function readSectionHeadingWidth(root = process.cwd()) {
 module.exports = {
 	DEFAULT_LOGO_WIDTH,
 	SECTION_HEADING_INDENT,
+	formatHeadingRight,
 	formatIndentedSectionHeading,
 	formatSectionHeading,
 	measureArtWidth,
