@@ -19,7 +19,10 @@ const notifyContainerListeners = () => {
 };
 
 const syncSharedInspectorContainer = () => {
-	const inspector = document.querySelector(BLOCK_INSPECTOR_SELECTOR);
+	const inspectors = [
+		...document.querySelectorAll(BLOCK_INSPECTOR_SELECTOR),
+	].filter(isConnectedInspector);
+	const inspector = inspectors[0] || null;
 	const next =
 		inspector && isConnectedInspector(inspector) ? inspector : null;
 
