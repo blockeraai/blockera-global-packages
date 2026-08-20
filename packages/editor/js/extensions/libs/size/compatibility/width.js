@@ -8,6 +8,38 @@ import { extractNumberAndUnit, isSpecialUnit } from '@blockera/controls';
  */
 import { resolveDimensionValueFromWP } from './dimension-variable-from-wp';
 
+const BUTTON_WIDTH_CLASS_REGEXP = /(?:^|\s)wp-block-button__width-(\d+)(?:\s|$)/;
+
+function getButtonWidthFromClassName(className: mixed): string | null {
+	if (!isString(className) || className === '') {
+		return null;
+	}
+
+	const match = className.match(BUTTON_WIDTH_CLASS_REGEXP);
+
+	if (!match) {
+		return null;
+	}
+
+	return match[1] + '%';
+}
+
+function getButtonWidthFromWPAttributes(attributes: Object): mixed {
+	const dimensionsWidth = attributes?.style?.dimensions?.width;
+
+	if (dimensionsWidth !== undefined && dimensionsWidth !== '') {
+		return resolveDimensionValueFromWP(dimensionsWidth);
+	}
+
+	if (attributes?.width !== undefined && attributes.width !== '') {
+		return typeof attributes.width === 'number'
+			? attributes.width + '%'
+			: resolveDimensionValueFromWP(attributes.width);
+	}
+
+	return getButtonWidthFromClassName(attributes?.className);
+}
+
 export function widthFromWPCompatibility({
 	attributes,
 	blockId,
@@ -31,16 +63,24 @@ export function widthFromWPCompatibility({
 
 			return attributes;
 
-		// no unit in value
-		// unit is %
-		case 'core/button':
-			if (attributes?.width !== undefined) {
+		// WP 7.1+: `supports.dimensions.width` → `style.dimensions.width`.
+		// Legacy markup may only keep `wp-block-button__width-{n}` on className
+		// after the numeric `width` attribute is dropped.
+		case 'core/button': {
+			if (attributes?.blockeraWidth?.value) {
+				return attributes;
+			}
+
+			const buttonWidth = getButtonWidthFromWPAttributes(attributes);
+
+			if (buttonWidth !== null && buttonWidth !== undefined) {
 				attributes.blockeraWidth = {
-					value: attributes?.width + '%',
+					value: buttonWidth,
 				};
 			}
 
 			return attributes;
+		}
 
 		// not unit in value
 		// unit is px always
@@ -199,11 +239,16 @@ export function widthToWPCompatibility({
 				size: +newValue.replace('px', ''), // remove px and convert to number
 			};
 
-		// A number attribute for width without unit (% is unit)
+		// WP 7.1+: string width on `style.dimensions.width`. Clear legacy numeric `width`.
 		case 'core/button':
 			if ('reset' === ref?.current?.action) {
 				return {
 					width: undefined,
+					style: {
+						dimensions: {
+							width: undefined,
+						},
+					},
 				};
 			}
 
@@ -212,15 +257,25 @@ export function widthToWPCompatibility({
 				isUndefined(newValue) ||
 				isSpecialUnit(newValue) ||
 				!isString(newValue) ||
-				!newValue.endsWith('%') // only percent units
+				newValue.endsWith('func')
 			) {
 				return {
 					width: undefined,
+					style: {
+						dimensions: {
+							width: undefined,
+						},
+					},
 				};
 			}
 
 			return {
-				width: +newValue.replace('%', ''), // remove % and convert to number
+				width: undefined,
+				style: {
+					dimensions: {
+						width: newValue,
+					},
+				},
 			};
 
 		// Blocks that support global styles dimensions.width
