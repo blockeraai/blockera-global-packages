@@ -110,6 +110,7 @@ function printOut(message) {
 		return;
 	}
 
+	// @debug-ignore
 	console.log(message);
 	writeBootstrapLog(message);
 	displayLines.push(message);
