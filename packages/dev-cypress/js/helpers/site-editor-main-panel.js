@@ -244,12 +244,17 @@ export function clickSiteEditorDrillDownBack(routeFragment) {
 }
 
 /**
- * Assert Blockera Site Editor chrome is mounted (branding under core SiteHub).
+ * Assert Blockera Site Editor chrome is mounted in view-mode sidebar.
+ *
+ * Gutenberg 7.1+ dropped desktop SiteHub (`.edit-site-site-hub` is mobile-only
+ * inside `.edit-site-layout__mobile`). Desktop chrome is sidebar + content +
+ * Blockera branding. Older cores still have a SiteHub sibling; do not require it.
  */
 export function assertSiteEditorChrome() {
 	cy.get('body').should('have.class', 'has-blockera-site-editor-main-panel');
-	cy.get('.edit-site-layout__sidebar > .edit-site-site-hub').should(
-		'be.visible'
+	cy.get('.edit-site-layout__sidebar').should('be.visible');
+	cy.get('.edit-site-layout__sidebar > .edit-site-sidebar__content').should(
+		'exist'
 	);
 	getSiteEditorHeader().should('be.visible');
 	cy.getByDataTest(SITE_EDITOR_TEST_IDS.headerTitle).should(
