@@ -3,9 +3,9 @@
 	"data": {
 		"total": 115,
 		"supported": 94,
-		"soft-supported": 109,
-		"not-supported": 6,
-		"no-need-to-support": 15
+		"soft-supported": 115,
+		"not-supported": 0,
+		"no-need-to-support": 21
 	},
 	"supported": [
 		{
