@@ -5,4 +5,4 @@ bin/block-themes-report/cache-themes.json
 bin/block-themes-report/cache-patterns.json
 bin/block-themes-report/cache-reviews.json
 bin/block-themes-report/theme-notes.json
-.pr-env.json
+
