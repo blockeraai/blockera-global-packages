@@ -1417,11 +1417,12 @@ export function restoreSpecialThemeTemplate(slug) {
  */
 export function assertStatusTooltip(statusTestId, { heading, bodyIncludes }) {
 	// Homepage/nav status Tooltip delay is 200ms; realHover + pointer events for
-	// headless Chrome (WP Tooltip listens to mouseenter). Hover twice — lower
-	// sidebar rows are flaky on first hover in headless Chrome.
-	// Scroll the badge to the middle of the drill-down content pane so the
-	// pinned header / Save Hub never cover it (Cypress treats `.edit-site`
-	// as position:fixed and fails `be.visible` when covered).
+	// headless Chrome (WP Tooltip / Ariakit listen to pointer enter). Hover
+	// twice — first hover is flaky in headless Chrome.
+	// Center the badge in the drill-down scroller so a top-placed tooltip has
+	// room (Ariakit unmounts on overflow). Do not scrollIntoView afterward —
+	// that pins the first rows under the drill-down header and the popover
+	// never mounts.
 	const hoverStatus = () => {
 		cy.getByDataTest(statusTestId).then(($el) => {
 			const el = $el[0];
@@ -1441,7 +1442,7 @@ export function assertStatusTooltip(statusTestId, { heading, bodyIncludes }) {
 			.trigger('pointerover', { force: true })
 			.trigger('mouseover', { force: true })
 			.trigger('mouseenter', { force: true })
-			.safeRealHover();
+			.realHover({ position: 'center', scrollBehavior: false });
 
 		// eslint-disable-next-line cypress/no-unnecessary-waiting
 		cy.wait(700);
@@ -1450,14 +1451,27 @@ export function assertStatusTooltip(statusTestId, { heading, bodyIncludes }) {
 	hoverStatus();
 	hoverStatus();
 
-	cy.get('body')
-		.find(
-			'[role="tooltip"], .components-tooltip, .blockera-component-tooltip',
-			{ timeout: 10000 }
-		)
+	const tooltipSelector =
+		'[role="tooltip"], .components-tooltip, .blockera-component-tooltip, [data-wp-compat-overlay-slot] [role="tooltip"]';
+
+	cy.getByDataTest(statusTestId)
 		.should('be.visible')
-		.and('contain.text', heading)
-		.and('contain.text', bodyIncludes);
+		.then(($el) => {
+			const describedBy = $el.attr('aria-describedby');
+			if (describedBy) {
+				cy.get(`#${describedBy}`, { timeout: 10000 })
+					.should('be.visible')
+					.and('contain.text', heading)
+					.and('contain.text', bodyIncludes);
+				return;
+			}
+
+			cy.get('body')
+				.find(tooltipSelector, { timeout: 10000 })
+				.should('be.visible')
+				.and('contain.text', heading)
+				.and('contain.text', bodyIncludes);
+		});
 }
 
 /**
