@@ -36,6 +36,9 @@ const DEFAULT_ALWAYS_EXCLUDE_SPEC_PATTERN = [
  * @param {string[]} [options.componentExcludeSpecPattern]
  * @param {Object} [options.env] Extra defaults merged into Cypress env.
  * @return {Object} Cypress `defineConfig` result.
+ *
+ * Env (process): `BLOCKERA_CYPRESS_IGNORE_PR_FILTER=true` skips merging
+ * `.pr-cypress.env.json` (used by CI pre-test before PR-filtered category specs).
  */
 function createCypressConfig(options = {}) {
 	const rootDir = options.rootDir || process.cwd();
@@ -64,12 +67,16 @@ function createCypressConfig(options = {}) {
 
 	const cypressEnvPath = path.resolve(rootDir, 'cypress.env.json');
 	const prCypressEnvPath = path.resolve(rootDir, '.pr-cypress.env.json');
+	const ignorePrCypressFilter =
+		process.env.BLOCKERA_CYPRESS_IGNORE_PR_FILTER === 'true';
 
 	// Localize Cypress env from consumer-root JSON files (not shared package dir).
 	env = {
 		...env,
 		...(fs.existsSync(cypressEnvPath) ? require(cypressEnvPath) : {}),
-		...(fs.existsSync(prCypressEnvPath) ? require(prCypressEnvPath) : {}),
+		...(fs.existsSync(prCypressEnvPath) && !ignorePrCypressFilter
+			? require(prCypressEnvPath)
+			: {}),
 		...process.env,
 	};
 

@@ -13,6 +13,7 @@
 #   BLOCKERA_E2E_PREPARE_CMD           replaces prepare.sh
 #   BLOCKERA_E2E_PRE_TEST_CMD          after build, before category specs
 #   BLOCKERA_E2E_PR_ENV_FILE           default: .pr-cypress.env.json
+#   BLOCKERA_CYPRESS_IGNORE_PR_FILTER  set during PRE_TEST when PR filter file exists
 #   BLOCKERA_E2E_GENERAL_CATEGORY      default: general-1
 set -euo pipefail
 
@@ -114,13 +115,12 @@ if [[ -f "${PR_ENV_FILE}" ]]; then
 fi
 
 if [[ -n "${PRE_TEST_CMD}" ]]; then
+	echo "cypress-e2e/run: pre-test via BLOCKERA_E2E_PRE_TEST_CMD"
 	if [[ -f "${PR_ENV_FILE}" ]]; then
-		# .pr-cypress.env.json becomes Cypress specPattern. PRE_TEST_CMD usually
-		# targets a license/account spec outside that list, so Cypress 15 reports
-		# "no spec files were found" and the category job never runs.
-		echo "cypress-e2e/run: skipping BLOCKERA_E2E_PRE_TEST_CMD (${PR_ENV_FILE} spec filter)"
+		# .pr-cypress.env.json narrows Cypress specPattern; ignore it for PRE_TEST
+		# so --spec in BLOCKERA_E2E_PRE_TEST_CMD can run outside the PR filter list.
+		BLOCKERA_CYPRESS_IGNORE_PR_FILTER=true eval "${PRE_TEST_CMD}"
 	else
-		echo "cypress-e2e/run: pre-test via BLOCKERA_E2E_PRE_TEST_CMD"
 		eval "${PRE_TEST_CMD}"
 	fi
 fi
