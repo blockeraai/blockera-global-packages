@@ -65,16 +65,22 @@ class CompatibilityCheck {
 	/**
 	 * Store the required version.
 	 *
+	 * Empty until the plugin header is read. Must be initialized so force-mode
+	 * checks (companion missing) do not access an uninitialized typed property.
+	 *
 	 * @var string $requires_at_least the required version.
 	 */
-	protected string $requires_at_least;
+	protected string $requires_at_least = '';
 
 	/**
 	 * Store the required plugin version.
 	 *
+	 * Empty when the companion plugin is not installed. Must be initialized so
+	 * checkVersions() is safe during WP-CLI / wp-env when only Pro is loaded.
+	 *
 	 * @var string $required_plugin_version the required plugin version.
 	 */
-	protected string $required_plugin_version;
+	protected string $required_plugin_version = '';
 
 	/**
 	 * Store the plugin version.
