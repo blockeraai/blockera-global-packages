@@ -67,9 +67,9 @@ addFilter(
 	() => {
 		// Resolved by store name (not a module import) so this shared bundle
 		// keeps building in repos where the products package is not wired up.
-		const companion = select('blockera/products')?.getCompanionProduct();
+		const companion = select('blockera/products')?.getProduct('blockera');
 
-		if (undefined !== companion && 'blockera' === companion.slug) {
+		if (undefined !== companion) {
 			return 'active' === companion.status;
 		}
 
