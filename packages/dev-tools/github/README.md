@@ -540,8 +540,16 @@ steps:
 
 ## Check PR config files
 
-Fails when leftover `.pr-*` files are present (except example templates:
-`*.env-example*` / `*.example.*` / `*-example*`).
+Fails when leftover PR-only config files are present. Defaults cover every
+known type (plus `.pr-*` for new names) and skip example templates
+(`*.env-example*` / `*.example.*` / `*-example*` / `*.example.json`):
+
+- `.pr-workflows.json`
+- `.pr-cypress.env.json`
+- `.pr-playwright.env.json`
+- `.pr-env.json`
+- `.pr-sync-env.json`
+- `.pr-github-playground.json`
 
 ```yaml
 steps:
@@ -554,14 +562,15 @@ steps:
 
 | Env | Default |
 | --- | --- |
-| `BLOCKERA_PR_CONFIG_NAME` | `.pr-*` |
-| `BLOCKERA_PR_CONFIG_EXCLUDE_NAMES` | `*.env-example* *.example.* *-example*` |
+| `BLOCKERA_PR_CONFIG_NAME` | `.pr-*` plus the known live filenames (space-separated `find -name` patterns) |
+| `BLOCKERA_PR_CONFIG_EXCLUDE_NAMES` | `*.env-example* *.example.* *-example* *.example.json` |
 | `BLOCKERA_PR_CONFIG_ROOT` | `.` |
 
 ## Remove PR config files
 
-Push-to-master cleanup: delete leftover `.pr-*` files, commit, and push.
-Shares the same `BLOCKERA_PR_CONFIG_NAME` / `_EXCLUDE_NAMES` / `_ROOT` as the check job.
+Push-to-master cleanup: delete leftover PR-only config files, commit, and push.
+Shares the same `BLOCKERA_PR_CONFIG_NAME` / `_EXCLUDE_NAMES` / `_ROOT` as the check job
+(`github/scripts/lib/pr-config-files.sh`).
 
 | Env | Default |
 | --- | --- |

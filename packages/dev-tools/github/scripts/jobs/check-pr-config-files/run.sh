@@ -1,39 +1,21 @@
 #!/usr/bin/env bash
-# Fail when PR-only config files (e.g. .pr-*) are still in the tree.
+# Fail when PR-only config files are still in the tree.
 #
-# Defaults match the Blockera plugin base. Override via env:
-#   BLOCKERA_PR_CONFIG_NAME            find -name pattern (default: .pr-*)
+# Defaults: see github/scripts/lib/pr-config-files.sh
+#   BLOCKERA_PR_CONFIG_NAME            space-separated find -name patterns
 #   BLOCKERA_PR_CONFIG_EXCLUDE_NAMES   space-separated ! -name patterns
-#                                      (default: *.env-example* *.example.* *-example*)
 #   BLOCKERA_PR_CONFIG_ROOT            search root (default: .)
 set -euo pipefail
 
 ROOT="${BLOCKERA_PR_CONFIG_ROOT:-.}"
-NAME_PATTERN="${BLOCKERA_PR_CONFIG_NAME:-.pr-*}"
-# Keep patterns literal: unquoted expansion would pathname-expand against cwd files.
-EXCLUDE_NAMES="${BLOCKERA_PR_CONFIG_EXCLUDE_NAMES:-*.env-example* *.example.* *-example*}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# shellcheck source=../../lib/pr-config-files.sh
+source "${SCRIPT_DIR}/../../lib/pr-config-files.sh"
 
 cd "${ROOT}"
 
-FIND_ARGS=(
-	.
-	\( -name node_modules -o -name .git -o -name vendor -o -name dist -o -name build \) -prune
-	-o
-	-type f
-	-name "${NAME_PATTERN}"
-)
-
-# noglob so "*.example.*" stays a find pattern, not a shell glob.
-set -f
-# shellcheck disable=SC2086
-for exclude in ${EXCLUDE_NAMES}; do
-	FIND_ARGS+=(! -name "${exclude}")
-done
-set +f
-
-FIND_ARGS+=(-print)
-
-FOUND="$(find "${FIND_ARGS[@]}" 2>/dev/null || true)"
+FOUND="$(pr_config_find -print)"
 
 if [[ -n "${FOUND}" ]]; then
 	echo "❌ PR config files found. Please remove all PR-related config files and wait for all tests to pass before merging to master."
