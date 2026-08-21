@@ -3,6 +3,14 @@
  *
  * Products deep-merge `.block-markup.config.js` on top. Token maps merge by
  * key; `enabled: false` on a parent disables children at runtime.
+ *
+ * Prettier post-process flags (override from the product config):
+ * - indentGutenbergComments
+ * - collapseTextOnlyTags
+ * - quoteJsonHtmlAttributes
+ * - indentSvgElements
+ * - wrapMixedInlineParents
+ * - breakFormControlTags
  */
 
 const STEPS = Object.freeze(['prettier', 'sanitize', 'localize']);
@@ -21,6 +29,10 @@ const baseConfig = {
 		skipWhenMarkupHasPhp: true,
 		indentGutenbergComments: true,
 		collapseTextOnlyTags: true,
+		quoteJsonHtmlAttributes: true,
+		indentSvgElements: true,
+		wrapMixedInlineParents: true,
+		breakFormControlTags: true,
 	},
 	sanitize: {
 		enabled: true,
