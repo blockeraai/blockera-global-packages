@@ -138,6 +138,8 @@ export const SITE_EDITOR_TEST_IDS = {
 		'blockera-site-editor-templates-nav-cpt-single:product',
 	templatesNavCptArchiveProduct:
 		'blockera-site-editor-templates-nav-cpt-archive:product',
+	/** Purpose filters that mount Templates Builder instead of purpose-nav. */
+	templatesBuilderPanel: 'blockera-templates-builder-panel',
 	templatesMissing: 'blockera-site-editor-templates-missing',
 	templatesMissingFallback: 'blockera-site-editor-templates-missing-fallback',
 	templatesAddSpecific: 'blockera-site-editor-templates-add-specific',
@@ -148,6 +150,63 @@ export const SITE_EDITOR_TEST_IDS = {
 	drillDown: 'blockera-site-editor-drill-down',
 	drillDownBack: 'blockera-site-editor-drill-down-back',
 };
+
+/** @type {Set<string>} */
+const TEMPLATES_BUILDER_FILTERS = new Set([
+	'archive',
+	'category',
+	'tag',
+	'author',
+	'date',
+	'taxonomy',
+	'search',
+	'home',
+	'index',
+	'single',
+	'page',
+	'404',
+]);
+
+/**
+ * Whether a Templates purpose filter opens Templates Builder (sidebar replaces purpose-nav).
+ *
+ * @param {string | null | undefined} filter
+ * @return {boolean}
+ */
+export function filterOpensTemplatesBuilder(filter) {
+	if (!filter || typeof filter !== 'string') {
+		return false;
+	}
+	if (TEMPLATES_BUILDER_FILTERS.has(filter)) {
+		return true;
+	}
+	return filter.startsWith('cpt-single:');
+}
+
+/**
+ * Assert Templates Builder shell is mounted in the drill-down sidebar.
+ */
+export function assertTemplatesBuilderShell() {
+	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesBuilderShell, {
+		timeout: 20000,
+	}).should('exist');
+	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesBuilderPanel, {
+		timeout: 20000,
+	}).should('be.visible');
+}
+
+/**
+ * Drill-down Back from Templates Builder → purpose-nav browse.
+ */
+export function backToTemplatesPurposeNav() {
+	cy.getByDataTest(SITE_EDITOR_TEST_IDS.drillDownBack)
+		.should('be.visible')
+		.click();
+	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesPanel, {
+		timeout: 20000,
+	}).should('be.visible');
+	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNav).should('be.visible');
+}
 
 export const DISABLE_EMOJIS_SETTING = 'blockera_one_disable_emojis';
 
@@ -212,11 +271,13 @@ export function assertSiteEditorTemplatesNav() {
 		'not.exist'
 	);
 	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNavHomepage).click();
-	/* Active homepage winner is hidden; other available layers (e.g. Index) show. */
-	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNavHomepageIndex).should(
-		'be.visible'
-	);
-	/* Leave live preview (`/wp_template/...`) and remount PageTemplates browse. */
+	cy.location('search').should((search) => {
+		expect(decodeURIComponent(String(search))).to.include('boFilter=home');
+	});
+	/* Home filter is archive-family Templates Builder — inline fallbacks stay in purpose-nav. */
+	assertTemplatesBuilderShell();
+	backToTemplatesPurposeNav();
+	/* Restore All browse so callers can assert core PageTemplates DataViews. */
 	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNavAll).click();
 	cy.location('search')
 		.should('include', 'p=%2Ftemplate')
@@ -774,6 +835,8 @@ export function clickSiteEditorOpenNavigation() {
  *   blogHomeStatus?: string | null,
  *   children?: Array<{ testId: string, statusTestId?: string, statusLabel?: string, visible?: boolean }>,
  *   absentChildTestIds?: string[],
+ *   homepageOpensBuilder?: boolean,
+ *   expectedHomepageFilter?: string,
  * }} options
  */
 export function assertTemplatesHomepageSection({
@@ -782,6 +845,8 @@ export function assertTemplatesHomepageSection({
 	blogHomeStatus = null,
 	children = [],
 	absentChildTestIds = [],
+	homepageOpensBuilder = false,
+	expectedHomepageFilter = null,
 } = {}) {
 	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNavHomepage).should(
 		'be.visible'
@@ -798,6 +863,22 @@ export function assertTemplatesHomepageSection({
 	}
 
 	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNavHomepage).click();
+
+	if (homepageOpensBuilder) {
+		if (expectedHomepageFilter) {
+			cy.location('search').should((search) => {
+				const decoded = decodeURIComponent(String(search));
+				expect(decoded).to.include(
+					`boFilter=${expectedHomepageFilter}`
+				);
+			});
+		}
+		assertTemplatesBuilderShell();
+		absentChildTestIds.forEach((testId) => {
+			cy.getByDataTest(testId).should('not.exist');
+		});
+		return;
+	}
 
 	if (blogHomeVisible) {
 		cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNavBlogPosts).should(
@@ -1078,7 +1159,11 @@ export function openTemplatesNavItem(testId, { boFilterIncludes } = {}) {
 		const decoded = decodeURIComponent(String(search));
 		expect(decoded).to.include(`boFilter=${filter}`);
 	});
-	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNav).should('exist');
+	if (filterOpensTemplatesBuilder(filter)) {
+		assertTemplatesBuilderShell();
+	} else {
+		cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNav).should('exist');
+	}
 }
 
 /**
