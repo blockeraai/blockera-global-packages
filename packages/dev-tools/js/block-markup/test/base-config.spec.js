@@ -28,4 +28,11 @@ describe('baseConfig', () => {
 		expect(baseConfig.localize.html.textNodes.enabled).toBe(true);
 		expect(baseConfig.localize.images.enabled).toBe(true);
 	});
+
+	it('enables prettier post-process passes by default', () => {
+		expect(baseConfig.prettier.quoteJsonHtmlAttributes).toBe(true);
+		expect(baseConfig.prettier.indentSvgElements).toBe(true);
+		expect(baseConfig.prettier.wrapMixedInlineParents).toBe(true);
+		expect(baseConfig.prettier.breakFormControlTags).toBe(true);
+	});
 });

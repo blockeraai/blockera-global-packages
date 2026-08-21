@@ -78,4 +78,21 @@ describe('mergeBlockMarkupConfig', () => {
 			false
 		);
 	});
+
+	it('lets the product disable prettier post-process tokens', () => {
+		const { config } = mergeBlockMarkupConfig({
+			prettier: {
+				indentSvgElements: false,
+				wrapMixedInlineParents: false,
+				breakFormControlTags: false,
+				quoteJsonHtmlAttributes: false,
+			},
+		});
+		expect(config.prettier.enabled).toBe(true);
+		expect(config.prettier.indentSvgElements).toBe(false);
+		expect(config.prettier.wrapMixedInlineParents).toBe(false);
+		expect(config.prettier.breakFormControlTags).toBe(false);
+		expect(config.prettier.quoteJsonHtmlAttributes).toBe(false);
+		expect(config.prettier.collapseTextOnlyTags).toBe(true);
+	});
 });
