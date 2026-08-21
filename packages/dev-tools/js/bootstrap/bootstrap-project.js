@@ -440,7 +440,6 @@ function copyTemplateTree(fromDir, toDir) {
 
 const CLEANUP_PATHS = [
 	{ name: 'dist/', rel: 'dist' },
-	{ name: '.cache/', rel: '.cache' },
 	{ name: '.cursor/', rel: '.cursor' },
 	{
 		name: 'cypress-image-diff-html-report/',

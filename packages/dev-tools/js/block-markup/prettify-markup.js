@@ -533,13 +533,13 @@ function collapsePhrasingContentTags(markup) {
 }
 
 /**
- * Indent of the nearest previous non-empty line.
+ * Nearest previous non-empty line.
  *
  * @param {string} markup HTML.
  * @param {number} lineStart Start index of the current line.
- * @return {string} Leading tabs/spaces.
+ * @return {string} Previous non-empty line, or empty.
  */
-function getPreviousLineIndent(markup, lineStart) {
+function getPreviousNonEmptyLine(markup, lineStart) {
 	let search = lineStart;
 
 	while (search > 0) {
@@ -548,8 +548,7 @@ function getPreviousLineIndent(markup, lineStart) {
 		const prevLine = markup.slice(prevStart, prevEnd);
 
 		if (prevLine.trim()) {
-			const indentMatch = prevLine.match(/^[\t ]*/);
-			return indentMatch ? indentMatch[0] : '';
+			return prevLine;
 		}
 
 		search = prevStart;
@@ -562,9 +561,44 @@ function getPreviousLineIndent(markup, lineStart) {
 }
 
 /**
+ * Indent of the nearest previous non-empty line.
+ *
+ * @param {string} markup HTML.
+ * @param {number} lineStart Start index of the current line.
+ * @return {string} Leading tabs/spaces.
+ */
+function getPreviousLineIndent(markup, lineStart) {
+	const prevLine = getPreviousNonEmptyLine(markup, lineStart);
+	const indentMatch = prevLine.match(/^[\t ]*/);
+	return indentMatch ? indentMatch[0] : '';
+}
+
+/**
+ * Last tag on a line, used to decide sibling vs nested indent.
+ *
+ * @param {string} beforeOnLine Text before the glued tag.
+ * @return {{ name: string, close: boolean, self: boolean } | null}
+ */
+function lastTagOnLine(beforeOnLine) {
+	const tagRe = /<\/?([a-zA-Z][\w:-]*)[^>]*>/g;
+	let token;
+	let last = null;
+
+	while ((token = tagRe.exec(beforeOnLine))) {
+		const name = token[1].toLowerCase();
+		const close = token[0].startsWith('</');
+		const self = VOID_TAGS[name] || /\/\s*>$/.test(token[0]);
+
+		last = { name, close, self };
+	}
+
+	return last;
+}
+
+/**
  * @param {string} markup HTML.
  * @param {number} offset Index of a tag.
- * @return {{ parentIndent: string, glued: boolean, sliceFrom: number }}
+ * @return {{ parentIndent: string, glued: boolean, asChild: boolean, sliceFrom: number }}
  */
 function getSvgPlacement(markup, offset) {
 	const lineStart = markup.lastIndexOf('\n', offset - 1) + 1;
@@ -576,13 +610,19 @@ function getSvgPlacement(markup, offset) {
 		return {
 			parentIndent: indentMatch ? indentMatch[0] : '',
 			glued: true,
+			asChild: true,
 			sliceFrom: offset,
 		};
 	}
 
+	const prevLine = getPreviousNonEmptyLine(markup, lineStart);
+	const last = lastTagOnLine(prevLine);
+	const asChild = Boolean(last && !last.close && !last.self);
+
 	return {
 		parentIndent: getPreviousLineIndent(markup, lineStart),
 		glued: false,
+		asChild,
 		sliceFrom: lineStart,
 	};
 }
@@ -649,12 +689,12 @@ function indentSvgElements(markup, indentUnit = '\t') {
 	let match;
 
 	while ((match = svgRe.exec(markup))) {
-		const { parentIndent, glued, sliceFrom } = getSvgPlacement(
+		const { parentIndent, glued, asChild, sliceFrom } = getSvgPlacement(
 			markup,
 			match.index
 		);
 		const svgIndent =
-			glued || parentIndent ? parentIndent + indentUnit : '';
+			glued || asChild ? parentIndent + indentUnit : parentIndent;
 		const formatted = formatSvgTree(match[0], svgIndent, indentUnit);
 		const afterIndex = match.index + match[0].length;
 		const gluedAfter =
@@ -880,28 +920,6 @@ function wrapMixedInlineParents(markup, indentUnit = '\t') {
 	}
 
 	return next;
-}
-
-/**
- * Last tag on a line, used to decide sibling vs nested indent.
- *
- * @param {string} beforeOnLine Text before the glued tag.
- * @return {{ name: string, close: boolean, self: boolean } | null}
- */
-function lastTagOnLine(beforeOnLine) {
-	const tagRe = /<\/?([a-zA-Z][\w:-]*)[^>]*>/g;
-	let token;
-	let last = null;
-
-	while ((token = tagRe.exec(beforeOnLine))) {
-		const name = token[1].toLowerCase();
-		const close = token[0].startsWith('</');
-		const self = VOID_TAGS[name] || /\/\s*>$/.test(token[0]);
-
-		last = { name, close, self };
-	}
-
-	return last;
 }
 
 /**
