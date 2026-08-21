@@ -144,6 +144,21 @@ node packages/dev-tools/js/theme-json/merge-theme-json.js --check
 
 Tokenized defaults live in `js/block-markup/base-config.js` (prettier / sanitize / localize). Products add `.block-markup.config.js` at the product root (`textDomain`, dirs, sparse token overrides). Unset `patternsDirs` / `templatesDirs` means that product has no patterns / templates.
 
+Prettier post-process flags (all `true` in the base config; set `false` in the product file to skip a pass):
+
+```js
+prettier: {
+  enabled: true,
+  skipWhenMarkupHasPhp: true,
+  indentGutenbergComments: true,
+  collapseTextOnlyTags: true,
+  quoteJsonHtmlAttributes: true, // data-wp-context="{ "id": "x" }" → single quotes
+  indentSvgElements: true, // format svg / path trees
+  wrapMixedInlineParents: true, // wrap <a> text + svg; align </a>
+  breakFormControlTags: true, // img /><button → button on its own line
+},
+```
+
 ```bash
 node packages/dev-tools/js/block-markup/normalize-block-markup-cli.js --check
 node packages/dev-tools/js/block-markup/normalize-block-markup-cli.js --prettier-only
