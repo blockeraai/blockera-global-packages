@@ -5,7 +5,7 @@ Shared development tooling for Blockera packages and themes:
 - Package webpack configs (JS + style entries)
 - ESLint `@blockera/*` import resolver
 - Modular `theme.json` merge/check CLI
-- Block patterns normalize/check CLI
+- Block-markup normalize/check/prettier CLI (patterns + templates)
 - Shared `git-conventional-commits.yaml` (husky `commit-msg` via `--config`)
 - Shared ambient TypeScript types (`types/blockera/`) loaded from host `tsconfig.json` via `tsconfig.base.json`
 - Shared `root-configs/` templates written by `project:bootstrap` (`Configure project files`)
@@ -37,7 +37,7 @@ packages/dev-tools/
 │   ├── webpack/                 # packages, styles, SVGO, plugins
 │   ├── eslint/import-resolver.js
 │   ├── theme-json/              # merge-theme-json CLI
-│   ├── patterns/                # pattern normalize CLI + Node sanitizers
+│   ├── block-markup/            # pattern + template normalize CLI + sanitizers
 │   ├── typescript/              # shared tsconfig.base.json
 │   ├── root-configs/            # write-root-configs CLI
 │   ├── sync-config/             # copy-template-dir / copy-template-file
@@ -140,13 +140,31 @@ node packages/dev-tools/js/theme-json/merge-theme-json.js --check
 
 `theme-config/` is the source of truth; generated `theme.json` must be checked for drift. Exports include build/merge/check/sort helpers.
 
-### Patterns CLI
+### Block-markup CLI
+
+Tokenized defaults live in `js/block-markup/base-config.js` (prettier / sanitize / localize). Products add `.block-markup.config.js` at the product root (`textDomain`, dirs, sparse token overrides). Unset `patternsDirs` / `templatesDirs` means that product has no patterns / templates.
 
 ```bash
-node packages/dev-tools/js/patterns/normalize-patterns-cli.js --check
+node packages/dev-tools/js/block-markup/normalize-block-markup-cli.js --check
+node packages/dev-tools/js/block-markup/normalize-block-markup-cli.js --prettier-only
 ```
 
-Supports `--check`, `--force`, `--debug`, `--quiet`, `--text-domain`, `--uri-php`.
+Supports `--check`, `--prettier-only`, `--force`, `--debug`, `--quiet`, `--text-domain`, `--uri-php`.
+
+Host scripts: `block-markup:normalize`, `block-markup:check`, `block-markup:prettier`.
+
+Templates (`templatesDirs`) run prettier + sanitize only. Disable a sanitizer token from the product file:
+
+```js
+sanitize: {
+  blocks: {
+    'core/query': {
+      attrs: { queryId: { enabled: false } },
+      // or enabled: false — every core/query sanitizer
+    },
+  },
+},
+```
 
 ---
 
