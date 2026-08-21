@@ -16,3 +16,10 @@ theme.json
 # Ignore test fixtures
 tests/**/input.html
 tests/**/*.css
+
+# Ignore theme patterna and templates files
+templates/**/*.html
+patterns/**/*.php
+
+# Ignore test html files
+tests/**/*.html
