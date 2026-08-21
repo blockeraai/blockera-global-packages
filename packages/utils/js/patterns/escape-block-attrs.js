@@ -6,6 +6,11 @@ const {
 	stripCopiedPatternMetadata,
 	sanitizeMetadataInRawConfig,
 } = require('./sanitize-block-metadata');
+const {
+	getBlockNameFromComment,
+	stripBlockRoleAttrs,
+	sanitizeBlockRolesInRawConfig,
+} = require('./sanitize-block-roles');
 
 const ALLOWED_BLOCK_ATTRS = [
 	{ name: 'label' },
@@ -32,8 +37,9 @@ function stringifyBlockConfig(configPrefix, configJson, configSuffix) {
 }
 
 /**
- * Escape selected string attributes inside a Gutenberg block comment JSON blob
- * and strip copied pattern metadata (`patternName`, `description`, …).
+ * Escape selected string attributes inside a Gutenberg block comment JSON blob,
+ * strip copied pattern metadata (`patternName`, `description`, …), and strip
+ * per-block-role instance attrs (`core/query` `queryId`).
  * Keeps `metadata.name` unless it was copied with `patternName`.
  *
  * @param {string} block Raw block comment text (without surrounding delimiters).
@@ -51,11 +57,13 @@ function escapeBlockAttrs(block, textDomain) {
 	const configPrefix = block.slice(0, start);
 	const config = block.slice(start, end + 1);
 	const configSuffix = block.slice(end + 1);
+	const blockName = getBlockNameFromComment(configPrefix);
 
 	try {
 		const configJson = JSON.parse(config);
 
 		stripCopiedPatternMetadata(configJson);
+		stripBlockRoleAttrs(configJson, blockName);
 
 		for (const attr of ALLOWED_BLOCK_ATTRS) {
 			if (!configJson[attr.name]) {
@@ -72,8 +80,11 @@ function escapeBlockAttrs(block, textDomain) {
 		return stringifyBlockConfig(configPrefix, configJson, configSuffix);
 	} catch (error) {
 		// Image URL rewrites inject PHP, which is not valid JSON. Still strip
-		// copied pattern metadata from the raw attrs blob.
-		const nextConfig = sanitizeMetadataInRawConfig(config);
+		// copied pattern metadata and per-block-role attrs from the raw blob.
+		const nextConfig = sanitizeBlockRolesInRawConfig(
+			sanitizeMetadataInRawConfig(config),
+			blockName
+		);
 
 		if (nextConfig === '{}') {
 			return configPrefix.replace(/\s+$/, '') + configSuffix;

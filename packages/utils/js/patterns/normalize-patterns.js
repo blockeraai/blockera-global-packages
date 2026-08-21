@@ -4,6 +4,7 @@
  * - wrap user-facing strings in esc_html_e / esc_attr_e
  * - rewrite absolute theme/plugin image URLs to a configurable PHP URI expression
  * - strip Gutenberg insert-time pattern metadata copied from the editor
+ * - strip per-block-role instance attrs (e.g. core/query queryId)
  */
 
 const fs = require('fs');
@@ -24,6 +25,7 @@ const {
 } = require('./escape-image-path');
 const { escapeBlockAttrs } = require('./escape-block-attrs');
 const { hasUnsanitizedPatternMetadata } = require('./sanitize-block-metadata');
+const { hasUnsanitizedBlockRoleAttrs } = require('./sanitize-block-roles');
 const {
 	hasPhpInPatternMarkup,
 	prettifyPatternMarkup,
@@ -324,12 +326,15 @@ async function normalizePatternsInDirectory(patternsDir, shared) {
 		);
 		const needsMetadataSanitize =
 			hasUnsanitizedPatternMetadata(originalContent);
+		const needsBlockRoleSanitize =
+			hasUnsanitizedBlockRoleAttrs(originalContent);
 		const canPrettify = !hasPhpInPatternMarkup(originalContent);
 
 		if (
 			!needsI18n &&
 			!hasStaticImages &&
 			!needsMetadataSanitize &&
+			!needsBlockRoleSanitize &&
 			!canPrettify &&
 			!force
 		) {
@@ -457,6 +462,7 @@ module.exports = {
 	escapeBlockAttrs,
 	hasStaticImagePaths,
 	hasUnsanitizedPatternMetadata,
+	hasUnsanitizedBlockRoleAttrs,
 	hasPhpInPatternMarkup,
 	prettifyPatternMarkup,
 };
