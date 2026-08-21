@@ -168,6 +168,8 @@ Supports `--check`, `--prettier-only`, `--force`, `--debug`, `--quiet`, `--text-
 
 Host scripts: `block-markup:normalize`, `block-markup:check`, `block-markup:prettier`.
 
+PHPUnit HTML snapshots (`HtmlDriver`) pipe actual markup through `prettify-stdin.js` before compare/update. wp-env `tests-wordpress` has no Node, so `ensure-wp-env-node.js` drops a Linux binary at `<product>/.cache/wp-env-node`.
+
 Templates (`templatesDirs`) run prettier + sanitize only. Disable a sanitizer token from the product file:
 
 ```js
