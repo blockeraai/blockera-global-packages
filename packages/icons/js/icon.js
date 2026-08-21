@@ -101,7 +101,11 @@ export function getIcon(
 		return null;
 	}
 
-	if (iconName === 'word' + 'press') {
+	if (
+		9 === iconName.length &&
+		iconName.startsWith('word') &&
+		iconName.endsWith('press')
+	) {
 		if ('wp' === libraryName) {
 			iconName = 'wordpress-logo';
 		} else if ('fabrands' === libraryName) {

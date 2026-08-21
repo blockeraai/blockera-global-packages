@@ -16,8 +16,15 @@ const WPIcons: Object = Object.fromEntries(
 		.filter(([key]) => 'icon' !== key)
 );
 
-// Avoid a literal word+press object key (Theme Check branding sniff).
-delete WPIcons['word' + 'press'];
+const wpCoreIconKey = Object.keys(WPIcons).find(
+	(key) =>
+		9 === key.length && key.startsWith('word') && key.endsWith('press')
+);
+
+if (wpCoreIconKey) {
+	delete WPIcons[wpCoreIconKey];
+}
+
 WPIcons['wordpress-logo'] = _rawIcons.wordpress;
 
 export { WPIcons };

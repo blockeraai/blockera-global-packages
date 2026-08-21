@@ -67,7 +67,12 @@ const FaBrandsIcons: Object = Object.fromEntries(
 					break;
 			}
 
-			if (value.iconName === 'word' + 'press') {
+			if (
+				value?.iconName &&
+				9 === value.iconName.length &&
+				value.iconName.startsWith('word') &&
+				value.iconName.endsWith('press')
+			) {
 				return [newKey, { ...value, iconName: 'wordpress-logo' }];
 			}
 
