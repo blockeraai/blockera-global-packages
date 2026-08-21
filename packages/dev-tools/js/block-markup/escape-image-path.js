@@ -41,7 +41,7 @@ function escapeImagePath(src, options = {}) {
 
 		if (absoluteMatch) {
 			if (debug) {
-				// @debug-ignore — CLI debug output for patterns:normalize --debug
+				// @debug-ignore — CLI debug output for block-markup --debug
 				// eslint-disable-next-line no-console
 				console.log(
 					'Image absolute match:',
@@ -70,7 +70,7 @@ function escapeImagePath(src, options = {}) {
 			const resultSrc = parts.slice(i).join('/');
 
 			if (debug) {
-				// @debug-ignore — CLI debug output for patterns:normalize --debug
+				// @debug-ignore — CLI debug output for block-markup --debug
 				// eslint-disable-next-line no-console
 				console.log('Image path-root match:', src, '->', resultSrc);
 			}

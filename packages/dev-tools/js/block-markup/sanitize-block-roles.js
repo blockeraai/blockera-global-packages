@@ -2,30 +2,54 @@
  * Strip instance-specific attributes copied from the editor, keyed by
  * Gutenberg block name (the block "role").
  *
- * Pattern sources must not ship a Query Loop `queryId`. Gutenberg assigns a
- * fresh id at insert time when the attribute is not finite — a hardcoded
- * value collides when the same pattern is used more than once.
- *
- * Comment tokens drop the `core/` prefix (`wp:query` for `core/query`).
- *
  * @see source-codes/block-editor/packages/block-library/src/query/block.json
  * @see source-codes/block-editor/packages/block-library/src/query/edit/query-content.js
  * @see source-codes/block-editor/packages/blocks/src/api/serializer.tsx
  */
 
-/**
- * Internal dependencies
- */
 const { escapeRegExp } = require('./escape-image-path');
+const { baseConfig } = require('./base-config');
 
 /**
- * Attributes to remove, keyed by Gutenberg block name.
- *
- * @type {Object<string, string[]>}
+ * @param {Object} [sanitize] Resolved sanitize config.
+ * @return {Object} Sanitize config.
  */
-const BLOCK_ROLE_SANITIZE_ATTRS = {
-	'core/query': ['queryId'],
-};
+function resolveSanitize(sanitize) {
+	return sanitize || baseConfig.sanitize;
+}
+
+/**
+ * Enabled attr names for a Gutenberg block.
+ *
+ * @param {Object} [sanitize] Resolved sanitize config.
+ * @param {string} blockName Gutenberg block name.
+ * @return {string[]} Attr keys to strip.
+ */
+function getEnabledBlockRoleAttrs(sanitize, blockName) {
+	const resolved = resolveSanitize(sanitize);
+
+	if (resolved.enabled === false || !blockName) {
+		return [];
+	}
+
+	const block = resolved.blocks && resolved.blocks[blockName];
+	if (!block || block.enabled === false || !block.attrs) {
+		return [];
+	}
+
+	const keys = Object.keys(block.attrs);
+	const enabled = [];
+
+	for (let i = 0; i < keys.length; i++) {
+		const key = keys[i];
+		const rule = block.attrs[key];
+		if (rule && rule.enabled !== false) {
+			enabled.push(key);
+		}
+	}
+
+	return enabled;
+}
 
 /**
  * Gutenberg comment token for a block name (`core/query` → `query`).
@@ -73,18 +97,28 @@ function getBlockNameFromComment(block) {
  * Detect unsanitized per-block-role attrs without parsing every comment.
  *
  * @param {string} content Pattern file contents.
+ * @param {Object} [sanitize] Resolved sanitize config.
  * @return {boolean} True when a registered block still has a dirty attr.
  */
-function hasUnsanitizedBlockRoleAttrs(content) {
+function hasUnsanitizedBlockRoleAttrs(content, sanitize) {
 	if (!content) {
 		return false;
 	}
 
-	const names = Object.keys(BLOCK_ROLE_SANITIZE_ATTRS);
+	const resolved = resolveSanitize(sanitize);
+	if (resolved.enabled === false || !resolved.blocks) {
+		return false;
+	}
+
+	const names = Object.keys(resolved.blocks);
 
 	for (let i = 0; i < names.length; i++) {
 		const blockName = names[i];
-		const keys = BLOCK_ROLE_SANITIZE_ATTRS[blockName];
+		const keys = getEnabledBlockRoleAttrs(resolved, blockName);
+		if (keys.length === 0) {
+			continue;
+		}
+
 		const token = escapeRegExp(toCommentToken(blockName));
 
 		if (!new RegExp(`<!--\\s+wp:${token}(?:\\s|\\{)`).test(content)) {
@@ -106,16 +140,17 @@ function hasUnsanitizedBlockRoleAttrs(content) {
  *
  * @param {Object} configJson Parsed block comment JSON.
  * @param {string|null} blockName Gutenberg block name.
+ * @param {Object} [sanitize] Resolved sanitize config.
  * @return {boolean} True when any key was removed.
  */
-function stripBlockRoleAttrs(configJson, blockName) {
+function stripBlockRoleAttrs(configJson, blockName, sanitize) {
 	if (!configJson || !blockName) {
 		return false;
 	}
 
-	const keys = BLOCK_ROLE_SANITIZE_ATTRS[blockName];
+	const keys = getEnabledBlockRoleAttrs(sanitize, blockName);
 
-	if (!keys) {
+	if (!keys.length) {
 		return false;
 	}
 
@@ -215,16 +250,17 @@ function findJsonPrimitiveValueEnd(source, valueStart) {
  *
  * @param {string} config Raw JSON object text including the braces.
  * @param {string|null} blockName Gutenberg block name.
+ * @param {Object} [sanitize] Resolved sanitize config.
  * @return {string} Config with registered keys removed.
  */
-function sanitizeBlockRolesInRawConfig(config, blockName) {
+function sanitizeBlockRolesInRawConfig(config, blockName, sanitize) {
 	if (!config || !blockName) {
 		return config;
 	}
 
-	const keys = BLOCK_ROLE_SANITIZE_ATTRS[blockName];
+	const keys = getEnabledBlockRoleAttrs(sanitize, blockName);
 
-	if (!keys) {
+	if (!keys.length) {
 		return config;
 	}
 
@@ -270,7 +306,8 @@ function sanitizeBlockRolesInRawConfig(config, blockName) {
 }
 
 module.exports = {
-	BLOCK_ROLE_SANITIZE_ATTRS,
+	BLOCK_ROLE_SANITIZE_ATTRS: { 'core/query': ['queryId'] },
+	getEnabledBlockRoleAttrs,
 	getBlockNameFromComment,
 	hasUnsanitizedBlockRoleAttrs,
 	stripBlockRoleAttrs,

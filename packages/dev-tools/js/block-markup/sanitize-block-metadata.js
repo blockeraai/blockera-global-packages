@@ -2,79 +2,106 @@
  * Strip Gutenberg insert-time pattern metadata copied when designing in the
  * editor and pasting into a pattern PHP file.
  *
- * Gutenberg writes `patternName`, `name`, `categories` (and sometimes
- * `description`) onto the root block at insert time. `patternName` also makes
- * the block a content-only section. Theme pattern sources already declare
- * Title / Description / Slug / Categories in the PHP file header.
- *
- * Keep `metadata.name` when it is a List View label (no `patternName`).
- * Strip `name` only on a copied pattern root, where it is the pattern title.
- *
  * @see source-codes/block-editor/packages/block-library/src/pattern/edit.js
  * @see source-codes/block-editor/packages/block-editor/src/store/private-selectors.js
  */
 
-/**
- * Keys Gutenberg copies onto the inserted pattern root block.
- *
- * @type {string[]}
- */
-const COPIED_PATTERN_METADATA_KEYS = [
-	'patternName',
-	'description',
-	'categories',
-];
+const { baseConfig } = require('./base-config');
 
-/**
- * Copied onto the pattern root together with `patternName`. A lone `name`
- * is the Gutenberg List View label and must be kept.
- *
- * @type {string}
- */
 const COPIED_PATTERN_TITLE_KEY = 'name';
 
 /**
- * Detect copied pattern metadata without parsing every block comment.
- * `patternName` is unique; the others are only dirty inside `metadata`.
- *
- * @param {string} content Pattern file contents.
- * @return {boolean} True when copied keys are still present.
+ * @param {Object} [sanitize] Resolved sanitize config.
+ * @return {Object} Metadata rule.
  */
-function hasUnsanitizedPatternMetadata(content) {
-	if (!content || content.indexOf('"metadata"') === -1) {
+function resolveMetadata(sanitize) {
+	if (sanitize && sanitize.metadata) {
+		return sanitize.metadata;
+	}
+
+	return baseConfig.sanitize.metadata;
+}
+
+/**
+ * @param {Object} [sanitize] Resolved sanitize config.
+ * @return {boolean} True when metadata sanitizing is on.
+ */
+function isMetadataSanitizeEnabled(sanitize) {
+	if (sanitize && sanitize.enabled === false) {
 		return false;
 	}
 
-	if (content.indexOf('"patternName"') !== -1) {
+	const metadata = resolveMetadata(sanitize);
+	return metadata.enabled !== false;
+}
+
+/**
+ * Detect copied pattern metadata without parsing every block comment.
+ *
+ * @param {string} content Pattern file contents.
+ * @param {Object} [sanitize] Resolved sanitize config.
+ * @return {boolean} True when copied keys are still present.
+ */
+function hasUnsanitizedPatternMetadata(content, sanitize) {
+	if (!isMetadataSanitizeEnabled(sanitize) || !content) {
+		return false;
+	}
+
+	if (content.indexOf('"metadata"') === -1) {
+		return false;
+	}
+
+	const metadata = resolveMetadata(sanitize);
+	const keys = metadata.keys || [];
+
+	if (keys.indexOf('patternName') !== -1 && content.indexOf('"patternName"') !== -1) {
 		return true;
 	}
 
-	return /"metadata"\s*:\s*\{[^{}]*"(?:description|categories)"/.test(
-		content
-	);
+	const nested = [];
+	for (let i = 0; i < keys.length; i++) {
+		if (keys[i] !== 'patternName') {
+			nested.push(keys[i]);
+		}
+	}
+
+	if (nested.length === 0) {
+		return false;
+	}
+
+	return new RegExp(
+		`"metadata"\\s*:\\s*\\{[^{}]*"(?:${nested.join('|')})"`
+	).test(content);
 }
 
 /**
  * Remove copied pattern keys from a parsed `metadata` object.
  *
  * @param {Object} configJson Parsed block comment JSON.
+ * @param {Object} [sanitize] Resolved sanitize config.
  * @return {boolean} True when any key was removed.
  */
-function stripCopiedPatternMetadata(configJson) {
+function stripCopiedPatternMetadata(configJson, sanitize) {
+	if (!isMetadataSanitizeEnabled(sanitize)) {
+		return false;
+	}
+
 	const metadata = configJson && configJson.metadata;
 
 	if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
 		return false;
 	}
 
+	const rule = resolveMetadata(sanitize);
+	const keys = rule.keys || [];
 	let changed = false;
 	const isCopiedPatternRoot = Object.prototype.hasOwnProperty.call(
 		metadata,
 		'patternName'
 	);
 
-	for (let i = 0; i < COPIED_PATTERN_METADATA_KEYS.length; i++) {
-		const key = COPIED_PATTERN_METADATA_KEYS[i];
+	for (let i = 0; i < keys.length; i++) {
+		const key = keys[i];
 		if (!Object.prototype.hasOwnProperty.call(metadata, key)) {
 			continue;
 		}
@@ -83,6 +110,7 @@ function stripCopiedPatternMetadata(configJson) {
 	}
 
 	if (
+		rule.stripTitleWithPatternName &&
 		isCopiedPatternRoot &&
 		Object.prototype.hasOwnProperty.call(metadata, COPIED_PATTERN_TITLE_KEY)
 	) {
@@ -189,13 +217,15 @@ function removeJsonProperty(source, keyStart, valueEnd) {
 /**
  * Strip copied pattern metadata from a raw (possibly PHP-containing) JSON blob.
  *
- * Used when `JSON.parse` of the full block attrs fails because image URLs were
- * already rewritten to `<?php echo esc_url(...) ?>`.
- *
  * @param {string} config Raw JSON object text including the braces.
+ * @param {Object} [sanitize] Resolved sanitize config.
  * @return {string} Config with copied metadata keys removed.
  */
-function sanitizeMetadataInRawConfig(config) {
+function sanitizeMetadataInRawConfig(config, sanitize) {
+	if (!isMetadataSanitizeEnabled(sanitize)) {
+		return config;
+	}
+
 	const marker = '"metadata"';
 	const markerIndex = config.indexOf(marker);
 
@@ -238,7 +268,7 @@ function sanitizeMetadataInRawConfig(config) {
 	}
 
 	const wrapper = { metadata };
-	if (!stripCopiedPatternMetadata(wrapper)) {
+	if (!stripCopiedPatternMetadata(wrapper, sanitize)) {
 		return config;
 	}
 
@@ -254,8 +284,10 @@ function sanitizeMetadataInRawConfig(config) {
 }
 
 module.exports = {
-	COPIED_PATTERN_METADATA_KEYS,
+	COPIED_PATTERN_METADATA_KEYS: baseConfig.sanitize.metadata.keys,
 	hasUnsanitizedPatternMetadata,
+	isMetadataSanitizeEnabled,
+	resolveMetadata,
 	stripCopiedPatternMetadata,
 	sanitizeMetadataInRawConfig,
 };

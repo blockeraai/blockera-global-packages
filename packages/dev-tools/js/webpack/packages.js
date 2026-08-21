@@ -34,7 +34,7 @@ const DependencyExtractionWebpackPlugin = consumerRequire(
  */
 const styleDependencies = require('./packages-styles');
 const MergeThemeJsonWebpackPlugin = require('./merge-theme-json-plugin');
-const NormalizePatternsWebpackPlugin = require('./normalize-patterns-plugin');
+const NormalizeBlockMarkupWebpackPlugin = require('./normalize-block-markup-plugin');
 
 /**
  * Keep `*-styles` bundles only for packages this consumer is compiling.
@@ -66,9 +66,9 @@ dotenv.config({ path: resolve(process.cwd(), '.env') });
 /** Only theme products ship `theme-config/`; plugins skip the merge plugin. */
 const shouldMergeThemeJson = MergeThemeJsonWebpackPlugin.hasThemeConfig();
 
-/** Normalize patterns when `.patterns.config.js` points at PHP pattern files. */
-const shouldNormalizePatterns =
-	NormalizePatternsWebpackPlugin.hasConfiguredPatterns();
+/** Normalize block-markup when `.block-markup.config.js` has source files. */
+const shouldNormalizeBlockMarkup =
+	NormalizeBlockMarkupWebpackPlugin.hasConfiguredSources();
 
 /**
  * Removes all svg rules from WordPress webpack config because it brakes the SVGR and SVGO plugins
@@ -186,8 +186,10 @@ module.exports = (env, argv) => {
 			new DependencyExtractionWebpackPlugin({ injectPolyfill: true }),
 			// Theme projects only (theme-config/ present). Plugins skip this.
 			shouldMergeThemeJson ? new MergeThemeJsonWebpackPlugin() : null,
-			// Normalize pattern PHP files when patterns are present.
-			shouldNormalizePatterns ? new NormalizePatternsWebpackPlugin() : null,
+			// Normalize pattern PHP + template HTML when sources are present.
+			shouldNormalizeBlockMarkup
+				? new NormalizeBlockMarkupWebpackPlugin()
+				: null,
 			new CopyPlugin({
 				patterns: [
 					{
