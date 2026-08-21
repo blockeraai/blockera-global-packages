@@ -180,6 +180,13 @@ module.exports = (env, argv) => {
 					test: /\.(txt|html)$/,
 					type: 'asset/source',
 				},
+				{
+					test: /[\\/]node_modules[\\/]@fortawesome[\\/]free-brands-svg-icons[\\/]/,
+					loader: resolve(
+						__dirname,
+						'fortawesome-wp-icon-name-loader.js'
+					),
+				},
 			],
 		},
 		plugins: [
