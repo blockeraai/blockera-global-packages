@@ -21,6 +21,10 @@ const {
 	writeSectionHeadingWidth,
 } = require('../cli/section-heading');
 const { formatDuration } = require('../cli/format-duration');
+const {
+	isBlockMarkupBootstrapActive,
+	collectBlockMarkupBootstrapSteps,
+} = require('./bootstrap-block-markup');
 
 const PROJECT_IDS = [
 	'blockera',
@@ -35,6 +39,7 @@ const SHARED_TEMPLATES = 'shared';
 const ENV_SOURCE_CODES = 'BLOCKERA_EXTERNAL_SOURCE_CODES_PATH';
 const ENV_SOURCE_CODES_PLACEHOLDER = '/absolute/path/to/shared/source-codes';
 const STEP_COUNT = 2;
+const SECTION_GAP_LINES = 3;
 const WATCH_DEBOUNCE_MS = 200;
 const DEV_TOOLS_ROOT = path.join(__dirname, '..', '..');
 const WATCH_DIRS = [
@@ -151,6 +156,13 @@ function loadLogoArt(projectId) {
 }
 
 let logoWidth = 0;
+let hasPrintedLogo = false;
+
+function printSectionGap() {
+	for (let i = 0; i < SECTION_GAP_LINES; i++) {
+		printOut('');
+	}
+}
 
 function printLogo(projectId) {
 	const art = loadLogoArt(projectId);
@@ -159,17 +171,22 @@ function printLogo(projectId) {
 		return;
 	}
 
+	hasPrintedLogo = true;
 	logoWidth = measureArtWidth(art);
 
 	printOut('');
 	art.forEach((line) => {
 		printOut(line.replace(/\*/g, () => color.star('*')));
 	});
-	printOut('');
 }
 
 function banner() {
-	printOut('');
+	if (hasPrintedLogo) {
+		printSectionGap();
+	} else {
+		printOut('');
+	}
+
 	printOut(
 		color.cyan(
 			formatIndentedSectionHeading(
@@ -186,6 +203,55 @@ function isBootstrapHeadingLine(line) {
 	const plain = String(line).replace(ANSI_PATTERN, '');
 
 	return /Bootstrap/.test(plain) && /[─━]/.test(plain);
+}
+
+function isBlockMarkupHeadingLine(line) {
+	const plain = String(line).replace(ANSI_PATTERN, '');
+
+	return /Block Markup/.test(plain) && /[─━]/.test(plain);
+}
+
+function blockMarkupHeadingOptions({ done }) {
+	return {
+		weight: done ? 'light' : 'heavy',
+		right: formatHeadingRight(done ? 'booted' : 'booting'),
+	};
+}
+
+function blockMarkupBanner({ done }) {
+	printSectionGap();
+	printOut(
+		(done ? color.ok : color.cyan)(
+			formatIndentedSectionHeading(
+				'Block Markup',
+				logoWidth,
+				blockMarkupHeadingOptions({ done })
+			)
+		)
+	);
+	printOut('');
+}
+
+function replaceSectionHeadingLine(title, isHeadingLine, headingOptions) {
+	const heading = color.ok(
+		formatIndentedSectionHeading(
+			title,
+			logoWidth,
+			headingOptions({ done: true })
+		)
+	);
+
+	const headingIndexes = displayLines
+		.map((line, index) => (isHeadingLine(line) ? index : -1))
+		.filter((index) => index >= 0);
+
+	if (headingIndexes.length) {
+		displayLines[headingIndexes[0]] = heading;
+
+		for (let i = headingIndexes.length - 1; i >= 1; i--) {
+			displayLines.splice(headingIndexes[i], 1);
+		}
+	}
 }
 
 function bootstrapHeadingOptions({ done }) {
@@ -219,27 +285,16 @@ function replaceDisplayLine(test, message) {
 }
 
 function persistBootstrapLog() {
-	const heading = color.ok(
-		formatIndentedSectionHeading(
-			'Bootstrap',
-			logoWidth,
-			bootstrapHeadingOptions({ done: true })
-		)
+	replaceSectionHeadingLine(
+		'Bootstrap',
+		isBootstrapHeadingLine,
+		bootstrapHeadingOptions
 	);
-
-	const headingIndexes = displayLines
-		.map((line, index) => (isBootstrapHeadingLine(line) ? index : -1))
-		.filter((index) => index >= 0);
-
-	if (headingIndexes.length) {
-		displayLines[headingIndexes[0]] = heading;
-
-		for (let i = headingIndexes.length - 1; i >= 1; i--) {
-			displayLines.splice(headingIndexes[i], 1);
-		}
-	} else {
-		displayLines.push(heading);
-	}
+	replaceSectionHeadingLine(
+		'Block Markup',
+		isBlockMarkupHeadingLine,
+		blockMarkupHeadingOptions
+	);
 
 	while (
 		displayLines.length &&
@@ -273,8 +328,8 @@ function finishBootstrap({ clearScreen = true } = {}) {
 	}
 }
 
-function stepLabel(index) {
-	return color.dim(`[${index}/${STEP_COUNT}]`);
+function stepLabel(index, totalSteps = STEP_COUNT) {
+	return color.dim(`[${index}/${totalSteps}]`);
 }
 
 const ANSI_PATTERN = /\u001b\[[0-9;]*m/g;
@@ -296,9 +351,17 @@ function countLabel(count, singular, plural) {
  * @param {number} durationMs Step duration.
  * @param {{ name: string, detail?: string }[]} inners Completed items.
  * @param {{ singular: string, plural: string }} unit Count noun.
+ * @param {number} [totalSteps] Total step count for the section label.
  */
-function logStepWithCounts(index, name, durationMs, inners, unit) {
-	const left = `  ${stepLabel(index)}  ${color.ok('✔')}  ${color.bold(name)}`;
+function logStepWithCounts(
+	index,
+	name,
+	durationMs,
+	inners,
+	unit,
+	totalSteps = STEP_COUNT
+) {
+	const left = `  ${stepLabel(index, totalSteps)}  ${color.ok('✔')}  ${color.bold(name)}`;
 	const right = color.dim(
 		`${countLabel(inners.length, unit.singular, unit.plural)} · ${formatDuration(durationMs)}`
 	);
@@ -313,7 +376,10 @@ function logStepWithCounts(index, name, durationMs, inners, unit) {
 		replaceDisplayLine((item) => {
 			const plain = String(item).replace(ANSI_PATTERN, '');
 
-			return plain.includes(`[${index}/${STEP_COUNT}]`);
+			return (
+				plain.includes(`[${index}/${totalSteps}]`) &&
+				plain.includes(name)
+			);
 		}, line);
 		return;
 	}
@@ -565,6 +631,28 @@ function bootstrapSyncConfig(root, projectId, env) {
 	});
 }
 
+function bootstrapBlockMarkup(root) {
+	if (!isBlockMarkupBootstrapActive(root)) {
+		return;
+	}
+
+	blockMarkupBanner({ done: false });
+
+	const { steps } = collectBlockMarkupBootstrapSteps(root);
+	const stepCount = steps.length;
+
+	steps.forEach((step, index) => {
+		logStepWithCounts(
+			index + 1,
+			step.name,
+			step.durationMs,
+			step.inners,
+			{ singular: 'dir', plural: 'dirs' },
+			stepCount
+		);
+	});
+}
+
 function shouldIgnoreWatchPath(filename) {
 	if (!filename) {
 		return false;
@@ -698,6 +786,7 @@ function main() {
 
 	cleanUp(root);
 	bootstrapSyncConfig(root, projectId, env);
+	bootstrapBlockMarkup(root);
 	finishBootstrap();
 
 	if (!watchMode) {

@@ -144,26 +144,55 @@ function formatBootstrapHeading(syncCount, frame = 0, status = 'watching') {
 }
 
 /**
- * Drop extra Bootstrap heading lines so a re-sync cannot stack two banners.
+ * @param {number} [frame] Pulse frame.
+ * @param {string} [status] Right-slot status.
+ * @return {string} Colored Block Markup heading.
+ */
+function formatBlockMarkupHeading(frame = 0, status = 'watching') {
+	return paint(
+		ANSI.green,
+		formatIndentedSectionHeading('Block Markup', LOGO_WIDTH, {
+			weight: 'light',
+			right: formatHeadingRight(status, frame),
+		})
+	);
+}
+
+/**
+ * Drop extra section heading lines so a re-sync cannot stack duplicate banners.
  *
  * @param {string} prefix Bootstrap log text.
- * @return {string} Prefix with at most one heading.
+ * @return {string} Prefix with at most one heading per section.
  */
-function collapseDuplicateBootstrapHeadings(prefix) {
+function collapseDuplicateSectionHeadings(prefix) {
 	const lines = String(prefix).split('\n');
-	let seenHeading = false;
+	const seen = {
+		bootstrap: false,
+		blockMarkup: false,
+	};
 	const next = [];
 
 	lines.forEach((line) => {
 		const plain = line.replace(ANSI_PATTERN, '');
-		const isHeading = /Bootstrap/.test(plain) && /[─━]/.test(plain);
+		const isBootstrapHeading =
+			/Bootstrap/.test(plain) && /[─━]/.test(plain);
+		const isBlockMarkupHeading =
+			/Block Markup/.test(plain) && /[─━]/.test(plain);
 
-		if (isHeading) {
-			if (seenHeading) {
+		if (isBootstrapHeading) {
+			if (seen.bootstrap) {
 				return;
 			}
 
-			seenHeading = true;
+			seen.bootstrap = true;
+		}
+
+		if (isBlockMarkupHeading) {
+			if (seen.blockMarkup) {
+				return;
+			}
+
+			seen.blockMarkup = true;
 		}
 
 		next.push(line);
@@ -177,7 +206,7 @@ function collapseDuplicateBootstrapHeadings(prefix) {
  */
 function readBootstrapHeadingState() {
 	try {
-		const prefix = collapseDuplicateBootstrapHeadings(
+		const prefix = collapseDuplicateSectionHeadings(
 			fs.readFileSync(BOOTSTRAP_LOG, 'utf8')
 		);
 		const lines = prefix.replace(/\n+$/, '').split('\n');
@@ -198,6 +227,34 @@ function readBootstrapHeadingState() {
 			lineCount: lines.length,
 			headingIndex,
 			syncCount: countMatch ? Number(countMatch[1]) : 1,
+		};
+	} catch (error) {
+		return null;
+	}
+}
+
+/**
+ * @return {{ lineCount: number, headingIndex: number }|null}
+ */
+function readBlockMarkupHeadingState() {
+	try {
+		const prefix = collapseDuplicateSectionHeadings(
+			fs.readFileSync(BOOTSTRAP_LOG, 'utf8')
+		);
+		const lines = prefix.replace(/\n+$/, '').split('\n');
+		const headingIndex = lines.findIndex((line) => {
+			const plain = line.replace(ANSI_PATTERN, '');
+
+			return /Block Markup/.test(plain) && /[─━]/.test(plain);
+		});
+
+		if (headingIndex < 0) {
+			return null;
+		}
+
+		return {
+			lineCount: lines.length,
+			headingIndex,
 		};
 	} catch (error) {
 		return null;
@@ -474,6 +531,7 @@ function createBuildStatusPlugin() {
 				const causeLines = hasCauseLine ? 2 : 0;
 				const buildUp = 2 + causeLines + 1 + 3;
 				const boot = readBootstrapHeadingState();
+				const blockMarkup = readBlockMarkupHeadingState();
 
 				process.stdout.write('\x1b[s');
 
@@ -485,6 +543,25 @@ function createBuildStatusPlugin() {
 					process.stdout.write(
 						`\x1b[${bootUp}A${ANSI.clearLine}${formatBootstrapHeading(
 							boot.syncCount,
+							pulseFrame,
+							'watching'
+						)}`
+					);
+					process.stdout.write('\x1b[u\x1b[s');
+				}
+
+				if (blockMarkup) {
+					const linesAfterHeading = Math.max(
+						0,
+						blockMarkup.lineCount - blockMarkup.headingIndex - 1
+					);
+					const blockMarkupUp =
+						buildUp +
+						BUILD_GROUP_GAP_LINES +
+						linesAfterHeading +
+						1;
+					process.stdout.write(
+						`\x1b[${blockMarkupUp}A${ANSI.clearLine}${formatBlockMarkupHeading(
 							pulseFrame,
 							'watching'
 						)}`
@@ -647,7 +724,7 @@ function createBuildStatusPlugin() {
 				let prefix = '';
 
 				try {
-					prefix = collapseDuplicateBootstrapHeadings(
+					prefix = collapseDuplicateSectionHeadings(
 						fs.readFileSync(BOOTSTRAP_LOG, 'utf8')
 					);
 				} catch (error) {
