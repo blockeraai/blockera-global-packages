@@ -264,6 +264,17 @@ const SKIP_TEXT_ONLY_COLLAPSE = {
 	style: true,
 };
 
+/** oEmbed URLs must stay on their own line inside this wrapper (see core/embed save.js). */
+const OEMBED_URL_WRAPPER_CLASS = 'wp-block-embed__wrapper';
+
+/**
+ * @param {string} [attrs] Raw tag attributes.
+ * @return {boolean} True when attrs mark an oEmbed URL wrapper.
+ */
+function isOembedUrlWrapperAttrs(attrs) {
+	return Boolean(attrs && attrs.includes(OEMBED_URL_WRAPPER_CLASS));
+}
+
 const VOID_TAGS = {
 	area: true,
 	base: true,
@@ -397,6 +408,10 @@ function collapseTextOnlyTags(markup) {
 				return full;
 			}
 
+			if (isOembedUrlWrapperAttrs(attrs)) {
+				return full;
+			}
+
 			if (!/\r|\n/.test(full) || !/\S/.test(inner)) {
 				return full;
 			}
@@ -502,6 +517,10 @@ function collapsePhrasingContentTags(markup) {
 		for (let i = 0; i < elements.length; i++) {
 			const el = elements[i];
 			if (SKIP_TEXT_ONLY_COLLAPSE[el.tag]) {
+				continue;
+			}
+
+			if (isOembedUrlWrapperAttrs(el.attrs)) {
 				continue;
 			}
 
@@ -974,6 +993,27 @@ function collapseWrappedTags(markup) {
 }
 
 /**
+ * Put bare oEmbed URLs on their own line inside `.wp-block-embed__wrapper`.
+ * Prettier collapses them to one line; WordPress needs `\n${url}\n` to autoembed.
+ *
+ * @param {string} markup HTML.
+ * @param {string} [indentUnit='\t'] One indent level.
+ * @return {string} Markup with expanded oEmbed wrappers.
+ */
+function expandOembedUrlWrappers(markup, indentUnit = '\t') {
+	const urlPattern = 'https?:\\/\\/[^\\s<]+';
+
+	return markup.replace(
+		new RegExp(
+			`^(\\t*)<div(\\s[^>]*\\b${OEMBED_URL_WRAPPER_CLASS}\\b[^>]*)>(${urlPattern})<\\/div>`,
+			'gm'
+		),
+		(match, indent, attrs, url) =>
+			`${indent}<div${attrs}>\n${indent}${indentUnit}${url}\n${indent}</div>`
+	);
+}
+
+/**
  * Interactivity API snapshots often emit invalid HTML:
  * `data-wp-context="{ "id": "x" }"`. Prettier then throws
  * "Opening tag not terminated" and we would keep the minified file.
@@ -1070,6 +1110,8 @@ async function prettifyMarkup(content, options = {}) {
 		formatted = breakFormControlTags(formatted, indentUnit);
 	}
 
+	formatted = expandOembedUrlWrappers(formatted, indentUnit);
+
 	if (start === 0) {
 		return formatted;
 	}
@@ -1100,6 +1142,7 @@ module.exports = {
 	collapsePhrasingContentTags,
 	collapseTextOnlyTags,
 	collapseWrappedTags,
+	expandOembedUrlWrappers,
 	quoteJsonHtmlAttributes,
 	indentSvgElements,
 	wrapMixedInlineParents,
