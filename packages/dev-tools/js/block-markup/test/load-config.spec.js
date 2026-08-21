@@ -57,20 +57,38 @@ describe('resolveDirs / sourceHasStep', () => {
 });
 
 describe('loadBlockMarkupConfig', () => {
-	it('loads blockera-one dirs from the product file', () => {
-		const themeRoot = path.resolve(__dirname, '../../../../../../..');
-		const loaded = loadBlockMarkupConfig({ quiet: true }, themeRoot);
+	it('loads dirs from the product file', () => {
+		const productRoot = path.resolve(__dirname, '../../../../../../..');
+		const loaded = loadBlockMarkupConfig({ quiet: true }, productRoot);
 
-		expect(loaded.patternsDirs.some((dir) => dir.endsWith('patterns'))).toBe(
-			true
-		);
+		expect(loaded.patternsDirs).toEqual([]);
 		expect(
-			loaded.templatesDirs.some((dir) => dir.endsWith('templates'))
+			loaded.templatesDirs.some((dir) => dir.endsWith('tests/fixtures'))
 		).toBe(true);
-		expect(loaded.sources).toHaveLength(2);
-		expect(loaded.sources[0].kind).toBe('patterns');
-		expect(loaded.sources[1].kind).toBe('templates');
-		expect(loaded.sources[1].steps).not.toContain('localize');
+		expect(loaded.sources).toHaveLength(1);
+		expect(loaded.sources[0].kind).toBe('templates');
+		expect(loaded.sources[0].steps).toEqual(['prettier']);
+	});
+
+	it('disables webpack when the product sets webpack: false', () => {
+		const root = fs.mkdtempSync(
+			path.join(os.tmpdir(), 'block-markup-nowp-')
+		);
+		fs.writeFileSync(
+			path.join(root, CONFIG_FILE_NAME),
+			`module.exports = {
+				textDomain: 'x',
+				uriPhpExpression: 'get_template_directory_uri()',
+				templatesDirs: ['templates'],
+				webpack: false,
+			};\n`,
+			'utf8'
+		);
+
+		const loaded = loadBlockMarkupConfig({ quiet: true }, root);
+		expect(loaded.webpack).toBe(false);
+
+		fs.rmSync(root, { recursive: true, force: true });
 	});
 
 	it('forces prettier-only steps on every source', () => {
