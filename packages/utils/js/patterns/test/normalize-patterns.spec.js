@@ -17,11 +17,17 @@ const {
 	checkPatterns,
 	hasPatternPhpFiles,
 	hasUnsanitizedPatternMetadata,
+	hasUnsanitizedBlockRoleAttrs,
 	needsTranslation,
 	normalizePatternsDirs,
 	hasPhpInPatternMarkup,
 	prettifyPatternMarkup,
 } = require('../normalize-patterns');
+const {
+	getBlockNameFromComment,
+	stripBlockRoleAttrs,
+	sanitizeBlockRolesInRawConfig,
+} = require('../sanitize-block-roles');
 
 describe('escapeText', () => {
 	it('wraps plain text with esc_html_e and the given text domain', () => {
@@ -164,6 +170,104 @@ describe('escapeBlockAttrs', () => {
 		expect(result).toContain(
 			'"metadata":{"name":"Body","blockeraOne":"container/body"}'
 		);
+	});
+
+	it('strips queryId from core/query and keeps the query envelope', () => {
+		const block =
+			' wp:query {"queryId":4,"query":{"perPage":9,"inherit":true},"metadata":{"blockeraOne":"section/posts-listing:full-width"},"align":"full"} ';
+
+		const result = escapeBlockAttrs(block, 'blockera-one');
+
+		expect(result).toContain('"query":{"perPage":9,"inherit":true}');
+		expect(result).toContain(
+			'"metadata":{"blockeraOne":"section/posts-listing:full-width"}'
+		);
+		expect(result).toContain('"align":"full"');
+		expect(result).not.toContain('"queryId"');
+	});
+
+	it('strips queryId from an explicit wp:core/query token', () => {
+		const block = ' wp:core/query {"queryId":12,"query":{"inherit":true}} ';
+
+		const result = escapeBlockAttrs(block, 'blockera-one');
+
+		expect(result).toBe(' wp:core/query {"query":{"inherit":true}} ');
+		expect(result).not.toContain('"queryId"');
+	});
+
+	it('omits attrs when queryId was the only property on core/query', () => {
+		expect(escapeBlockAttrs(' wp:query {"queryId":4} ', 'blockera-one')).toBe(
+			' wp:query '
+		);
+	});
+
+	it('does not strip queryId from a sibling query-* block', () => {
+		const block =
+			' wp:query-pagination {"queryId":4,"paginationArrow":"arrow"} ';
+
+		const result = escapeBlockAttrs(block, 'blockera-one');
+
+		expect(result).toContain('"queryId":4');
+		expect(result).toContain('"paginationArrow":"arrow"');
+	});
+
+	it('does not strip queryId from an unregistered block role', () => {
+		const block = ' wp:group {"queryId":4,"align":"wide"} ';
+
+		const result = escapeBlockAttrs(block, 'blockera-one');
+
+		expect(result).toContain('"queryId":4');
+		expect(result).toContain('"align":"wide"');
+	});
+
+	it('strips queryId from core/query when PHP image URLs make attrs unparseable', () => {
+		const block =
+			' wp:query {"queryId":4,"query":{"inherit":true},"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/cover.webp"} ';
+
+		const result = escapeBlockAttrs(block, 'blockera-one');
+
+		expect(result).toContain('"query":{"inherit":true}');
+		expect(result).toContain(
+			'"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/cover.webp"'
+		);
+		expect(result).not.toContain('"queryId"');
+	});
+});
+
+describe('sanitize-block-roles', () => {
+	it('resolves comment tokens to Gutenberg block names', () => {
+		expect(getBlockNameFromComment(' wp:query {"queryId":4} ')).toBe(
+			'core/query'
+		);
+		expect(getBlockNameFromComment(' wp:core/query {')).toBe('core/query');
+		expect(getBlockNameFromComment(' wp:query-pagination {')).toBe(
+			'core/query-pagination'
+		);
+		expect(getBlockNameFromComment(' wp:foo/bar {')).toBe('foo/bar');
+		expect(getBlockNameFromComment(' wp:group ')).toBe('core/group');
+		expect(getBlockNameFromComment('')).toBeNull();
+	});
+
+	it('strips only registered attrs for the given block role', () => {
+		const queryAttrs = { queryId: 4, query: { inherit: true } };
+		expect(stripBlockRoleAttrs(queryAttrs, 'core/query')).toBe(true);
+		expect(queryAttrs).toEqual({ query: { inherit: true } });
+
+		const pagination = { queryId: 4, paginationArrow: 'arrow' };
+		expect(stripBlockRoleAttrs(pagination, 'core/query-pagination')).toBe(
+			false
+		);
+		expect(pagination.queryId).toBe(4);
+	});
+
+	it('removes a primitive queryId from a raw PHP-containing attrs blob', () => {
+		const raw =
+			'{"queryId":4,"query":{"inherit":true},"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/cover.webp"}';
+
+		expect(sanitizeBlockRolesInRawConfig(raw, 'core/query')).toBe(
+			'{"query":{"inherit":true},"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/cover.webp"}'
+		);
+		expect(sanitizeBlockRolesInRawConfig(raw, 'core/group')).toBe(raw);
 	});
 });
 
@@ -343,6 +447,29 @@ describe('normalizePatternContent', () => {
 		);
 	});
 
+	it('strips core/query queryId from already-normalized content', async () => {
+		const input = `<?php
+/**
+ * Title: Listing
+ */
+?>
+<!-- wp:query {"queryId":4,"query":{"perPage":9,"inherit":true},"align":"full"} -->
+<div class="wp-block-query alignfull">
+	<h2 class="wp-block-heading"><?php esc_html_e( 'Hello', 'blockera-one' ); ?></h2>
+</div>
+<!-- /wp:query -->
+`;
+
+		const output = await normalizePatternContent(input, baseOptions);
+
+		expect(output).not.toContain('"queryId"');
+		expect(output).toContain('"query":{"perPage":9,"inherit":true}');
+		expect(output).toContain('"align":"full"');
+		expect(output).toContain(
+			"<?php esc_html_e( 'Hello', 'blockera-one' ); ?>"
+		);
+	});
+
 	it('strips copied pattern metadata from already-normalized content', async () => {
 		const input = `<?php
 /**
@@ -506,6 +633,25 @@ describe('normalizePatterns / checkPatterns', () => {
 		).toContain('Needs work');
 	});
 
+	it('hasUnsanitizedBlockRoleAttrs detects a leftover core/query queryId', () => {
+		expect(
+			hasUnsanitizedBlockRoleAttrs(
+				'<!-- wp:query {"queryId":4,"query":{"inherit":true}} -->'
+			)
+		).toBe(true);
+		expect(
+			hasUnsanitizedBlockRoleAttrs(
+				'<!-- wp:query {"query":{"inherit":true}} -->'
+			)
+		).toBe(false);
+		expect(
+			hasUnsanitizedBlockRoleAttrs(
+				'<!-- wp:query-pagination {"queryId":4} -->'
+			)
+		).toBe(false);
+		expect(hasUnsanitizedBlockRoleAttrs('<!-- wp:group -->')).toBe(false);
+	});
+
 	it('hasUnsanitizedPatternMetadata detects copied editor keys', () => {
 		expect(
 			hasUnsanitizedPatternMetadata(
@@ -577,6 +723,38 @@ describe('normalizePatterns / checkPatterns', () => {
 
 		expect(result.ok).toBe(true);
 		expect(result.changedFiles).toHaveLength(0);
+	});
+
+	it('sanitizes core/query queryId on already-normalized files', async () => {
+		writePattern(
+			'listing.php',
+			`<?php
+/**
+ * Title: Listing
+ */
+?>
+<!-- wp:query {"queryId":4,"query":{"perPage":9,"inherit":true},"align":"full"} -->
+<div class="wp-block-query alignfull">
+	<h2><?php esc_html_e( 'Hello', 'blockera-one' ); ?></h2>
+</div>
+<!-- /wp:query -->
+`
+		);
+
+		const result = await normalizePatterns({
+			patternsDir: tempDir,
+			textDomain: 'blockera-one',
+			uriPhpExpression: 'get_template_directory_uri()',
+			quiet: true,
+		});
+
+		expect(result.ok).toBe(true);
+		expect(result.changedFiles).toHaveLength(1);
+		const written = fs.readFileSync(result.changedFiles[0], 'utf8');
+		expect(written).not.toContain('"queryId"');
+		expect(written).toContain('"query":{"perPage":9,"inherit":true}');
+		expect(written).toContain('"align":"full"');
+		expect(written).toContain("esc_html_e( 'Hello', 'blockera-one' )");
 	});
 
 	it('sanitizes copied pattern metadata on already-normalized files', async () => {
