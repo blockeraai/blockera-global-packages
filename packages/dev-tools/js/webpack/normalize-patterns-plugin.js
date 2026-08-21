@@ -37,7 +37,7 @@ class NormalizePatternsWebpackPlugin {
 			const {
 				hasPatternPhpFiles,
 				normalizePatterns,
-			} = require('../../../utils/js/patterns/normalize-patterns');
+			} = require('../patterns/normalize-patterns');
 
 			let config;
 			try {
@@ -126,7 +126,7 @@ function hasConfiguredPatterns(overrides = {}) {
 		} = require('../patterns/load-patterns-config');
 		const {
 			hasPatternPhpFiles,
-		} = require('../../../utils/js/patterns/normalize-patterns');
+		} = require('../patterns/normalize-patterns');
 		const config = loadPatternsConfig({ ...overrides, quiet: true });
 		return hasPatternPhpFiles(config.patternsDirs);
 	} catch (error) {

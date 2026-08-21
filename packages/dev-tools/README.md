@@ -37,7 +37,7 @@ packages/dev-tools/
 │   ├── webpack/                 # packages, styles, SVGO, plugins
 │   ├── eslint/import-resolver.js
 │   ├── theme-json/              # merge-theme-json CLI
-│   ├── patterns/                # normalize-patterns CLI
+│   ├── patterns/                # pattern normalize CLI + Node sanitizers
 │   ├── typescript/              # shared tsconfig.base.json
 │   ├── root-configs/            # write-root-configs CLI
 │   ├── sync-config/             # copy-template-dir / copy-template-file

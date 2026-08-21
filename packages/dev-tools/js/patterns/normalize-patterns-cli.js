@@ -15,7 +15,7 @@ const { loadPatternsConfig } = require('./load-patterns-config');
 const {
 	normalizePatterns,
 	checkPatterns,
-} = require('../../../utils/js/patterns/normalize-patterns');
+} = require('./normalize-patterns');
 
 /**
  * Parse CLI argv into option overrides.
