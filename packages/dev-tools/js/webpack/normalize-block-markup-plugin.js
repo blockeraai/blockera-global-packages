@@ -40,7 +40,7 @@ class NormalizeBlockMarkupWebpackPlugin {
 				return;
 			}
 
-			if (!hasConfiguredSourceFiles(config)) {
+			if (config.webpack === false || !hasConfiguredSourceFiles(config)) {
 				return;
 			}
 
@@ -134,6 +134,9 @@ function hasConfiguredSources(overrides = {}) {
 	try {
 		const { loadBlockMarkupConfig } = require('../block-markup/load-config');
 		const config = loadBlockMarkupConfig({ ...overrides, quiet: true });
+		if (config.webpack === false) {
+			return false;
+		}
 		return hasConfiguredSourceFiles(config);
 	} catch (error) {
 		return false;

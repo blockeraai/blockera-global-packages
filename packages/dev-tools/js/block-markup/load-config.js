@@ -191,6 +191,10 @@ function loadBlockMarkupConfig(overrides = {}, productRoot = PRODUCT_ROOT) {
 		debug: Boolean(overrides.debug),
 		check: Boolean(overrides.check),
 		prettierOnly: Boolean(overrides.prettierOnly || config.prettierOnly),
+		webpack:
+			overrides.webpack !== false &&
+			fileConfig.webpack !== false &&
+			config.webpack !== false,
 	};
 }
 
