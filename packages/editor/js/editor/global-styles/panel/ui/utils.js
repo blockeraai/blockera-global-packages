@@ -197,7 +197,7 @@ export function getRenderedStyles(
 		label: _x('Default', 'block style', 'blockera'),
 		isDefault: true,
 		icon: {
-			name: 'wordpress',
+			name: 'wordpress-logo',
 			library: 'wp',
 		},
 	};
@@ -274,7 +274,7 @@ export function getRenderedStyles(
 			return {
 				...style,
 				icon: {
-					name: 'wordpress',
+					name: 'wordpress-logo',
 					library: 'wp',
 				},
 			};

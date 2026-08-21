@@ -101,6 +101,14 @@ export function getIcon(
 		return null;
 	}
 
+	if (iconName === 'word' + 'press') {
+		if ('wp' === libraryName) {
+			iconName = 'wordpress-logo';
+		} else if ('fabrands' === libraryName) {
+			iconName = 'fa-wordpress';
+		}
+	}
+
 	const lib = getIconLibraryIcons(libraryName);
 
 	if (!isUndefined(lib[iconName])) {

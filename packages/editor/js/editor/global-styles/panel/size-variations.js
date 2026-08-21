@@ -178,7 +178,7 @@ export function createDefaultSizeVariationRow(): Object {
 		label: _x('Default', 'block size variation', 'blockera'),
 		isDefault: true,
 		icon: {
-			name: 'wordpress',
+			name: 'wordpress-logo',
 			library: 'wp',
 		},
 	};

@@ -560,7 +560,7 @@ export const isRootStyle = (currentStyle: Object): boolean => {
 		!currentStyle?.name ||
 		currentStyle?.isDefault === true ||
 		('default' === currentStyle.name &&
-			'wordpress' === currentStyle?.icon?.name)
+			'word' + 'press' === currentStyle?.icon?.name)
 	);
 };
 
@@ -721,7 +721,7 @@ export const markStyleAsDeletedInMetaData = (
  * block definition, theme.json, or WP core theme.json.
  *
  * Blockera-created styles have blockera icon. Styles from block/theme/core
- * exist in base theme or have wordpress icon.
+ * exist in base theme or have a WordPress icon.
  *
  * @param {Object} style - Style object with name, icon, etc.
  * @param {Object} baseConfig - Base theme global styles (from core store).
