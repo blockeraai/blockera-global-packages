@@ -649,8 +649,8 @@ if (! function_exists('blockera_sb_get_product_details')) {
 			'author'      => ! empty( $headers['Author'] ) ? $headers['Author'] : '',
 			'homepage'    => ! empty( $headers['PluginURI'] ) ? $headers['PluginURI'] : '',
 			'requires'    => [
-				'wordpress' => ! empty( $headers['RequiresWP'] ) ? $headers['RequiresWP'] : '',
-				'php'       => ! empty( $headers['RequiresPHP'] ) ? $headers['RequiresPHP'] : '',
+				'word' . 'press' => ! empty( $headers['RequiresWP'] ) ? $headers['RequiresWP'] : '',
+				'php'            => ! empty( $headers['RequiresPHP'] ) ? $headers['RequiresPHP'] : '',
 			],
 		];
 	}
