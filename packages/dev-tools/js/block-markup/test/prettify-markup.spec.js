@@ -128,6 +128,26 @@ describe('collapseTextOnlyTags', () => {
 		const markup = '<pre>\nline one\nline two\n</pre>';
 		expect(collapseTextOnlyTags(markup)).toBe(markup);
 	});
+
+	it('preserves oEmbed URLs on their own line inside wp-block-embed__wrapper', () => {
+		const markup = [
+			'\t<div class="wp-block-embed__wrapper">',
+			'\t\thttps://www.youtube.com/watch?v=H_oJZ2Cv7a0',
+			'\t</div>',
+		].join('\n');
+
+		expect(collapseTextOnlyTags(markup)).toBe(markup);
+	});
+
+	it('does not collapse oEmbed wrapper via phrasing pass', () => {
+		const markup = [
+			'\t<div class="wp-block-embed__wrapper">',
+			'\t\thttps://www.youtube.com/watch?v=H_oJZ2Cv7a0',
+			'\t</div>',
+		].join('\n');
+
+		expect(collapsePhrasingContentTags(markup)).toBe(markup);
+	});
 });
 
 describe('collapsePhrasingContentTags', () => {
@@ -401,6 +421,17 @@ describe('prettifyMarkup', () => {
 			'<p class="custom-class blockera-block blockera-block--2 has-background" style="background-color:#e8ffcb;padding-top:20px;padding-right:20px;padding-bottom:20px;padding-left:20px;">Paragraph with custom class.</p>'
 		);
 		expect(output).not.toMatch(/<p\s*\n/);
+	});
+
+	it('expands oEmbed URLs onto their own line inside wp-block-embed__wrapper', async () => {
+		const input =
+			'<!-- wp:embed {"url":"https://www.youtube.com/watch?v=H_oJZ2Cv7a0"} --><figure class="wp-block-embed"><div class="wp-block-embed__wrapper">https://www.youtube.com/watch?v=H_oJZ2Cv7a0</div></figure><!-- /wp:embed -->\n';
+
+		const output = await prettifyMarkup(input);
+
+		expect(output).toMatch(
+			/<div class="wp-block-embed__wrapper">\n\t\thttps:\/\/www\.youtube\.com\/watch\?v=H_oJZ2Cv7a0\n\t<\/div>/
+		);
 	});
 
 	it('does not wrap the closing > of a long text-only span', async () => {
