@@ -274,6 +274,27 @@ describe('indentSvgElements', () => {
 				'\t\t\t</a>'
 		);
 	});
+
+	it('keeps svg aligned with sibling text inside a wrapped link', () => {
+		const markup =
+			'\t\t\t<a class="wp-element-button">\n' +
+			'\t\t\t\tButton 2\n' +
+			'\t\t\t\t\t<svg viewBox="0 0 24 24" class="icon">\n' +
+			'\t\t\t\t\t\t<path d="M12 4Z"></path>\n' +
+			'\t\t\t\t\t</svg>\n' +
+			'\t\t\t\tButton 2 extra\n' +
+			'\t\t\t</a>';
+
+		expect(indentSvgElements(markup)).toBe(
+			'\t\t\t<a class="wp-element-button">\n' +
+				'\t\t\t\tButton 2\n' +
+				'\t\t\t\t<svg viewBox="0 0 24 24" class="icon">\n' +
+				'\t\t\t\t\t<path d="M12 4Z"></path>\n' +
+				'\t\t\t\t</svg>\n' +
+				'\t\t\t\tButton 2 extra\n' +
+				'\t\t\t</a>'
+		);
+	});
 });
 
 describe('wrapMixedInlineParents', () => {
@@ -611,5 +632,21 @@ describe('prettifyMarkup php header', () => {
 		});
 
 		expect(output).toMatch(/\/><button/);
+	});
+});
+
+describe('prettify-stdin', () => {
+	it('formats HTML from stdin using the product prettier pipeline', () => {
+		const { spawnSync } = require('child_process');
+		const path = require('path');
+		const script = path.join(__dirname, '../prettify-stdin.js');
+		const productRoot = path.resolve(__dirname, '../../../../../../..');
+		const result = spawnSync(process.execPath, [script, productRoot], {
+			input: '<p>Hi<strong>x</strong></p>\n',
+			encoding: 'utf8',
+		});
+
+		expect(result.status).toBe(0);
+		expect(result.stdout).toContain('<p>Hi<strong>x</strong></p>');
 	});
 });
