@@ -58,8 +58,23 @@ describe('resolveDirs / sourceHasStep', () => {
 
 describe('loadBlockMarkupConfig', () => {
 	it('loads dirs from the product file', () => {
-		const productRoot = path.resolve(__dirname, '../../../../../../..');
-		const loaded = loadBlockMarkupConfig({ quiet: true }, productRoot);
+		const root = fs.mkdtempSync(
+			path.join(os.tmpdir(), 'block-markup-dirs-')
+		);
+		fs.writeFileSync(
+			path.join(root, CONFIG_FILE_NAME),
+			`module.exports = {
+				textDomain: 'x',
+				uriPhpExpression: 'get_template_directory_uri()',
+				templatesDirs: ['tests/fixtures'],
+				steps: {
+					templates: ['prettier'],
+				},
+			};\n`,
+			'utf8'
+		);
+
+		const loaded = loadBlockMarkupConfig({ quiet: true }, root);
 
 		expect(loaded.patternsDirs).toEqual([]);
 		expect(
@@ -68,6 +83,8 @@ describe('loadBlockMarkupConfig', () => {
 		expect(loaded.sources).toHaveLength(1);
 		expect(loaded.sources[0].kind).toBe('templates');
 		expect(loaded.sources[0].steps).toEqual(['prettier']);
+
+		fs.rmSync(root, { recursive: true, force: true });
 	});
 
 	it('disables webpack when the product sets webpack: false', () => {
