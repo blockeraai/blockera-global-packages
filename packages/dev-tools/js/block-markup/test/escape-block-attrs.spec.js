@@ -35,12 +35,12 @@ describe('escapeBlockAttrs', () => {
 
 	it('strips Gutenberg copied pattern metadata and keeps blockeraOne', () => {
 		const block =
-			' wp:group {"metadata":{"blockeraOne":"section/page-header:simple","patternName":"blockera-one/builder-archive-page-header-simple","name":"Archive Page Header","description":"Simple archive page header with title and term description.","categories":["blockera-one/template-builder"]},"align":"wide"} ';
+			' wp:group {"metadata":{"blockeraOne":{"stamp":"section/page-header:simple"},"patternName":"blockera-one/builder-archive-page-header-simple","name":"Archive Page Header","description":"Simple archive page header with title and term description.","categories":["blockera-one/template-builder"]},"align":"wide"} ';
 
 		const result = escapeBlockAttrs(block, 'blockera-one');
 
 		expect(result).toContain(
-			'"metadata":{"blockeraOne":"section/page-header:simple"}'
+			'"metadata":{"blockeraOne":{"stamp":"section/page-header:simple"}}'
 		);
 		expect(result).not.toContain('"patternName"');
 		expect(result).not.toContain('"Archive Page Header"');
@@ -65,7 +65,7 @@ describe('escapeBlockAttrs', () => {
 
 	it('strips metadata when PHP image URLs make the attrs JSON unparseable', () => {
 		const block =
-			' wp:cover {"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/cover.webp","metadata":{"patternName":"blockera-one/hero-book","name":"Hero book","blockeraOne":"section/hero:default"}} ';
+			' wp:cover {"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/cover.webp","metadata":{"patternName":"blockera-one/hero-book","name":"Hero book","blockeraOne":{"stamp":"section/hero:default"}}} ';
 
 		const result = escapeBlockAttrs(block, 'blockera-one');
 
@@ -73,17 +73,17 @@ describe('escapeBlockAttrs', () => {
 			'"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/cover.webp"'
 		);
 		expect(result).toContain(
-			'"metadata":{"blockeraOne":"section/hero:default"}'
+			'"metadata":{"blockeraOne":{"stamp":"section/hero:default"}}'
 		);
 		expect(result).not.toContain('"patternName"');
 	});
 
 	it('keeps a List View metadata.name when patternName is absent', () => {
 		const block =
-			' wp:group {"metadata":{"name":"Body","blockeraOne":"container/body"},"align":"wide"} ';
+			' wp:group {"metadata":{"name":"Body","blockeraOne":{"stamp":"container/body"}},"align":"wide"} ';
 
 		expect(escapeBlockAttrs(block, 'blockera-one')).toContain(
-			'"metadata":{"name":"Body","blockeraOne":"container/body"}'
+			'"metadata":{"name":"Body","blockeraOne":{"stamp":"container/body"}}'
 		);
 	});
 

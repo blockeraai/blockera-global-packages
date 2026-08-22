@@ -39,12 +39,17 @@ describe('skip-localize-stamps', () => {
 	it('extracts a blockeraOne stamp from a Gutenberg comment', () => {
 		expect(
 			extractBlockeraOneStamp(
-				' wp:paragraph {"metadata":{"name":"Separator","blockeraOne":"container/meta-separator:default"}} '
+				' wp:paragraph {"metadata":{"name":"Separator","blockeraOne":{"stamp":"container/meta-separator:default"}}} '
 			)
 		).toBe('container/meta-separator:default');
 		expect(
 			extractBlockeraOneStamp(
-				" wp:paragraph {'metadata':{'blockeraOne':'container/meta-separator:default'}} "
+				" wp:paragraph {'metadata':{'blockeraOne':{'stamp':'container/meta-separator:default'}}} "
+			)
+		).toBe('container/meta-separator:default');
+		expect(
+			extractBlockeraOneStamp(
+				' wp:paragraph {"metadata":{"blockeraOne":{"metaSeparator":"bullet","stamp":"container/meta-separator:default"}}} '
 			)
 		).toBe('container/meta-separator:default');
 		expect(extractBlockeraOneStamp(' wp:paragraph ')).toBe('');
@@ -71,13 +76,13 @@ describe('skip-localize-stamps', () => {
 	it('parses open, self-closing, and closer Gutenberg comments', () => {
 		expect(
 			parseGutenbergComment(
-				' wp:paragraph {"metadata":{"blockeraOne":"container/meta-separator:default"}} ',
+				' wp:paragraph {"metadata":{"blockeraOne":{"stamp":"container/meta-separator:default"}}} ',
 				skipById
 			)
 		).toEqual({ closer: false, selfClosing: false, skipText: true });
 		expect(
 			parseGutenbergComment(
-				' wp:post-terms {"metadata":{"blockeraOne":"container/meta-item-block:default"}} /',
+				' wp:post-terms {"metadata":{"blockeraOne":{"stamp":"container/meta-item-block:default"}}} /',
 				skipById
 			)
 		).toEqual({ closer: false, selfClosing: true, skipText: false });

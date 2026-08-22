@@ -18,7 +18,7 @@ describe('sanitize-block-metadata', () => {
 		).toBe(true);
 		expect(
 			hasUnsanitizedPatternMetadata(
-				'<!-- wp:group {"metadata":{"name":"Body","blockeraOne":"container/body"}} -->'
+				'<!-- wp:group {"metadata":{"name":"Body","blockeraOne":{"stamp":"container/body"}}} -->'
 			)
 		).toBe(false);
 		expect(hasUnsanitizedPatternMetadata('<!-- wp:group -->')).toBe(false);
@@ -52,20 +52,23 @@ describe('sanitize-block-metadata', () => {
 			metadata: {
 				patternName: 'blockera-one/hero',
 				name: 'Hero',
-				blockeraOne: 'section/hero:default',
+				blockeraOne: { stamp: 'section/hero:default' },
 			},
 			align: 'full',
 		};
 
 		expect(stripCopiedPatternMetadata(configJson)).toBe(true);
 		expect(configJson.metadata).toEqual({
-			blockeraOne: 'section/hero:default',
+			blockeraOne: { stamp: 'section/hero:default' },
 		});
 	});
 
 	it('keeps List View name when patternName is absent', () => {
 		const configJson = {
-			metadata: { name: 'Body', blockeraOne: 'container/body' },
+			metadata: {
+				name: 'Body',
+				blockeraOne: { stamp: 'container/body' },
+			},
 		};
 
 		expect(stripCopiedPatternMetadata(configJson)).toBe(false);
@@ -91,27 +94,27 @@ describe('sanitize-block-metadata', () => {
 			metadata: {
 				patternName: 'x',
 				name: 'Hero',
-				blockeraOne: 'section/hero:default',
+				blockeraOne: { stamp: 'section/hero:default' },
 			},
 		};
 
 		stripCopiedPatternMetadata(configJson, config.sanitize);
 		expect(configJson.metadata).toEqual({
 			name: 'Hero',
-			blockeraOne: 'section/hero:default',
+			blockeraOne: { stamp: 'section/hero:default' },
 		});
 	});
 
 	it('strips metadata from a raw PHP-containing attrs blob', () => {
 		const raw =
-			'{"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/c.webp","metadata":{"patternName":"x","name":"Hero","blockeraOne":"section/hero:default"}}';
+			'{"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/c.webp","metadata":{"patternName":"x","name":"Hero","blockeraOne":{"stamp":"section/hero:default"}}}';
 
 		const next = sanitizeMetadataInRawConfig(raw);
 
 		expect(next).toContain(
 			'"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/c.webp"'
 		);
-		expect(next).toContain('"blockeraOne":"section/hero:default"');
+		expect(next).toContain('"blockeraOne":{"stamp":"section/hero:default"}');
 		expect(next).not.toContain('"patternName"');
 		expect(next).not.toContain('"name":"Hero"');
 	});

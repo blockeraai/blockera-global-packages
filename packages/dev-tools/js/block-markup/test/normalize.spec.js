@@ -76,9 +76,9 @@ describe('normalizeMarkupContent', () => {
 
 	it('skips wrapping text inside a skip-stamped block, not by character', async () => {
 		const stamped =
-			'<!-- wp:paragraph {"metadata":{"name":"Separator","blockeraOne":"container/meta-separator:default"}} --><p>•</p><!-- /wp:paragraph -->\n';
+			'<!-- wp:paragraph {"metadata":{"name":"Separator","blockeraOne":{"stamp":"container/meta-separator:default"}}} --><p>•</p><!-- /wp:paragraph -->\n';
 		const custom =
-			'<!-- wp:paragraph {"metadata":{"name":"Separator","blockeraOne":"container/meta-separator:default"}} --><p>Custom sep</p><!-- /wp:paragraph -->\n';
+			'<!-- wp:paragraph {"metadata":{"name":"Separator","blockeraOne":{"stamp":"container/meta-separator:default"}}} --><p>Custom sep</p><!-- /wp:paragraph -->\n';
 		const unstamped =
 			'<!-- wp:paragraph --><p>•</p><!-- /wp:paragraph -->\n';
 
@@ -106,7 +106,7 @@ describe('normalizeMarkupContent', () => {
 
 	it('unwraps localized PHP inside a skip-stamped block', async () => {
 		const output = await normalizeMarkupContent(
-			'<!-- wp:paragraph {"metadata":{"blockeraOne":"container/meta-separator:default"}} --><p><?php esc_html_e( \'Custom sep\', \'blockera-one\' ); ?></p><!-- /wp:paragraph -->\n',
+			'<!-- wp:paragraph {"metadata":{"blockeraOne":{"stamp":"container/meta-separator:default"}}} --><p><?php esc_html_e( \'Custom sep\', \'blockera-one\' ); ?></p><!-- /wp:paragraph -->\n',
 			{
 				...baseOptions,
 				steps: ['sanitize', 'localize'],
@@ -123,7 +123,7 @@ describe('normalizeMarkupContent', () => {
 		});
 
 		const output = await normalizeMarkupContent(
-			'<!-- wp:paragraph {"metadata":{"blockeraOne":"container/meta-separator:default"}} --><p>•</p><!-- /wp:paragraph -->\n',
+			'<!-- wp:paragraph {"metadata":{"blockeraOne":{"stamp":"container/meta-separator:default"}}} --><p>•</p><!-- /wp:paragraph -->\n',
 			{
 				...baseOptions,
 				localize: config.localize,
