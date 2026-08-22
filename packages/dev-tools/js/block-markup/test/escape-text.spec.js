@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-const { escapeText } = require('../escape-text');
+const { escapeText, unwrapLocalizedPhp } = require('../escape-text');
 
 describe('escapeText', () => {
 	it('wraps plain text with esc_html_e and the given text domain', () => {
@@ -40,5 +40,29 @@ describe('escapeText', () => {
 		expect(escapeText('Hello', '')).toBe('Hello');
 		expect(escapeText('   ', 'blockera-one')).toBe('   ');
 		expect(escapeText('', 'blockera-one')).toBe('');
+	});
+
+	it('wraps a single character when it is not a skipped stamp', () => {
+		expect(escapeText('•', 'blockera-one')).toBe(
+			"<?php esc_html_e( '•', 'blockera-one' ); ?>"
+		);
+	});
+});
+
+describe('unwrapLocalizedPhp', () => {
+	it('returns the i18n string argument', () => {
+		expect(
+			unwrapLocalizedPhp("<?php esc_html_e( '•', 'blockera-one' ); ?>")
+		).toBe('•');
+		expect(
+			unwrapLocalizedPhp(
+				"<?php esc_html_e( 'Custom sep', 'blockera-one' ); ?>"
+			)
+		).toBe('Custom sep');
+	});
+
+	it('returns null when the snippet is not an i18n echo', () => {
+		expect(unwrapLocalizedPhp('•')).toBeNull();
+		expect(unwrapLocalizedPhp("<?php echo 'x'; ?>")).toBeNull();
 	});
 });

@@ -27,6 +27,9 @@ describe('baseConfig', () => {
 		]);
 		expect(baseConfig.localize.html.textNodes.enabled).toBe(true);
 		expect(baseConfig.localize.images.enabled).toBe(true);
+		expect(baseConfig.localize.skipStamps.stamps).toEqual([
+			'meta-separator',
+		]);
 	});
 
 	it('enables prettier post-process passes by default', () => {

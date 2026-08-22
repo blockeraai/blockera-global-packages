@@ -27,6 +27,7 @@ describe('mergeBlockMarkupConfig', () => {
 		);
 		expect(config.steps.templates).toEqual(['prettier', 'sanitize']);
 		expect(config.steps.patterns).toEqual(baseConfig.steps.patterns);
+		expect(config.localize.skipStamps.stamps).toEqual(['meta-separator']);
 	});
 
 	it('replaces steps arrays and warns on unknown steps', () => {

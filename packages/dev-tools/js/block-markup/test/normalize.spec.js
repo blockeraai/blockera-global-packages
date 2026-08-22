@@ -74,6 +74,68 @@ describe('normalizeMarkupContent', () => {
 		expect(output).toContain('Hello');
 	});
 
+	it('skips wrapping text inside a skip-stamped block, not by character', async () => {
+		const stamped =
+			'<!-- wp:paragraph {"metadata":{"name":"Separator","blockeraOne":"container/meta-separator:default"}} --><p>•</p><!-- /wp:paragraph -->\n';
+		const custom =
+			'<!-- wp:paragraph {"metadata":{"name":"Separator","blockeraOne":"container/meta-separator:default"}} --><p>Custom sep</p><!-- /wp:paragraph -->\n';
+		const unstamped =
+			'<!-- wp:paragraph --><p>•</p><!-- /wp:paragraph -->\n';
+
+		const stampedOut = await normalizeMarkupContent(stamped, {
+			...baseOptions,
+			steps: ['sanitize', 'localize'],
+		});
+		const customOut = await normalizeMarkupContent(custom, {
+			...baseOptions,
+			steps: ['sanitize', 'localize'],
+		});
+		const unstampedOut = await normalizeMarkupContent(unstamped, {
+			...baseOptions,
+			steps: ['sanitize', 'localize'],
+		});
+
+		expect(stampedOut).toContain('<p>•</p>');
+		expect(stampedOut).not.toContain('esc_html_e');
+		expect(customOut).toContain('<p>Custom sep</p>');
+		expect(customOut).not.toContain('esc_html_e');
+		expect(unstampedOut).toContain(
+			"<?php esc_html_e( '•', 'blockera-one' ); ?>"
+		);
+	});
+
+	it('unwraps localized PHP inside a skip-stamped block', async () => {
+		const output = await normalizeMarkupContent(
+			'<!-- wp:paragraph {"metadata":{"blockeraOne":"container/meta-separator:default"}} --><p><?php esc_html_e( \'Custom sep\', \'blockera-one\' ); ?></p><!-- /wp:paragraph -->\n',
+			{
+				...baseOptions,
+				steps: ['sanitize', 'localize'],
+			}
+		);
+
+		expect(output).toContain('<p>Custom sep</p>');
+		expect(output).not.toContain('esc_html_e');
+	});
+
+	it('wraps skip-stamped text when skipStamps is disabled', async () => {
+		const { config } = require('../merge-config').mergeBlockMarkupConfig({
+			localize: { skipStamps: { enabled: false } },
+		});
+
+		const output = await normalizeMarkupContent(
+			'<!-- wp:paragraph {"metadata":{"blockeraOne":"container/meta-separator:default"}} --><p>•</p><!-- /wp:paragraph -->\n',
+			{
+				...baseOptions,
+				localize: config.localize,
+				steps: ['sanitize', 'localize'],
+			}
+		);
+
+		expect(output).toContain(
+			"<?php esc_html_e( '•', 'blockera-one' ); ?>"
+		);
+	});
+
 	it('skips text wrapping when html.textNodes is disabled', async () => {
 		const { config } = require('../merge-config').mergeBlockMarkupConfig({
 			localize: {
