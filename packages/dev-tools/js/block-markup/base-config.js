@@ -58,6 +58,11 @@ const baseConfig = {
 			htmlFn: 'esc_html_e',
 			attrFn: 'esc_attr_e',
 		},
+		skipStamps: {
+			enabled: true,
+			token: 'skip-stamps',
+			stamps: ['meta-separator'],
+		},
 		images: {
 			enabled: true,
 			token: 'static-image-urls',

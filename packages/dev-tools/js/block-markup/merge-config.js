@@ -201,6 +201,15 @@ function pruneUnknownTokens(merged, warnings) {
 			'localize.blockAttrs.attrs'
 		);
 	}
+
+	if (localize && localize.skipStamps && baseLocalize.skipStamps) {
+		pruneUnknownKeys(
+			localize.skipStamps,
+			baseLocalize.skipStamps,
+			warnings,
+			'localize.skipStamps'
+		);
+	}
 }
 
 /**

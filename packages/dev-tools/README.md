@@ -144,6 +144,8 @@ node packages/dev-tools/js/theme-json/merge-theme-json.js --check
 
 Tokenized defaults live in `js/block-markup/base-config.js` (prettier / sanitize / localize). Products add `.block-markup.config.js` at the product root (`textDomain`, dirs, sparse token overrides). Unset `patternsDirs` / `templatesDirs` means that product has no patterns / templates.
 
+`localize.skipStamps` (default stamp id `meta-separator`) skips i18n wrapping for inner HTML of those Gutenberg blocks. Matching uses the same grammar as theme stamps: skip list entries may be the id (`meta-separator`), `role/id` (`container/meta-separator`), or a full `role/id:variant`. Inner text is not inspected — custom glyphs in child themes stay untranslated. Existing `esc_html_e` inside a skipped stamp is unwrapped on the next localize pass. Add ids in the product `.block-markup.config.js` (`stamps` replaces the base list). Set `enabled: false` to wrap them.
+
 Prettier post-process flags (all `true` in the base config; set `false` in the product file to skip a pass):
 
 ```js

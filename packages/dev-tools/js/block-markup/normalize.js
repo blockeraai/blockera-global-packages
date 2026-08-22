@@ -12,7 +12,11 @@ const fg = require('fast-glob');
 const RewritingStream = require('parse5-html-rewriting-stream');
 
 const { baseConfig } = require('./base-config');
-const { escapeText } = require('./escape-text');
+const { escapeText, unwrapLocalizedPhp } = require('./escape-text');
+const {
+	getSkipLocalizeStamps,
+	parseGutenbergComment,
+} = require('./skip-localize-stamps');
 const {
 	escapeImagePath,
 	hasStaticImagePaths,
@@ -161,11 +165,19 @@ function createRewriter(options) {
 	const wrapAria =
 		doLocalize && isLocalizeTokenEnabled(localize, 'html', 'ariaLabel');
 	const wrapImages = doLocalize && isLocalizeTokenEnabled(localize, 'images');
+	const skipStamps = doLocalize ? getSkipLocalizeStamps(localize) : [];
+	const trackSkipStamps = skipStamps.length > 0;
+	// Stack pairs Gutenberg closers; skipDepth is O(1) on every text node.
+	const blockStack = [];
+	let skipDepth = 0;
 
 	rewriter.on('text', (_, raw) => {
-		rewriter.emitRaw(
-			wrapText ? escapeText(raw, textDomain, false, textConfig) : raw
-		);
+		if (!wrapText || skipDepth > 0) {
+			rewriter.emitRaw(raw);
+			return;
+		}
+
+		rewriter.emitRaw(escapeText(raw, textDomain, false, textConfig));
 	});
 
 	rewriter.on('startTag', (startTag) => {
@@ -216,8 +228,32 @@ function createRewriter(options) {
 
 	rewriter.on('comment', (comment, rawHtml) => {
 		if (comment.text.startsWith('?php')) {
+			if (wrapText && skipDepth > 0) {
+				const unwrapped = unwrapLocalizedPhp(rawHtml);
+				if (unwrapped !== null) {
+					rewriter.emitRaw(unwrapped);
+					return;
+				}
+			}
 			rewriter.emitRaw(rawHtml);
 			return;
+		}
+
+		if (trackSkipStamps) {
+			const wpComment = parseGutenbergComment(comment.text, skipStamps);
+
+			if (wpComment) {
+				if (wpComment.closer) {
+					if (blockStack.length > 0 && blockStack.pop()) {
+						skipDepth -= 1;
+					}
+				} else if (!wpComment.selfClosing) {
+					blockStack.push(wpComment.skipText);
+					if (wpComment.skipText) {
+						skipDepth += 1;
+					}
+				}
+			}
 		}
 
 		let processedComment = comment.text;
