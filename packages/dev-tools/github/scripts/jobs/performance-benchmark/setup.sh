@@ -3,6 +3,8 @@
 #
 # Defaults match the Blockera plugin base. Override via env:
 #   BLOCKERA_PERF_COMPOSER_CMD
+#   COMPOSER_INSTALL_RETRIES          default: 4
+#   COMPOSER_INSTALL_RETRY_DELAY_SEC  default: 20
 #   BLOCKERA_PERF_WP_ENV_CONFIG       default: .github/wp-env-configs/performance.json
 #   BLOCKERA_PERF_WP_ENV_START_CMD    default: bash packages/global-packages/packages/dev-tools/github/scripts/retry-wp-env-start.sh
 #   BLOCKERA_PERF_BUILD_CMD           default: npm run build
@@ -11,6 +13,9 @@
 #   BLOCKERA_PERF_READY_DELAY_SEC     default: 5
 #   BLOCKERA_PERF_PLAYWRIGHT_CMD      default: npx playwright install --with-deps chromium
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RETRY_SH="${SCRIPT_DIR}/../../lib/retry.sh"
 
 COMPOSER_CMD="${BLOCKERA_PERF_COMPOSER_CMD:-composer install --no-dev -o --apcu-autoloader -a}"
 WP_ENV_CONFIG="${BLOCKERA_PERF_WP_ENV_CONFIG:-.github/wp-env-configs/performance.json}"
@@ -21,8 +26,18 @@ READY_ATTEMPTS="${BLOCKERA_PERF_READY_ATTEMPTS:-36}"
 READY_DELAY="${BLOCKERA_PERF_READY_DELAY_SEC:-5}"
 PLAYWRIGHT_CMD="${BLOCKERA_PERF_PLAYWRIGHT_CMD:-npx playwright install --with-deps chromium}"
 
+if [[ ! -f "${RETRY_SH}" ]]; then
+	echo "performance/setup: missing ${RETRY_SH}" >&2
+	exit 1
+fi
+
 echo "performance/setup: ${COMPOSER_CMD}"
-eval "${COMPOSER_CMD}"
+# GitHub dist zipballs (api.github.com) occasionally 504; retry like npm ci / wp-env.
+bash "${RETRY_SH}" \
+	--max "${COMPOSER_INSTALL_RETRIES:-4}" \
+	--delay "${COMPOSER_INSTALL_RETRY_DELAY_SEC:-20}" \
+	--label "composer install" \
+	-- bash -c "${COMPOSER_CMD}"
 
 echo "performance/setup: using ${WP_ENV_CONFIG}"
 cp "${WP_ENV_CONFIG}" .wp-env.json
