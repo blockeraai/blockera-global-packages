@@ -1,10 +1,11 @@
 /**
  * Skip i18n wrapping for Gutenberg blocks identified by blockeraOne stamps.
  *
- * Markup stores `role/id:variant` (e.g. `container/meta-separator:default`).
- * The skip list uses the stamp id (`meta-separator`), the dictionary form
- * (`container/meta-separator`), or a full stamp. Same grammar as theme
- * `parseStamp` (`role/id` with optional `:variant`).
+ * Markup stores `metadata.blockeraOne.stamp` as `role/id:variant`
+ * (e.g. `container/meta-separator:default`). The skip list uses the stamp
+ * id (`meta-separator`), the dictionary form (`container/meta-separator`),
+ * or a full stamp. Same grammar as theme `parseStamp`
+ * (`role/id` with optional `:variant`).
  */
 
 const STAMP_SHAPE =
@@ -30,18 +31,30 @@ function getSkipLocalizeStamps(localize) {
 
 /**
  * @param {string} commentText parse5 comment body (no `<!-- -->`).
- * @return {string} `blockeraOne` stamp or empty string.
+ * @return {string} `blockeraOne.stamp` or empty string.
  */
 function extractBlockeraOneStamp(commentText) {
 	if (!commentText) {
 		return '';
 	}
 
-	const match = commentText.match(
-		/["']blockeraOne["']\s*:\s*["']([^"']*)["']/
-	);
+	const key = commentText.match(/["']blockeraOne["']\s*:/);
 
-	return match ? match[1] : '';
+	if (!key) {
+		return '';
+	}
+
+	const after = commentText
+		.slice(key.index + key[0].length)
+		.replace(/^\s+/, '');
+
+	if (after.charAt(0) !== '{') {
+		return '';
+	}
+
+	const stamp = after.match(/["']stamp["']\s*:\s*["']([^"']*)["']/);
+
+	return stamp ? stamp[1] : '';
 }
 
 /**
@@ -67,7 +80,8 @@ function isSkipLocalizeStamp(stamp, skipStamps) {
 	const roleId = `${parsed[1]}/${parsed[2]}`;
 
 	return (
-		skipStamps.indexOf(roleId) !== -1 || skipStamps.indexOf(parsed[2]) !== -1
+		skipStamps.indexOf(roleId) !== -1 ||
+		skipStamps.indexOf(parsed[2]) !== -1
 	);
 }
 
