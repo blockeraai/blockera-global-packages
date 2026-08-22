@@ -53,6 +53,21 @@ describe('ensureSiteEditorHistoryPatch', () => {
 
 		window.removeEventListener(SITE_EDITOR_NAVIGATE_EVENT, listener);
 	});
+
+	test('rewrites encoded query chars on the current location', () => {
+		window.history.replaceState(
+			{ keep: true },
+			'',
+			'/wp-admin/site-editor.php?p=%2Fwp_template%2Fblockera-one%2F%2Farchive&blockera-builder=children%3Acategory'
+		);
+
+		ensureSiteEditorHistoryPatch();
+
+		expect(window.location.search).toBe(
+			'?p=/wp_template/blockera-one//archive&blockera-builder=children:category'
+		);
+		expect(window.history.state).toEqual({ keep: true });
+	});
 });
 
 describe('useSiteEditorNavigate', () => {
