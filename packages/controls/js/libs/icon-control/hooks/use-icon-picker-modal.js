@@ -221,11 +221,17 @@ export function useIconPickerModal({
 			}
 
 			parseUploadedMediaAndSetIcon(media, (svgString) => {
+				// Classic wp.media attachments usually expose `filename`; fall back
+				// to the URL basename when a consumer omits it.
+				const filenameFromUrl = media.url
+					? String(media.url).split('/').pop()?.split('?')[0]
+					: '';
+
 				setDraft({
 					svgString: sanitizeRawSVGString(svgString),
 					uploadSVG: {
 						title: media.title,
-						filename: media.filename,
+						filename: media.filename || filenameFromUrl || '',
 						url: media.url,
 						updated: '',
 					},

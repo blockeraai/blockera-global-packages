@@ -223,20 +223,21 @@ export const useBlockFeatures = (
 				feature.filterSetAttributes();
 			}
 
-			if ('function' !== typeof feature.editBlockHTML) {
+			const editBlockHTML = feature.editBlockHTML;
+			if ('function' !== typeof editBlockHTML) {
 				return;
 			}
 
 			// Remove redundant params.
-			const { blockFeatures, ...rest } = props;
+			const { blockFeatures: propsBlockFeatures, ...rest } = props;
 
-			const featureSchema = featuresSchemas[feature.name];
+			const featureSchema = (featuresSchemas: any)[feature.name];
 			const featureBlockConfig = mergeObject(
 				featureSchema.block,
-				blockFeatures[feature.name]
+				((propsBlockFeatures: any) || {})[feature.name] || {}
 			);
 
-			feature.editBlockHTML({
+			editBlockHTML({
 				...rest,
 				htmlEditable: featureBlockConfig.htmlEditable,
 			});

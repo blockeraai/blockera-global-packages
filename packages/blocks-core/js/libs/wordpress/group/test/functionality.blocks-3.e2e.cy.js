@@ -91,13 +91,15 @@ describe('Group Block', () => {
 		cy.get('[role="tab"][aria-label="Settings"]').click();
 
 		cy.get('.block-editor-block-inspector').within(() => {
-			cy.get('.block-editor-block-inspector__position').should(
-				'not.be.visible'
-			);
-
-			cy.get('.components-panel__body-title button')
-				.contains('Layout')
-				.should('be.visible');
+			// Commented as in WP 7.1, Position settings are moved to styles tab.
+			// cy.get('.block-editor-block-inspector__position').should(
+			// 	'not.be.visible'
+			// );
+			// Commented as in WP 7.1, Layout settings are moved to styles tab.
+			// todo: add same layout feature to the settings tab to give same feature to user.
+			// cy.get('.components-panel__body-title button')
+			// 	.contains('Layout')
+			// 	.should('be.visible');
 		});
 
 		//
@@ -133,29 +135,11 @@ describe('Group Block', () => {
 		cy.get('[role="tab"][aria-label="Settings"]').click();
 
 		cy.get('.block-editor-block-inspector').within(() => {
-			cy.get('.block-editor-block-inspector__position').should(
-				'not.be.visible'
-			);
-
-			cy.get('.components-panel__body-title button')
-				.contains('Layout')
-				.should('not.be.visible');
-
-			cy.get(
-				'.components-base-control__label, .components-base-control__visual-label'
-			)
-				.contains('Max. columns')
-				.should('exist')
-				.scrollIntoView()
-				.should('not.be.visible');
-
-			cy.get(
-				'.components-base-control__label, .components-base-control__visual-label'
-			)
-				.contains('Min. column width')
-				.should('exist')
-				.scrollIntoView()
-				.should('not.be.visible');
+			// Commented as in WP 7.1, Layout settings are moved to styles tab.
+			// todo: add same layout feature to the settings tab to give same feature to user.
+			// cy.get('.components-panel__body-title button')
+			// 	.contains('Layout')
+			// 	.should('not.be.visible');
 		});
 	});
 });

@@ -14,7 +14,10 @@ import { mergeObject } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import type { TBlockeraBlockType } from './types';
+import type {
+	TBlockeraBlockType,
+	TBlockeraVariationType,
+} from './types';
 
 /**
  * Register a new block type.
@@ -34,16 +37,24 @@ export const registerBlockeraBlockType = (
 
 export const registerBlockeraBlockTypes = (
 	blockTypes: Array<Object>
-): Array<TBlockeraBlockType> => {
-	return blockTypes.map(({ blockType, blockConfig }) => {
-		return registerBlockeraBlockType(blockType, blockConfig);
-	});
+): Array<TBlockeraBlockType | void> => {
+	return blockTypes.map(
+		({
+			blockType,
+			blockConfig,
+		}: {
+			blockType: string,
+			blockConfig: Object,
+		}): TBlockeraBlockType | void => {
+			return registerBlockeraBlockType(blockType, blockConfig);
+		}
+	);
 };
 
 export const registerBlockeraBlockVariation = (
 	originBlockType: string,
 	variationConfig: TBlockeraVariationType
-) => {
+): mixed => {
 	for (const key in variationConfig?.supports?.blockExtensions || {}) {
 		addFilter(
 			`blockera.block.${originBlockType.replace(
@@ -71,8 +82,19 @@ export const registerBlockeraBlockVariation = (
 
 export const registerBlockeraBlockVariations = (
 	blockVariations: Array<Object>
-): Array<TBlockeraBlockVariation> => {
-	return blockVariations.map(({ originBlockType, variationConfig }) => {
-		return registerBlockeraBlockVariation(originBlockType, variationConfig);
-	});
+): Array<mixed> => {
+	return blockVariations.map(
+		({
+			originBlockType,
+			variationConfig,
+		}: {
+			originBlockType: string,
+			variationConfig: TBlockeraVariationType,
+		}): mixed => {
+			return registerBlockeraBlockVariation(
+				originBlockType,
+				variationConfig
+			);
+		}
+	);
 };

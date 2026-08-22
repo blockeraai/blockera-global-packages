@@ -244,7 +244,7 @@ export const resolveTypographyConfigForBlock = (blockName: string): Object => {
 /**
  * Mirrors core `getValidTextAlignments()` in block-editor text-align hook.
  *
- * @see source-code-block-editor/packages/block-editor/src/hooks/text-align.js
+ * @see source-codes/block-editor/packages/block-editor/src/hooks/text-align.js
  */
 const getValidTextAlignmentsFromSupport = (
 	blockTextAlign: ?(boolean | Array<string>)

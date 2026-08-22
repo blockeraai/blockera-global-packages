@@ -593,7 +593,7 @@ function hasMeaningfulMissingVariableCachedValue(value: mixed): boolean {
 	}
 
 	if (isObject(value)) {
-		return Object.keys(value).length > 0;
+		return Object.keys((value: Object)).length > 0;
 	}
 
 	return true;
@@ -604,11 +604,12 @@ function formatBorderCachedValueForDisplay(value: mixed): string {
 		return typeof value === 'string' ? value.trim() : '';
 	}
 
-	let side = value;
-	if (value.type === 'all' && isObject(value.all)) {
-		side = value.all;
-	} else if (value.type === 'custom' && isObject(value.custom)) {
-		side = value.custom;
+	const borderValue: Object = (value: Object);
+	let side: Object = borderValue;
+	if (borderValue.type === 'all' && isObject(borderValue.all)) {
+		side = (borderValue.all: Object);
+	} else if (borderValue.type === 'custom' && isObject(borderValue.custom)) {
+		side = (borderValue.custom: Object);
 	}
 
 	const width = String(side.width ?? '').trim();
@@ -663,12 +664,13 @@ export function formatMissingVariableCachedValueForDisplay(
 
 	if (variableType === 'shadow' || variableType === 'text-shadow') {
 		if (isObject(cachedValue)) {
-			const direct = String(cachedValue.shadow ?? '').trim();
+			const shadowValue: Object = (cachedValue: Object);
+			const direct = String(shadowValue.shadow ?? '').trim();
 			if (direct) {
 				return direct;
 			}
 
-			const items = cachedValue.items;
+			const items = shadowValue.items;
 			if (typeof items === 'string') {
 				return items.trim();
 			}
@@ -699,8 +701,8 @@ export function formatMissingVariableCachedValueForDisplay(
 		variableType === 'filter' ||
 		variableType === 'transition'
 	) {
-		if (isObject(cachedValue) && Array.isArray(cachedValue.items)) {
-			const count = cachedValue.items.length;
+		if (isObject(cachedValue) && Array.isArray((cachedValue: Object).items)) {
+			const count = ((cachedValue: Object).items: Array<mixed>).length;
 			if (count > 0) {
 				return sprintf(
 					/* translators: %d is the number of repeater rows. */
@@ -720,10 +722,11 @@ export function formatMissingVariableCachedValueForDisplay(
 	}
 
 	if (isObject(cachedValue) && !Array.isArray(cachedValue)) {
-		const keys = Object.keys(cachedValue);
-		if (keys.some((key) => isObject(cachedValue[key]))) {
+		const objectValue: Object = (cachedValue: Object);
+		const keys = Object.keys(objectValue);
+		if (keys.some((key) => isObject(objectValue[key]))) {
 			const rowCount = keys.filter((key) =>
-				isObject(cachedValue[key])
+				isObject(objectValue[key])
 			).length;
 			if (rowCount > 0) {
 				return sprintf(

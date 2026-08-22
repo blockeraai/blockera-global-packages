@@ -79,6 +79,7 @@ export const StyleItem = ({
 		hasChangesets,
 		setChangesets,
 		variationSurface: pickerVariationSurface,
+		pickOnly = false,
 	} = pickerContext;
 	const {
 		defaultStyles,
@@ -490,7 +491,7 @@ export const StyleItem = ({
 	};
 
 	let blockCardAfterPreviewMultipleBlocks: MixedElement | null = null;
-	if (!isSizeVariationUi) {
+	if (!pickOnly && !isSizeVariationUi) {
 		const blockCardUsageControl = renderUsageAcrossBlocksControl(
 			openBlockCardUsageForMultipleBlocksModal,
 			'block-card'
@@ -604,8 +605,10 @@ export const StyleItem = ({
 
 					// Skip click on actions opener element.
 					if (
-						!event.target.innerText ||
-						-1 === event.target.innerText.indexOf(style.label)
+						!pickOnly &&
+						(!event.target.innerText ||
+							-1 ===
+								event.target.innerText.indexOf(style.label))
 					) {
 						return;
 					}
@@ -685,10 +688,11 @@ export const StyleItem = ({
 						alignItems={'center'}
 						style={{ marginLeft: 'auto' }}
 					>
-						{renderUsageAcrossBlocksControl(
-							openUsageForMultipleBlocksModal,
-							'list-row'
-						)}
+						{!pickOnly &&
+							renderUsageAcrossBlocksControl(
+								openUsageForMultipleBlocksModal,
+								'list-row'
+							)}
 
 						{defaultStyle && style.isDefault && (
 							<Tooltip
@@ -796,7 +800,7 @@ export const StyleItem = ({
 							</Tooltip>
 						)}
 
-						{isUserCanSaveCustomizations && (
+						{!pickOnly && isUserCanSaveCustomizations && (
 							<span
 								className="context-menu-trigger style-item-context-menu-anchor"
 								data-test={`open-${style.name}-contextmenu`}
@@ -817,46 +821,48 @@ export const StyleItem = ({
 					</Flex>
 				</Flex>
 
-				<StyleItemMenuContextProvider
-					value={{
-						anchorRef: styleItemContextMenuAnchorRef,
-						blockTitle: getBlockType(blockName).title,
-						style,
-						counter,
-						handlePromotionPopover,
-						isOpenDeleteModal,
-						setIsOpenDeleteModal,
-						isOpenDuplicateModal,
-						setIsOpenDuplicateModal,
-						blockName,
-						setCounter,
-						buttonText,
-						handleOnRename,
-						handleOnDuplicate,
-						handleOnEnable,
-						handleOnDelete,
-						handleOnUsageForMultipleBlocks,
-						handleOnSaveUsageForMultipleBlocks,
-						isConfirmedChangeID,
-						setIsOpenUsageForMultipleBlocks,
-						isOpenUsageForMultipleBlocks,
-						setIsConfirmedChangeID,
-						cachedStyle,
-						isOpenRenameModal,
-						setIsOpenRenameModal,
-						isOpenContextMenu,
-						setIsOpenContextMenu,
-						setCurrentBlockStyleVariation,
-						blockStyles,
-						variationAllowsMultipleBlocks:
-							variationSurface !== VARIATION_SURFACE_SIZE,
-					}}
-				>
-					<StyleItemMenu />
-				</StyleItemMenuContextProvider>
+				{!pickOnly && (
+					<StyleItemMenuContextProvider
+						value={{
+							anchorRef: styleItemContextMenuAnchorRef,
+							blockTitle: getBlockType(blockName).title,
+							style,
+							counter,
+							handlePromotionPopover,
+							isOpenDeleteModal,
+							setIsOpenDeleteModal,
+							isOpenDuplicateModal,
+							setIsOpenDuplicateModal,
+							blockName,
+							setCounter,
+							buttonText,
+							handleOnRename,
+							handleOnDuplicate,
+							handleOnEnable,
+							handleOnDelete,
+							handleOnUsageForMultipleBlocks,
+							handleOnSaveUsageForMultipleBlocks,
+							isConfirmedChangeID,
+							setIsOpenUsageForMultipleBlocks,
+							isOpenUsageForMultipleBlocks,
+							setIsConfirmedChangeID,
+							cachedStyle,
+							isOpenRenameModal,
+							setIsOpenRenameModal,
+							isOpenContextMenu,
+							setIsOpenContextMenu,
+							setCurrentBlockStyleVariation,
+							blockStyles,
+							variationAllowsMultipleBlocks:
+								variationSurface !== VARIATION_SURFACE_SIZE,
+						}}
+					>
+						<StyleItemMenu />
+					</StyleItemMenuContextProvider>
+				)}
 			</div>
 
-			{isActive && (
+			{!pickOnly && isActive && (
 				<Fill name="block-inspector-style-actions">
 					{!isSizeVariationUi && (
 						<Button

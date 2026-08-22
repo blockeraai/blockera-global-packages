@@ -21,6 +21,10 @@ export type LabelControlProps = {
 	 */
 	controlFieldId?: string | null,
 	mode?: 'advanced' | 'simple' | 'none',
+	/**
+	 * Extra class names applied on the label element (also used by BaseControl).
+	 */
+	labelClassName?: string,
 	isRepeater?: void | boolean,
 	onClick?: (event: MouseEvent) => void,
 	resetToDefault?: (args?: {

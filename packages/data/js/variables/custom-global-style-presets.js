@@ -83,7 +83,7 @@ function mapFontSizesCustom(
 		slug?: string,
 		name?: string,
 		size?: string,
-		fluid?: { min?: string, max?: string },
+		fluid?: boolean | { min?: string, max?: string } | null, // theme.json fluid flag or object
 	}>,
 	reference: ValueAddonReference = customOriginRef
 ): Array<VariableItem> {
@@ -91,13 +91,23 @@ function mapFontSizesCustom(
 		return [];
 	}
 
-	return items.map((item) => ({
-		name: item?.name || item.slug || '',
-		id: item.slug || '',
-		value: normalizePresetSize(item.size || ''),
-		...(item?.fluid ? { fluid: normalizeFontSizeFluid(item.fluid) } : {}),
-		reference,
-	}));
+	return items.map((item) => {
+		const mapped: VariableItem = {
+			name: item?.name || item.slug || '',
+			id: item.slug || '',
+			value: normalizePresetSize(item.size || ''),
+			reference,
+		};
+
+		if (item?.fluid) {
+			const fluid = normalizeFontSizeFluid(item.fluid);
+			if (fluid && typeof fluid === 'object') {
+				mapped.fluid = fluid;
+			}
+		}
+
+		return mapped;
+	});
 }
 
 function mapGradientsCustom(

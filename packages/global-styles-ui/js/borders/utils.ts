@@ -19,6 +19,7 @@ export type BorderBoxPreset = {
 	name: string;
 	isVisible: boolean;
 	border: BorderPresetStoredSide;
+	[key: string]: unknown;
 };
 
 /**
@@ -103,7 +104,7 @@ export function sanitizeBorderBoxPresets(presets: unknown): BorderBoxPreset[] {
 			withPresetMetaFromRepeaterRow(o, {
 				slug: o.slug,
 				name: o.name,
-				isVisible: o.isVisible,
+				isVisible: o.isVisible !== false,
 				border: coerceBorderPresetSide(o.border),
 			})
 		);

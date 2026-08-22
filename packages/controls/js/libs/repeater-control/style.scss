@@ -420,6 +420,10 @@
 		}
 
 		.blockera-control-repeater-header-action-buttons {
+			flex-grow: 1;
+			max-width: 100%;
+			justify-content: center;
+
 			.blockera-control-btn-add {
 				padding: 0 10px 0 3px !important;
 				width: auto;

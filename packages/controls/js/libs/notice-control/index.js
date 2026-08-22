@@ -25,6 +25,7 @@ export default function NoticeControl({
 	columns,
 	field,
 	className,
+	fieldProps,
 	icon,
 	showIcon = true,
 	type = 'warning',
@@ -46,9 +47,8 @@ export default function NoticeControl({
 		setIsShown(false);
 	};
 
-	// $FlowFixMe
 	if (isShown && children && isFunction(onShown)) {
-		onShown();
+		(onShown: any)();
 	}
 
 	return (
@@ -59,6 +59,7 @@ export default function NoticeControl({
 				columns={columns}
 				controlName={field}
 				className={className}
+				fieldProps={fieldProps}
 			>
 				<Flex
 					alignItems="flex-start"

@@ -1,0 +1,61 @@
+name: 'Blockera WordPress Theme Review Check'
+description: >
+    Setup Node/PHP, build+extract the theme zip, and run theme-review-check.
+    Defaults match blockera-one; override via inputs.
+inputs:
+    zip-file:
+        description: 'Zip produced by the build'
+        required: false
+        default: 'blockera-one.zip'
+    build-dir:
+        description: 'Directory passed to theme-review-check after extract'
+        required: false
+        default: './build/blockera-one'
+    composer-options:
+        description: 'Composer options for setup-php'
+        required: false
+        default: '--no-dev -o --apcu-autoloader -a'
+    accessible-ready:
+        description: 'Whether to run the full accessibility tests'
+        required: false
+        default: 'true'
+    repo-token:
+        description: 'GitHub token for PR comment updates (secrets.BLOCKERABOT_PAT)'
+        required: true
+    comment-title:
+        description: 'H1 prepended to the theme review PR comment'
+        required: false
+        default: '# 🎨 WordPress Theme Review Report'
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Setup Node.js and install dependencies
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+
+        - name: Setup PHP Composer install dependencies
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-php
+          with:
+              composer-options: ${{ inputs.composer-options }}
+
+        - name: Build and extract theme zip
+          shell: bash
+          env:
+              BLOCKERA_PLUGIN_CHECK_ZIP: ${{ inputs.zip-file }}
+              BLOCKERA_PLUGIN_CHECK_BUILD_DIR: ${{ inputs.build-dir }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/plugin-check/prepare-build.sh"
+
+        - name: Test With WordPress Theme Review Action
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/theme-review-check
+          with:
+              root-folder: ${{ inputs.build-dir }}
+              accessible-ready: ${{ inputs.accessible-ready }}
+
+        - name: Post theme review PR comment
+          if: always() && github.event_name == 'pull_request'
+          shell: bash
+          env:
+              GITHUB_TOKEN: ${{ inputs.repo-token }}
+              BLOCKERA_THEME_CHECK_LOGS_DIR: ${{ github.workspace }}/theme-review-action/logs
+              BLOCKERA_THEME_CHECK_COMMENT_TITLE: ${{ inputs.comment-title }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/theme-check/post-comment.sh"

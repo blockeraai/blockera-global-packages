@@ -24,6 +24,7 @@ describe('Layout Matrix Control component testing', () => {
 			});
 
 			cy.getByDataTest('layout-matrix').should('exist');
+			cy.getByDataTest('layout-matrix-axis-controls').should('exist');
 			cy.contains('Dense').should('not.exist');
 		});
 
@@ -68,6 +69,37 @@ describe('Layout Matrix Control component testing', () => {
 			});
 
 			cy.getByAriaLabel('flex-direction: row').should('not.exist');
+			cy.getByDataTest('layout-matrix-axis-controls').should('exist');
+		});
+
+		it('should render correctly, when axis controls inactive', () => {
+			cy.withDataProvider({
+				component: (
+					<LayoutMatrixControl isAxisControlsActive={false} />
+				),
+				value,
+			});
+
+			cy.getByDataTest('layout-matrix').should('exist');
+			cy.getByDataTest('layout-matrix-axis-controls').should('not.exist');
+			cy.get('button[aria-haspopup="listbox"]').should('not.exist');
+		});
+
+		it('should render correctly, when direction and axis controls inactive', () => {
+			cy.withDataProvider({
+				component: (
+					<LayoutMatrixControl
+						isDirectionActive={false}
+						isAxisControlsActive={false}
+					/>
+				),
+				value,
+			});
+
+			cy.getByDataTest('layout-matrix').should('exist');
+			cy.getByAriaLabel('flex-direction: row').should('not.exist');
+			cy.getByDataTest('layout-matrix-axis-controls').should('not.exist');
+			cy.get('button[aria-haspopup="listbox"]').should('not.exist');
 		});
 
 		it('should render correctly, when dense active', () => {
@@ -591,6 +623,34 @@ describe('Layout Matrix Control component testing', () => {
 				checkSelectOption(1, 'layout-matrix-align-start');
 
 				// Check data provider (dense omitted from store when isDenseActive is false)
+				cy.get('body').then(() => {
+					expect(getControlValue(name)).to.deep.include({
+						direction: 'row',
+						alignItems: 'flex-start',
+						justifyContent: 'flex-start',
+					});
+				});
+			});
+
+			it('should set correct data from matrix, when axis controls inactive', () => {
+				const name = nanoid();
+				cy.withDataProvider({
+					component: (
+						<LayoutMatrixControl isAxisControlsActive={false} />
+					),
+					value,
+					name,
+				});
+
+				cy.getByDataTest('layout-matrix-axis-controls').should(
+					'not.exist'
+				);
+
+				cy.getByDataTest('matrix-top-left-normal').click();
+
+				cy.getByDataTest('matrix-top-left-selected').should('exist');
+				cy.get('button[aria-haspopup="listbox"]').should('not.exist');
+
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'row',

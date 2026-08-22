@@ -60,13 +60,31 @@ export const ListItem: BlockType = {
 		icon: {
 			status: true,
 			inspector: {
+				status: true,
+				extensions: {
+					icon: {
+						tabPosition: 'blockera-inspector-settings-start',
+					},
+				},
 				innerBlocks: {
+					status: true,
 					items: {
 						'elements/icon': {
 							availableBlockStates: {},
 						},
 					},
 				},
+				blockStates: {
+					status: false,
+					items: {},
+				},
+			},
+			htmlEditable: {
+				status: true,
+			},
+			contextualToolbar: {
+				status: false,
+				type: 'none',
 			},
 		},
 	},

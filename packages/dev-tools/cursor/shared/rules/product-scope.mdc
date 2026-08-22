@@ -1,0 +1,79 @@
+---
+description: Product scope for the Blockera suite. Default to the blockera plugin; ask before editing other products.
+alwaysApply: true
+---
+
+# Product Scope
+
+This rule sets the **active product**. You may switch products when the user asks. You may **not** write every workspace repo in one turn.
+
+## Session start
+
+1. If the user named a product (or the open files/workspace make it obvious), that is the **active product**.
+2. If they did **not** specify, the active product is **blockera**.
+3. If it is unclear, ask once, then continue with **blockera** until they say otherwise.
+4. When the user names a new product, that becomes active immediately. Chat history in another checkout does **not** authorize continuing there.
+
+## Every reply
+
+Start **every** reply (not only the first) with:
+
+`Product: <id> (<path>). 
+GP writes: <active-product>/packages/global-packages/.`
+
+Example when active is `blockera-one`:
+
+`Product: blockera-one (wp-content/themes/blockera-one/). 
+GP writes: wp-content/themes/blockera-one/packages/global-packages/.`
+
+## Products
+
+| Id                      | Path                                        |
+| ----------------------- | ------------------------------------------- |
+| `blockera`              | `wp-content/plugins/blockera/`              |
+| `blockera-pro`          | `wp-content/plugins/blockera-pro/`          |
+| `blockera-one`          | `wp-content/themes/blockera-one/`           |
+| `blockera-site-toolkit` | `wp-content/plugins/blockera-site-toolkit/` |
+
+`source-codes/` in each project root is read-only reference (symlink). Prefer it for Gutenberg / WordPress / Woo / Blocksy lookups.
+
+## global-packages (write root)
+
+`packages/global-packages/` is a **submodule checkout inside each product**, not a fifth product and not a shared write target. Same remote, separate working trees.
+
+- **All GP edits, stages, and commits** go only to `<active-product>/packages/global-packages/`.
+- Never write another product’s GP. Example: if active is `blockera-one`, do **not** edit `wp-content/plugins/blockera/packages/global-packages/`.
+- Even if the change is a shared API (e.g. `BaseControl`), write **only** the active product’s GP. Do not edit, stage, commit, or **offer to copy** into another product’s GP unless the user expands scope.
+- You may **read** another product’s GP to compare. You may **not** write it.
+- Resolve `Read`, `Grep`, `Glob`, `Shell`, and `git -C` against the **active product root**. Relative paths like `packages/global-packages/packages/controls/...` mean that path **under the active product**. If search hits another product’s GP, ignore it for writes.
+- Pass the active product **and** its GP path to subagents.
+
+## How to work
+
+- Do the requested work in the **active product** first (including its `packages/global-packages/`).
+- You may **read** other products when you need to understand compatibility, unlock/limit behavior, or compare GP.
+- Do **not** edit, stage, or commit another product until the user agrees.
+- Keep commits inside the active product unless scope was expanded. One repo per commit (GP submodule commits stay in that product’s GP checkout).
+- Pass the same active product (and any granted extras) to subagents.
+
+## Cross-product updates (always ask)
+
+If you discover another product also needs changes, **stop and ask** before editing it. Name the product, why, and what you would change. Do not volunteer copying GP into other products unless the user expands scope.
+
+### blockera → blockera-pro
+
+While the active product is **blockera**, ask to continue in **blockera-pro** when:
+
+- A feature is limited, gated, or incomplete until Pro unlocks it
+- Pro must stay compatible with a free-plugin API, schema, or UI change
+- Pro would otherwise break or stay on old behavior
+
+Do not silently patch Pro. Ask, then only proceed if they say yes.
+
+### Other products
+
+Same rule for `blockera-one`, `blockera-site-toolkit`, or any other workspace repo (including APIs): ask first, then edit only what they approved.
+
+## Out of bounds without asking
+
+Unrelated site plugins/themes (`akismet`, `blockera-demo-*`, installed Blocksy, WordPress core outside `source-codes/`) stay off-limits unless the user explicitly includes them.

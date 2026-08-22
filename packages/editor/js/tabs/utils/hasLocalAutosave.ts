@@ -7,7 +7,7 @@
  * Uses native sessionStorage intentionally — WordPress core owns these keys
  * and they must not go through Blockera site-scoped storage.
  *
- * @see source-code-block-editor/packages/editor/src/store/local-autosave.js
+ * @see source-codes/block-editor/packages/editor/src/store/local-autosave.js
  */
 
 /* eslint-disable no-restricted-globals, no-restricted-syntax -- WordPress core autosave keys; not Blockera data. */

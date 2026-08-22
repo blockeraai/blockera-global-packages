@@ -59,12 +59,12 @@ export default function ({
 	if (showValue && valueType === 'variable') {
 		switch (type) {
 			case 'font-size':
+				const fluid = (data?.fluid: any);
 				if (
-					!isUndefined(data?.fluid?.min) &&
-					!isUndefined(data?.fluid?.max)
+					!isUndefined(fluid?.min) &&
+					!isUndefined(fluid?.max)
 				) {
-					// $FlowFixMe
-					itemValue = `${data.fluid.min} → ${data.fluid.max}`;
+					itemValue = `${fluid.min} → ${fluid.max}`;
 				} else if (isNumber(data.value)) {
 					// $FlowFixMe
 					itemValue = data.value + 'px';

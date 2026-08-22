@@ -383,7 +383,7 @@ export async function saveSiteEditorEntityForPreview(
 		return null;
 	}
 
-	const editorSelect = select(editorStore) as {
+	const editorSelect = select(editorStore) as unknown as {
 		getEditedPostContent: () => string;
 		getEditedPostAttribute: (attr: string) => unknown;
 	};
@@ -406,7 +406,7 @@ export async function saveSiteEditorEntityForPreview(
 	const autosavePath = `/wp/v2/${restBase}/${templateId}/autosaves`;
 	const updatePath = `/wp/v2/${restBase}/${templateId}`;
 
-	const coreSelect = select(coreStore) as {
+	const coreSelect = select(coreStore) as unknown as {
 		getEntityRecord: (
 			kind: string,
 			name: string,

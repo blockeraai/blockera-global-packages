@@ -8,6 +8,7 @@ import type { MixedElement } from 'react';
  * Internal dependencies
  */
 import type { TPopoverProps } from '../../popover/types';
+import type { FieldProps } from '../../../types';
 
 export type GroupControlMode = 'popover' | 'accordion' | 'nothing';
 
@@ -82,6 +83,10 @@ export type GroupControlProps = {
 	children?: string | MixedElement,
 	//
 	className?: string,
+	/**
+	 * Spread onto the group root only.
+	 */
+	fieldProps?: FieldProps,
 	/**
 	 * Function that will be fired while closing group
 	 */

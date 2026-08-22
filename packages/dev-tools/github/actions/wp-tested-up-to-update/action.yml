@@ -1,0 +1,21 @@
+name: 'Blockera WP Tested up to updater'
+description: >
+    Wrap AlecRust/wp-tut-updater-action. Defaults match the Blockera plugin main file.
+inputs:
+    github-token:
+        description: 'Token for the updater action (usually github.token or BLOCKERABOT_PAT)'
+        required: true
+    file-paths:
+        description: 'Plugin main file(s) containing "Tested up to"'
+        required: false
+        default: 'blockera.php'
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Run wp-tut-updater-action
+          uses: AlecRust/wp-tut-updater-action@main
+          env:
+              GITHUB_TOKEN: ${{ inputs.github-token }}
+          with:
+              file-paths: ${{ inputs.file-paths }}

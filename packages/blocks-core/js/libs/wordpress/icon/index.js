@@ -23,9 +23,29 @@ export const Icon: BlockType = {
 	blockFeatures: {
 		icon: {
 			status: true,
+			inspector: {
+				status: true,
+				extensions: {
+					icon: {
+						tabPosition: 'blockera-inspector-settings-start',
+					},
+				},
+				innerBlocks: {
+					status: true,
+					items: {},
+				},
+				blockStates: {
+					status: false,
+					items: {},
+				},
+			},
 			// Canvas preview is owned by canvasEdit — avoid editor DOM htmlEditable side effects.
 			htmlEditable: {
 				status: false,
+			},
+			contextualToolbar: {
+				status: false,
+				type: 'none',
 			},
 		},
 	},

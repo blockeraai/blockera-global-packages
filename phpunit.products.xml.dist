@@ -1,0 +1,29 @@
+<!--
+	WordPress-backed PHPUnit config for blockera/products (blockera-global-packages).
+	Runs in wp-env via npm run test:unit:php:products — not in consumer suites.
+-->
+<phpunit
+        bootstrap="./packages/dev-phpunit/php/bootstrap.php"
+        backupGlobals="false"
+        colors="true"
+        convertErrorsToExceptions="true"
+        convertNoticesToExceptions="true"
+        convertWarningsToExceptions="true"
+        verbose="true"
+        failOnEmptyTestSuite="true"
+>
+    <testsuites>
+        <testsuite name="units">
+            <directory suffix="Test.php">./packages/products/php/tests/</directory>
+        </testsuite>
+    </testsuites>
+
+    <php>
+        <env name="VERSION" value="1.0-beta" />
+        <const name="PHPUNIT_PLUGIN_TEST" value="true"/>
+        <env name="__BLOCKERA_DIR__" value="blockera-global-packages" />
+        <env name="WP_PHPUNIT__TESTS_CONFIG" value="./packages/dev-phpunit/php/config.php" />
+        <env name="WP_TESTS_CONFIG_FILE_PATH" value="./packages/dev-phpunit/php/config.php" />
+    </php>
+
+</phpunit>

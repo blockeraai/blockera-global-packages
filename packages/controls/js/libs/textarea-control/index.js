@@ -42,8 +42,10 @@ export default function TextAreaControl({
 	onChange,
 	field = 'textarea',
 	className,
+	fieldProps,
 	disabled = false,
 	height = 55,
+	rows,
 	...props
 }: TTextAreaItem): MixedElement {
 	const {
@@ -102,6 +104,7 @@ export default function TextAreaControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<textarea
@@ -112,7 +115,7 @@ export default function TextAreaControl({
 				style={textareaStyle}
 				{...props}
 				// One row so empty scrollHeight can settle at the 30px min (browser default is 2).
-				rows={height === 'auto' ? 1 : props.rows}
+				rows={height === 'auto' ? 1 : rows}
 				onChange={(e) => {
 					setValue(e.target.value);
 

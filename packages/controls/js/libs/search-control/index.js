@@ -32,6 +32,7 @@ export default function SearchControl({
 	placeholder = __('Search…', 'blockera'),
 	//
 	className,
+	fieldProps,
 	...props
 }: TSearchControlProps): MixedElement {
 	const {
@@ -67,6 +68,7 @@ export default function SearchControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<WPSearchControl

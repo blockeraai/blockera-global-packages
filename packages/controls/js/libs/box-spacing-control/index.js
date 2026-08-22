@@ -36,6 +36,7 @@ import { isValid } from '../../value-addons';
 
 export default function BoxSpacingControl({
 	className,
+	fieldProps,
 	//
 	// marginDisable = 'none',
 	// paddingDisable = 'none',
@@ -131,6 +132,7 @@ export default function BoxSpacingControl({
 				label=""
 				columns={'columns-1'}
 				controlName="box-spacing-padding"
+				fieldProps={fieldProps}
 			>
 				<div className={controlClassNames('box-spacing', className)}>
 					<div className={controlInnerClassNames('spacing-header')}>

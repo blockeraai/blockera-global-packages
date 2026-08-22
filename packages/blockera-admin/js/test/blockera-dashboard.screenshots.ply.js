@@ -31,6 +31,18 @@ test.describe('Blockera Dashboard → Visual Test', () => {
 			}
 		});
 
+		// hide WP update/moderation badges (Plugins, Themes, Updates, Comments)
+		// so fluctuating counts cannot flake the snapshot
+		await page.evaluate(() => {
+			const badges = document.querySelectorAll(
+				'#adminmenu .update-plugins, #adminmenu .awaiting-mod, #adminmenu .menu-counter, #wpadminbar #wp-admin-bar-updates'
+			);
+
+			badges.forEach((el) => {
+				el.style.display = 'none';
+			});
+		});
+
 		// Wait for content to be ready
 		await page.waitForTimeout(500);
 

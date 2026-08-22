@@ -21,7 +21,7 @@ describe('Featured Image Block → Selectors test', () => {
 		cy.get('button').contains('Set featured image').click();
 		cy.get('#menu-item-upload').click();
 		cy.get('input[type="file"]').selectFile(
-			'packages/dev-cypress/js/fixtures/test.jpg',
+			'packages/global-packages/packages/dev-cypress/js/fixtures/test.jpg',
 			{
 				force: true,
 			}

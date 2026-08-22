@@ -13,7 +13,8 @@ import type { BreakpointTypes, TBreakpoint } from './types';
 export default function (): {
 	[key: TBreakpoint]: BreakpointTypes,
 } {
-	return {
+	// Defaults intentionally omit icon settings / native flags; consumers merge those later.
+	return ({
 		'2xl-desktop': {
 			type: '2xl-desktop',
 			base: false,
@@ -91,5 +92,5 @@ export default function (): {
 			},
 			attributes: {},
 		},
-	};
+	}: any);
 }

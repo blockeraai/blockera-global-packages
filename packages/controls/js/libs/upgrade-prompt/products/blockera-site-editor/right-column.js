@@ -143,7 +143,7 @@ export function SiteEditorUpgradeRightColumn(): MixedElement {
 								)}
 							>
 								<Icon
-									icon="wordpress"
+									icon="wordpress-logo"
 									library="wp"
 									iconSize="20"
 								/>
@@ -212,7 +212,7 @@ export function SiteEditorUpgradeRightColumn(): MixedElement {
 								)}
 							>
 								<Icon
-									icon="wordpress"
+									icon="wordpress-logo"
 									library="wp"
 									iconSize="20"
 								/>

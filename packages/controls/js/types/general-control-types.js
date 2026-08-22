@@ -17,6 +17,21 @@ import type { LabelControlProps } from '../libs/label-control/types';
 
 export type ControlSize = 'normal' | 'input' | 'small' | 'extra-small';
 
+/**
+ * Extra attributes for a control's field root. Avoid `{ [string]: mixed }` —
+ * Flow cannot spread that indexer onto a DOM node (`key` / `ref`).
+ */
+export type FieldProps = {
+	className?: string,
+	style?: Object,
+	'data-cy'?: string,
+	'data-test'?: string,
+	'data-id'?: string,
+	'data-control-id'?: string,
+	'data-active-style'?: string,
+	'aria-label'?: string,
+};
+
 export type ControlGeneralTypes = {
 	id?: string,
 	/**
@@ -37,6 +52,11 @@ export type ControlGeneralTypes = {
 	labelProps?: LabelControlProps,
 	columns?: string,
 	style?: Object,
+	/**
+	 * Spread onto the BaseControl field root only (not the inner input).
+	 * Include className, style, or data-cy here when they belong on the root.
+	 */
+	fieldProps?: FieldProps,
 	//
 	defaultValue?: string | number | Object,
 	onChange?: (data: any) => void,

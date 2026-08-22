@@ -1,0 +1,49 @@
+{
+    "name": "blockera/plugin-b",
+    "description": "Plugin B for testing the autoloader coordinator.",
+    "type": "wordpress-plugin",
+    "version": "1.0.0",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Blockera",
+            "email": "support@blockera.ai"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "blockera/autoloader-coordinator": "*",
+        "blockera/name-utils": "*"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./packages/autoloader-coordinator",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "./packages/name-utils",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "PluginB\\": "src/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
+

@@ -17,11 +17,11 @@ import {
 	getValueFromVariable,
 } from '../theme-json-utils';
 
-export function useGlobalSetting(
+export function useGlobalSetting<T = unknown>(
 	propertyPath: string,
-	blockName: string,
+	blockName = '',
 	source = 'all'
-): [unknown, (newValue: unknown) => void] {
+): [T, (newValue: T) => void] {
 	const { setUserConfig, ...configs } = useGlobalStylesContext();
 	const appendedBlockPath = blockName ? '.blocks.' + blockName : '';
 	const appendedPropertyPath = propertyPath ? '.' + propertyPath : '';
@@ -55,7 +55,7 @@ export function useGlobalSetting(
 			setImmutably(currentConfig, contextualPath.split('.'), newValue)
 		);
 	};
-	return [settingValue, setSetting];
+	return [settingValue as T, setSetting as (newValue: T) => void];
 }
 
 export function useGlobalStyle(

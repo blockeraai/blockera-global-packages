@@ -59,7 +59,7 @@ import {
 | Group | Examples |
 |-------|----------|
 | Foundation | `Flex`, `Grid`, `Button`, `Modal`, `Popover`, `Tooltip`, `Tabs`, `BaseControl` |
-| Inputs | `InputControl`, `TextAreaControl`, `SelectControl`, `ToggleControl`, `RangeControl`, `ColorControl`, `MediaUploader` |
+| Inputs | `InputControl`, `StepperControl`, `TextAreaControl`, `SelectControl`, `ToggleControl`, `RangeControl`, `ColorControl`, `MediaUploader` |
 | Style | `BackgroundControl`, `BorderControl`, `BoxBorderControl`, `BorderRadiusControl`, `BoxShadowControl`, `TextShadowControl`, `TransformControl`, `TransitionControl`, `FilterControl`, `MaskControl`, `LayoutMatrixControl` |
 | Composite | `RepeaterControl`, `ValueAddonControl`, `FeatureWrapper`, `UpgradePrompt`, `Promoter`, `RendererControl`, `CodeControl` |
 | Store | `store`, `actions`, `reducer`, `selectors`, `STORE_NAME` |

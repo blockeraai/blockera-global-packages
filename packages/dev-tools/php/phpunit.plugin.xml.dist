@@ -1,0 +1,55 @@
+<!--
+	Shared Blockera plugin PHPUnit config (source of truth in @blockera/dev-tools).
+	Consumers keep a real root phpunit.xml.dist copy (PHPUnit has no config includes).
+	@see https://github.com/wp-phpunit/docs
+-->
+<phpunit
+        bootstrap="./packages/global-packages/packages/dev-phpunit/php/bootstrap.php"
+        backupGlobals="false"
+        colors="true"
+        convertErrorsToExceptions="true"
+        convertNoticesToExceptions="true"
+        convertWarningsToExceptions="true"
+        verbose="true"
+>
+    <coverage>
+        <report>
+            <html outputDirectory="php-coverage" />
+        </report>
+    </coverage>
+
+    <testsuites>
+        <testsuite name="units">
+            <directory suffix=".php">./packages/global-packages/packages/dev-phpunit/php/</directory>
+            <directory suffix=".php">./packages/global-packages/packages/blockera/php/tests/</directory>
+            <directory suffix=".php">./packages/global-packages/packages/blockera-admin/php/tests/</directory>
+            <directory suffix=".php">./packages/global-packages/packages/data/php/tests/</directory>
+            <directory suffix=".php">./packages/global-packages/packages/editor/php/Tests/</directory>
+            <directory suffix=".php">./packages/global-packages/packages/wordpress/php/tests/</directory>
+            <directory suffix=".php">./packages/global-packages/packages/utils/php/tests/</directory>
+            <exclude>./node_modules/</exclude>
+            <exclude>./dist/</exclude>
+            <exclude>./packages/global-packages/packages/blockera/php/tests/Fixtures/</exclude>
+            <exclude>./packages/global-packages/packages/editor/php/Tests/Fixtures/</exclude>
+            <exclude>./packages/global-packages/packages/editor/php/Tests/StyleDefinitionTestCase.php</exclude>
+        </testsuite>
+        <testsuite name="snapshots">
+            <directory suffix=".php">./packages/global-packages/packages/dev-phpunit/php/</directory>
+            <directory suffix=".php">./tests/phpunit/main/</directory>
+            <exclude>./node_modules/</exclude>
+            <exclude>./dist/</exclude>
+            <exclude>./packages/global-packages/packages/blockera/php/tests/Fixtures/</exclude>
+            <exclude>./packages/global-packages/packages/editor/php/Tests/Fixtures/</exclude>
+            <exclude>./packages/global-packages/packages/editor/php/Tests/StyleDefinitionTestCase.php</exclude>
+        </testsuite>
+    </testsuites>
+
+    <php>
+        <env name="VERSION" value="1.0-beta" />
+        <const name="PHPUNIT_PLUGIN_TEST" value="true"/>
+        <env name="__BLOCKERA_DIR__" value="blockera" />
+        <env name="WP_PHPUNIT__TESTS_CONFIG" value="./packages/global-packages/packages/dev-phpunit/php/config.php" />
+        <env name="WP_TESTS_CONFIG_FILE_PATH" value="./packages/global-packages/packages/dev-phpunit/php/config.php" />
+    </php>
+
+</phpunit>

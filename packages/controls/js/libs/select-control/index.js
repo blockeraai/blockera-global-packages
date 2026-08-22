@@ -47,6 +47,8 @@ const SelectControl = ({
 	//
 	className,
 	style = {},
+	fieldProps,
+	children,
 	...props
 }: TSelectControlProps): MixedElement => {
 	const {
@@ -88,6 +90,7 @@ const SelectControl = ({
 			controlName={field}
 			className={className}
 			style={style}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			{type === 'native' && (
@@ -108,6 +111,8 @@ const SelectControl = ({
 					{options?.map(renderSelectNativeOption)}
 				</WPSelectControl>
 			)}
+
+			{children}
 
 			{type === 'custom' && (
 				<WPCustomSelectControl

@@ -43,6 +43,7 @@ export default function ColorPickerControl({
 	field = 'color-picker',
 	//
 	className,
+	fieldProps,
 	children,
 }: ColorPickerControlProps): MixedElement {
 	const valueCleanup = useCallback((newValue: string) => {
@@ -212,6 +213,7 @@ export default function ColorPickerControl({
 				columns={columns}
 				controlName={field}
 				className={className}
+				fieldProps={fieldProps}
 				{...{
 					attribute,
 					blockName,
@@ -299,6 +301,7 @@ export default function ColorPickerControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...{ attribute, blockName, resetToDefault }}
 		>
 			<div className={sketchStackClassName}>

@@ -1,0 +1,25 @@
+{
+    "name": "blockera/name-utils",
+    "description": "Utility functions for working with names.",
+    "type": "library",
+    "version": "1.0.1",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Blockera",
+            "email": "support@blockera.ai"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Blockera\\NameUtils\\": "php/"
+        },
+        "files": [
+            "php/functions.php"
+        ]
+    }
+}
+

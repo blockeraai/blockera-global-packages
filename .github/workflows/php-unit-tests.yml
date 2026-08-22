@@ -1,0 +1,121 @@
+name: PHP Unit Tests
+
+on:
+    pull_request:
+        types: [opened, synchronize, ready_for_review]
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+    cancel-in-progress: true
+
+jobs:
+    php-unit:
+        name: PHP ${{ matrix.php }} on ubuntu-latest
+        runs-on: ubuntu-latest
+        timeout-minutes: 25
+        if: ${{ github.repository == 'blockeraai/blockera-global-packages' || github.event_name == 'pull_request' }}
+        strategy:
+            fail-fast: true
+            matrix:
+                php:
+                    - '7.4'
+                    - '8.0'
+                    - '8.1'
+                    - '8.2'
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+            WP_ENV_PHP_VERSION: ${{ matrix.php }}
+            WP_ENV_CORE: https://wordpress.org/wordpress-latest.zip
+            BLOCKERA_PHP_UNIT_PHP_VERSION: ${{ matrix.php }}
+            BLOCKERA_PHP_UNIT_MULTISITE: 'false'
+            BLOCKERA_PHP_UNIT_SKIP_IF_NO_TESTS: 'true'
+            BLOCKERA_PHP_UNIT_BUILD_CMD: 'true'
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - uses: ./packages/dev-tools/github/actions/setup-node
+
+            - uses: ./packages/dev-tools/github/actions/setup-php
+              with:
+                  php-version: ${{ matrix.php }}
+
+            - name: Coordinator unit tests
+              env:
+                  BLOCKERA_PHP_UNIT_TEST_ROOTS: packages/autoloader-coordinator
+                  BLOCKERA_PHP_UNIT_MIN_TESTS: '43'
+                  BLOCKERA_PHP_UNIT_WP_ENV_START_CMD: 'true'
+                  BLOCKERA_PHP_UNIT_TEST_CMD: npm run test:unit:php
+              run: bash packages/dev-tools/github/scripts/jobs/php-unit-tests/run.sh
+
+            - name: Products unit tests
+              env:
+                  BLOCKERA_PHP_UNIT_TEST_ROOTS: packages/products
+                  BLOCKERA_PHP_UNIT_MIN_TESTS: '19'
+                  BLOCKERA_PHP_UNIT_WP_ENV_CONFIG_DIR: .github/wp-env-configs
+                  BLOCKERA_PHP_UNIT_WP_ENV_START_CMD: bash packages/dev-tools/github/scripts/retry-wp-env-start.sh
+                  BLOCKERA_PHP_UNIT_TEST_CMD: npm run test:unit:php:products
+              run: bash packages/dev-tools/github/scripts/jobs/php-unit-tests/run.sh
+
+    coordinator-wp-env:
+        name: Coordinator WP ${{ matrix.scenario_name }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 25
+        if: ${{ github.repository == 'blockeraai/blockera-global-packages' || github.event_name == 'pull_request' }}
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - scenario_name: plugin-a-newer
+                      plugin_a_version: '2.0.0'
+                      plugin_b_version: '1.0.0'
+                      expected_winner: plugin-a
+                      expected_version: '2.0.0'
+                    - scenario_name: plugin-b-newer
+                      plugin_a_version: '1.0.0'
+                      plugin_b_version: '2.0.0'
+                      expected_winner: plugin-b
+                      expected_version: '2.0.0'
+                    - scenario_name: same-version
+                      plugin_a_version: '1.0.0'
+                      plugin_b_version: '1.0.0'
+                      expected_winner: plugin-a
+                      expected_version: '1.0.0'
+                    - scenario_name: major-version-diff
+                      plugin_a_version: '3.0.0'
+                      plugin_b_version: '1.0.0'
+                      expected_winner: plugin-a
+                      expected_version: '3.0.0'
+                    - scenario_name: patch-version-diff
+                      plugin_a_version: '1.0.0'
+                      plugin_b_version: '1.0.1'
+                      expected_winner: plugin-b
+                      expected_version: '1.0.1'
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+            WP_ENV_PHP_VERSION: '8.2'
+            COORDINATOR_WP_ENV_PHP_VERSION: '8.2'
+            COORDINATOR_WP_ENV_SCENARIO: ${{ matrix.scenario_name }}
+            COORDINATOR_WP_ENV_PLUGIN_A_VERSION: ${{ matrix.plugin_a_version }}
+            COORDINATOR_WP_ENV_PLUGIN_B_VERSION: ${{ matrix.plugin_b_version }}
+            COORDINATOR_WP_ENV_EXPECTED_WINNER: ${{ matrix.expected_winner }}
+            COORDINATOR_WP_ENV_EXPECTED_VERSION: ${{ matrix.expected_version }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - uses: ./packages/dev-tools/github/actions/setup-node
+
+            - uses: ./packages/dev-tools/github/actions/setup-php
+              with:
+                  php-version: '8.2'
+
+            - name: Run coordinator wp-env scenario
+              run: bash packages/autoloader-coordinator/php/tests/fixtures/run-wp-env-scenario.sh
+
+            - name: Stop wp-env
+              if: always()
+              run: npx --yes @wordpress/env stop || true

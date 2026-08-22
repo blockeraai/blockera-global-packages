@@ -47,7 +47,7 @@ import { Icon } from '@blockera/icons';
 /**
  * Internal dependencies
  */
-import type { VariableType } from './types.ts';
+import type { VariableType } from './types';
 import {
 	type PresetRepeaterValue,
 	type PresetVariablesInput,
@@ -55,10 +55,10 @@ import {
 	normalizePresetRepeaterValueToIndexKeys,
 	overlayCreatingStepRowsFromRepeaterStore,
 	variablesToPresetRepeaterValue,
-} from './preset-repeater-value-utils.ts';
-import { PresetStateContainer } from './preset-state-container.tsx';
-import { getPresetDeleteConfirmWarningText } from './preset-origin-utils.ts';
-import { resolvePresetRepeaterItemSize } from './preset-taxonomy-ui/preset-taxonomy-utils.ts';
+} from './preset-repeater-value-utils';
+import { PresetStateContainer } from './preset-state-container';
+import { getPresetDeleteConfirmWarningText } from './preset-origin-utils';
+import { resolvePresetRepeaterItemSize } from './preset-taxonomy-ui/preset-taxonomy-utils';
 import {
 	applyVariablePickerRepeaterSelection,
 	buildPresetVariablePickerPayload,
@@ -69,11 +69,11 @@ import {
 	stripIsSelectedFromRepeaterItems,
 	stripRepeaterPickerUiFields,
 	syncVariablePickerCreatingStepSlugs,
-} from './variable-picker-preset-utils.ts';
+} from './variable-picker-preset-utils';
 import {
 	useCanAddCustomPresetInVariablePicker,
 	useCanEditGlobalStyles,
-} from './use-global-styles-preset-edit.ts';
+} from './use-global-styles-preset-edit';
 
 function areCreatingStepSlugMapsEqual(
 	a: Record<string, true>,
@@ -766,7 +766,7 @@ export const PresetGroup = memo(function PresetGroup({
 		}
 
 		const storeValue = (
-			select('blockera/controls/repeater') as {
+			select('blockera/controls/repeater') as unknown as {
 				getControl: (name: string) => { value?: unknown } | undefined;
 			}
 		).getControl(repeaterControlName)?.value;

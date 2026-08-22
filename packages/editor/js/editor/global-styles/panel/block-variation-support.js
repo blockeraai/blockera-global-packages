@@ -43,6 +43,27 @@ export function getBlockVariationSupportForBlock(
 }
 
 /**
+ * Pick-only pickers default to the size surface when the block only supports
+ * size variations (e.g. Button). Explicit `variationSurface` always wins.
+ */
+export function resolvePickOnlyVariationSurface(
+	support: BlockVariationSupport,
+	explicitSurface?: ?string,
+	fallbackSurface: string,
+	sizeSurface: string
+): string {
+	if (explicitSurface) {
+		return explicitSurface;
+	}
+
+	if (support.hasSizeVariations && !support.hasStyleVariations) {
+		return sizeSurface;
+	}
+
+	return fallbackSurface;
+}
+
+/**
  * Whether the given variation surface should render UI for this block.
  */
 export function isVariationSurfaceEnabled(

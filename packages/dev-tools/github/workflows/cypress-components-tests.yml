@@ -1,0 +1,56 @@
+# Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO.
+name: Cypress Components Tests
+
+on:
+    pull_request:
+        types: [opened, synchronize, ready_for_review]
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+    cancel-in-progress: true
+
+jobs:
+    pr-workflow-gate:
+        name: PR workflow filter
+        runs-on: ubuntu-latest
+        outputs:
+            run: ${{ steps.gate.outputs.run }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - id: gate
+              uses: ./packages/global-packages/packages/dev-tools/github/actions/pr-workflow-gate
+              with:
+                  workflow-file: cypress-components-tests.yml
+
+    cypress_components_tests:
+        name: Cypress Components Tests
+        needs: pr-workflow-gate
+        if: ${{ needs.pr-workflow-gate.outputs.run == 'true' && (github.repository == 'OWNER/REPO' || github.event_name == 'pull_request') }}
+        runs-on: ubuntu-latest
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+            # Theme example overrides:
+            # BLOCKERA_CT_COMPOSER_INSTALL: 'false'
+            # BLOCKERA_CT_SKIP_IF_NO_SPECS: 'true'
+            # BLOCKERA_CT_SPECS_ROOTS: './packages/blockera-one-* ./packages/*-one'
+            # BLOCKERA_CT_TEST_CMD: 'npm run test:ct -- --spec "./packages/blockera-one-*/**/*.component.cy.js" "./packages/*-one/**/*.component.cy.js"'
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+
+            - run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/cypress-components-tests/run.sh

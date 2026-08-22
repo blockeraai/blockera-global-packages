@@ -9,7 +9,7 @@ import {
 	store as keyboardShortcutsStore,
 } from '@wordpress/keyboard-shortcuts';
 import { registerPlugin } from '@wordpress/plugins';
-import type { MouseEvent, ReactElement, KeyboardEvent } from 'react';
+import type { MouseEvent, ReactElement } from 'react';
 
 /**
  * Internal dependencies
@@ -158,9 +158,13 @@ function BlockeraPreview(): ReactElement {
 		[]
 	);
 
-	// Bind keyboard shortcuts
-	useShortcut('blockera/preview-mode/toggle', handleKeyboardShortcut);
-	useShortcut('blockera/preview-mode/open-new-tab', handleOpenNewTabShortcut);
+	// Bind keyboard shortcuts. Wrap async handlers so useShortcut receives a void callback.
+	useShortcut('blockera/preview-mode/toggle', (event) => {
+		void handleKeyboardShortcut(event);
+	});
+	useShortcut('blockera/preview-mode/open-new-tab', (event) => {
+		void handleOpenNewTabShortcut(event);
+	});
 
 	/**
 	 * Handle click on the preview button.

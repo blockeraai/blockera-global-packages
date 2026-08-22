@@ -1,20 +1,32 @@
 // @flow
 
 /**
- * WordPress Site Editor (`site-editor.php`) URL helpers.
- */
-
-export const SITE_EDITOR_PATH = 'site-editor.php';
-
-/**
- * Whether the current window location is the WordPress Site Editor.
+ * WordPress Site Editor (`site-editor.php`) helpers.
  *
- * @return {boolean} True when pathname includes `site-editor.php`.
+ * URL detection, Gutenberg-router-compatible SPA history (write + subscribe),
+ * `p` path helpers, and core sidebar DOM utilities.
  */
-export function isSiteEditorUrl(): boolean {
-	if (typeof window === 'undefined') {
-		return false;
-	}
 
-	return window.location.pathname.includes(SITE_EDITOR_PATH);
-}
+export {
+	SITE_EDITOR_PATH,
+	SITE_EDITOR_ROOT_PATH,
+	isSiteEditorUrl,
+} from './is-url';
+export { pushSiteEditorHistory } from './push-history';
+export { withLiteralQueryChars } from './query-chars';
+export {
+	SITE_EDITOR_NAVIGATE_EVENT,
+	ensureSiteEditorHistoryPatch,
+	useSiteEditorNavigate,
+} from './history-patch';
+export { useSiteEditorUrlState } from './use-url-state';
+export {
+	getSiteEditorPath,
+	isSiteEditorRootPath,
+	navigateToSiteEditorPath,
+} from './path';
+export {
+	SITE_EDITOR_SIDEBAR_SCREEN_WRAPPER_SELECTOR,
+	clickCoreNavItem,
+	clearCoreSidebarSlideClasses,
+} from './dom';

@@ -1,0 +1,19 @@
+{
+	"name": "blockera/products",
+	"version": "1.0.0",
+	"description": "The Blockera products details registry, providing an object store api and localization for javascript consumers.",
+	"autoload": {
+		"psr-4": {
+			"Blockera\\Products\\": "php/"
+		},
+		"files": [
+			"php/functions.php",
+			"php/hooks.php"
+		]
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"Blockera\\Products\\Tests\\": "php/tests/"
+		}
+	}
+}

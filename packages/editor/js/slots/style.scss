@@ -35,7 +35,8 @@
 	display: none;
 }
 
-/* Editor settings dropdown button */
+/* Editor settings dropdown button and editor back button */
+.editor-header .editor-header__back-button .components-button.has-icon,
 .editor-header__settings
 	.components-dropdown.components-dropdown-menu:last-child
 	.components-button.components-dropdown-menu__toggle {

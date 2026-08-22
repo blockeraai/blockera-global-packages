@@ -39,6 +39,7 @@ export default function MediaImageControl({
 	field = 'media-image',
 	//
 	className,
+	fieldProps,
 }: MediaImageControlProps): MixedElement {
 	const {
 		value,
@@ -74,6 +75,7 @@ export default function MediaImageControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<div

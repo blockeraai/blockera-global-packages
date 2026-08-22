@@ -45,7 +45,7 @@ function subscribe(onStoreChange: () => void): () => void {
 	window.addEventListener('popstate', onStoreChange);
 
 	let layoutObserver: MutationObserver | null = null;
-	let pollTimer: ReturnType<typeof setInterval> | null = null;
+	let pollTimer: number | null = null;
 	let layoutAttached = false;
 
 	const attachLayoutObserver = (el: Element) => {

@@ -34,7 +34,10 @@ import { default as EditorFeatureWrapper } from '@blockera/editor/js/components/
 /**
  * Internal dependencies
  */
-import type { TIconProps } from './types/icon-extension-props';
+import type {
+	TIconProps,
+	TExtensionFillComponentProps,
+} from './types/icon-extension-props';
 import {
 	getIconColorAttributeId,
 	getIconSizeAttributeId,
@@ -51,10 +54,12 @@ import {
 	renderLibraryIconMarkup,
 } from '../icon-render-utils';
 
-export const IconExtension: ComponentType<{
+type IconExtensionProps = {
 	...TIconProps,
 	...TExtensionFillComponentProps,
-}> = ({
+};
+
+export const IconExtension: ComponentType<IconExtensionProps> = ({
 	block,
 	iconConfig: {
 		blockeraIcon,
@@ -83,7 +88,7 @@ export const IconExtension: ComponentType<{
 	attributes,
 	useBlockSection,
 	activeSearchMode = false,
-}: TIconProps): MixedElement => {
+}: IconExtensionProps): MixedElement => {
 	const { changeExtensionCurrentBlock: setCurrentBlock } =
 		dispatch('blockera/extensions') || {};
 	const { initialOpen, onToggle } = useBlockSection('iconConfig');

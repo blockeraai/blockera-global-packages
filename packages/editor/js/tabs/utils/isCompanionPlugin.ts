@@ -10,5 +10,5 @@ import { applyFilters } from '@wordpress/hooks';
  * promote installing the plugin.
  */
 export function isCompanionPlugin(): boolean {
-	return applyFilters('blockera.products.isCompanionPlugin', false);
+	return Boolean(applyFilters('blockera.products.isCompanionPlugin', false));
 }

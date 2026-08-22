@@ -43,24 +43,59 @@ function resolvePackagesRoot(rootDir) {
 const rootDir = resolveRootDir();
 const packagesRoot = resolvePackagesRoot(rootDir);
 
+/**
+ * Consumers that link the shared packages via packages/global-packages also
+ * keep their own product packages next to it (e.g. the blockera-one theme
+ * package). Include those as extra roots so their unit tests run too.
+ *
+ * Override with BLOCKERA_JEST_ROOTS (comma/space/colon-separated paths relative
+ * to rootDir, or absolute) when a consumer should not run shared package tests
+ * (e.g. site-toolkit → packages/site-toolkit).
+ */
+function resolveTestRoots() {
+	const override = process.env.BLOCKERA_JEST_ROOTS;
+	if (override && String(override).trim()) {
+		return String(override)
+			.split(/[,:\s]+/)
+			.map((entry) => entry.trim())
+			.filter(Boolean)
+			.map((entry) =>
+				path.isAbsolute(entry) ? entry : path.join(rootDir, entry)
+			);
+	}
+
+	const roots = [packagesRoot];
+	const consumerPackages = path.join(rootDir, 'packages');
+	if (packagesRoot === consumerPackages || !fs.existsSync(consumerPackages)) {
+		return roots;
+	}
+	for (const entry of fs.readdirSync(consumerPackages, {
+		withFileTypes: true,
+	})) {
+		if (entry.isDirectory() && entry.name !== 'global-packages') {
+			roots.push(path.join(consumerPackages, entry.name));
+		}
+	}
+	return roots;
+}
+
+const testRoots = resolveTestRoots();
+
 module.exports = {
 	rootDir,
-	roots: [packagesRoot],
+	roots: testRoots,
 	preset: '@wordpress/jest-preset-default',
-	collectCoverageFrom: [`${packagesRoot}/**/*.js`],
+	collectCoverageFrom: testRoots.map((root) => `${root}/**/*.js`),
 	setupFiles: [
 		path.join(DEV_JEST_JS, 'setup-text-encoding.js'),
 		path.join(DEV_JEST_JS, 'setup-jsdom-css.js'),
 	],
 	setupFilesAfterEnv: [
 		require.resolve('@wordpress/jest-preset-default/scripts/setup-globals.js'),
+		path.join(DEV_JEST_JS, 'setup-mock-breakpoints-bootstrap.js'),
 	],
 	modulePathIgnorePatterns: [],
-	testPathIgnorePatterns: [
-		'/node_modules/',
-		'/source-code-block-editor/',
-		'/source-code-wordpress/',
-	],
+	testPathIgnorePatterns: ['/node_modules/', '/source-codes/'],
 	testMatch: ['**/test/**/*.spec.js', '**/tests/**/*.spec.js'],
 	transformIgnorePatterns: [
 		'/node_modules/(?!(.*@wordpress/theme|parsel-js|client-zip|marked)).*\\.(js|jsx|mjs|cjs|ts|tsx)$',

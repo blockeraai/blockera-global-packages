@@ -1,0 +1,46 @@
+name: 'Setup PHP and install Composer dependencies'
+description: >
+    Shared PHP/Composer setup for Blockera consumers and the global-packages monorepo.
+    Resolves wp-cli helper scripts from this action directory so both layouts work:
+    packages/dev-tools/... (this repo) and packages/global-packages/packages/dev-tools/... (consumers).
+inputs:
+    php-version:
+        description: 'PHP version for the runner (and composer platform.php).'
+        required: false
+        default: '7.4'
+    composer-options:
+        description: 'Extra options passed to composer install.'
+        required: false
+        default: ''
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Set up PHP
+          uses: shivammathur/setup-php@v2
+          with:
+              php-version: '${{ inputs.php-version }}'
+              ini-file: development
+              coverage: none
+              tools: cs2pr
+              ini-values: memory_limit=128M, max_execution_time=30, max_input_time=60, max_input_vars=1000
+
+        - name: Remove wp-cli bundle from composer files
+          shell: bash
+          run: bash "${GITHUB_ACTION_PATH}/../../scripts/lib/strip-wp-cli-composer-files.sh"
+
+        - name: Override PHP version in composer.json
+          shell: bash
+          run: composer config platform.php ${{ inputs.php-version }}
+
+        - name: Install Composer dependencies
+          uses: ramsey/composer-install@v4
+          with:
+              custom-cache-suffix: $(/bin/date -u --date='last Mon' "+%F")
+              composer-options: '${{ inputs.composer-options }}'
+
+        - name: Remove Composer wp-cli from vendor
+          shell: bash
+          env:
+              BLOCKERA_COMPOSER_INSTALL_OPTS: '${{ inputs.composer-options }}'
+          run: bash "${GITHUB_ACTION_PATH}/../../scripts/lib/remove-wp-cli-vendor.sh"

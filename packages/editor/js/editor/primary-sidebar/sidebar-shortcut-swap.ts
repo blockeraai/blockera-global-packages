@@ -42,7 +42,7 @@ export function applyBlockeraPrimarySidebarShortcutSwap(): void {
 			character: '.',
 		},
 		icon: 'arrow-right',
-	});
+	} as Parameters<typeof registerShortcut>[0]);
 }
 
 /**

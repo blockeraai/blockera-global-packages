@@ -75,10 +75,7 @@ const omitUnownedBlockeraDisplay = (
 ): Object => {
 	for (let i = 0; i < owners.length; i++) {
 		const owner = owners[i];
-		if (
-			owner &&
-			Object.prototype.hasOwnProperty.call(owner, 'blockeraDisplay')
-		) {
+		if (owner && 'blockeraDisplay' in owner) {
 			return mergedAttrs;
 		}
 	}

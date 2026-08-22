@@ -451,13 +451,14 @@ export default function AIExperimentalTools(): JSX.Element {
 		}
 
 		const model = aiModel.trim();
+		let selectedClientId: string | null = null;
 
 		const payload = (() => {
 			let existingDesignBlocks: any[] | null = null;
 
 			if (intent.includes('@block')) {
 				const blockEditorSelect = select('core/block-editor') as any;
-				const selectedClientId =
+				selectedClientId =
 					(blockEditorSelect?.getSelectedBlockClientId?.() as
 						string | undefined) || null;
 				if (!selectedClientId) {

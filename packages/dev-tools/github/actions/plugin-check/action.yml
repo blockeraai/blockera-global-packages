@@ -1,0 +1,75 @@
+name: 'Blockera WordPress Plugin Check (PCP)'
+description: >
+    Setup Node/PHP, build+extract the plugin zip, and run wordpress/plugin-check-action.
+    Defaults match the Blockera plugin; override via inputs or BLOCKERA_PLUGIN_CHECK_* env.
+inputs:
+    repo-token:
+        description: 'Token passed to wordpress/plugin-check-action (secrets.BLOCKERABOT_PAT)'
+        required: true
+    zip-file:
+        description: 'Zip produced by the build (Blockera base default)'
+        required: false
+        default: 'blockera.zip'
+    build-dir:
+        description: 'Directory passed to plugin-check-action after extract'
+        required: false
+        default: './build/blockera'
+    main-file-suffix:
+        description: 'MAIN_FILE_SUFFIX for the default plugin zip builder'
+        required: false
+        default: ''
+    composer-options:
+        description: 'Composer options for setup-php'
+        required: false
+        default: '--no-dev -o --apcu-autoloader -a'
+    php-version:
+        description: 'PHP version for setup-php (and composer platform.php)'
+        required: false
+        default: '7.4'
+    categories:
+        description: 'PCP categories (multiline)'
+        required: false
+        default: |
+            general
+            security
+            performance
+            plugin_repo
+            accessibility
+    exclude-directories:
+        description: 'Optional PCP exclude-directories'
+        required: false
+        default: ''
+    exclude-checks:
+        description: 'Optional PCP exclude-checks (multiline)'
+        required: false
+        default: ''
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Setup Node.js and install dependencies
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+
+        - name: Setup PHP Composer install dependencies
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-php
+          with:
+              php-version: ${{ inputs.php-version }}
+              composer-options: ${{ inputs.composer-options }}
+
+        - name: Build and extract plugin zip
+          shell: bash
+          env:
+              BLOCKERA_PLUGIN_CHECK_ZIP: ${{ inputs.zip-file }}
+              BLOCKERA_PLUGIN_CHECK_BUILD_DIR: ${{ inputs.build-dir }}
+              BLOCKERA_PLUGIN_CHECK_MAIN_FILE_SUFFIX: ${{ inputs.main-file-suffix }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/plugin-check/prepare-build.sh"
+
+        - name: Test With WordPress Plugin Check (PCP)
+          # v1.1.8 shipped a broken dist (webpackMissingModule for @actions/core).
+          uses: wordpress/plugin-check-action@v1.1.9
+          with:
+              repo-token: ${{ inputs.repo-token }}
+              build-dir: ${{ inputs.build-dir }}
+              categories: ${{ inputs.categories }}
+              exclude-directories: ${{ inputs.exclude-directories }}
+              exclude-checks: ${{ inputs.exclude-checks }}

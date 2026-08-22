@@ -32,6 +32,7 @@ export default function ({
 	block,
 	handleOnChangeAttributes,
 	defaultValue,
+	labelProps: incomingLabelProps,
 	...props
 }: {
 	gap: { lock: boolean, gap: string, columns: string, rows: string },
@@ -40,6 +41,7 @@ export default function ({
 	attributeId: string,
 	handleOnChangeAttributes: THandleOnChangeAttributes,
 	block: TBlockProps,
+	labelProps?: Object,
 }): MixedElement {
 	const { value, attribute, blockName, resetToDefault } = useControlContext({
 		defaultValue,
@@ -57,7 +59,7 @@ export default function ({
 	});
 
 	const labelProps = {
-		...(props.labelProps || {}),
+		...(incomingLabelProps || {}),
 		value,
 		attribute,
 		blockName,
@@ -65,9 +67,9 @@ export default function ({
 		resetToDefault,
 		mode: 'advanced',
 		// Full gap object so preview sees lock / rows / columns (not only unified `gap`).
-		path: props.labelProps?.path ?? attribute,
+		path: incomingLabelProps?.path ?? attribute,
 		changesetGraphPreviewRender:
-			props.labelProps?.changesetGraphPreviewRender ??
+			incomingLabelProps?.changesetGraphPreviewRender ??
 			renderGapUnifiedChangesetPreview,
 	};
 

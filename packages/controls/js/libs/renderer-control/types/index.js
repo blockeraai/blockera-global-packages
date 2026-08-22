@@ -2,7 +2,12 @@
 
 import type { ControlGeneralTypes } from '../../../types';
 
-export type RendererControlTypes = 'text' | 'select' | 'link' | 'search';
+export type RendererControlTypes =
+	| 'text'
+	| 'select'
+	| 'link'
+	| 'search'
+	| 'stepper';
 
 export type RendererControlProps = {
 	...ControlGeneralTypes,

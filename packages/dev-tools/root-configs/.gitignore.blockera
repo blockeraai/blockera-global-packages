@@ -1,0 +1,5 @@
+# Shared packages live in the sparse submodule packages/global-packages.
+# Only index.php is owned by this repo under packages/.
+/packages/*
+!/packages/index.php
+!/packages/global-packages

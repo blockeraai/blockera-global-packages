@@ -111,7 +111,7 @@ export const Popup = ({
 	let modalTitle = '';
 	let modalIcon: MixedElement = <></>;
 	let modalActions: MixedElement = <></>;
-	let modalStyle: Record<string, string> = {};
+	let modalStyle: { [string]: string } = {};
 
 	if (optInStatus === 'ALLOW') {
 		modalTitle =

@@ -312,7 +312,7 @@ function _getLibraryIcons(library: IconLibraryTypes): Array<any> {
 }
 
 export function getIconLibrarySearchData(
-	library: IconLibraryTypes | 'all'
+	library: IconLibraryTypes | 'all' | 'all2'
 ): Array<any> {
 	const searchData: Array<any> = [];
 

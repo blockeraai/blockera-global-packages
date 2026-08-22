@@ -48,11 +48,18 @@ export default function GroupControl({
 	children = 'Content...',
 	//
 	className,
+	fieldProps = {},
 	onClose: fnOnClose = () => {},
 	onOpen: fnOnOpen = () => {},
 	onClick = () => {},
 }: GroupControlProps): MixedElement {
 	const groupHeaderRef = useRef<?HTMLElement>(null);
+	const {
+		className: fieldClassName,
+		style: fieldStyle,
+		'data-cy': fieldDataCy,
+		...restFieldProps
+	} = fieldProps;
 
 	const getHeaderOpenIcon = (): MixedElement | string => {
 		if (headerOpenIcon) {
@@ -153,10 +160,13 @@ export default function GroupControl({
 				disableAccordionOpenPrimaryBorder && mode === 'accordion'
 					? 'no-accordion-open-primary-border'
 					: '',
-				className
+				className,
+				fieldClassName
 			)}
-			data-cy="control-group"
+			style={fieldStyle}
+			data-cy={fieldDataCy || 'control-group'}
 			aria-label={'group-control'}
+			{...restFieldProps}
 		>
 			<div
 				ref={groupHeaderRef}

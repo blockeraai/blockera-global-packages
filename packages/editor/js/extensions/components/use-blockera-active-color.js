@@ -12,7 +12,8 @@ import {
 	computeBlockeraActiveColor,
 	computeBlockeraVariationCssVars,
 } from './blockera-active-color';
-import { useEditorStore, useExtensionsStore } from '../../hooks';
+import { useEditorStore } from '../../hooks/use-editor-store';
+import { useExtensionsStore } from '../../hooks/use-extensions-store';
 
 /**
  * Shared active color + variation CSS variables for StateContainer and inspector tabs.

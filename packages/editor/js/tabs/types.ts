@@ -321,3 +321,5 @@ export interface TabsBarProps {
 	/** Function to get lock user for a tab. */
 	getLockUser: (tabKey: string) => LockUser | null;
 }
+
+export type { TabsLimitsConfig, TabsConfig } from './utils/tabsConfig';

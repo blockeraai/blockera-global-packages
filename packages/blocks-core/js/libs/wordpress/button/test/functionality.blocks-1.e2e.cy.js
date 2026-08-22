@@ -136,10 +136,10 @@ describe('Button Block', () => {
 		cy.getByAriaControls('settings-view').click();
 
 		cy.get('.block-editor-block-inspector').within(() => {
-			// block settings panel body should be hidden
-			cy.get('.components-tools-panel:not(.block-editor-bindings__panel)')
-				.should('exist')
-				.should('not.be.visible');
+			// block settings panel body should not exist (WP 7.1 fix)
+			cy.get(
+				'.components-tools-panel:not(.block-editor-bindings__panel)'
+			).should('not.exist');
 		});
 
 		//

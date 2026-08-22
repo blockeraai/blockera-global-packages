@@ -15,7 +15,7 @@ import type { ControlContextRefCurrent } from '@blockera/controls';
  * Internal dependencies
  */
 import type { TBlockProps } from './types';
-import { getBaseBreakpoint } from '../../editor/header-ui';
+import { getBaseBreakpoint } from '../../editor/header-ui/components/breakpoints/helpers';
 import { isInnerBlock, isNormalState } from '../components/utils';
 import type { BlockDetail } from './block-card/block-states/types';
 import { STORE_NAME } from './base/store/constants';

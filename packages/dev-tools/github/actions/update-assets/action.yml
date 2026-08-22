@@ -1,0 +1,26 @@
+name: 'Update WordPress.org plugin assets and readme'
+description: >
+    Install SVN and run 10up/action-wordpress-plugin-asset-update. Defaults match
+    the Blockera WordPress.org plugin publishing flow.
+inputs:
+    svn-username:
+        description: 'WordPress.org SVN username'
+        required: true
+    svn-password:
+        description: 'WordPress.org SVN password'
+        required: true
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Install SVN
+          shell: bash
+          run: |
+              sudo apt-get update
+              sudo apt-get install -y subversion
+
+        - name: Update WordPress.org assets
+          uses: 10up/action-wordpress-plugin-asset-update@stable
+          env:
+              SVN_PASSWORD: ${{ inputs.svn-password }}
+              SVN_USERNAME: ${{ inputs.svn-username }}

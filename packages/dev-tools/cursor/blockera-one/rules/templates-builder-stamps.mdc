@@ -1,0 +1,31 @@
+---
+description: Follow Templates Builder stamp grammar and dictionaries. Read STAMPS.md before adding or renaming stamps.
+globs: packages/blockera-one/js/site-editor/templates-builder/**,patterns/**,templates/*.html
+alwaysApply: false
+---
+
+# Templates Builder stamps
+
+Before adding, moving, or renaming a `metadata.blockeraOne` stamp, **read
+`packages/blockera-one/js/site-editor/templates-builder/STAMPS.md`** for
+the full standard (grammar, uniqueness, Using stamps, catalogs, lookup,
+hard-cut). Do not invent a parallel convention and do not duplicate
+catalog tables here.
+
+- Grammar: `role/id` or `role/id:variant`. Roles: `layout | section | area | container`.
+- Follow **Using stamps** for which family to pick; catalogs list every id.
+- Dictionary ids are globally unique on the **id token**. Nested stamps
+  may still **repeat in the tree under different parents**; lookup is
+  parent-scoped (`shared/stamp-lookup.ts`). Do not invent
+  `loop-item-media` twins.
+- Inner-region slots: `container/start`, `container/media`,
+  `container/body`, `container/end`, `container/comments`. Not chrome
+  `header`/`footer`. Not `content-column`. List View `metadata.name` is
+  user-facing and independent of the stamp id.
+- Put cross-type / engine / layout-main / page-header-family /
+  posts-listing / pagination / inner-slot stamps in `shared/stamps.ts`.
+- Put type-only stamps in `<type>/stamps.ts`. Promote to shared when a
+  second type needs the same id — never copy.
+- `wp_template` layout root is always `layout/main`. Part roots are
+  `layout/site-header`, `layout/site-footer`, `layout/site-sidebar`.
+- Update `STAMPS.md` in the same change as the dictionary or markup.

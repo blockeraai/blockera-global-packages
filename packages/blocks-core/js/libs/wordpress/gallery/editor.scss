@@ -1,2 +1,12 @@
 // import style from php file to keep only one style for both editor and front end
 @import "../../../../php/libs/wordpress/gallery/style.css";
+
+/* Fix display: flex not being applied to images in gallery block. [WP 7.1 fix] */
+.blockera-block.wp-block-gallery.has-nested-images.is-cropped
+	figure.wp-block-image:not(#individual-image)
+	> a,
+.blockera-block.wp-block-gallery.has-nested-images.is-cropped
+	figure.wp-block-image:not(#individual-image)
+	> div:not(.components-drop-zone) {
+	display: flex !important;
+}

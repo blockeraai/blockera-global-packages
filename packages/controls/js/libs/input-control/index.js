@@ -61,6 +61,7 @@ export default function InputControl({
 	variableTypes,
 	//
 	children,
+	fieldProps,
 	...props
 }: InputControlProps): MixedElement {
 	let isValidValue = true;
@@ -150,7 +151,7 @@ export default function InputControl({
 		? pickedUnit
 		: getUnitByValue(extractedValue.unit, units);
 	const fallbackUnit = getFirstUnit(units);
-	let unitValue = { value: '', label: '', format: 'number' };
+	let unitValue: Object = { value: '', label: '', format: 'number' };
 
 	if (typeof resolvedUnitValue?.value === 'string') {
 		unitValue = resolvedUnitValue;
@@ -186,6 +187,7 @@ export default function InputControl({
 				columns={columns}
 				controlName={field}
 				className={className}
+				fieldProps={fieldProps}
 				{...labelProps}
 				{...props}
 			>
@@ -212,6 +214,7 @@ export default function InputControl({
 			columns={columns}
 			controlName={field}
 			className={className + ' ' + valueAddonClassNames}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			{!isEmpty(units) ? (

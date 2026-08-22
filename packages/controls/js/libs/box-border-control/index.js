@@ -71,6 +71,7 @@ export default function BoxBorderControl({
 	field = 'box-border',
 	//
 	className,
+	fieldProps,
 	withoutValueAddons = false,
 	showLinkedSidesToggle = true,
 	controlAddonTypes,
@@ -157,6 +158,7 @@ export default function BoxBorderControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 		>
 			<div className={controlClassNames('box-border', className)}>
 				<div className={controlInnerClassNames('border-header')}>
@@ -193,7 +195,7 @@ export default function BoxBorderControl({
 										resolvedControlAddonTypes
 									}
 									variableTypes={resolvedVariableTypes}
-									defaultValue={defaultValue?.all}
+									defaultValue={(defaultValue?.all: any)}
 								/>
 							) : (
 								<span></span>
@@ -287,7 +289,7 @@ export default function BoxBorderControl({
 							}}
 							controlAddonTypes={resolvedControlAddonTypes}
 							variableTypes={resolvedVariableTypes}
-							defaultValue={defaultValue.top}
+							defaultValue={(defaultValue.top: any)}
 						/>
 						<BorderControl
 							label=""
@@ -312,7 +314,7 @@ export default function BoxBorderControl({
 							}}
 							controlAddonTypes={resolvedControlAddonTypes}
 							variableTypes={resolvedVariableTypes}
-							defaultValue={defaultValue.right}
+							defaultValue={(defaultValue.right: any)}
 						/>
 						<BorderControl
 							label=""
@@ -336,7 +338,7 @@ export default function BoxBorderControl({
 							}}
 							controlAddonTypes={resolvedControlAddonTypes}
 							variableTypes={resolvedVariableTypes}
-							defaultValue={defaultValue.bottom}
+							defaultValue={(defaultValue.bottom: any)}
 						/>
 						<BorderControl
 							label=""
@@ -361,7 +363,7 @@ export default function BoxBorderControl({
 							}}
 							controlAddonTypes={resolvedControlAddonTypes}
 							variableTypes={resolvedVariableTypes}
-							defaultValue={defaultValue.left}
+							defaultValue={(defaultValue.left: any)}
 						/>
 						<div
 							className={controlInnerClassNames(

@@ -14,4 +14,8 @@ export type TTextAreaItem = {
 	 * Textarea custom height. Use `'auto'` to grow/shrink with content.
 	 */
 	height?: number | 'auto',
+	/**
+	 * Native textarea rows attribute (ignored when `height` is `'auto'`).
+	 */
+	rows?: number,
 };

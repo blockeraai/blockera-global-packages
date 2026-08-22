@@ -24,7 +24,10 @@ import type {
 import type { InnerBlockType } from '../../../../extensions/libs/block-card/inner-blocks/types';
 import { useGlobalStylesPanelContext } from '../context';
 import { useBlockVariationSupport } from '../use-block-variation-support';
-import { isVariationSurfaceEnabled } from '../block-variation-support';
+import {
+	isVariationSurfaceEnabled,
+	resolvePickOnlyVariationSurface,
+} from '../block-variation-support';
 import {
 	VARIATION_SURFACE_SIZE,
 	VARIATION_SURFACE_STYLE,
@@ -64,6 +67,13 @@ type TBlockStyleVariations = {
 	blockeraGlobalStylesMetaData: Object,
 	variationUiSurface?: string,
 	closeSiblingPicker?: () => void,
+	/**
+	 * Search + pick only: hide add/save/duplicate and each item’s ⋮ menu.
+	 * Used by Templates Builder (and similar pickers).
+	 */
+	pickOnly?: boolean,
+	/** Fired on click-to-apply (not hover preview). */
+	onCommitStyle?: (style: Object) => void,
 };
 
 export const BlockStyleVariations: ComponentType<TBlockStyleVariations> = ({
@@ -93,15 +103,24 @@ export const BlockStyleVariations: ComponentType<TBlockStyleVariations> = ({
 	setCurrentPreviewStyle,
 	variationUiSurface,
 	closeSiblingPicker,
+	pickOnly = false,
+	onCommitStyle,
 }: TBlockStyleVariations): MixedElement => {
 	const { variationSurface = VARIATION_SURFACE_STYLE } =
 		useGlobalStylesPanelContext();
+	const variationSupport = useBlockVariationSupport(blockName);
 
 	const uiSurface =
 		variationUiSurface !== undefined && variationUiSurface !== ''
 			? variationUiSurface
-			: variationSurface;
-	const variationSupport = useBlockVariationSupport(blockName);
+			: pickOnly
+				? resolvePickOnlyVariationSurface(
+						variationSupport,
+						null,
+						variationSurface,
+						VARIATION_SURFACE_SIZE
+					)
+				: variationSurface;
 
 	if (
 		!isVariationSurfaceEnabled(
@@ -227,7 +246,13 @@ export const BlockStyleVariations: ComponentType<TBlockStyleVariations> = ({
 					data-test="style-variations-button-label"
 					gap={5}
 				>
-					{buttonText}
+					<span
+						className={controlInnerClassNames(
+							'style-variations-button__text'
+						)}
+					>
+						{buttonText}
+					</span>
 
 					{uiSurface !== VARIATION_SURFACE_SIZE && (
 						<ChangeIndicator
@@ -263,6 +288,8 @@ export const BlockStyleVariations: ComponentType<TBlockStyleVariations> = ({
 					}
 					setChangesets={setChangesets}
 					pickerVariationSurface={uiSurface}
+					pickOnly={pickOnly}
+					onCommitStyle={onCommitStyle}
 					styles={{
 						onSelect,
 						setIsOpen,

@@ -183,7 +183,13 @@ export function BlockEditorExperimentalFeaturesSync() {
 			return;
 		}
 
-		const currentStoreSettings = getEditorSettings();
+		const currentStoreSettings = getEditorSettings() as
+			| {
+					__experimentalFeatures?: unknown;
+					styles?: unknown;
+			  }
+			| undefined
+			| null;
 		if (!currentStoreSettings) {
 			return;
 		}

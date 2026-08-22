@@ -42,6 +42,7 @@ export default function LinkControl({
 	field = 'link',
 	onChange,
 	className,
+	fieldProps,
 	placeholder = 'https://your-link.com',
 	attributesId = 'link-control-attributes',
 	defaultValue = {
@@ -100,6 +101,7 @@ export default function LinkControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<div className={controlClassNames('link', className)}>

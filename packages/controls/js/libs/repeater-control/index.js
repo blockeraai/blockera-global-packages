@@ -116,6 +116,7 @@ export default function RepeaterControl(
 		PromoComponent,
 		//
 		className,
+		fieldProps = {},
 		canAddNewItem = true,
 		enableCreatingStep = false,
 		showNoItemsMessage = false,
@@ -126,6 +127,13 @@ export default function RepeaterControl(
 		companionGateAllRepeaterActions = false,
 		...additionalPropsForRepeaterContext
 	} = applyFilters(`blockera.controls.${props.id}.props`, props);
+
+	const {
+		className: fieldClassName,
+		style: fieldStyle,
+		'data-cy': fieldDataCy,
+		...restFieldProps
+	} = fieldProps;
 
 	let resolvedPopoverTitleButtonsRight = popoverTitleButtonsRight;
 	if (resolvedPopoverTitleButtonsRight === undefined) {
@@ -383,9 +391,12 @@ export default function RepeaterControl(
 				className={controlClassNames(
 					'repeater',
 					'design-' + design,
-					className
+					className,
+					fieldClassName
 				)}
-				data-cy="blockera-repeater-control"
+				style={fieldStyle}
+				data-cy={fieldDataCy || 'blockera-repeater-control'}
+				{...restFieldProps}
 			>
 				<div className={controlInnerClassNames('header')}>
 					{label && (
@@ -798,9 +809,12 @@ export default function RepeaterControl(
 				className={controlClassNames(
 					'repeater',
 					'design-' + design,
-					className
+					className,
+					fieldClassName
 				)}
-				data-cy="blockera-repeater-control"
+				style={fieldStyle}
+				data-cy={fieldDataCy || 'blockera-repeater-control'}
+				{...restFieldProps}
 			>
 				{design === 'large' && (
 					<>

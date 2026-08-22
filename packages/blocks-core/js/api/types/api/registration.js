@@ -13,6 +13,15 @@ export type TBlockeraBlockVariation = {
 	attributes?: { [string]: any },
 };
 
+export type TBlockeraVariationType = {
+	...TBlockeraBlockVariation,
+	supports?: {
+		blockExtensions?: { [string]: Object },
+		[string]: any,
+	},
+	[string]: any,
+};
+
 export type TBlockeraBlockType = {
 	name: string,
 	title: string,

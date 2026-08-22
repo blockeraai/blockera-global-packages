@@ -1,0 +1,55 @@
+# Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO.
+# Path filters live in scripts/jobs/bundle-size/paths.default (override via env).
+name: Compressed Size
+
+on:
+    pull_request:
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+    cancel-in-progress: true
+
+jobs:
+    pr-workflow-gate:
+        name: PR workflow filter
+        runs-on: ubuntu-latest
+        outputs:
+            run: ${{ steps.gate.outputs.run }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - id: gate
+              uses: ./packages/global-packages/packages/dev-tools/github/actions/pr-workflow-gate
+              with:
+                  workflow-file: bundle-size.yml
+
+    build:
+        name: Building and Give Sizes
+        needs: pr-workflow-gate
+        if: ${{ needs.pr-workflow-gate.outputs.run == 'true' && (github.repository == 'OWNER/REPO' || github.event_name == 'pull_request') }}
+        runs-on: ubuntu-latest
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+                  fetch-depth: 0
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - uses: ./packages/global-packages/packages/dev-tools/github/actions/bundle-size
+              with:
+                  repo-token: ${{ secrets.BLOCKERABOT_PAT }}
+                  # Optional: force: 'true'
+                  # Optional path override:
+                  # env BLOCKERA_BUNDLE_SIZE_PATHS or BLOCKERA_BUNDLE_SIZE_PATHS_FILE

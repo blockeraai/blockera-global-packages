@@ -1,0 +1,45 @@
+name: 'Blockera VirusTotal scan'
+description: >
+    Setup Node/PHP, build the product zip, and scan with crazy-max/ghaction-virustotal.
+    Defaults match the Blockera plugin; override via inputs.
+inputs:
+    vt-api-key:
+        description: 'VirusTotal API key (secrets.VT_API_KEY)'
+        required: true
+    files:
+        description: 'Multiline file list for VirusTotal'
+        required: false
+        default: |
+            ./blockera.zip
+            ./
+    composer-options:
+        description: 'Composer options for setup-php'
+        required: false
+        default: '--no-dev -o --apcu-autoloader -a'
+    main-file-suffix:
+        description: 'MAIN_FILE_SUFFIX for the default plugin zip builder'
+        required: false
+        default: ''
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Setup Node.js and install dependencies
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+
+        - name: Setup PHP Composer install dependencies
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-php
+          with:
+              composer-options: ${{ inputs.composer-options }}
+
+        - name: Build product zip
+          shell: bash
+          env:
+              BLOCKERA_DEMO_MAIN_FILE_SUFFIX: ${{ inputs.main-file-suffix }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/create-demo-attachments/build-zip.sh"
+
+        - name: VirusTotal Scan
+          uses: crazy-max/ghaction-virustotal@v4
+          with:
+              vt_api_key: ${{ inputs.vt-api-key }}
+              files: ${{ inputs.files }}

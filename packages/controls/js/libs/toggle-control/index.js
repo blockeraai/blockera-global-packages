@@ -30,6 +30,7 @@ export default function ToggleControl({
 	columns,
 	onChange,
 	className,
+	fieldProps,
 	children,
 	labelType = 'advanced',
 	size = 'normal',
@@ -69,6 +70,7 @@ export default function ToggleControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<WPToggleControl
