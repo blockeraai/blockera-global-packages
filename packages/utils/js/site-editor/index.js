@@ -13,6 +13,7 @@ export {
 	isSiteEditorUrl,
 } from './is-url';
 export { pushSiteEditorHistory } from './push-history';
+export { withLiteralQueryChars } from './query-chars';
 export {
 	SITE_EDITOR_NAVIGATE_EVENT,
 	ensureSiteEditorHistoryPatch,

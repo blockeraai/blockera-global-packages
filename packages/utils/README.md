@@ -73,8 +73,8 @@ Exports are grouped by folder (`is`, `get`, `memo`, `array`, `color`, `css-lengt
 
 Site Editor helpers (`js/site-editor/`) are **side-effecting** where they talk to Gutenberg’s private `@wordpress/router` `history@5` singleton:
 
-- `pushSiteEditorHistory` / `navigateToSiteEditorPath` — `pushState` with `{ usr, key, idx }` + `popstate`.
-- `ensureSiteEditorHistoryPatch` / `useSiteEditorNavigate` — patch `pushState`/`replaceState` once and emit `SITE_EDITOR_NAVIGATE_EVENT` so listeners see core router navigations that do not fire `popstate`. The patch is process-wide; unsubscribe only removes the `popstate` listener.
+- `pushSiteEditorHistory` / `navigateToSiteEditorPath` — `pushState` with `{ usr, key, idx }` + `popstate`. Query values keep `/` and `:` literal (`withLiteralQueryChars`).
+- `ensureSiteEditorHistoryPatch` / `useSiteEditorNavigate` — patch `pushState`/`replaceState` once (also rewriting `%2F` / `%3A` in the query, including the URL already in the address bar) and emit `SITE_EDITOR_NAVIGATE_EVENT` so listeners see core router navigations that do not fire `popstate`. The patch is process-wide; unsubscribe only removes the `popstate` listener.
 - `useSiteEditorUrlState( read )` — keep a derived URL-state value in React state, re-reading it on every Site Editor navigation (built on `useSiteEditorNavigate`).
 
 Use these only when you cannot call the locked `useHistory().navigate()` API.

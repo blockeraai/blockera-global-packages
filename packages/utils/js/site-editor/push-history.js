@@ -22,6 +22,11 @@
  */
 import { addQueryArgs } from '@wordpress/url';
 
+/**
+ * Internal dependencies
+ */
+import { withLiteralQueryChars } from './query-chars';
+
 type QueryValue = string | void;
 
 type RouterHistoryState = {
@@ -65,9 +70,11 @@ export function pushSiteEditorHistory(
 				parsed.searchParams.delete(key);
 			}
 		});
-		nextUrl = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+		nextUrl = withLiteralQueryChars(
+			`${parsed.pathname}${parsed.search}${parsed.hash}`
+		);
 	} catch (_e) {
-		// Keep absoluteUrl fallback.
+		nextUrl = withLiteralQueryChars(absoluteUrl);
 	}
 
 	const prevState: RouterHistoryState =
