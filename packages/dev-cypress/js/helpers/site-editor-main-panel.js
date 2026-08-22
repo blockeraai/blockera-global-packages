@@ -272,7 +272,9 @@ export function assertSiteEditorTemplatesNav() {
 	);
 	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNavHomepage).click();
 	cy.location('search').should((search) => {
-		expect(decodeURIComponent(String(search))).to.include('boFilter=home');
+		expect(decodeURIComponent(String(search))).to.include(
+			'blockera-builder=home'
+		);
 	});
 	/* Home filter is archive-family Templates Builder — inline fallbacks stay in purpose-nav. */
 	assertTemplatesBuilderShell();
@@ -280,7 +282,7 @@ export function assertSiteEditorTemplatesNav() {
 	/* Restore All browse so callers can assert core PageTemplates DataViews. */
 	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNavAll).click();
 	cy.location('search')
-		.should('include', 'p=%2Ftemplate')
+		.should('include', 'p=/template')
 		.and('not.include', 'wp_template');
 	cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesNavHomepageFrontPage).should(
 		'not.exist'
@@ -668,7 +670,7 @@ export function assertTemplatesAreaHub({ area, mode = 'preview' }) {
 		cy.getByDataTest(SITE_EDITOR_TEST_IDS.templatesAreaHubManage)
 			.should('be.visible')
 			.and('contain.text', labels.manage);
-		cy.location('search').should('include', `partsArea=${area}`);
+		cy.location('search').should('include', `blockera-builder=${area}`);
 		return;
 	}
 
@@ -689,7 +691,7 @@ export function assertTemplatesAreaHub({ area, mode = 'preview' }) {
 			'not.exist'
 		);
 		cy.location('search').should('include', 'wp_template_part');
-		cy.location('search').should('include', `partsArea=${area}`);
+		cy.location('search').should('include', `blockera-builder=${area}`);
 		cy.location('search').should('include', 'canvas=edit');
 		return;
 	}
@@ -708,7 +710,7 @@ export function assertTemplatesAreaHub({ area, mode = 'preview' }) {
 		.should('be.visible')
 		.and('contain.text', labels.manage);
 	cy.location('search').should('include', 'wp_template_part');
-	cy.location('search').should('include', `partsArea=${area}`);
+	cy.location('search').should('include', `blockera-builder=${area}`);
 }
 
 /**
@@ -732,7 +734,7 @@ export function assertNavigatedToPatternsTemplatePartArea(area) {
 		expect(params.get('p')).to.equal('/pattern');
 		expect(params.get('postType')).to.equal('wp_template_part');
 		expect(params.get('categoryId')).to.equal(area);
-		expect(params.get('partsArea')).to.equal(null);
+		expect(params.get('blockera-builder')).to.equal(null);
 	});
 
 	// Left Design root (Templates hub / main nav) for Patterns drill-down.
@@ -869,7 +871,7 @@ export function assertTemplatesHomepageSection({
 			cy.location('search').should((search) => {
 				const decoded = decodeURIComponent(String(search));
 				expect(decoded).to.include(
-					`boFilter=${expectedHomepageFilter}`
+					`blockera-builder=${expectedHomepageFilter}`
 				);
 			});
 		}
@@ -1146,18 +1148,18 @@ function scrollTemplatesNavItemIntoView(testId) {
  * Open a Templates purpose-nav row (scroll past Save Hub, force click).
  *
  * @param {string} testId SITE_EDITOR_TEST_IDS.templatesNav*
- * @param {{ boFilterIncludes?: string }} [options]
+ * @param {{ builderIncludes?: string }} [options]
  */
-export function openTemplatesNavItem(testId, { boFilterIncludes } = {}) {
+export function openTemplatesNavItem(testId, { builderIncludes } = {}) {
 	const filter =
-		boFilterIncludes ||
+		builderIncludes ||
 		String(testId).replace(/^blockera-site-editor-templates-nav-/, '');
 
 	scrollTemplatesNavItemIntoView(testId).click({ force: true });
 
 	cy.location('search').should((search) => {
 		const decoded = decodeURIComponent(String(search));
-		expect(decoded).to.include(`boFilter=${filter}`);
+		expect(decoded).to.include(`blockera-builder=${filter}`);
 	});
 	if (filterOpensTemplatesBuilder(filter)) {
 		assertTemplatesBuilderShell();
@@ -1278,7 +1280,7 @@ export function getTemplatesWooCommerceSection() {
 }
 
 /**
- * Open a WooCommerce Templates nav row and assert `boFilter` + nav still mounted.
+ * Open a WooCommerce Templates nav row and assert `blockera-builder` + nav still mounted.
  *
  * @param {string} testId SITE_EDITOR_TEST_IDS.templatesNavWoo*
  */
