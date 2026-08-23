@@ -80,6 +80,10 @@ function DeferredLibraryIcon({
 		return <IconPlaceholder iconSize={props.iconSize} />;
 	}
 
+	if (!library) {
+		return <></>;
+	}
+
 	const Renderer = getDeferredIconRenderer(library);
 
 	if (!Renderer) {
