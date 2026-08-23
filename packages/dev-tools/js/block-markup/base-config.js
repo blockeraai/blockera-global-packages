@@ -47,6 +47,13 @@ const baseConfig = {
 				enabled: true,
 				attrs: {
 					queryId: { enabled: true, token: 'core/query.queryId' },
+					perPage: {
+						enabled: true,
+						token: 'core/query.query.perPage',
+						path: 'query.perPage',
+						// Dictionary form: every `section/posts-listing:<variant>` matches.
+						stamps: ['section/posts-listing'],
+					},
 				},
 			},
 		},

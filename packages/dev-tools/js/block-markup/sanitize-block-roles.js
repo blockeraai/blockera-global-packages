@@ -7,8 +7,8 @@
  * @see source-codes/block-editor/packages/blocks/src/api/serializer.tsx
  */
 
-const { escapeRegExp } = require('./escape-image-path');
 const { baseConfig } = require('./base-config');
+const { extractBlockeraOneStamp, isSkipLocalizeStamp } = require('./skip-localize-stamps');
 
 /**
  * @param {Object} [sanitize] Resolved sanitize config.
@@ -19,13 +19,20 @@ function resolveSanitize(sanitize) {
 }
 
 /**
- * Enabled attr names for a Gutenberg block.
+ * Enabled attr rules for a Gutenberg block.
+ *
+ * `path` is a dotted JSON path (`query.perPage`). Detection and raw-JSON
+ * stripping use the last segment (`perPage`).
  *
  * @param {Object} [sanitize] Resolved sanitize config.
  * @param {string} blockName Gutenberg block name.
- * @return {string[]} Attr keys to strip.
+ * `stamps` limits the rule to matching `metadata.blockeraOne.stamp` values
+ * (`role/id` or `role/id:variant`). Empty/omitted stamps apply to every
+ * instance of the block.
+ *
+ * @return {Array<{ jsonKey: string, path: string[], stamps: string[] }>}
  */
-function getEnabledBlockRoleAttrs(sanitize, blockName) {
+function getEnabledBlockRoleAttrRules(sanitize, blockName) {
 	const resolved = resolveSanitize(sanitize);
 
 	if (resolved.enabled === false || !blockName) {
@@ -43,22 +50,96 @@ function getEnabledBlockRoleAttrs(sanitize, blockName) {
 	for (let i = 0; i < keys.length; i++) {
 		const key = keys[i];
 		const rule = block.attrs[key];
-		if (rule && rule.enabled !== false) {
-			enabled.push(key);
+		if (!rule || rule.enabled === false) {
+			continue;
 		}
+
+		const path =
+			typeof rule.path === 'string' && rule.path
+				? rule.path.split('.')
+				: [key];
+
+		enabled.push({
+			jsonKey: path[path.length - 1],
+			path,
+			stamps: Array.isArray(rule.stamps) ? rule.stamps : [],
+		});
 	}
 
 	return enabled;
 }
 
 /**
- * Gutenberg comment token for a block name (`core/query` → `query`).
+ * Enabled JSON keys to look for on a Gutenberg block.
  *
+ * @param {Object} [sanitize] Resolved sanitize config.
  * @param {string} blockName Gutenberg block name.
- * @return {string} Comment token after `wp:`.
+ * @return {string[]} Attr keys to strip / detect.
  */
-function toCommentToken(blockName) {
-	return blockName.indexOf('core/') === 0 ? blockName.slice(5) : blockName;
+function getEnabledBlockRoleAttrs(sanitize, blockName) {
+	const rules = getEnabledBlockRoleAttrRules(sanitize, blockName);
+	const keys = [];
+
+	for (let i = 0; i < rules.length; i++) {
+		keys.push(rules[i].jsonKey);
+	}
+
+	return keys;
+}
+
+/**
+ * Delete a dotted path from a nested object.
+ *
+ * @param {Object} target Parsed attrs.
+ * @param {string[]} path Path segments.
+ * @return {boolean} True when a key was removed.
+ */
+function deleteAtPath(target, path) {
+	if (!target || !path || path.length === 0) {
+		return false;
+	}
+
+	let cursor = target;
+
+	for (let i = 0; i < path.length - 1; i++) {
+		const part = path[i];
+		const next = cursor[part];
+		if (!next || typeof next !== 'object' || Array.isArray(next)) {
+			return false;
+		}
+		cursor = next;
+	}
+
+	const last = path[path.length - 1];
+	if (!Object.prototype.hasOwnProperty.call(cursor, last)) {
+		return false;
+	}
+
+	delete cursor[last];
+	return true;
+}
+
+/**
+ * @param {{ stamps?: string[] }} rule Attr rule.
+ * @param {string} stamp Block `metadata.blockeraOne.stamp` (`role/id:variant`).
+ * @return {boolean} True when ungated, or the stamp's role/id matches.
+ */
+function ruleAppliesToStamp(rule, stamp) {
+	const prefixes = rule && rule.stamps;
+	if (!prefixes || prefixes.length === 0) {
+		return true;
+	}
+
+	return isSkipLocalizeStamp(stamp, prefixes);
+}
+
+/**
+ * @param {Object} configJson Parsed block attrs.
+ * @return {string} Stamp string or empty.
+ */
+function getStampFromConfigJson(configJson) {
+	const stamp = configJson?.metadata?.blockeraOne?.stamp;
+	return typeof stamp === 'string' ? stamp : '';
 }
 
 /**
@@ -111,22 +192,49 @@ function hasUnsanitizedBlockRoleAttrs(content, sanitize) {
 	}
 
 	const names = Object.keys(resolved.blocks);
+	const rulesByBlock = {};
 
 	for (let i = 0; i < names.length; i++) {
 		const blockName = names[i];
-		const keys = getEnabledBlockRoleAttrs(resolved, blockName);
-		if (keys.length === 0) {
+		const rules = getEnabledBlockRoleAttrRules(resolved, blockName);
+		if (rules.length > 0) {
+			rulesByBlock[blockName] = rules;
+		}
+	}
+
+	if (Object.keys(rulesByBlock).length === 0) {
+		return false;
+	}
+
+	let cursor = 0;
+
+	while (cursor < content.length) {
+		const start = content.indexOf('<!--', cursor);
+		if (start === -1) {
+			break;
+		}
+		const end = content.indexOf('-->', start + 4);
+		if (end === -1) {
+			break;
+		}
+
+		const body = content.slice(start + 4, end);
+		cursor = end + 3;
+
+		const blockName = getBlockNameFromComment(body);
+		const rules = blockName ? rulesByBlock[blockName] : null;
+		if (!rules) {
 			continue;
 		}
 
-		const token = escapeRegExp(toCommentToken(blockName));
+		const stamp = extractBlockeraOneStamp(body);
 
-		if (!new RegExp(`<!--\\s+wp:${token}(?:\\s|\\{)`).test(content)) {
-			continue;
-		}
-
-		for (let k = 0; k < keys.length; k++) {
-			if (content.indexOf(`"${keys[k]}"`) !== -1) {
+		for (let r = 0; r < rules.length; r++) {
+			const rule = rules[r];
+			if (!ruleAppliesToStamp(rule, stamp)) {
+				continue;
+			}
+			if (body.indexOf(`"${rule.jsonKey}"`) !== -1) {
 				return true;
 			}
 		}
@@ -148,21 +256,23 @@ function stripBlockRoleAttrs(configJson, blockName, sanitize) {
 		return false;
 	}
 
-	const keys = getEnabledBlockRoleAttrs(sanitize, blockName);
+	const rules = getEnabledBlockRoleAttrRules(sanitize, blockName);
 
-	if (!keys.length) {
+	if (!rules.length) {
 		return false;
 	}
 
+	const stamp = getStampFromConfigJson(configJson);
 	let changed = false;
 
-	for (let i = 0; i < keys.length; i++) {
-		const key = keys[i];
-		if (!Object.prototype.hasOwnProperty.call(configJson, key)) {
+	for (let i = 0; i < rules.length; i++) {
+		const rule = rules[i];
+		if (!ruleAppliesToStamp(rule, stamp)) {
 			continue;
 		}
-		delete configJson[key];
-		changed = true;
+		if (deleteAtPath(configJson, rule.path)) {
+			changed = true;
+		}
 	}
 
 	return changed;
@@ -258,16 +368,22 @@ function sanitizeBlockRolesInRawConfig(config, blockName, sanitize) {
 		return config;
 	}
 
-	const keys = getEnabledBlockRoleAttrs(sanitize, blockName);
+	const rules = getEnabledBlockRoleAttrRules(sanitize, blockName);
 
-	if (!keys.length) {
+	if (!rules.length) {
 		return config;
 	}
 
+	const stamp = extractBlockeraOneStamp(config);
 	let next = config;
 
-	for (let i = 0; i < keys.length; i++) {
-		const key = keys[i];
+	for (let i = 0; i < rules.length; i++) {
+		const rule = rules[i];
+		if (!ruleAppliesToStamp(rule, stamp)) {
+			continue;
+		}
+
+		const key = rule.jsonKey;
 		const marker = `"${key}"`;
 		const keyStart = next.indexOf(marker);
 
@@ -306,7 +422,8 @@ function sanitizeBlockRolesInRawConfig(config, blockName, sanitize) {
 }
 
 module.exports = {
-	BLOCK_ROLE_SANITIZE_ATTRS: { 'core/query': ['queryId'] },
+	BLOCK_ROLE_SANITIZE_ATTRS: { 'core/query': ['queryId', 'perPage'] },
+	getEnabledBlockRoleAttrRules,
 	getEnabledBlockRoleAttrs,
 	getBlockNameFromComment,
 	hasUnsanitizedBlockRoleAttrs,
