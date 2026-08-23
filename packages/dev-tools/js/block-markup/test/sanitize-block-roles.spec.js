@@ -25,15 +25,44 @@ describe('sanitize-block-roles', () => {
 	});
 
 	it('strips only registered attrs for the given block role', () => {
-		const queryAttrs = { queryId: 4, query: { inherit: true } };
+		const queryAttrs = { queryId: 4, query: { inherit: true, perPage: 9 } };
 		expect(stripBlockRoleAttrs(queryAttrs, 'core/query')).toBe(true);
-		expect(queryAttrs).toEqual({ query: { inherit: true } });
+		expect(queryAttrs).toEqual({
+			query: { inherit: true, perPage: 9 },
+		});
+
+		const stamped = {
+			queryId: 4,
+			query: { inherit: true, perPage: 9 },
+			metadata: {
+				blockeraOne: { stamp: 'section/posts-listing:list' },
+			},
+		};
+		expect(stripBlockRoleAttrs(stamped, 'core/query')).toBe(true);
+		expect(stamped.query).toEqual({ inherit: true });
+		expect(stamped.queryId).toBeUndefined();
 
 		const pagination = { queryId: 4, paginationArrow: 'arrow' };
 		expect(stripBlockRoleAttrs(pagination, 'core/query-pagination')).toBe(
 			false
 		);
 		expect(pagination.queryId).toBe(4);
+	});
+
+	it('strips query.perPage on every posts-listing variant', () => {
+		const variants = ['list', 'grid-2', 'grid-3', 'full-width'];
+
+		for (let i = 0; i < variants.length; i++) {
+			const stamp = `section/posts-listing:${variants[i]}`;
+			const attrs = {
+				query: { inherit: true, perPage: 9 },
+				metadata: { blockeraOne: { stamp } },
+			};
+
+			expect(stripBlockRoleAttrs(attrs, 'core/query')).toBe(true);
+			expect(attrs.query.perPage).toBeUndefined();
+			expect(attrs.query.inherit).toBe(true);
+		}
 	});
 
 	it('does not strip when sanitize is disabled', () => {
@@ -58,6 +87,16 @@ describe('sanitize-block-roles', () => {
 				'<!-- wp:query {"query":{"inherit":true}} -->'
 			)
 		).toBe(false);
+		expect(
+			hasUnsanitizedBlockRoleAttrs(
+				'<!-- wp:query {"query":{"perPage":9,"inherit":true}} -->'
+			)
+		).toBe(false);
+		expect(
+			hasUnsanitizedBlockRoleAttrs(
+				'<!-- wp:query {"query":{"perPage":9},"metadata":{"blockeraOne":{"stamp":"section/posts-listing:list"}}} -->'
+			)
+		).toBe(true);
 		expect(
 			hasUnsanitizedBlockRoleAttrs(
 				'<!-- wp:query-pagination {"queryId":4} -->'
@@ -107,5 +146,18 @@ describe('sanitize-block-roles', () => {
 			'{"query":{"inherit":true},"url":"<?php echo esc_url( get_template_directory_uri() ); ?>/assets/images/cover.webp"}'
 		);
 		expect(sanitizeBlockRolesInRawConfig(raw, 'core/group')).toBe(raw);
+	});
+
+	it('removes nested query.perPage only on posts-listing stamps', () => {
+		const unstamped = '{"query":{"perPage":9,"inherit":true},"align":"full"}';
+		const stamped =
+			'{"query":{"perPage":9,"inherit":true},"metadata":{"blockeraOne":{"stamp":"section/posts-listing:grid-2"}}}';
+
+		expect(sanitizeBlockRolesInRawConfig(unstamped, 'core/query')).toBe(
+			unstamped
+		);
+		expect(sanitizeBlockRolesInRawConfig(stamped, 'core/query')).toBe(
+			'{"query":{"inherit":true},"metadata":{"blockeraOne":{"stamp":"section/posts-listing:grid-2"}}}'
+		);
 	});
 });

@@ -175,6 +175,25 @@ describe('normalizeMarkupContent', () => {
 		expect(output).toContain('"query":{"perPage":9,"inherit":true}');
 	});
 
+	it('strips query.perPage from posts-listing Query Loops', async () => {
+		const input = `<?php
+/**
+ * Title: Listing
+ */
+?>
+<!-- wp:query {"query":{"perPage":9,"inherit":true},"metadata":{"blockeraOne":{"stamp":"section/posts-listing:list"}}} -->
+<div class="wp-block-query">
+	<h2 class="wp-block-heading"><?php esc_html_e( 'Hello', 'blockera-one' ); ?></h2>
+</div>
+<!-- /wp:query -->
+`;
+
+		const output = await normalizePatternContent(input, baseOptions);
+
+		expect(output).not.toContain('"perPage"');
+		expect(output).toContain('"query":{"inherit":true}');
+	});
+
 	it('does not rewrite images when localize.images is disabled', async () => {
 		const { config } = require('../merge-config').mergeBlockMarkupConfig({
 			localize: { images: { enabled: false } },

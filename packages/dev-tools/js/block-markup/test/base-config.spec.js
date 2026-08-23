@@ -20,6 +20,12 @@ describe('baseConfig', () => {
 		expect(
 			baseConfig.sanitize.blocks['core/query'].attrs.queryId.enabled
 		).toBe(true);
+		expect(
+			baseConfig.sanitize.blocks['core/query'].attrs.perPage.path
+		).toBe('query.perPage');
+		expect(
+			baseConfig.sanitize.blocks['core/query'].attrs.perPage.stamps
+		).toEqual(['section/posts-listing']);
 		expect(baseConfig.sanitize.metadata.keys).toEqual([
 			'patternName',
 			'description',

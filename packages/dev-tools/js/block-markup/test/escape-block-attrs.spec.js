@@ -97,6 +97,16 @@ describe('escapeBlockAttrs', () => {
 		expect(result).not.toContain('"queryId"');
 	});
 
+	it('strips query.perPage from a posts-listing Query Loop', () => {
+		const block =
+			' wp:query {"query":{"perPage":9,"inherit":true},"metadata":{"blockeraOne":{"stamp":"section/posts-listing:list"}}} ';
+
+		const result = escapeBlockAttrs(block, 'blockera-one');
+
+		expect(result).toContain('"query":{"inherit":true}');
+		expect(result).not.toContain('"perPage"');
+	});
+
 	it('strips queryId from an explicit wp:core/query token', () => {
 		const block = ' wp:core/query {"queryId":12,"query":{"inherit":true}} ';
 
