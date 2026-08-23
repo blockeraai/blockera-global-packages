@@ -48,7 +48,7 @@ eval "${INSTALL_CMD}"
 
 if [[ "${COMPOSER_INSTALL}" == "true" ]]; then
 	echo "cypress-components: ${COMPOSER_CMD}"
-	eval "${COMPOSER_CMD}"
+	COMPOSER_CMD="${COMPOSER_CMD}" bash packages/global-packages/packages/dev-tools/github/scripts/retry-composer-install.sh
 else
 	echo "cypress-components: skipping composer (BLOCKERA_CT_COMPOSER_INSTALL=false)"
 fi

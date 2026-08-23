@@ -15,7 +15,6 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RETRY_SH="${SCRIPT_DIR}/../../lib/retry.sh"
 
 COMPOSER_CMD="${BLOCKERA_PERF_COMPOSER_CMD:-composer install --no-dev -o --apcu-autoloader -a}"
 WP_ENV_CONFIG="${BLOCKERA_PERF_WP_ENV_CONFIG:-.github/wp-env-configs/performance.json}"
@@ -26,18 +25,9 @@ READY_ATTEMPTS="${BLOCKERA_PERF_READY_ATTEMPTS:-36}"
 READY_DELAY="${BLOCKERA_PERF_READY_DELAY_SEC:-5}"
 PLAYWRIGHT_CMD="${BLOCKERA_PERF_PLAYWRIGHT_CMD:-npx playwright install --with-deps chromium}"
 
-if [[ ! -f "${RETRY_SH}" ]]; then
-	echo "performance/setup: missing ${RETRY_SH}" >&2
-	exit 1
-fi
-
 echo "performance/setup: ${COMPOSER_CMD}"
 # GitHub dist zipballs (api.github.com) occasionally 504; retry like npm ci / wp-env.
-bash "${RETRY_SH}" \
-	--max "${COMPOSER_INSTALL_RETRIES:-4}" \
-	--delay "${COMPOSER_INSTALL_RETRY_DELAY_SEC:-20}" \
-	--label "composer install" \
-	-- bash -c "${COMPOSER_CMD}"
+COMPOSER_CMD="${COMPOSER_CMD}" bash "${SCRIPT_DIR}/../../retry-composer-install.sh"
 
 echo "performance/setup: using ${WP_ENV_CONFIG}"
 cp "${WP_ENV_CONFIG}" .wp-env.json

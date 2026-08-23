@@ -104,7 +104,7 @@ run_playwright_install
 
 if [[ "${COMPOSER_INSTALL}" == "true" ]]; then
 	echo "playwright-e2e/run: ${COMPOSER_CMD}"
-	eval "${COMPOSER_CMD}"
+	COMPOSER_CMD="${COMPOSER_CMD}" bash packages/global-packages/packages/dev-tools/github/scripts/retry-composer-install.sh
 fi
 
 WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/base.json"

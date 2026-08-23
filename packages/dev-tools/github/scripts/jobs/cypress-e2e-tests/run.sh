@@ -7,6 +7,8 @@
 # Optional:
 #   BLOCKERA_E2E_INSTALL_CMD
 #   BLOCKERA_E2E_COMPOSER_INSTALL / BLOCKERA_E2E_COMPOSER_CMD
+#   COMPOSER_INSTALL_RETRIES / COMPOSER_INSTALL_RETRY_DELAY_SEC
+#   BLOCKERA_E2E_PREPARE_RETRIES / BLOCKERA_E2E_PREPARE_RETRY_DELAY_SEC
 #   BLOCKERA_E2E_WP_ENV_START_CMD
 #   BLOCKERA_E2E_BUILD_CMD / _TEST_CMD / _STOP_CMD
 #   BLOCKERA_E2E_PACKAGE_GLOB          Cypress glob prefix (empty = packages + tests)
@@ -37,6 +39,22 @@ LIST_CMD="${BLOCKERA_E2E_LIST_CATEGORIES_CMD:-node packages/global-packages/pack
 PREPARE_CMD="${BLOCKERA_E2E_PREPARE_CMD:-}"
 PRE_TEST_CMD="${BLOCKERA_E2E_PRE_TEST_CMD:-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RETRY_SH="${SCRIPT_DIR}/../../lib/retry.sh"
+RETRY_COMPOSER="${SCRIPT_DIR}/../../retry-composer-install.sh"
+
+retry_prepare_step() {
+	local label="$1"
+	shift
+	if [[ ! -f "${RETRY_SH}" ]]; then
+		echo "cypress-e2e/run: missing ${RETRY_SH}" >&2
+		exit 1
+	fi
+	bash "${RETRY_SH}" \
+		--max "${BLOCKERA_E2E_PREPARE_RETRIES:-4}" \
+		--delay "${BLOCKERA_E2E_PREPARE_RETRY_DELAY_SEC:-20}" \
+		--label "${label}" \
+		-- "$@"
+}
 
 cleanup() {
 	echo "cypress-e2e/run: ${STOP_CMD}"
@@ -47,19 +65,19 @@ trap cleanup EXIT
 echo "cypress-e2e/run: category=${CATEGORY}"
 
 echo "cypress-e2e/run: ${INSTALL_CMD}"
-eval "${INSTALL_CMD}"
+retry_prepare_step "cypress install" bash -c "${INSTALL_CMD}"
 
 if [[ "${COMPOSER_INSTALL}" == "true" ]]; then
 	echo "cypress-e2e/run: ${COMPOSER_CMD}"
-	eval "${COMPOSER_CMD}"
+	COMPOSER_CMD="${COMPOSER_CMD}" bash "${RETRY_COMPOSER}"
 fi
 
 if [[ -n "${PREPARE_CMD}" ]]; then
 	echo "cypress-e2e/run: prepare via BLOCKERA_E2E_PREPARE_CMD"
-	eval "${PREPARE_CMD}"
+	retry_prepare_step "cypress-e2e prepare" bash -c "${PREPARE_CMD}"
 else
 	echo "cypress-e2e/run: prepare.sh"
-	bash "${SCRIPT_DIR}/prepare.sh"
+	retry_prepare_step "cypress-e2e prepare" bash "${SCRIPT_DIR}/prepare.sh"
 fi
 
 echo "cypress-e2e/run: ${WP_ENV_START_CMD}"
