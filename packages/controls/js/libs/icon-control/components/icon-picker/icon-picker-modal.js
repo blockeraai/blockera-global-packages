@@ -407,7 +407,9 @@ export default function IconPickerModal({
 								instanceId={instanceId}
 								design="modern"
 								orientation="horizontal"
-								onTabClick={setActiveTab}
+								onTabClick={(tabName) => {
+									setActiveTab(tabName);
+								}}
 							/>
 						</div>
 					</>
@@ -446,14 +448,13 @@ export default function IconPickerModal({
 									/>
 								)}
 
-								{!isSearching && <RecentIcons />}
-
-								{!isSearching && (
+								<div hidden={isSearching}>
+									<RecentIcons />
 									<IconLibraries
 										libraries={libraries}
 										activeFilter={activeFilter}
 									/>
-								)}
+								</div>
 							</div>
 						</div>
 					) : (

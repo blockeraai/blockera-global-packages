@@ -20,7 +20,8 @@ import {
 	isValidIcon,
 	getIconLibraryIcons,
 	getIconLibrary,
-	getIconLibrarySearchData,
+	getIconLibrarySearchRecord,
+	subscribeIconPickerLibraries,
 	prepareIconSvgForStorage,
 	extractSvgMarkup,
 	NativeIconLibrariesList,
@@ -230,6 +231,23 @@ export function getCustomIconFeatureType(): 'companion' | 'native' | 'none' {
 }
 
 /**
+ * Resolve FeatureWrapper type for a picker library or search bucket.
+ * Pro registers a filter that returns `none` to unlock native packs.
+ *
+ * @param {string} library Library id (`lucide`) or search bucket (`search-2`).
+ * @return {'native'|'none'} Lock type for one wrapper around the whole grid.
+ */
+export function getIconLibraryLockType(library: string): 'native' | 'none' {
+	return applyFilters(
+		'blockera.controls.iconControl.utils.getLibraryIcons.type',
+		['search-2', ...NativeIconLibrariesList].includes(library)
+			? 'native'
+			: 'none',
+		library
+	);
+}
+
+/**
  * Whether custom icon file upload (drop / media library) requires the companion plugin.
  *
  * @return {boolean} True when uploads are gated; false when unlocked.
@@ -274,6 +292,10 @@ export function readSvgFromDroppedFiles(
 
 const iconSearchMetadataCache: Map<string, ?Object> = new Map();
 
+subscribeIconPickerLibraries(() => {
+	iconSearchMetadataCache.clear();
+});
+
 /**
  * Look up icon metadata (title, tags) from library search data.
  *
@@ -297,13 +319,7 @@ export function getIconSearchMetadata(
 		return iconSearchMetadataCache.get(cacheKey);
 	}
 
-	const searchData = getIconLibrarySearchData(library);
-	const found =
-		searchData.find(
-			(item) => item.iconName === iconName && item.library === library
-		) ||
-		searchData.find((item) => item.iconName === iconName) ||
-		null;
+	const found = getIconLibrarySearchRecord(library, iconName) || null;
 
 	iconSearchMetadataCache.set(cacheKey, found);
 
@@ -613,14 +629,6 @@ export function getLibraryIcons({
 		iconLibraryIcons = getIconLibraryIcons(library);
 	}
 
-	const iconType = applyFilters(
-		'blockera.controls.iconControl.utils.getLibraryIcons.type',
-		['search-2', ...NativeIconLibrariesList].includes(library)
-			? 'native'
-			: 'none',
-		library
-	);
-
 	for (const iconKey in iconLibraryIcons) {
 		const sourceMeta = iconLibraryIcons[iconKey];
 		const icon = createStandardIconObject(
@@ -633,73 +641,61 @@ export function getLibraryIcons({
 
 		if (isValidIcon(icon, iconKey)) {
 			iconsStack.push(
-				<ConditionalWrapper
+				<span
 					key={`${iconKey}-${icon.iconName}`}
-					condition={iconType === 'native'}
-					wrapper={(children: any) => (
-						<FeatureWrapper
-							className={controlInnerClassNames('icon-wrapper')}
-							type={iconType}
-						>
-							{children}
-						</FeatureWrapper>
+					className={controlInnerClassNames(
+						'icon-control-icon',
+						'library-' + icon.library,
+						'icon-' + icon.iconName
 					)}
+					aria-label={sprintf(
+						// translators: %s is icon ID in icon libraries for example arrow-left
+						__('%s Icon', 'blockera'),
+						icon.iconName
+					)}
+					onClick={(event) =>
+						onClick(event, {
+							type: 'UPDATE_ICON',
+							icon: icon.iconName,
+							library: icon.library,
+						})
+					}
+					onDoubleClick={(event) =>
+						onDoubleClick(event, {
+							type: 'UPDATE_ICON',
+							icon: icon.iconName,
+							library: icon.library,
+						})
+					}
 				>
-					<span
-						className={controlInnerClassNames(
-							'icon-control-icon',
-							'library-' + icon.library,
-							'icon-' + icon.iconName
+					<Tooltip
+						text={buildIconLibraryTooltipContent(
+							icon.iconName,
+							icon.library,
+							sourceMeta
 						)}
-						aria-label={sprintf(
-							// translators: %s is icon ID in icon libraries for example arrow-left
-							__('%s Icon', 'blockera'),
-							icon.iconName
-						)}
-						onClick={(event) =>
-							onClick(event, {
-								type: 'UPDATE_ICON',
-								icon: icon.iconName,
-								library: icon.library,
-							})
-						}
-						onDoubleClick={(event) =>
-							onDoubleClick(event, {
-								type: 'UPDATE_ICON',
-								icon: icon.iconName,
-								library: icon.library,
-							})
-						}
+						width="220px"
 					>
-						<Tooltip
-							text={buildIconLibraryTooltipContent(
-								icon.iconName,
-								icon.library,
-								sourceMeta
-							)}
-							width="220px"
-						>
-							<Icon
-								library={icon.library}
-								icon={icon}
-								iconSize={
-									[
-										'faregular',
-										'fasolid',
-										'fabrands',
-										'feather',
-										'lucide',
-										'untitledui',
-										'tabler',
-										'tabler-filled',
-									].includes(icon.library)
-										? 18
-										: 24
-								}
-							/>
-						</Tooltip>
-					</span>
-				</ConditionalWrapper>
+						<Icon
+							library={icon.library}
+							icon={icon}
+							iconSize={
+								[
+									'faregular',
+									'fasolid',
+									'fabrands',
+									'feather',
+									'lucide',
+									'untitledui',
+									'tabler',
+									'tabler-filled',
+								].includes(icon.library)
+									? 18
+									: 24
+							}
+						/>
+					</Tooltip>
+				</span>
 			);
 		}
 	}

@@ -10,6 +10,7 @@ import {
 	useCallback,
 } from '@wordpress/element';
 import { SearchControl as WPSearchControl } from '@wordpress/components';
+import { useDebounce } from '@wordpress/compose';
 
 /**
  * Blockera dependencies
@@ -18,14 +19,15 @@ import {
 	controlClassNames,
 	controlInnerClassNames,
 } from '@blockera/classnames';
-import { Icon } from '@blockera/icons';
+import { Icon, useIconPickerLibrariesReady } from '@blockera/icons';
 
 /**
  * Internal dependencies
  */
 import { IconContext } from '../../context';
-import { getLibraryIcons } from '../../utils';
+import { getIconLibraryLockType, getLibraryIcons } from '../../utils';
 import { useDraftIconHighlight } from '../../hooks/use-draft-icon-highlight';
+import { FeatureWrapper } from '../../../feature-wrapper';
 import {
 	DEFAULT_LIBRARIES,
 	formatIconCount,
@@ -36,6 +38,7 @@ export default function Search({
 	libraries = DEFAULT_LIBRARIES,
 	onSearchChange = () => {},
 }) {
+	const pickerReady = useIconPickerLibrariesReady();
 	const [searchInput, setSearchInput] = useState('');
 	const [searchData, setSearchData] = useState([]);
 	const [searchData2, setSearchData2] = useState([]);
@@ -46,7 +49,7 @@ export default function Search({
 
 	const iconCount = useMemo(
 		() => getLibrariesIconCount(libraries),
-		[libraries]
+		[libraries, pickerReady]
 	);
 
 	const buildSearchResults = useCallback(
@@ -66,12 +69,14 @@ export default function Search({
 					query: value,
 					onClick: handleIconSelect,
 					onDoubleClick: handleLibraryIconQuickSelect,
-					limit: 200,
+					limit: 400,
 				})
 			);
 		},
 		[handleIconSelect, handleLibraryIconQuickSelect]
 	);
+
+	const runSearchDebounced = useDebounce(buildSearchResults, 150);
 
 	useDraftIconHighlight(
 		searchResultsRef,
@@ -84,33 +89,37 @@ export default function Search({
 		onSearchChange(value);
 
 		if (!value) {
+			if (typeof runSearchDebounced.cancel === 'function') {
+				runSearchDebounced.cancel();
+			}
 			setSearchData([]);
 			setSearchData2([]);
 			return;
 		}
 
-		buildSearchResults(value);
+		runSearchDebounced(value);
 	};
 
 	return (
-		<div
-			className={controlInnerClassNames(
-				'icon-search',
-				searchInput ? 'is-searched' : ''
-			)}
-		>
-			<WPSearchControl
-				value={searchInput}
-				onChange={handleSearchChange}
-				placeholder={sprintf(
-					// translators: %s is the total number of icons available in the library.
-					__('Search %s icons…', 'blockera'),
-					formatIconCount(iconCount)
+		<>
+			<div
+				className={controlInnerClassNames(
+					'icon-search',
+					searchInput ? 'is-searched' : ''
 				)}
-				className={controlClassNames('search')}
-				__nextHasNoMarginBottom={true}
-			/>
-
+			>
+				<WPSearchControl
+					value={searchInput}
+					onChange={handleSearchChange}
+					placeholder={sprintf(
+						// translators: %s is the total number of icons available in the library.
+						__('Search %s icons…', 'blockera'),
+						formatIconCount(iconCount)
+					)}
+					className={controlClassNames('search')}
+					__nextHasNoMarginBottom={true}
+				/>
+			</div>
 			{searchInput && (
 				<div ref={searchResultsRef}>
 					<div
@@ -150,7 +159,13 @@ export default function Search({
 									'no-fade'
 								)}
 							>
-								{searchData}
+								<div
+									className={controlInnerClassNames(
+										'library-grid'
+									)}
+								>
+									{searchData}
+								</div>
 							</div>
 						)}
 					</div>
@@ -192,7 +207,21 @@ export default function Search({
 									'no-fade'
 								)}
 							>
-								{searchData2}
+								<FeatureWrapper
+									className={controlInnerClassNames(
+										'icon-library-lock'
+									)}
+									type={getIconLibraryLockType('search-2')}
+									showText="always"
+								>
+									<div
+										className={controlInnerClassNames(
+											'library-grid'
+										)}
+									>
+										{searchData2}
+									</div>
+								</FeatureWrapper>
 							</div>
 						)}
 
@@ -211,6 +240,6 @@ export default function Search({
 					</div>
 				</div>
 			)}
-		</div>
+		</>
 	);
 }

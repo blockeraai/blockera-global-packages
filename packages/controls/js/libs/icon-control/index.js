@@ -15,7 +15,11 @@ import {
 	controlClassNames,
 	controlInnerClassNames,
 } from '@blockera/classnames';
-import { Icon, prepareIconSvgForStorage } from '@blockera/icons';
+import {
+	Icon,
+	prepareIconSvgForStorage,
+	useIconPickerLibrariesReady,
+} from '@blockera/icons';
 import { isString, isEmpty, isUndefined } from '@blockera/utils';
 
 /**
@@ -82,6 +86,8 @@ function IconControl({
 		value,
 		onCommit: handlePickerCommit,
 	});
+
+	useIconPickerLibrariesReady();
 
 	const { currentIcon } = iconContextValue;
 	const {
