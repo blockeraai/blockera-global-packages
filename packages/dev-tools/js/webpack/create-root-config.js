@@ -109,6 +109,19 @@ function createRootWebpackConfig(options) {
 			};
 		}, {});
 
+		if (blockeraEntries.icons) {
+			const iconsCanonical = resolveCanonicalPackageName('icons');
+			const iconsPackageDir = resolvePackageDir(iconsCanonical);
+
+			blockeraEntries['icons-picker'] = {
+				import: `${iconsPackageDir.replace(/\/$/, '')}/js/picker.js`,
+				library: {
+					name: 'blockeraIconsPicker',
+					type: 'var',
+				},
+			};
+		}
+
 		const config = packagesConfig(env, {
 			...argv,
 			projectRoot: process.cwd(),

@@ -15,24 +15,14 @@ import { isUndefined } from '@blockera/utils';
  * Internal dependencies
  */
 import searchIndex from './search-index.json';
-import searchIndex2 from './search-index-2.json';
 import type { IconLibraryTypes, IconLibrary } from './types';
 // WP Library
 import { WPIcons } from './library-wp';
 import { default as WPLibraryIcon } from './library-wp/library-icon';
 import WPIconsSearchData from './library-wp/search-data.json';
-// FontAwesome Library
-import { FaRegularIcons } from './library-faregular';
 import { default as FaRegularLibraryIcon } from './library-faregular/library-icon';
-import FaRegularIconsSearchData from './library-faregular/search-data.json';
-// FontAwesome Brands Library
-import { FaBrandsIcons } from './library-fabrands';
 import { default as FaBrandsLibraryIcon } from './library-fabrands/library-icon';
-import FaBrandsIconsSearchData from './library-fabrands/search-data.json';
-// FontAwesome Solid Library
-import { FaSolidIcons } from './library-fasolid';
 import { default as FaSolidLibraryIcon } from './library-fasolid/library-icon';
-import FaSolidIconsSearchData from './library-fasolid/search-data.json';
 // Blockera Library
 import { BlockeraIcons } from './library-blockera';
 import { default as LibraryIcon } from './library-blockera/library-icon';
@@ -47,30 +37,12 @@ import { default as LibraryCursorIcon } from './library-cursor/library-icon';
 // Brands Library
 import { BrandsIcons } from './library-brands';
 import BrandsIconsSearchData from './library-brands/search-data.json';
-// Essentials Library
-import { EssentialsIcons } from './library-essentials';
 import { default as EssentialsLibraryIcon } from './library-essentials/library-icon';
-import EssentialsIconsSearchData from './library-essentials/search-data.json';
-// Feather Library
-import { FeatherIcons } from './library-feather';
 import { default as FeatherLibraryIcon } from './library-feather/library-icon';
-import FeatherIconsSearchData from './library-feather/search-data.json';
-// Lucide Library
-import { LucideIcons } from './library-lucide';
 import { default as LucideLibraryIcon } from './library-lucide/library-icon';
-import LucideIconsSearchData from './library-lucide/search-data.json';
-// Untitled UI Library
-import { UntitleduiIcons } from './library-untitledui';
 import { default as UntitleduiLibraryIcon } from './library-untitledui/library-icon';
-import UntitleduiIconsSearchData from './library-untitledui/search-data.json';
-// Tabler Library
-import { TablerIcons } from './library-tabler';
 import { default as TablerLibraryIcon } from './library-tabler/library-icon';
-import TablerIconsSearchData from './library-tabler/search-data.json';
-// Tabler Filled Library
-import { TablerFilledIcons } from './library-tabler-filled';
 import { default as TablerFilledLibraryIcon } from './library-tabler-filled/library-icon';
-import TablerFilledIconsSearchData from './library-tabler-filled/search-data.json';
 import { default as BrandsIcon } from './library-brands/library-icon';
 import searchLibraries from './search-libraries.json';
 import searchLibraries2 from './search-libraries-2.json';
@@ -85,6 +57,32 @@ const FONT_AWESOME_LIBRARY_ATTRIBUTION = {
 	link: 'https://github.com/fortawesome/font-awesome',
 };
 
+const libraryIconsMaps: { [key: string]: Object } = {
+	ui: BlockeraUIIcons || {},
+	blockera: BlockeraIcons || {},
+	wp: WPIcons || {},
+	cursor: CursorIcons || {},
+	brands: BrandsIcons || {},
+};
+
+const librarySearchDataMaps: { [key: string]: Array<any> } = {
+	wp: WPIconsSearchData,
+	blockera: IconsSearchData,
+	cursor: CursorIconsSearchData,
+	brands: BrandsIconsSearchData,
+};
+
+const searchRecordIndexes: { [key: string]: { [string]: Object } } = {};
+let cachedSearchDocsAll = null;
+let cachedSearchDocsAll2 = null;
+
+const libraryRenderers: { [key: string]: any } = {};
+
+let parsedSearchIndex = null;
+let parsedSearchIndex2 = null;
+let pickerLibrariesLoaded = false;
+const pickerLibraryListeners: Array<() => void> = [];
+
 export const IconLibraries: {
 	[key: string]: IconLibrary,
 } = {
@@ -93,7 +91,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('WordPress Icons', 'blockera'),
 		icon: <WPLibraryIcon />,
-		count: Object.keys(WPIcons).length,
+		count: Object.keys(WPIcons || {}).length,
 		author: 'WordPress',
 		link: 'https://wordpress.org',
 	},
@@ -102,7 +100,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('FontAwesome Regular', 'blockera'),
 		icon: <FaRegularLibraryIcon />,
-		count: Object.keys(FaRegularIcons).length,
+		count: 0,
 		...FONT_AWESOME_LIBRARY_ATTRIBUTION,
 	},
 	fasolid: {
@@ -110,7 +108,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('FontAwesome Solid', 'blockera'),
 		icon: <FaSolidLibraryIcon />,
-		count: Object.keys(FaSolidIcons).length,
+		count: 0,
 		...FONT_AWESOME_LIBRARY_ATTRIBUTION,
 	},
 	fabrands: {
@@ -118,7 +116,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('FontAwesome Brands', 'blockera'),
 		icon: <FaBrandsLibraryIcon />,
-		count: Object.keys(FaBrandsIcons).length,
+		count: 0,
 		...FONT_AWESOME_LIBRARY_ATTRIBUTION,
 	},
 	feather: {
@@ -126,7 +124,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('Feather Icons', 'blockera'),
 		icon: <FeatherLibraryIcon />,
-		count: Object.keys(FeatherIcons).length,
+		count: 0,
 		author: 'Feather',
 		link: 'https://github.com/feathericons/feather',
 	},
@@ -135,7 +133,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('Lucide Icons', 'blockera'),
 		icon: <LucideLibraryIcon />,
-		count: Object.keys(LucideIcons).length,
+		count: 0,
 		author: 'Lucide',
 		link: 'https://github.com/lucide-icons/lucide',
 	},
@@ -144,7 +142,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('Untitled UI Icons', 'blockera'),
 		icon: <UntitleduiLibraryIcon />,
-		count: Object.keys(UntitleduiIcons).length,
+		count: 0,
 		author: 'Untitled UI',
 		link: 'https://github.com/untitleduico/icons',
 	},
@@ -153,7 +151,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('Tabler Icons', 'blockera'),
 		icon: <TablerLibraryIcon />,
-		count: Object.keys(TablerIcons).length,
+		count: 0,
 		author: 'Tabler',
 		link: 'https://github.com/tabler/tabler-icons',
 	},
@@ -162,7 +160,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('Tabler Icons Filled', 'blockera'),
 		icon: <TablerFilledLibraryIcon />,
-		count: Object.keys(TablerFilledIcons).length,
+		count: 0,
 		author: 'Tabler',
 		link: 'https://github.com/tabler/tabler-icons',
 	},
@@ -171,7 +169,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('Blockera Branding', 'blockera'),
 		icon: <BrandsIcon />,
-		count: Object.keys(BrandsIcons).length,
+		count: Object.keys(BrandsIcons || {}).length,
 		...BLOCKERA_LIBRARY_ATTRIBUTION,
 	},
 	blockera: {
@@ -179,7 +177,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('Blockera Products', 'blockera'),
 		icon: <LibraryIcon />,
-		count: Object.keys(BlockeraIcons).length,
+		count: Object.keys(BlockeraIcons || {}).length,
 		...BLOCKERA_LIBRARY_ATTRIBUTION,
 	},
 	ui: {
@@ -187,7 +185,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('User Interface', 'blockera'),
 		icon: <LibraryUIIcon />,
-		count: Object.keys(BlockeraUIIcons).length,
+		count: Object.keys(BlockeraUIIcons || {}).length,
 		...BLOCKERA_LIBRARY_ATTRIBUTION,
 	},
 	cursor: {
@@ -195,7 +193,7 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('Cursors', 'blockera'),
 		icon: <LibraryCursorIcon />,
-		count: Object.keys(CursorIcons).length,
+		count: Object.keys(CursorIcons || {}).length,
 		...BLOCKERA_LIBRARY_ATTRIBUTION,
 	},
 	essentials: {
@@ -203,10 +201,111 @@ export const IconLibraries: {
 		// translators: Icon library name
 		name: __('Blockera Essentials', 'blockera'),
 		icon: <EssentialsLibraryIcon />,
-		count: Object.keys(EssentialsIcons).length,
+		count: 0,
 		...BLOCKERA_LIBRARY_ATTRIBUTION,
 	},
 };
+
+/**
+ * @return {boolean} True when picker packs have registered.
+ */
+export function arePickerLibrariesLoaded(): boolean {
+	return pickerLibrariesLoaded;
+}
+
+/**
+ * Subscribe to picker library registration.
+ *
+ * @param {Function} listener Callback.
+ * @return {Function} Unsubscribe.
+ */
+export function subscribeIconPickerLibraries(listener: () => void): () => void {
+	pickerLibraryListeners.push(listener);
+
+	return () => {
+		const index = pickerLibraryListeners.indexOf(listener);
+
+		if (index !== -1) {
+			pickerLibraryListeners.splice(index, 1);
+		}
+	};
+}
+
+function notifyPickerLibraryListeners() {
+	for (let i = 0; i < pickerLibraryListeners.length; i++) {
+		pickerLibraryListeners[i]();
+	}
+}
+
+/**
+ * Merge deferred icon packs from the picker script.
+ *
+ * @param {Object} payload Libraries, renderers, and Fuse index 2.
+ * @return {void}
+ */
+export function registerIconLibraries(payload: {
+	searchIndex2?: Object,
+	libraries?: {
+		[key: string]: {
+			icons?: Object,
+			searchData?: Array<any>,
+			render?: any,
+		},
+	},
+}): void {
+	const libraries = payload?.libraries || {};
+
+	for (const libraryId in libraries) {
+		if (!Object.prototype.hasOwnProperty.call(libraries, libraryId)) {
+			continue;
+		}
+
+		const entry = libraries[libraryId];
+
+		if (entry?.icons) {
+			libraryIconsMaps[libraryId] = entry.icons;
+
+			if (IconLibraries[libraryId]) {
+				IconLibraries[libraryId] = {
+					...IconLibraries[libraryId],
+					count: Object.keys(entry.icons).length,
+				};
+			}
+		}
+
+		if (entry?.searchData) {
+			librarySearchDataMaps[libraryId] = entry.searchData;
+		}
+
+		if (entry?.render) {
+			libraryRenderers[libraryId] = entry.render;
+		}
+	}
+
+	if (payload?.searchIndex2) {
+		parsedSearchIndex2 = Fuse.parseIndex(payload.searchIndex2);
+	}
+
+	cachedSearchDocsAll = null;
+	cachedSearchDocsAll2 = null;
+
+	for (const libraryId in searchRecordIndexes) {
+		if (Object.prototype.hasOwnProperty.call(searchRecordIndexes, libraryId)) {
+			delete searchRecordIndexes[libraryId];
+		}
+	}
+
+	pickerLibrariesLoaded = true;
+	notifyPickerLibraryListeners();
+}
+
+/**
+ * @param {string} library Library id.
+ * @return {any} Renderer component or null.
+ */
+export function getDeferredIconRenderer(library: string): any {
+	return libraryRenderers[library] || null;
+}
 
 export function isValidIconLibrary(library: IconLibraryTypes): boolean {
 	return !isUndefined(IconLibraries[library]);
@@ -231,90 +330,50 @@ export function getIconLibraryIcons(iconLibrary: IconLibraryTypes): Object {
 		return {};
 	}
 
-	switch (iconLibrary) {
-		case 'ui':
-			return BlockeraUIIcons;
-
-		case 'blockera':
-			return BlockeraIcons;
-
-		case 'wp':
-			return WPIcons;
-
-		case 'faregular':
-			return FaRegularIcons;
-
-		case 'fabrands':
-			return FaBrandsIcons;
-
-		case 'fasolid':
-			return FaSolidIcons;
-
-		case 'cursor':
-			return CursorIcons;
-
-		case 'brands':
-			return BrandsIcons;
-
-		case 'essentials':
-			return EssentialsIcons;
-
-		case 'feather':
-			return FeatherIcons;
-
-		case 'lucide':
-			return LucideIcons;
-
-		case 'untitledui':
-			return UntitleduiIcons;
-
-		case 'tabler':
-			return TablerIcons;
-
-		case 'tabler-filled':
-			return TablerFilledIcons;
-	}
-
-	return {};
+	return libraryIconsMaps[iconLibrary] || {};
 }
 
 function _getLibraryIcons(library: IconLibraryTypes): Array<any> {
-	switch (library) {
-		case 'wp':
-			return WPIconsSearchData;
-		case 'faregular':
-			return FaRegularIconsSearchData;
-		case 'fabrands':
-			return FaBrandsIconsSearchData;
-		case 'fasolid':
-			return FaSolidIconsSearchData;
-		case 'blockera':
-			return IconsSearchData;
-		case 'cursor':
-			return CursorIconsSearchData;
-		case 'brands':
-			return BrandsIconsSearchData;
-		case 'essentials':
-			return EssentialsIconsSearchData;
-		case 'feather':
-			return FeatherIconsSearchData;
-		case 'lucide':
-			return LucideIconsSearchData;
-		case 'untitledui':
-			return UntitleduiIconsSearchData;
-		case 'tabler':
-			return TablerIconsSearchData;
-		case 'tabler-filled':
-			return TablerFilledIconsSearchData;
+	return librarySearchDataMaps[library] || [];
+}
+
+/**
+ * O(1) lookup for tooltip/search metadata.
+ *
+ * @param {string} library Library id.
+ * @param {string} iconName Icon id.
+ * @return {Object|null} Search record.
+ */
+export function getIconLibrarySearchRecord(
+	library: string,
+	iconName: string
+): ?Object {
+	if (!library || !iconName) {
+		return null;
 	}
 
-	return [];
+	if (!searchRecordIndexes[library]) {
+		const data = librarySearchDataMaps[library] || [];
+		const index: { [string]: Object } = {};
+
+		for (let i = 0; i < data.length; i++) {
+			const item = data[i];
+
+			if (item?.iconName) {
+				index[item.iconName] = item;
+			}
+		}
+
+		searchRecordIndexes[library] = index;
+	}
+
+	return searchRecordIndexes[library][iconName] || null;
 }
 
 export function getIconLibrarySearchData(
 	library: IconLibraryTypes | 'all' | 'all2'
 ): Array<any> {
-	const searchData: Array<any> = [];
+	let searchData: Array<any> = [];
 
 	if (
 		library === 'all' ||
@@ -323,31 +382,35 @@ export function getIconLibrarySearchData(
 	) {
 		switch (library) {
 			case 'all':
-				searchLibraries.forEach((library) => {
-					// $FlowFixMe
-					Array.prototype.push.apply(
-						searchData,
-						_getLibraryIcons(library)
-					);
-				});
+				if (!cachedSearchDocsAll) {
+					cachedSearchDocsAll = [];
+					searchLibraries.forEach((libraryId) => {
+						// $FlowFixMe
+						Array.prototype.push.apply(
+							cachedSearchDocsAll,
+							_getLibraryIcons(libraryId)
+						);
+					});
+				}
+				searchData = cachedSearchDocsAll;
 				break;
 
 			case 'all2':
-				searchLibraries2.forEach((library) => {
-					// $FlowFixMe
-					Array.prototype.push.apply(
-						searchData,
-						_getLibraryIcons(library)
-					);
-				});
+				if (!cachedSearchDocsAll2) {
+					cachedSearchDocsAll2 = [];
+					searchLibraries2.forEach((libraryId) => {
+						// $FlowFixMe
+						Array.prototype.push.apply(
+							cachedSearchDocsAll2,
+							_getLibraryIcons(libraryId)
+						);
+					});
+				}
+				searchData = cachedSearchDocsAll2;
 				break;
 
 			default:
-				// $FlowFixMe
-				Array.prototype.push.apply(
-					searchData,
-					_getLibraryIcons(library)
-				);
+				searchData = _getLibraryIcons(library);
 				break;
 		}
 	}
@@ -357,10 +420,59 @@ export function getIconLibrarySearchData(
 
 export function getIconLibrariesSearchIndex(
 	library: IconLibraryTypes | 'all' | 'all2'
-): Object {
+): Object | null {
 	if (library === 'all2' || searchLibraries2.includes(library)) {
-		return Fuse.parseIndex(searchIndex2);
+		return parsedSearchIndex2;
 	}
 
-	return Fuse.parseIndex(searchIndex);
+	if (!parsedSearchIndex) {
+		parsedSearchIndex = Fuse.parseIndex(searchIndex);
+	}
+
+	return parsedSearchIndex;
+}
+
+/**
+ * Reset deferred packs for unit tests.
+ *
+ * @return {void}
+ */
+export function __resetPickerLibrariesForTests(): void {
+	const deferred = [
+		'faregular',
+		'fasolid',
+		'fabrands',
+		'essentials',
+		'feather',
+		'lucide',
+		'untitledui',
+		'tabler',
+		'tabler-filled',
+	];
+
+	for (let i = 0; i < deferred.length; i++) {
+		const id = deferred[i];
+		delete libraryIconsMaps[id];
+		delete librarySearchDataMaps[id];
+		delete libraryRenderers[id];
+
+		if (IconLibraries[id]) {
+			IconLibraries[id] = {
+				...IconLibraries[id],
+				count: 0,
+			};
+		}
+	}
+
+	parsedSearchIndex2 = null;
+	pickerLibrariesLoaded = false;
+	pickerLibraryListeners.length = 0;
+	cachedSearchDocsAll = null;
+	cachedSearchDocsAll2 = null;
+
+	for (const libraryId in searchRecordIndexes) {
+		if (Object.prototype.hasOwnProperty.call(searchRecordIndexes, libraryId)) {
+			delete searchRecordIndexes[libraryId];
+		}
+	}
 }

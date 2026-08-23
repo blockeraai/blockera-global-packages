@@ -11,7 +11,7 @@ import { isString, isUndefined, snakeCase } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { getIcon } from '../index';
+import { getIcon } from '@blockera/icons';
 import { FaRegularIcons } from './icons';
 
 export function FaRegularIcon({

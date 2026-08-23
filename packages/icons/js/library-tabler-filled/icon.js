@@ -6,7 +6,7 @@ import { isString, isUndefined } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { getIcon } from '../index';
+import { getIcon } from '@blockera/icons';
 import { StrokeSvgIcon } from '../components/stroke-svg-icon';
 
 export function TablerFilledIcon({

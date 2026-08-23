@@ -6,7 +6,7 @@ import { isString, isUndefined } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { getIcon } from '../index';
+import { getIcon } from '@blockera/icons';
 
 export function UntitleduiIcon({
 	library = 'untitledui',

@@ -14,7 +14,7 @@ import { isString, isUndefined } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { getIcon } from '../index';
+import { getIcon } from '@blockera/icons';
 import type { IconProps } from '../types';
 
 export function EssentialsIcon({
