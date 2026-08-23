@@ -5,8 +5,9 @@ export const DEFAULT_PAGE_TOP_MAX_PX = 300;
 export const SKIP_TOP_EPSILON_PX = 1;
 
 /**
- * Scroll only when any part of the node is outside the viewport.
- * A node fully inside the port is left alone.
+ * Scroll only when the node's top is off-screen. A visible top is enough:
+ * the rest may be clipped (tall query loops, variant swaps) and must not
+ * pull the canvas.
  */
 export function shouldScrollSpotlightNode(
 	blockTop: number,
@@ -14,7 +15,7 @@ export function shouldScrollSpotlightNode(
 	portTop: number,
 	portBottom: number
 ): boolean {
-	return blockTop < portTop || blockBottom > portBottom;
+	return blockTop < portTop || blockTop > portBottom;
 }
 
 /**
@@ -37,9 +38,8 @@ export function scrollRoomNeeded(delta: number, maxScroll: number): number {
 
 /**
  * Next scrollTop. Nodes whose document Y is under `pageTopMaxPx` go to
- * page top. Others move only enough to bring the whole node in with
- * `inset` from the edge it came from. A node taller than the port pins
- * its top at that inset.
+ * page top. A visible top never moves the canvas. Off-screen tops land
+ * `inset` from the edge they came from (tall nodes always pin at top).
  */
 export function resolveSpotlightScrollTop(
 	blockTop: number,
@@ -54,15 +54,12 @@ export function resolveSpotlightScrollTop(
 	if (docY < pageTopMaxPx) {
 		return 0;
 	}
+	if (blockTop >= portTop && blockTop <= portBottom) {
+		return scrollTop;
+	}
 	const viewHeight = portBottom - portTop;
 	const blockHeight = Math.max(0, blockBottom - blockTop);
-	if (blockHeight + inset > viewHeight) {
-		return Math.max(
-			0,
-			scrollTop + scrollDeltaForTopOffset(blockTop, portTop, inset)
-		);
-	}
-	if (blockTop < portTop) {
+	if (blockHeight > viewHeight || blockTop < portTop) {
 		return Math.max(
 			0,
 			scrollTop + scrollDeltaForTopOffset(blockTop, portTop, inset)
