@@ -73,8 +73,8 @@ const librarySearchDataMaps: { [key: string]: Array<any> } = {
 };
 
 const searchRecordIndexes: { [key: string]: { [string]: Object } } = {};
-let cachedSearchDocsAll = null;
-let cachedSearchDocsAll2 = null;
+let cachedSearchDocsAll: Array<any> | null = null;
+let cachedSearchDocsAll2: Array<any> | null = null;
 
 const libraryRenderers: { [key: string]: any } = {};
 
@@ -255,20 +255,17 @@ export function registerIconLibraries(payload: {
 }): void {
 	const libraries = payload?.libraries || {};
 
-	for (const libraryId in libraries) {
-		if (!Object.prototype.hasOwnProperty.call(libraries, libraryId)) {
-			continue;
-		}
-
+	for (const libraryId of Object.keys(libraries)) {
 		const entry = libraries[libraryId];
+		const icons = entry?.icons;
 
-		if (entry?.icons) {
-			libraryIconsMaps[libraryId] = entry.icons;
+		if (icons) {
+			libraryIconsMaps[libraryId] = icons;
 
 			if (IconLibraries[libraryId]) {
 				IconLibraries[libraryId] = {
 					...IconLibraries[libraryId],
-					count: Object.keys(entry.icons).length,
+					count: Object.keys(icons).length,
 				};
 			}
 		}
@@ -289,10 +286,8 @@ export function registerIconLibraries(payload: {
 	cachedSearchDocsAll = null;
 	cachedSearchDocsAll2 = null;
 
-	for (const libraryId in searchRecordIndexes) {
-		if (Object.prototype.hasOwnProperty.call(searchRecordIndexes, libraryId)) {
-			delete searchRecordIndexes[libraryId];
-		}
+	for (const libraryId of Object.keys(searchRecordIndexes)) {
+		delete searchRecordIndexes[libraryId];
 	}
 
 	pickerLibrariesLoaded = true;
@@ -335,6 +330,20 @@ export function getIconLibraryIcons(iconLibrary: IconLibraryTypes): Object {
 
 function _getLibraryIcons(library: IconLibraryTypes): Array<any> {
 	return librarySearchDataMaps[library] || [];
+}
+
+function buildCachedSearchDocs(libraryIds: Array<any>): Array<any> {
+	const docs: Array<any> = [];
+
+	for (let i = 0; i < libraryIds.length; i++) {
+		const icons = _getLibraryIcons(libraryIds[i]);
+
+		for (let j = 0; j < icons.length; j++) {
+			docs.push(icons[j]);
+		}
+	}
+
+	return docs;
 }
 
 /**
@@ -381,33 +390,23 @@ export function getIconLibrarySearchData(
 		isValidIconLibrary(library)
 	) {
 		switch (library) {
-			case 'all':
-				if (!cachedSearchDocsAll) {
-					cachedSearchDocsAll = [];
-					searchLibraries.forEach((libraryId) => {
-						// $FlowFixMe
-						Array.prototype.push.apply(
-							cachedSearchDocsAll,
-							_getLibraryIcons(libraryId)
-						);
-					});
-				}
-				searchData = cachedSearchDocsAll;
+			case 'all': {
+				const docs: Array<any> =
+					cachedSearchDocsAll ??
+					buildCachedSearchDocs(searchLibraries);
+				cachedSearchDocsAll = docs;
+				searchData = docs;
 				break;
+			}
 
-			case 'all2':
-				if (!cachedSearchDocsAll2) {
-					cachedSearchDocsAll2 = [];
-					searchLibraries2.forEach((libraryId) => {
-						// $FlowFixMe
-						Array.prototype.push.apply(
-							cachedSearchDocsAll2,
-							_getLibraryIcons(libraryId)
-						);
-					});
-				}
-				searchData = cachedSearchDocsAll2;
+			case 'all2': {
+				const docs: Array<any> =
+					cachedSearchDocsAll2 ??
+					buildCachedSearchDocs(searchLibraries2);
+				cachedSearchDocsAll2 = docs;
+				searchData = docs;
 				break;
+			}
 
 			default:
 				searchData = _getLibraryIcons(library);
@@ -470,9 +469,7 @@ export function __resetPickerLibrariesForTests(): void {
 	cachedSearchDocsAll = null;
 	cachedSearchDocsAll2 = null;
 
-	for (const libraryId in searchRecordIndexes) {
-		if (Object.prototype.hasOwnProperty.call(searchRecordIndexes, libraryId)) {
-			delete searchRecordIndexes[libraryId];
-		}
+	for (const libraryId of Object.keys(searchRecordIndexes)) {
+		delete searchRecordIndexes[libraryId];
 	}
 }

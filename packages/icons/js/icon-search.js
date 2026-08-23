@@ -23,10 +23,8 @@ const searchConfig = require('./search-config.json');
 const fuseCache: { [key: string]: { index: Object, fuse: Object } } = {};
 
 subscribeIconPickerLibraries(() => {
-	for (const key in fuseCache) {
-		if (Object.prototype.hasOwnProperty.call(fuseCache, key)) {
-			delete fuseCache[key];
-		}
+	for (const key of Object.keys(fuseCache)) {
+		delete fuseCache[key];
 	}
 });
 
