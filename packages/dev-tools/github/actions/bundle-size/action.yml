@@ -55,6 +55,16 @@ runs:
           shell: bash
           run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/bundle-size/prepare.sh"
 
+        # compressed-size-action runs its own `npm ci` for the PR head and
+        # again after checking out the base branch. That path has no retry;
+        # npm registry ETIMEDOUT then fails the job. Stage retry-npm-ci.sh
+        # outside the worktree so `git reset --hard` cannot drop it.
+        - name: Stage retryable npm ci for size action
+          if: ${{ steps.gate.outputs.run == 'true' }}
+          id: npmci
+          shell: bash
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/bundle-size/stage-install-script.sh"
+
         - name: Compressed size report
           if: ${{ steps.gate.outputs.run == 'true' }}
           id: sizes
@@ -62,6 +72,7 @@ runs:
           with:
               repo-token: ${{ inputs.repo-token }}
               pattern: ${{ steps.cfg.outputs.pattern }}
+              install-script: ${{ steps.npmci.outputs.command }}
 
         - name: Save size comment body
           if: ${{ steps.gate.outputs.run == 'true' }}
