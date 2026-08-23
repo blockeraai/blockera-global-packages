@@ -94,7 +94,16 @@ export function ensureIconPickerLibraries(): Promise<boolean> {
 			loadPromise = null;
 			reject(new Error('Failed to load icon picker libraries.'));
 		};
-		document.head.appendChild(script);
+
+		const head = document.head;
+
+		if (!head) {
+			loadPromise = null;
+			reject(new Error('Document head is missing.'));
+			return;
+		}
+
+		head.appendChild(script);
 	});
 
 	return loadPromise;
