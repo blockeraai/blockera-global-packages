@@ -30,10 +30,24 @@ describe('shouldScrollSpotlightNode', () => {
 		);
 	});
 
-	it('scrolls when the top is in view but the bottom is clipped', () => {
-		expect(shouldScrollSpotlightNode(780, 830, PORT_TOP, PORT_BOTTOM)).toBe(
-			true
+	it('does not scroll a tall node when its top is already in the viewport', () => {
+		expect(shouldScrollSpotlightNode(50, 2000, PORT_TOP, PORT_BOTTOM)).toBe(
+			false
 		);
+		expect(shouldScrollSpotlightNode(319, 6170, 0, 1265)).toBe(false);
+	});
+
+	it('scrolls a tall node when its top is above the viewport', () => {
+		expect(
+			shouldScrollSpotlightNode(-40, 2000, PORT_TOP, PORT_BOTTOM)
+		).toBe(true);
+	});
+
+	it('does not scroll when the top is in view, even if the bottom is clipped', () => {
+		expect(shouldScrollSpotlightNode(780, 830, PORT_TOP, PORT_BOTTOM)).toBe(
+			false
+		);
+		expect(shouldScrollSpotlightNode(319, 1381, 0, 1265)).toBe(false);
 	});
 
 	it('does not scroll when the whole node is inside the canvas', () => {
@@ -81,8 +95,20 @@ describe('resolveSpotlightScrollTop', () => {
 		);
 	});
 
-	it('does not move when the whole node is already in the canvas', () => {
+	it('does not move when the top is already in the canvas', () => {
 		expect(resolveSpotlightScrollTop(50, 80, 0, 800, 200, 350)).toBe(200);
+		expect(resolveSpotlightScrollTop(319, 1381, 0, 1265, 0, 319)).toBe(0);
+	});
+
+	it('does not move a tall node when its top is already in the canvas', () => {
+		expect(resolveSpotlightScrollTop(319, 6170, 0, 1265, 0, 319)).toBe(0);
+		expect(resolveSpotlightScrollTop(50, 2000, 0, 800, 200, 350)).toBe(200);
+	});
+
+	it('pins a tall node whose top is above the canvas at the inset from the top', () => {
+		expect(resolveSpotlightScrollTop(-40, 2000, 0, 800, 500, 460)).toBe(
+			460 - DEFAULT_INSET
+		);
 	});
 
 	it('pins a node taller than the canvas at the inset from the top', () => {
