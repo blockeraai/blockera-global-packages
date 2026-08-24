@@ -395,12 +395,12 @@
 	}
 
 	.blockera-control-icon-picker-custom-icon-input-column {
-		padding-right: 24px;
+		padding: var(--modal-gap);
 		border-right: 1px solid var(--blockera-controls-sep-color);
 	}
 
 	.blockera-control-icon-picker-custom-icon-preview-column {
-		padding-left: 24px;
+		padding: var(--modal-gap);
 	}
 
 	.blockera-control-icon-picker-custom-icon-input-header,
