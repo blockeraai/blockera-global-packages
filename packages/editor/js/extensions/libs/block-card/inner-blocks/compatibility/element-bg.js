@@ -39,9 +39,7 @@ export function elementNormalBackgroundFromWPCompatibility({
 
 	const rawGradient = resolveElementWpGradientRawString(
 		attributes,
-		dataCompatibilityElement,
-		insideBlockInspector,
-		editorSelectedBlockEvent
+		dataCompatibilityElement
 	);
 	const gradientSentinel = normalizeWpGradientSentinel(rawGradient);
 

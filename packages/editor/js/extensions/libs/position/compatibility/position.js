@@ -13,7 +13,7 @@ import type { ValueAddon } from '@blockera/controls/js/value-addons/types';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
 function mapPositionInsetFromWP(raw: mixed): ValueAddon | string {
 	let asString: string;
@@ -44,15 +44,10 @@ export function positionFromWPCompatibility({
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 	insideBlockInspector?: boolean,
 }): Object {
-	// Check block-level style (insideBlockInspector) or global style context
-	// Block inspector: attributes.style.position.*
-	// Global styles: attributes.position.*
-	const positionData = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.position
-		: attributes?.position;
+	const positionData = getWpFromStyleOrGlobal(
+		attributes?.style?.position,
+		attributes?.position
+	);
 
 	if (
 		// Blockera don't have position

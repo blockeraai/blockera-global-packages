@@ -1,22 +1,24 @@
 // @flow
 
+/**
+ * Internal dependencies
+ */
+import { isEmptyBlockeraCompatValue, getWpFromStyleOrGlobal } from '../../utils';
+
 export function fontStyleFromWPCompatibility({
 	attributes,
-	insideBlockInspector = true,
-	runSelectedBlockEvent,
 }: {
 	attributes: Object,
 	insideBlockInspector?: boolean,
 	runSelectedBlockEvent: boolean,
 }): Object {
-	// Check block-level style (insideBlockInspector) or global style context
-	const fontStyle =
-		insideBlockInspector && runSelectedBlockEvent
-			? attributes?.style?.typography?.fontStyle
-			: attributes?.typography?.fontStyle;
+	const fontStyle = getWpFromStyleOrGlobal(
+		attributes?.style?.typography?.fontStyle,
+		attributes?.typography?.fontStyle
+	);
 
 	if (
-		attributes?.blockeraFontStyle?.value === '' &&
+		isEmptyBlockeraCompatValue(attributes?.blockeraFontStyle?.value) &&
 		fontStyle !== undefined
 	) {
 		attributes.blockeraFontStyle = {

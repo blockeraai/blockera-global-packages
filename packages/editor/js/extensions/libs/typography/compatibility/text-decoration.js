@@ -3,7 +3,7 @@
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, isEmptyBlockeraCompatValue, getWpFromStyleOrGlobal } from '../../utils';
 
 export function textDecorationFromWPCompatibility({
 	attributes,
@@ -14,16 +14,13 @@ export function textDecorationFromWPCompatibility({
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 	insideBlockInspector?: boolean,
 }): Object {
-	// Check block-level style (insideBlockInspector) or global style context
-	const textDecoration = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.typography?.textDecoration
-		: attributes?.typography?.textDecoration;
+	const textDecoration = getWpFromStyleOrGlobal(
+		attributes?.style?.typography?.textDecoration,
+		attributes?.typography?.textDecoration
+	);
 
 	if (
-		attributes?.blockeraTextDecoration?.value === '' &&
+		isEmptyBlockeraCompatValue(attributes?.blockeraTextDecoration?.value) &&
 		textDecoration !== undefined
 	) {
 		attributes.blockeraTextDecoration = {

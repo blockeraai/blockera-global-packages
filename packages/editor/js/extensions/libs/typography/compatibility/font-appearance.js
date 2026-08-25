@@ -7,7 +7,7 @@ import { isEquals } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
 export function fontAppearanceFromWPCompatibility({
 	attributes,
@@ -18,25 +18,21 @@ export function fontAppearanceFromWPCompatibility({
 	insideBlockInspector?: boolean,
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 }): Object {
-	// Check block-level style (insideBlockInspector) or global style context
-	const fontWeight = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.typography?.fontWeight
-		: attributes?.typography?.fontWeight;
-	const fontStyle = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.typography?.fontStyle
-		: attributes?.typography?.fontStyle;
+	const fontWeight = getWpFromStyleOrGlobal(
+		attributes?.style?.typography?.fontWeight,
+		attributes?.typography?.fontWeight
+	);
+	const fontStyle = getWpFromStyleOrGlobal(
+		attributes?.style?.typography?.fontStyle,
+		attributes?.typography?.fontStyle
+	);
 
 	if (
-		isEquals(attributes?.blockeraFontAppearance?.value, {
+		(isEquals(attributes?.blockeraFontAppearance?.value, {
 			weight: '',
 			style: '',
-		}) &&
+		}) ||
+			attributes?.blockeraFontAppearance?.value == null) &&
 		(fontWeight !== undefined || fontStyle !== undefined)
 	) {
 		attributes.blockeraFontAppearance = {

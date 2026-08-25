@@ -10,7 +10,7 @@ import { extractNumberAndUnit, isSpecialUnit } from '@blockera/controls';
  * Internal dependencies
  */
 import { resolveDimensionValueFromWP } from './dimension-variable-from-wp';
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, isEmptyBlockeraCompatValue, getWpFromStyleOrGlobal } from '../../utils';
 
 const DIMENSIONS_MIN_HEIGHT_BLOCKS = [
 	'core/group',
@@ -21,16 +21,12 @@ const DIMENSIONS_MIN_HEIGHT_BLOCKS = [
 ];
 
 function getDimensionsMinHeightFromWPAttributes(
-	attributes: Object,
-	insideBlockInspector: boolean,
-	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style'
+	attributes: Object
 ): mixed {
-	return runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.dimensions?.minHeight
-		: attributes?.dimensions?.minHeight;
+	return getWpFromStyleOrGlobal(
+		attributes?.style?.dimensions?.minHeight,
+		attributes?.dimensions?.minHeight
+	);
 }
 
 function getDimensionsMinHeightClearPatch(
@@ -89,44 +85,35 @@ export function minHeightFromWPCompatibility({
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 	insideBlockInspector?: boolean,
 }): Object {
-	if (attributes?.blockeraMinHeight?.value !== '') {
+	if (!isEmptyBlockeraCompatValue(attributes?.blockeraMinHeight?.value)) {
 		return attributes;
 	}
 
 	if (blockId === 'core/cover') {
-		// Check block-level style (insideBlockInspector) or global style context
-		// Block inspector: separated minHeight and minHeightUnit
 		if (
-			runInsideBlockInspector(
-				insideBlockInspector,
-				editorSelectedBlockEvent
-			) &&
 			attributes?.minHeight !== undefined &&
 			attributes?.minHeightUnit !== undefined
 		) {
 			attributes.blockeraMinHeight = {
 				value: attributes?.minHeight + attributes.minHeightUnit,
 			};
-		}
+		} else {
+			const coverMinHeight = getWpFromStyleOrGlobal(
+				attributes?.style?.dimensions?.minHeight,
+				attributes?.dimensions?.minHeight
+			);
 
-		// Global styles: single string value in dimensions.minHeight
-		if (
-			!insideBlockInspector &&
-			attributes?.dimensions?.minHeight !== undefined
-		) {
-			attributes.blockeraMinHeight = {
-				value: resolveDimensionValueFromWP(
-					attributes.dimensions.minHeight
-				),
-			};
+			if (coverMinHeight !== undefined) {
+				attributes.blockeraMinHeight = {
+					value: resolveDimensionValueFromWP(coverMinHeight),
+				};
+			}
 		}
 	}
 
 	if (blockId && DIMENSIONS_MIN_HEIGHT_BLOCKS.includes(blockId)) {
 		const dimensionsMinHeight = getDimensionsMinHeightFromWPAttributes(
-			attributes,
-			insideBlockInspector,
-			editorSelectedBlockEvent
+			attributes
 		);
 
 		if (dimensionsMinHeight !== undefined) {

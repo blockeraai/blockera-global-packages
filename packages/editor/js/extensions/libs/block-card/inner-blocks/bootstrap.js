@@ -43,6 +43,7 @@ import {
 	isResetRef,
 	mergeWPCompatibility,
 	runInsideBlockInspector,
+	getWpFromStyleOrGlobal,
 	sanitizeWPCompatibilityAttributes,
 } from '../../utils';
 import {
@@ -68,14 +69,10 @@ const hasElementStyles = (
 	insideBlockInspector: boolean,
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style'
 ): boolean => {
-	const useStyle = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
+	const elementData = getWpFromStyleOrGlobal(
+		attributes?.style?.elements?.[dataCompatibilityElement],
+		attributes?.elements?.[dataCompatibilityElement]
 	);
-
-	const elementData = useStyle
-		? attributes?.style?.elements?.[dataCompatibilityElement]
-		: attributes?.elements?.[dataCompatibilityElement];
 
 	return elementDataHasStyleData(elementData);
 };

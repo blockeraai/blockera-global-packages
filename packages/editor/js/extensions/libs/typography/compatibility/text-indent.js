@@ -9,7 +9,7 @@ import { normalizeCssLengthValue } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, isEmptyBlockeraCompatValue, getWpFromStyleOrGlobal } from '../../utils';
 
 export function textIndentFromWPCompatibility({
 	attributes,
@@ -20,16 +20,13 @@ export function textIndentFromWPCompatibility({
 	insideBlockInspector?: boolean,
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 }): Object {
-	// Check block-level style (insideBlockInspector) or global style context
-	const textIndent = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.typography?.textIndent
-		: attributes?.typography?.textIndent;
+	const textIndent = getWpFromStyleOrGlobal(
+		attributes?.style?.typography?.textIndent,
+		attributes?.typography?.textIndent
+	);
 
 	if (
-		attributes?.blockeraTextIndent?.value === '' &&
+		isEmptyBlockeraCompatValue(attributes?.blockeraTextIndent?.value) &&
 		textIndent !== undefined
 	) {
 		attributes.blockeraTextIndent = {

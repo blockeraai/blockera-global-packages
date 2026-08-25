@@ -14,7 +14,7 @@ import { isObject, isString, normalizeCssLengthValue } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
 function isBorderRadiusPresetVarString(value: mixed): boolean {
 	return (
@@ -124,12 +124,10 @@ export function borderRadiusFromWPCompatibility({
 	insideBlockInspector: boolean,
 }): Object {
 	if (isBorderRadiusEmpty(attributes?.blockeraBorderRadius?.value)) {
-		const borderRadius = runInsideBlockInspector(
-			insideBlockInspector,
-			editorSelectedBlockEvent
-		)
-			? attributes?.style?.border?.radius
-			: attributes?.border?.radius;
+		const borderRadius = getWpFromStyleOrGlobal(
+			attributes?.style?.border?.radius,
+			attributes?.border?.radius
+		);
 
 		if (borderRadius) {
 			if (isString(borderRadius)) {

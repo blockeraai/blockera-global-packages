@@ -13,7 +13,7 @@
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
 /**
  * Migrate WordPress custom CSS to Blockera blockeraCustomCSS format.
@@ -43,14 +43,10 @@ export function customCssFromWPCompatibility({
 		return attributes;
 	}
 
-	// Block Inspector: attributes.style.css
-	// Global Styles: attributes.css (root-level in theme.json blocks[blockName])
-	const wpCss = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.css
-		: attributes?.css;
+	const wpCss = getWpFromStyleOrGlobal(
+		attributes?.style?.css,
+		attributes?.css
+	);
 
 	if ('string' === typeof wpCss && '' !== wpCss.trim()) {
 		attributes.blockeraCustomCSS = {

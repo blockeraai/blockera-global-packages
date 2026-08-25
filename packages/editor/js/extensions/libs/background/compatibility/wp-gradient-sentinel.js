@@ -8,7 +8,7 @@ import { isString } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { getWpFromStyleOrGlobal } from '../../utils';
 
 export const WP_GRADIENT_NONE: string = 'none';
 export const WP_GRADIENT_TRANSPARENT_NONE: string = 'transparent none';
@@ -49,52 +49,32 @@ export function createNoneBackgroundLayer(): Object {
 }
 
 export function resolveWpGradientRawString(
-	attributes: Object,
-	insideBlockInspector: boolean,
-	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style'
+	attributes: Object
 ): ?string {
-	const useStyle = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
+	const preset = isString(attributes?.gradient) ? attributes.gradient : null;
+	const styleGradient = isString(attributes?.style?.color?.gradient)
+		? attributes.style.color.gradient
+		: null;
+	const globalGradient = isString(attributes?.color?.gradient)
+		? attributes.color.gradient
+		: null;
+
+	const gradient = getWpFromStyleOrGlobal(
+		preset || styleGradient,
+		globalGradient
 	);
 
-	if (
-		attributes?.gradient !== undefined ||
-		attributes?.color?.gradient !== undefined
-	) {
-		if (useStyle) {
-			return isString(attributes?.gradient) ? attributes.gradient : null;
-		}
-
-		return isString(attributes?.color?.gradient)
-			? attributes.color.gradient
-			: null;
-	}
-
-	if (useStyle && attributes?.style?.color?.gradient !== undefined) {
-		return isString(attributes?.style?.color?.gradient)
-			? attributes.style.color.gradient
-			: null;
-	}
-
-	return null;
+	return isString(gradient) ? gradient : null;
 }
 
 export function resolveElementWpGradientRawString(
 	attributes: Object,
-	dataCompatibilityElement: string,
-	insideBlockInspector: boolean,
-	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style'
+	dataCompatibilityElement: string
 ): ?string {
-	const useStyle = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
+	const gradient = getWpFromStyleOrGlobal(
+		attributes?.style?.elements?.[dataCompatibilityElement]?.color?.gradient,
+		attributes?.elements?.[dataCompatibilityElement]?.color?.gradient
 	);
-
-	const gradient = useStyle
-		? attributes?.style?.elements?.[dataCompatibilityElement]?.color
-				?.gradient
-		: attributes?.elements?.[dataCompatibilityElement]?.color?.gradient;
 
 	return isString(gradient) ? gradient : null;
 }

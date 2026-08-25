@@ -164,6 +164,24 @@ export const runInsideBlockInspector = (
 };
 
 /**
+ * WP→Blockera source for first-time conversion.
+ * Block-level values live on `style.*`; global styles use a sibling path.
+ * Canvas conversion still needs `style.*` when the inspector is not mounted.
+ */
+export function getWpFromStyleOrGlobal(
+	styleValue: mixed,
+	globalValue: mixed
+	// WP style/global payloads vary by feature (objects, strings, presets).
+	// Call sites inspect the concrete shape after this pick.
+): any {
+	return styleValue || globalValue;
+}
+
+export function isEmptyBlockeraCompatValue(value: mixed): boolean {
+	return value === '' || value == null;
+}
+
+/**
  * Resolve the store definition key for an inner block.
  * Exact keys win (e.g. `core/heading-1`). Instance suffixes fall back to the
  * base key (e.g. `elements/link-1` → `elements/link`).

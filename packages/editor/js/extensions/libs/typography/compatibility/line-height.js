@@ -13,7 +13,7 @@ import {
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, isEmptyBlockeraCompatValue, getWpFromStyleOrGlobal } from '../../utils';
 
 export function lineHeightFromWPCompatibility({
 	attributes,
@@ -24,13 +24,11 @@ export function lineHeightFromWPCompatibility({
 	insideBlockInspector?: boolean,
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 }): Object {
-	if (attributes?.blockeraLineHeight?.value === '') {
-		const lineHeight = runInsideBlockInspector(
-			insideBlockInspector,
-			editorSelectedBlockEvent
-		)
-			? attributes?.style?.typography?.lineHeight
-			: attributes?.typography?.lineHeight;
+	if (isEmptyBlockeraCompatValue(attributes?.blockeraLineHeight?.value)) {
+		const lineHeight = getWpFromStyleOrGlobal(
+			attributes?.style?.typography?.lineHeight,
+			attributes?.typography?.lineHeight
+		);
 
 		if (lineHeight) {
 			const lineHeightVar = getLineHeightVAFromVarString(lineHeight);

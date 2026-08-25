@@ -10,7 +10,7 @@ import { getColorVAFromVarString } from '@blockera/data';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../../utils';
 import { getBaseBreakpoint } from '../../../../../editor/header-ui';
 
 export function elementNormalFontColorFromWPCompatibility({
@@ -31,13 +31,11 @@ export function elementNormalFontColorFromWPCompatibility({
 		attributes?.elements?.[dataCompatibilityElement]?.color?.text
 	) {
 		const color = getColorVAFromVarString(
-			runInsideBlockInspector(
-				insideBlockInspector,
-				editorSelectedBlockEvent
+			getWpFromStyleOrGlobal(
+				attributes?.style?.elements?.[dataCompatibilityElement]?.color
+					?.text,
+				attributes?.elements?.[dataCompatibilityElement]?.color?.text
 			)
-				? attributes?.style?.elements?.[dataCompatibilityElement]?.color
-						?.text
-				: attributes?.elements?.[dataCompatibilityElement]?.color?.text
 		);
 
 		if (color) {
@@ -78,14 +76,13 @@ export function elementHoverFontColorFromWPCompatibility({
 			?.text
 	) {
 		const color = getColorVAFromVarString(
-			runInsideBlockInspector(
-				insideBlockInspector,
-				editorSelectedBlockEvent
+			getWpFromStyleOrGlobal(
+				attributes?.style?.elements?.[dataCompatibilityElement]?.[
+					':hover'
+				]?.color?.text,
+				attributes?.elements?.[dataCompatibilityElement]?.[':hover']
+					?.color?.text
 			)
-				? attributes.style.elements[dataCompatibilityElement][':hover']
-						.color.text
-				: attributes.elements[dataCompatibilityElement][':hover'].color
-						.text
 		);
 
 		if (color) {

@@ -17,7 +17,7 @@ import {
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
 const defaultGap = {
 	lock: true,
@@ -172,15 +172,10 @@ export function gapFromWPCompatibility({
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 	insideBlockInspector?: boolean,
 }): Object {
-	// Check block-level style (insideBlockInspector) or global style context
-	// Block inspector: attributes.style.spacing.blockGap
-	// Global styles: attributes.spacing.blockGap
-	const blockGap = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.spacing?.blockGap
-		: attributes?.spacing?.blockGap;
+	const blockGap = getWpFromStyleOrGlobal(
+		attributes?.style?.spacing?.blockGap,
+		attributes?.spacing?.blockGap
+	);
 
 	if (isEquals(attributes?.blockeraGap?.value, defaultGap) && blockGap) {
 		attributes.blockeraGap = {

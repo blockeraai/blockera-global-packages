@@ -12,7 +12,11 @@ import {
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import {
+	runInsideBlockInspector,
+	isEmptyBlockeraCompatValue,
+	getWpFromStyleOrGlobal,
+} from '../../utils';
 
 export function fontSizeFromWPCompatibility({
 	attributes,
@@ -23,18 +27,14 @@ export function fontSizeFromWPCompatibility({
 	insideBlockInspector?: boolean,
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 }): Object {
-	if (attributes?.blockeraFontSize?.value === '') {
+	const currentFontSize = attributes?.blockeraFontSize?.value;
+	if (isEmptyBlockeraCompatValue(currentFontSize)) {
 		// fontSize attribute in root always is variable
 		// medium → var(--wp--preset--font-size--medium)
 		// it should be changed to a Value Addon (variable)
-		if (attributes?.fontSize || attributes?.typography?.fontSize) {
+		if (attributes?.fontSize) {
 			const fontSizeVar = getFontSizeVAFromVarString(
-				runInsideBlockInspector(
-					insideBlockInspector,
-					editorSelectedBlockEvent
-				)
-					? `var:preset|font-size|${attributes?.fontSize}`
-					: attributes?.typography?.fontSize
+				`var:preset|font-size|${attributes?.fontSize}`
 			);
 
 			if (fontSizeVar) {
@@ -46,13 +46,26 @@ export function fontSizeFromWPCompatibility({
 			}
 		}
 
-		// Check block-level style (insideBlockInspector) or global style context
-		const fontSize = runInsideBlockInspector(
-			insideBlockInspector,
-			editorSelectedBlockEvent
-		)
-			? attributes?.style?.typography?.fontSize
-			: attributes?.typography?.fontSize;
+		if (attributes?.typography?.fontSize) {
+			const fontSizeVar = getFontSizeVAFromVarString(
+				attributes.typography.fontSize
+			);
+
+			if (fontSizeVar) {
+				attributes.blockeraFontSize = {
+					value: fontSizeVar,
+				};
+
+				return attributes;
+			}
+		}
+
+		// Block-level custom size lives on style.typography; canvas (and global
+		// styles) may also expose typography.fontSize.
+		const fontSize = getWpFromStyleOrGlobal(
+			attributes?.style?.typography?.fontSize,
+			attributes?.typography?.fontSize
+		);
 
 		if (fontSize) {
 			attributes.blockeraFontSize = {
