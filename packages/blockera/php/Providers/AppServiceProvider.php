@@ -335,6 +335,31 @@ class AppServiceProvider extends ServiceProvider {
 		// Register Query Loop context hooks.
 		QueryLoopContext::register();
 
+		add_filter( 'render_block_data', 'blockera_normalize_parsed_block_ids', 9 );
+
+		add_filter(
+			'pre_render_block',
+			static function ( $pre_render, array $parsed_block ) {
+				if ( null === $pre_render ) {
+					blockera_engine_skip_enter( $parsed_block );
+				}
+
+				return $pre_render;
+			},
+			1,
+			2
+		);
+
+		add_filter(
+			'render_block',
+			static function ( string $html ) {
+				blockera_engine_skip_leave();
+
+				return $html;
+			},
+			1000
+		);
+
 		// save_post hook - always needed.
 		add_action('save_post', [ $this, 'handleSavePost' ], 9e8, 2);
 

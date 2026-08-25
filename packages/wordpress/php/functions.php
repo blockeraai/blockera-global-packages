@@ -38,6 +38,154 @@ if ( ! function_exists( 'blockera_get_block_type_property' ) ) {
 	}
 }
 
+if ( ! function_exists( 'blockera_get_blockera_id' ) ) {
+
+	/**
+	 * Canonical Blockera identity after migrate (`blockeraId`, fallback `blockeraPropsId`).
+	 *
+	 * @param array $attrs Block attributes.
+	 *
+	 * @return string
+	 */
+	function blockera_get_blockera_id( array $attrs ): string {
+
+		if ( ! empty( $attrs['blockeraId'] ) ) {
+			return (string) $attrs['blockeraId'];
+		}
+
+		if ( ! empty( $attrs['blockeraPropsId'] ) ) {
+			return (string) $attrs['blockeraPropsId'];
+		}
+
+		return '';
+	}
+}
+
+if ( ! function_exists( 'blockera_is_block_mode_basic' ) ) {
+
+	/**
+	 * Whether this block is in Basic (core) mode.
+	 *
+	 * @param array $attrs Block attributes.
+	 *
+	 * @return bool
+	 */
+	function blockera_is_block_mode_basic( array $attrs ): bool {
+
+		return isset( $attrs['blockeraBlockMode'] ) && 'basic' === $attrs['blockeraBlockMode'];
+	}
+}
+
+if ( ! function_exists( 'blockera_normalize_blockera_ids' ) ) {
+
+	/**
+	 * Copy blockeraPropsId → blockeraId, drop legacy keys. Do not rewrite unique class.
+	 *
+	 * @param array $attrs Block attributes.
+	 *
+	 * @return array
+	 */
+	function blockera_normalize_blockera_ids( array $attrs ): array {
+
+		if ( empty( $attrs['blockeraId'] ) && ! empty( $attrs['blockeraPropsId'] ) ) {
+			$attrs['blockeraId'] = $attrs['blockeraPropsId'];
+		}
+
+		unset( $attrs['blockeraPropsId'], $attrs['blockeraCompatId'] );
+
+		if ( blockera_is_block_mode_basic( $attrs ) && ! empty( $attrs['className'] ) && is_string( $attrs['className'] ) ) {
+			$tokens = preg_split( '/\s+/', $attrs['className'], -1, PREG_SPLIT_NO_EMPTY );
+			$keep   = [];
+
+			foreach ( $tokens as $token ) {
+				if ( 'blockera-block' === $token || 1 === preg_match( '/^blockera-block-[\w-]+$/i', $token ) ) {
+					continue;
+				}
+				$keep[] = $token;
+			}
+
+			$attrs['className'] = implode( ' ', $keep );
+		}
+
+		return $attrs;
+	}
+}
+
+if ( ! function_exists( 'blockera_normalize_parsed_block_ids' ) ) {
+
+	/**
+	 * `render_block_data` callback: migrate identity on parsed blocks.
+	 *
+	 * @param array $parsed_block Parsed block.
+	 *
+	 * @return array
+	 */
+	function blockera_normalize_parsed_block_ids( array $parsed_block ): array {
+
+		if ( empty( $parsed_block['attrs'] ) || ! is_array( $parsed_block['attrs'] ) ) {
+			return $parsed_block;
+		}
+
+		$parsed_block['attrs'] = blockera_normalize_blockera_ids( $parsed_block['attrs'] );
+
+		return $parsed_block;
+	}
+}
+
+if ( ! function_exists( 'blockera_engine_skip_enter' ) ) {
+
+	/**
+	 * Push skip-engine flag for this block (true if this or an ancestor is basic).
+	 *
+	 * @param array $parsed_block Parsed block.
+	 *
+	 * @return void
+	 */
+	function blockera_engine_skip_enter( array $parsed_block ): void {
+
+		$stack       = $GLOBALS['blockera_engine_skip_stack'] ?? [];
+		$parent_skip = ! empty( $stack ) && true === end( $stack );
+		$skip        = $parent_skip || blockera_is_block_mode_basic( $parsed_block['attrs'] ?? [] );
+		$stack[]     = $skip;
+
+		$GLOBALS['blockera_engine_skip_stack'] = $stack;
+	}
+}
+
+if ( ! function_exists( 'blockera_engine_skip_leave' ) ) {
+
+	/**
+	 * Pop skip-engine flag after the block finishes rendering.
+	 *
+	 * @return void
+	 */
+	function blockera_engine_skip_leave(): void {
+
+		$stack = $GLOBALS['blockera_engine_skip_stack'] ?? [];
+
+		if ( ! empty( $stack ) ) {
+			array_pop( $stack );
+		}
+
+		$GLOBALS['blockera_engine_skip_stack'] = $stack;
+	}
+}
+
+if ( ! function_exists( 'blockera_should_skip_engine' ) ) {
+
+	/**
+	 * True when this block or an ancestor is in Basic Mode.
+	 *
+	 * @return bool
+	 */
+	function blockera_should_skip_engine(): bool {
+
+		$stack = $GLOBALS['blockera_engine_skip_stack'] ?? [];
+
+		return ! empty( $stack ) && true === end( $stack );
+	}
+}
+
 if ( ! function_exists( 'blockera_is_supported_block' ) ) {
 
 	/**
@@ -49,7 +197,17 @@ if ( ! function_exists( 'blockera_is_supported_block' ) ) {
 	 */
 	function blockera_is_supported_block( array $block ): bool {
 
-		return ! empty( $block['attrs']['blockeraPropsId'] ) && ! empty( $block['attrs']['className'] );
+		if ( function_exists( 'blockera_should_skip_engine' ) && blockera_should_skip_engine() ) {
+			return false;
+		}
+
+		$attrs = $block['attrs'] ?? [];
+
+		if ( blockera_is_block_mode_basic( $attrs ) ) {
+			return false;
+		}
+
+		return '' !== blockera_get_blockera_id( $attrs ) && ! empty( $attrs['className'] );
 	}
 }
 
@@ -87,7 +245,7 @@ if ( ! function_exists( 'blockera_get_block_cache_key' ) ) {
 		$block_name = str_replace( [ '/', '-' ], '_', $block['blockName'] );
 
 		// Create and return a unique cache key.
-		return 'wp_block_' . $block_name . '_' . md5( $attributes['blockeraPropsId'] );
+		return 'wp_block_' . $block_name . '_' . md5( blockera_get_blockera_id( $attributes ) );
 	}
 }
 
@@ -385,7 +543,7 @@ if (! function_exists('blockera_contains_blockera_block')) {
 		}
 
 		// Check if post_content contains any Blockera block.
-		if (strpos($post_content, 'blockeraPropsId') === false) {
+		if ( false === strpos( $post_content, 'blockeraId' ) && false === strpos( $post_content, 'blockeraPropsId' ) ) {
 			return false;
 		}
 

@@ -58,7 +58,7 @@ trait Processor {
 			return;
 		}
 
-		$props_id = $parsed_block['attrs']['blockeraPropsId'] ?? '';
+		$props_id = blockera_get_blockera_id( $parsed_block['attrs'] ?? [] );
 		if ('' === $props_id) {
 			return;
 		}
@@ -79,7 +79,7 @@ trait Processor {
 
 		// Pair with registerBlockDomOrderSlot() from pre_render_block (document order).
 		// render_block fires post-order; we consume the next unconsumed slot for this props id.
-		$props_id = $this->block['attrs']['blockeraPropsId'] ?? '';
+		$props_id = blockera_get_blockera_id( $this->block['attrs'] ?? [] );
 		if ( '' === $props_id ) {
 			return PHP_INT_MAX;
 		}

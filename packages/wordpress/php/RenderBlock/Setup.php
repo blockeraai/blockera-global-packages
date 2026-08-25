@@ -130,7 +130,7 @@ class Setup {
 
 		$this->warmBlockCustomizationOverlays();
 
-        if ( ! isset( $args['attributes']['blockeraPropsId'] ) ) {
+        if ( ! isset( $args['attributes']['blockeraId'] ) && ! isset( $args['attributes']['blockeraPropsId'] ) ) {
 			$args['attributes'] = array_merge( $args['attributes'] ?? [], blockera_get_shared_block_attributes() );
 		}
 

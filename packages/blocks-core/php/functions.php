@@ -112,8 +112,10 @@ if (! function_exists('blockera_get_supports')) {
 	function blockera_get_supports(): array {
 		$attributes = include __DIR__ . '/shared/attributes.php';
 		$excluded   = [
-			'blockeraPropsId' => true,
-			'blockeraCompatId' => true,
+			'blockeraId'        => true,
+			'blockeraPropsId'   => true,
+			'blockeraCompatId'  => true,
+			'blockeraBlockMode' => true,
 		];
 		$supports   = [];
 		

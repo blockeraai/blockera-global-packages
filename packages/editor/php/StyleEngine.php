@@ -295,7 +295,7 @@ final class StyleEngine {
 			$settings = array_filter(
                 $this->settings,
                 function ( string $id): bool {
-					return str_starts_with($id, 'blockera') && ! in_array($id, [ 'blockeraBlockStates', 'blockeraPropsId', 'blockeraCompatId' ], true);
+					return str_starts_with($id, 'blockera') && ! in_array($id, [ 'blockeraBlockStates', 'blockeraId', 'blockeraPropsId', 'blockeraCompatId', 'blockeraBlockMode' ], true);
 				},
                 ARRAY_FILTER_USE_KEY
             );
@@ -381,7 +381,7 @@ final class StyleEngine {
 
 		$settings = $this->settings;
 
-		unset($settings['blockeraBlockStates'], $settings['blockeraPropsId'], $settings['blockeraCompatId']);
+		unset($settings['blockeraBlockStates'], $settings['blockeraId'], $settings['blockeraPropsId'], $settings['blockeraCompatId'], $settings['blockeraBlockMode']);
 
 		return $this->prepareBreakpointStyles($this->breakpoint, $settings);
 	}
