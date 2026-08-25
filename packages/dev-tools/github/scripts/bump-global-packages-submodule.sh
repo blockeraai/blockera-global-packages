@@ -7,8 +7,9 @@
 # Local (no ref arg): advance the current pin to the tip of the branch that contains it.
 #   - If the pin is on master → master tip
 #   - Else if exactly one remote branch contains it → that branch tip
-#   - Else if multiple remote branches contain it → master tip (ambiguous)
-#   - Else → error
+#   - Else if multiple remote branches contain it → the one matching this
+#     repo's current branch (exact, blockera/<branch>, or */<branch>)
+#   - Else → error (never rewind an off-master pin onto master)
 # Explicit ref/SHA always wins. CI should pass the ref (defaults to master if omitted).
 #
 # Env:
@@ -240,8 +241,29 @@ else
 		if [ "${#CANDIDATES[@]}" -eq 1 ]; then
 			TARGET_REF="${CANDIDATES[0]}"
 		else
-			log_warn "pin ${PREV_SHORT:-${PREV_SHA}} is on multiple branches (${CANDIDATES[*]}); falling back to master"
-			TARGET_REF="master"
+			PARENT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+			if [ "${PARENT_BRANCH}" = "HEAD" ]; then
+				PARENT_BRANCH=""
+			fi
+
+			MATCHED=()
+			if [ -n "${PARENT_BRANCH}" ]; then
+				for cand in "${CANDIDATES[@]}"; do
+					case "${cand}" in
+						"${PARENT_BRANCH}" | "blockera/${PARENT_BRANCH}" | */"${PARENT_BRANCH}")
+							MATCHED+=("${cand}")
+							;;
+					esac
+				done
+			fi
+
+			if [ "${#MATCHED[@]}" -eq 1 ]; then
+				TARGET_REF="${MATCHED[0]}"
+				log_info "pin ${PREV_SHORT:-${PREV_SHA}} is on multiple branches (${CANDIDATES[*]}); matched consumer branch ${C_BOLD}${PARENT_BRANCH}${C_RESET}"
+			else
+				log_err "pin ${PREV_SHORT:-${PREV_SHA}} is on multiple branches (${CANDIDATES[*]}); pass an explicit ref"
+				exit 1
+			fi
 		fi
 	fi
 
