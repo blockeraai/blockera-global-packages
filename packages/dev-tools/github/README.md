@@ -66,7 +66,7 @@ github/
     jobs/playwright-e2e-tests/   # detect-categories.sh | run.sh | collect-baselines.sh
     jobs/plugin-check/           # prepare-build.sh
     jobs/sync-global-packages-submodule/  # resolve | run-bump | commit | open-pr
-    jobs/upload-release-to-plugin-repo/   # compute-release-branch.sh | publish-to-svn.sh
+    jobs/upload-release-to-plugin-repo/   # compute-release-branch.sh | publish-to-svn.sh (plugin + theme SVN via BLOCKERA_UPLOAD_SVN_LAYOUT)
     jobs/upload-release-to-blockeraai/    # publish.sh (Pro → Blockera AI)
     jobs/build-plugin-zip/                # version bump / notes / revert helpers
     jobs/build-plugin-zip-tests/          # find-specs | prepare-build-env | run-e2e
@@ -281,17 +281,37 @@ steps:
 
 Reuses `create-demo-attachments/build-zip.sh` for the product zip.
 
-## Upload release to WordPress.org plugin repo
+## Upload release to WordPress.org SVN (plugin or theme)
 
 Triggered on `release: published`. Computes `release/x.y.z`, then publishes the
-release zip asset to SVN trunk + tag (environment `wp.org plugin`).
+release zip asset. Same job scripts serve both layouts; the consumer sets
+`BLOCKERA_UPLOAD_SVN_LAYOUT`.
 
-| Env | Default (Blockera base) |
+**Plugin layout** (`plugin`, default): checkout trunk, replace contents, commit,
+copy to `tags/{version}/`, update `readme.txt` Stable tag. Environment
+`wp.org plugin`. Template: `workflows/upload-release-to-plugin-repo.yml`.
+
+**Theme layout** (`theme`): `svn import` the unzipped tree to
+`{repo}/{version}/` (WordPress.org theme SVN has no trunk/tags). Environment
+`wp.org theme`. Template: `workflows/upload-release-to-theme-repo.yml`.
+
+```yaml
+# Theme-style example
+env:
+    BLOCKERA_UPLOAD_SVN_LAYOUT: theme
+    BLOCKERA_UPLOAD_SVN_REPO_URL: 'https://themes.svn.wordpress.org/THEME-SLUG'
+    BLOCKERA_UPLOAD_ZIP_NAME: theme.zip
+```
+
+| Env | Default |
 | --- | --- |
-| `BLOCKERA_UPLOAD_PLUGIN_REPO_URL` | `https://plugins.svn.wordpress.org/blockera` |
+| `BLOCKERA_UPLOAD_SVN_LAYOUT` | `plugin` |
+| `BLOCKERA_UPLOAD_SVN_REPO_URL` | plugin layout last-resort: `https://plugins.svn.wordpress.org/blockera`; **required** for theme layout |
+| `BLOCKERA_UPLOAD_PLUGIN_REPO_URL` | alias for SVN root (legacy) |
 | `BLOCKERA_UPLOAD_ZIP_NAME` | `blockera.zip` |
+| `BLOCKERA_UPLOAD_UNWRAP_SINGLE_DIR` | `true` for theme, `false` for plugin |
 | `SVN_USERNAME` / `SVN_PASSWORD` | required secrets |
-| `PLUGIN_URL` / `VERSION` | from the GitHub release event |
+| `PLUGIN_URL` / `BLOCKERA_UPLOAD_ASSET_URL` / `VERSION` | from the GitHub release event |
 
 ## Upload release to Blockera AI (Pro)
 
@@ -649,7 +669,8 @@ Available toolkit workflow filenames:
 `php-snapshots.yml`, `php-unit-tests.yml`, `playwright-e2e-tests.yml`,
 `plugin-check.yml`, `remove-pr-config-files.yml`, `remove-pr-env-json.yml`,
 `sync-global-packages-submodule.yml`, `upload-release-to-blockeraai.yml`,
-`upload-release-to-plugin-repo.yml`, `virus-total.yml`,
+`upload-release-to-plugin-repo.yml`, `upload-release-to-theme-repo.yml`,
+`virus-total.yml`,
 `wp-tested-up-to-update.yml`
 
 ## Bundle size
