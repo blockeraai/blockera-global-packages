@@ -104,4 +104,41 @@ class FunctionsTest extends \WP_UnitTestCase {
 		$result = blockera_create_css_selector($selector);
 		$this->assertEquals('.wp-block-sample:is(.a, .b).blockera-block', $result);
 	}
+
+	public function testNormalizeBlockeraIdsMigratesPropsIdAndKeepsUniqueClass(): void {
+		$attrs = blockera_normalize_blockera_ids(
+			[
+				'blockeraPropsId'  => 'abc123',
+				'blockeraCompatId' => 'zzzzzz',
+				'className'        => 'blockera-block blockera-block-oldtoken extra',
+			]
+		);
+
+		$this->assertSame( 'abc123', $attrs['blockeraId'] );
+		$this->assertArrayNotHasKey( 'blockeraPropsId', $attrs );
+		$this->assertArrayNotHasKey( 'blockeraCompatId', $attrs );
+		$this->assertSame( 'blockera-block blockera-block-oldtoken extra', $attrs['className'] );
+	}
+
+	public function testSupportedBlockRequiresIdClassAndAdvancedMode(): void {
+		$supported = [
+			'attrs' => [
+				'blockeraId' => 'abc123',
+				'className'  => 'blockera-block blockera-block-abc123',
+			],
+		];
+		$this->assertTrue( blockera_is_supported_block( $supported ) );
+
+		$basic = $supported;
+		$basic['attrs']['blockeraBlockMode'] = 'basic';
+		$this->assertFalse( blockera_is_supported_block( $basic ) );
+
+		$legacy = [
+			'attrs' => [
+				'blockeraPropsId' => 'legacy',
+				'className'       => 'blockera-block',
+			],
+		];
+		$this->assertTrue( blockera_is_supported_block( $legacy ) );
+	}
 }
