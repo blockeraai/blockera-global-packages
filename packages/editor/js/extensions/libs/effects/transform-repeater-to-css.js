@@ -8,25 +8,63 @@
  */
 import { getValueAddonRealValue, getSortedRepeater } from '@blockera/controls';
 
+/**
+ * Schema / sanitize may keep `{ value: repeater }`. Hover overlay maps are unwrapped.
+ * Variable addons (`valueType: 'variable'`) stay wrapped.
+ *
+ * @param {mixed} value Repeater map, tuples, array, or `{ value }`.
+ * @return {mixed} Unwrapped repeater payload.
+ */
+export function unwrapRepeaterAttr(value: mixed): mixed {
+	if (value == null || typeof value !== 'object' || Array.isArray(value)) {
+		return value;
+	}
+
+	const record: Object = value;
+	if (record.valueType === 'variable') {
+		return value;
+	}
+
+	if (!('value' in record)) {
+		return value;
+	}
+
+	const otherKeys = Object.keys(record).filter(
+		(key) =>
+			key !== 'value' && key !== 'valueType' && key !== 'settings'
+	);
+	if (otherKeys.length) {
+		return value;
+	}
+
+	return unwrapRepeaterAttr(record.value);
+}
+
 function getTransformEntries(blockeraTransformRepeater: mixed): mixed {
+	const repeater = unwrapRepeaterAttr(blockeraTransformRepeater);
+
 	if (
-		!blockeraTransformRepeater ||
-		(typeof blockeraTransformRepeater === 'object' &&
-			!Array.isArray(blockeraTransformRepeater) &&
-			!Object.keys(blockeraTransformRepeater).length)
+		!repeater ||
+		(typeof repeater === 'object' &&
+			!Array.isArray(repeater) &&
+			!Object.keys(repeater).length)
 	) {
 		return [];
 	}
 
 	if (
-		Array.isArray(blockeraTransformRepeater) &&
-		blockeraTransformRepeater.length &&
-		Array.isArray(blockeraTransformRepeater[0])
+		Array.isArray(repeater) &&
+		repeater.length &&
+		Array.isArray(repeater[0])
 	) {
-		return blockeraTransformRepeater;
+		return repeater;
 	}
 
-	return getSortedRepeater(blockeraTransformRepeater);
+	if (Array.isArray(repeater) && !repeater.length) {
+		return [];
+	}
+
+	return getSortedRepeater(repeater);
 }
 
 /**

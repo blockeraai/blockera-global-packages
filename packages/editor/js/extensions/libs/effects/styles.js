@@ -3,7 +3,7 @@
  * Blockera dependencies
  */
 import { isEmptyObject } from '@blockera/utils';
-import { getValueAddonRealValue, getSortedRepeater } from '@blockera/controls';
+import { getValueAddonRealValue } from '@blockera/controls';
 import { experimental } from '@blockera/env';
 
 /**
@@ -19,7 +19,10 @@ import {
 	TransitionGenerator,
 	MaskGenerator,
 } from './css-generators';
-import { joinTransformCssFromRepeaterMap } from './transform-repeater-to-css';
+import {
+	joinTransformCssFromRepeaterMap,
+	unwrapRepeaterAttr,
+} from './transform-repeater-to-css';
 import {
 	getCompatibleBlockCssSelector,
 	computedCssDeclarations,
@@ -32,6 +35,13 @@ import {
 import { getBlockSupportCategory, getBlockSupportFallback } from '../../utils';
 
 const supports = getBlockSupportCategory('effects');
+
+function unwrappedRepeaterEquals(a: mixed, b: mixed): boolean {
+	return arrayEquals(
+		(unwrapRepeaterAttr(a): any),
+		(unwrapRepeaterAttr(b): any)
+	);
+}
 
 function wrapCompoundCssVarIfVariable(
 	field: any,
@@ -133,7 +143,7 @@ export const EffectsStyles = ({
 		const transformProperties: TTransformCssProps = {};
 
 		if (
-			!arrayEquals(
+			!unwrappedRepeaterEquals(
 				attributes.blockeraTransform.default,
 				blockProps.attributes.blockeraTransform
 			)
@@ -158,8 +168,6 @@ export const EffectsStyles = ({
 					? rawItems
 					: [];
 				transformValue = items.map((t, i) => [`${t.type}-${i}`, t]);
-			} else {
-				transformValue = getSortedRepeater(transformValue);
 			}
 
 			const joinTransformCss =
@@ -260,7 +268,7 @@ export const EffectsStyles = ({
 
 	if (
 		isActiveField(blockeraTransition) &&
-		!arrayEquals(
+		!unwrappedRepeaterEquals(
 			attributes.blockeraTransition.default,
 			blockProps.attributes.blockeraTransition
 		)
