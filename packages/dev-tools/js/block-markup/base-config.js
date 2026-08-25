@@ -42,6 +42,10 @@ const baseConfig = {
 			keys: ['patternName', 'description', 'categories'],
 			stripTitleWithPatternName: true,
 		},
+		blockeraIdentity: {
+			enabled: true,
+			token: 'blockera-identity',
+		},
 		blocks: {
 			'core/query': {
 				enabled: true,

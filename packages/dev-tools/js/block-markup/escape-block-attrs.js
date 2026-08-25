@@ -12,6 +12,7 @@ const {
 	stripBlockRoleAttrs,
 	sanitizeBlockRolesInRawConfig,
 } = require('./sanitize-block-roles');
+const { sanitizeBlockeraIdentityAttrs } = require('./sanitize-blockera-identity');
 
 /**
  * @param {Object} [pipeline] Optional sanitize / localize slices.
@@ -100,6 +101,11 @@ function escapeBlockAttrs(block, textDomain, pipeline = {}) {
 
 		stripCopiedPatternMetadata(configJson, sanitize);
 		stripBlockRoleAttrs(configJson, blockName, sanitize);
+		sanitizeBlockeraIdentityAttrs(
+			configJson,
+			pipeline.identityClassReplacements,
+			sanitize
+		);
 
 		for (const attr of localizeAttrs) {
 			if (!configJson[attr.name]) {

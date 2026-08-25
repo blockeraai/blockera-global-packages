@@ -26,6 +26,10 @@ const { escapeBlockAttrs } = require('./escape-block-attrs');
 const { hasUnsanitizedPatternMetadata } = require('./sanitize-block-metadata');
 const { hasUnsanitizedBlockRoleAttrs } = require('./sanitize-block-roles');
 const {
+	hasUnsanitizedBlockeraIdentity,
+	applyIdentityClassReplacements,
+} = require('./sanitize-blockera-identity');
+const {
 	hasPhpInMarkup,
 	prettifyMarkup,
 } = require('./prettify-markup');
@@ -170,6 +174,7 @@ function createRewriter(options) {
 	// Stack pairs Gutenberg closers; skipDepth is O(1) on every text node.
 	const blockStack = [];
 	let skipDepth = 0;
+	const identityClassReplacements = [];
 
 	rewriter.on('text', (_, raw) => {
 		if (!wrapText || skipDepth > 0) {
@@ -221,6 +226,18 @@ function createRewriter(options) {
 				true,
 				textConfig
 			);
+		}
+
+		if (doSanitize && identityClassReplacements.length > 0) {
+			const classAttr = startTag.attrs.find(
+				(attr) => attr.name === 'class'
+			);
+			if (classAttr) {
+				classAttr.value = applyIdentityClassReplacements(
+					classAttr.value,
+					identityClassReplacements
+				);
+			}
 		}
 
 		rewriter.emitStartTag(startTag);
@@ -279,6 +296,7 @@ function createRewriter(options) {
 			processedComment = escapeBlockAttrs(processedComment, textDomain, {
 				sanitize,
 				localize: doLocalize ? localize : { enabled: false },
+				identityClassReplacements,
 			});
 		}
 
@@ -486,6 +504,9 @@ async function normalizeDirectory(dir, source, shared) {
 			hasUnsanitizedPatternMetadata(originalContent, sanitize);
 		const needsBlockRoleSanitize =
 			doSanitize && hasUnsanitizedBlockRoleAttrs(originalContent, sanitize);
+		const needsBlockeraIdentitySanitize =
+			doSanitize &&
+			hasUnsanitizedBlockeraIdentity(originalContent, sanitize);
 		const canPrettify =
 			doPrettier &&
 			prettier.enabled !== false &&
@@ -496,6 +517,7 @@ async function normalizeDirectory(dir, source, shared) {
 			!hasStaticImages &&
 			!needsMetadataSanitize &&
 			!needsBlockRoleSanitize &&
+			!needsBlockeraIdentitySanitize &&
 			!canPrettify &&
 			!force
 		) {
@@ -634,6 +656,7 @@ module.exports = {
 	hasStaticImagePaths,
 	hasUnsanitizedPatternMetadata,
 	hasUnsanitizedBlockRoleAttrs,
+	hasUnsanitizedBlockeraIdentity,
 	hasPhpInMarkup,
 	hasPhpInPatternMarkup: hasPhpInMarkup,
 	prettifyMarkup,

@@ -179,6 +179,7 @@ Templates (`templatesDirs`) run prettier + sanitize only. Disable a sanitizer to
 
 ```js
 sanitize: {
+  blockeraIdentity: { enabled: false }, // skip canonical blockeraId rewrite
   blocks: {
     'core/query': {
       attrs: { queryId: { enabled: false } },
