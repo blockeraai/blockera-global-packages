@@ -434,10 +434,17 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	}, [blockAttributes, setBlockAttributes]);
 
 	const compatibleAttributes = useMemo(() => {
+		const hasFeatures = hasBlockeraFeatureAttributes(
+			blockAttributes,
+			originDefaultAttributes
+		);
+		// WP→Blockera deep-merges schema defaults (`{ value: '' }`) into attrs.
+		// Pasted feature values (e.g. a value-addon without a `value` key) would
+		// pick up that empty `value` and sanitize down to a blank control.
 		const shouldRunWpToBlockera =
 			isActive &&
-			(!getBlockeraId(blockAttributes) ||
-				pendingReturnCompatRef.current);
+			(pendingReturnCompatRef.current ||
+				(!getBlockeraId(blockAttributes) && !hasFeatures));
 
 		if (pendingReturnCompatRef.current && isActive) {
 			pendingReturnCompatRef.current = false;
@@ -450,7 +457,8 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			runWpToBlockera: shouldRunWpToBlockera,
 			stampIdentity:
 				Boolean(getBlockeraId(blockAttributes)) ||
-				persistReturnCompatRef.current,
+				persistReturnCompatRef.current ||
+				hasFeatures,
 			attributes: cloneObject(blockAttributes),
 			defaultAttributes: originDefaultAttributes,
 		});

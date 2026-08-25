@@ -186,6 +186,9 @@ export const getCompatibleAttributes = ({
 	}
 
 	if (!runWpToBlockera) {
+		if (stampIdentity && !getBlockeraId(normalized)) {
+			return getAttributesWithIds(normalized, 'blockeraId');
+		}
 		return normalized;
 	}
 
