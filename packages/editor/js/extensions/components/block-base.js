@@ -84,7 +84,10 @@ import {
 	generalBlockStates,
 	generalInnerBlockStates,
 } from '../libs/block-card/block-states/states';
-import { getCompatibleAttributes } from './get-compatible-attributes';
+import {
+	getCompatibleAttributes,
+	shouldRunWpToBlockeraHydrate,
+} from './get-compatible-attributes';
 import { isBlockeraEngineSkippedForClient } from './is-blockera-engine-skipped';
 import { getBlockCSSSelector } from '../../style-engine/get-block-css-selector';
 import { useGlobalStylesPanelContext } from '../../editor/global-styles/panel/context';
@@ -438,13 +441,11 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			blockAttributes,
 			originDefaultAttributes
 		);
-		// WP→Blockera deep-merges schema defaults (`{ value: '' }`) into attrs.
-		// Pasted feature values (e.g. a value-addon without a `value` key) would
-		// pick up that empty `value` and sanitize down to a blank control.
-		const shouldRunWpToBlockera =
-			isActive &&
-			(pendingReturnCompatRef.current ||
-				(!getBlockeraId(blockAttributes) && !hasFeatures));
+		const shouldRunWpToBlockera = shouldRunWpToBlockeraHydrate({
+			isActive,
+			pendingReturn: pendingReturnCompatRef.current,
+			hasFeatures,
+		});
 
 		if (pendingReturnCompatRef.current && isActive) {
 			pendingReturnCompatRef.current = false;

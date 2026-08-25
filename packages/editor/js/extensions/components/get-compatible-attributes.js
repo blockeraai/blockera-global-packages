@@ -29,6 +29,29 @@ import {
 import { prepareBlockeraDefaultAttributesValues } from './utils';
 
 /**
+ * Whether to run WP→Blockera attribute filters.
+ *
+ * Gate on feature attrs, not identity. A `blockeraId` / legacy props id must
+ * still hydrate empty Blockera fields from WP (e.g. `style.layout.columnSpan`).
+ * Existing feature values skip the merge so schema `{ value: '' }` does not
+ * wipe pasted value-addons.
+ *
+ * @param {Object} params
+ * @return {boolean} Whether WP→Blockera should run.
+ */
+export function shouldRunWpToBlockeraHydrate({
+	isActive,
+	pendingReturn = false,
+	hasFeatures,
+}: {
+	isActive: boolean,
+	pendingReturn?: boolean,
+	hasFeatures: boolean,
+}): boolean {
+	return Boolean(isActive && (pendingReturn || !hasFeatures));
+}
+
+/**
  * Run `blockera.blockEdit.setAttributes` for each Blockera feature and accumulate
  * WordPress compatibility output with deep merge.
  *
