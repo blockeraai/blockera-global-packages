@@ -3,6 +3,7 @@ import {
 	getAttributesWithIds,
 	hasBlockeraFeatureAttributes,
 	migrateLegacyBlockeraIds,
+	remintBlockeraIdentity,
 	needsLegacyBlockeraIdMigrate,
 	normalizeBlockeraIds,
 	stripBlockeraBlockClasses,
@@ -179,6 +180,72 @@ describe('migrateLegacyBlockeraIds', () => {
 		};
 
 		expect(migrateLegacyBlockeraIds(state)).toBe(state);
+	});
+});
+
+describe('remintBlockeraIdentity', () => {
+	it('mints a new id and rewrites the unique class', () => {
+		const next = remintBlockeraIdentity({
+			blockeraId: 'abc123',
+			blockeraBackgroundColor: { value: 'var:preset|color|accent-4' },
+			className: 'blockera-block blockera-block-abc123 extra',
+		});
+
+		expect(next.blockeraId).toMatch(/^[0-9a-z]{6}$/);
+		expect(next.blockeraId).not.toBe('abc123');
+		expect(next.blockeraPropsId).toBeUndefined();
+		expect(next.blockeraCompatId).toBeUndefined();
+		expect(next.className.split(/\s+/)).toEqual(
+			expect.arrayContaining([
+				'extra',
+				'blockera-block',
+				`blockera-block-${next.blockeraId}`,
+			])
+		);
+		expect(next.className).not.toContain('blockera-block-abc123');
+		expect(next.blockeraBackgroundColor).toEqual({
+			value: 'var:preset|color|accent-4',
+		});
+	});
+
+	it('rewrites unique class even when force-assign would keep it', () => {
+		const forced = getAttributesWithIds(
+			{
+				blockeraId: 'abc123',
+				className: 'blockera-block blockera-block-abc123 extra',
+			},
+			'blockeraId',
+			true
+		);
+
+		expect(forced.className).toContain('blockera-block-abc123');
+
+		const reminted = remintBlockeraIdentity(forced);
+
+		expect(reminted.className).not.toContain('blockera-block-abc123');
+		expect(reminted.className).toContain(
+			`blockera-block-${reminted.blockeraId}`
+		);
+	});
+
+	it('stamps unique class when none exists', () => {
+		const next = remintBlockeraIdentity({
+			blockeraId: 'abc123',
+			className: 'is-style-plain',
+		});
+
+		expect(next.blockeraId).not.toBe('abc123');
+		expect(next.className.split(/\s+/)).toEqual(
+			expect.arrayContaining([
+				'is-style-plain',
+				'blockera-block',
+				`blockera-block-${next.blockeraId}`,
+			])
+		);
+	});
+
+	it('returns an empty object for a non-object', () => {
+		expect(remintBlockeraIdentity(null)).toEqual({});
 	});
 });
 
