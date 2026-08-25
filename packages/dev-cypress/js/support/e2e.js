@@ -126,11 +126,11 @@ Cypress.Commands.add('getIframeBody', () => {
 	return cy.get('iframe[name="editor-canvas"]').its('0.contentDocument.body');
 });
 
-Cypress.Commands.add('getBlockeraStylesWrapper', () => {
+Cypress.Commands.add('getBlockeraStylesWrapper', (options = {}) => {
 	if (Cypress.$('iframe[name="editor-canvas"]').length) {
-		return cy.getIframeBody().find('#blockera-styles-wrapper');
+		return cy.getIframeBody().find('#blockera-styles-wrapper', options);
 	}
-	return cy.get('#blockera-styles-wrapper');
+	return cy.get('#blockera-styles-wrapper', options);
 });
 
 // realHover can hang headless Chrome in CI; scroll + center pointer first.
