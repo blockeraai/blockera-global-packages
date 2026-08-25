@@ -1,8 +1,43 @@
 import {
+	getPresetRepeaterItemsFromVariable,
 	isPresetRepeaterObjectValue,
 	normalizePresetRepeaterValueToIndexKeys,
 	variablesToPresetRepeaterValue,
 } from '../preset-repeater-value-utils';
+
+describe('getPresetRepeaterItemsFromVariable', () => {
+	it('reads top-level items from theme.json preset rows', () => {
+		expect(
+			getPresetRepeaterItemsFromVariable({
+				slug: 'e-2-e-transform',
+				items: [{ type: 'move', 'move-x': '15px' }],
+			})
+		).toEqual([{ type: 'move', 'move-x': '15px' }]);
+	});
+
+	it('reads nested value.items from variable-picker catalog rows', () => {
+		expect(
+			getPresetRepeaterItemsFromVariable({
+				id: 'e-2-e-transform',
+				value: { items: [{ type: 'move', 'move-x': '15px' }] },
+			})
+		).toEqual([{ type: 'move', 'move-x': '15px' }]);
+	});
+
+	it('uses value.items when top-level items is an empty array', () => {
+		expect(
+			getPresetRepeaterItemsFromVariable({
+				items: [],
+				value: { items: [{ type: 'move', 'move-x': '8px' }] },
+			})
+		).toEqual([{ type: 'move', 'move-x': '8px' }]);
+	});
+
+	it('returns empty when neither shape is present', () => {
+		expect(getPresetRepeaterItemsFromVariable({ slug: 'x' })).toEqual([]);
+		expect(getPresetRepeaterItemsFromVariable(null)).toEqual([]);
+	});
+});
 
 describe('isPresetRepeaterObjectValue', () => {
 	it('returns true for plain object maps', () => {
