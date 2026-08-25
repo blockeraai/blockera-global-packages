@@ -136,6 +136,26 @@ describe('syncGroupLayoutFromWp', () => {
 			'column'
 		);
 	});
+
+	it('copies WP grid min column width when skip-hydrate layout sync runs', () => {
+		const next = syncGroupLayoutFromWp(
+			{
+				layout: { type: 'grid', minimumColumnWidth: '23rem' },
+				blockeraDisplay: { value: 'grid' },
+				blockeraGridMinimumColumnWidth: { value: '' },
+			},
+			{
+				blockId: 'core/group',
+				blockAttributes: {
+					blockeraDisplay: { default: { value: '' } },
+				},
+			}
+		);
+
+		expect(
+			unwrapBlockeraStoredValue(next.blockeraGridMinimumColumnWidth)
+		).toBe('23rem');
+	});
 });
 
 describe('shouldRunWpToBlockeraHydrate', () => {
