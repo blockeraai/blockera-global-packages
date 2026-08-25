@@ -1,6 +1,8 @@
 import {
 	getCompatibleAttributes,
 	shouldRunWpToBlockeraHydrate,
+	syncGroupLayoutFromWp,
+	unwrapBlockeraStoredValue,
 } from '../get-compatible-attributes';
 
 const unwrappedFontSizeAddon = {
@@ -53,6 +55,86 @@ describe('getCompatibleAttributes', () => {
 
 		expect(next.blockeraId).toBeUndefined();
 		expect(next.blockeraFontSize).toEqual(unwrappedFontSizeAddon);
+	});
+
+	it('syncs group display from WP layout when skipping WP→Blockera', () => {
+		const next = getCompatibleAttributes({
+			args: {
+				blockId: 'core/group',
+				activeBlockVariation: { name: 'group-row' },
+				blockAttributes: {
+					blockeraDisplay: { default: { value: '' } },
+				},
+			},
+			isActive: true,
+			runWpToBlockera: false,
+			stampIdentity: false,
+			availableAttributes: { blockeraId: { type: 'string' } },
+			defaultAttributes: {
+				blockeraDisplay: { type: 'object', default: { value: '' } },
+			},
+			attributes: {
+				layout: { type: 'flex' },
+				blockeraDisplay: { value: '' },
+				blockeraFontSize: unwrappedFontSizeAddon,
+			},
+		});
+
+		expect(next.blockeraDisplay).toEqual({ value: 'flex' });
+		expect(next.blockeraFontSize).toEqual(unwrappedFontSizeAddon);
+	});
+});
+
+describe('syncGroupLayoutFromWp', () => {
+	it('clears leftover flex display on constrained group', () => {
+		const next = syncGroupLayoutFromWp(
+			{
+				layout: { type: 'constrained' },
+				blockeraDisplay: 'flex',
+			},
+			{
+				blockId: 'core/group',
+				activeBlockVariation: { name: 'group' },
+				blockAttributes: {
+					blockeraDisplay: { default: { value: '' } },
+				},
+			}
+		);
+
+		expect(unwrapBlockeraStoredValue(next.blockeraDisplay)).toBe('');
+	});
+
+	it('sets flex direction from group-stack without cloning non-group attrs', () => {
+		const foreign = { layout: { type: 'flex' } };
+		expect(
+			syncGroupLayoutFromWp(foreign, { blockId: 'core/paragraph' })
+		).toBe(foreign);
+
+		const next = syncGroupLayoutFromWp(
+			{
+				layout: { type: 'flex', orientation: 'vertical' },
+				blockeraDisplay: { value: '' },
+				blockeraFlexLayout: {
+					value: {
+						direction: 'row',
+						justifyContent: '',
+						alignItems: '',
+					},
+				},
+			},
+			{
+				blockId: 'core/group',
+				activeBlockVariation: { name: 'group-stack' },
+				blockAttributes: {
+					blockeraDisplay: { default: { value: '' } },
+				},
+			}
+		);
+
+		expect(unwrapBlockeraStoredValue(next.blockeraDisplay)).toBe('flex');
+		expect(unwrapBlockeraStoredValue(next.blockeraFlexLayout)?.direction).toBe(
+			'column'
+		);
 	});
 });
 

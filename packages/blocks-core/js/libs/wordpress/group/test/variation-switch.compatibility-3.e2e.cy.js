@@ -87,7 +87,6 @@ describe('Group Block → Variation Switch Compatibility', () => {
 		cy.setBlockVariation('group-row');
 
 		cy.getByAriaControls('styles-view').click();
-		cy.editTransition(201, 2001);
 		cy.getByAriaControls('settings-view').click();
 
 		assertBlockData((data) => {
@@ -149,7 +148,6 @@ describe('Group Block → Variation Switch Compatibility', () => {
 		cy.setBlockVariation('group-stack');
 
 		cy.getByAriaControls('styles-view').click();
-		cy.editTransition(202, 2002);
 		cy.getByAriaControls('settings-view').click();
 
 		assertBlockData((data) => {
@@ -211,7 +209,6 @@ describe('Group Block → Variation Switch Compatibility', () => {
 		cy.setBlockVariation('group-grid');
 
 		cy.getByAriaControls('styles-view').click();
-		cy.editTransition(203, 2003);
 		cy.getByAriaControls('settings-view').click();
 
 		assertBlockData((data) => {
@@ -266,7 +263,6 @@ describe('Group Block → Variation Switch Compatibility', () => {
 		cy.setBlockVariation('group');
 
 		cy.getByAriaControls('styles-view').click();
-		cy.editTransition(200, 2000);
 		cy.getByAriaControls('settings-view').click();
 
 		assertBlockData((data) => {

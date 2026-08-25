@@ -1021,8 +1021,8 @@ export const registerCommands = () => {
 			.within(() => {
 				cy.getByDataTest('transition-input-duration').clear();
 				cy.getByDataTest('transition-input-duration').type(
-					duration,
-					delay
+					String(duration),
+					{ delay: 0 }
 				);
 
 				cy.getParentContainer('Timing').within(() => {
@@ -1036,7 +1036,9 @@ export const registerCommands = () => {
 				});
 
 				cy.getByDataTest('transition-input-delay').clear();
-				cy.getByDataTest('transition-input-delay').type(2000);
+				cy.getByDataTest('transition-input-delay').type(String(delay), {
+					delay: 0,
+				});
 			});
 	});
 
