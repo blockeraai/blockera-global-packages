@@ -49,6 +49,29 @@ describe('minHeightFromWPCompatibility', () => {
 			});
 		});
 
+		test('imports from style.dimensions.minHeight on canvas', () => {
+			const attributes = {
+				blockeraMinHeight: {
+					value: '',
+				},
+				style: {
+					dimensions: {
+						minHeight: '300px',
+					},
+				},
+			};
+
+			const result = minHeightFromWPCompatibility({
+				attributes,
+				blockId: 'core/group',
+				insideBlockInspector: false,
+			});
+
+			expect(result.blockeraMinHeight).toEqual({
+				value: '300px',
+			});
+		});
+
 		test('skips when blockeraMinHeight already has a value', () => {
 			const attributes = {
 				blockeraMinHeight: {
