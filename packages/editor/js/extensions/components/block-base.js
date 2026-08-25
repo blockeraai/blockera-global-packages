@@ -65,7 +65,10 @@ import { BlockeraLayoutToolbar } from '../libs/layout/components/blockera-layout
 import { BlockPartials } from './block-partials';
 import { BlockFillPartials } from './block-fill-partials';
 import { sanitizeBlockAttributes } from '../hooks/utils';
-import { buildPresetPreviewAttributePatch } from '../libs/preset-preview-attributes';
+import {
+	buildPresetPreviewAttributePatch,
+	mergeAttributesWithPresetPreviewPatch,
+} from '../libs/preset-preview-attributes';
 import { BlockInspectorEditContent } from './block-inspector-edit-content';
 import { BlockInspectorTabSync } from './block-inspector-tab-sync';
 import { BlockBaseInspectorBundle } from './block-base-inspector-bundle';
@@ -583,7 +586,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			return;
 		}
 
-		const patch = {};
+		const patch: { [string]: mixed } = {};
 
 		if (
 			storedLayoutFieldDiffers(
@@ -1128,20 +1131,21 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			Object.keys(presetPreviewAttributePatch).length > 0;
 
 		const mergedAttributes = hasPresetPreviewPatch
-			? mergeObject(
-					cloneObject(sanitizedAttributes),
+			? mergeAttributesWithPresetPreviewPatch(
+					sanitizedAttributes,
 					presetPreviewAttributePatch
 				)
 			: sanitizedAttributes;
 		const mergedCurrentAttributes = hasPresetPreviewPatch
-			? mergeObject(
-					cloneObject(currentAttributes),
+			? mergeAttributesWithPresetPreviewPatch(
+					currentAttributes,
 					presetPreviewAttributePatch
 				)
 			: currentAttributes;
 
 		return {
 			clientId,
+			hasPresetPreviewPatch: Boolean(hasPresetPreviewPatch),
 			supports,
 			selectors,
 			additional,

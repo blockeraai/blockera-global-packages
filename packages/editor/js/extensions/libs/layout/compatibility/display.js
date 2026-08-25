@@ -5,7 +5,7 @@ function isBlockeraValueEnvelope(raw: mixed): boolean {
 		raw &&
 			typeof raw === 'object' &&
 			!Array.isArray(raw) &&
-			Object.prototype.hasOwnProperty.call(raw, 'value')
+			'value' in raw
 	);
 }
 

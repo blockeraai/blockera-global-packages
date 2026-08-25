@@ -63,7 +63,7 @@ export function unwrapBlockeraStoredValue(value: mixed): mixed {
 		value &&
 		typeof value === 'object' &&
 		!Array.isArray(value) &&
-		Object.prototype.hasOwnProperty.call(value, 'value')
+		'value' in value
 	) {
 		return value.value;
 	}

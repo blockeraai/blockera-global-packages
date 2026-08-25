@@ -65,7 +65,6 @@ import {
 	formatControlItemsToCssBoxShadow,
 	parseCssBoxShadowToRepeaterValue,
 } from '../border-and-shadow/compatibilities/shadow';
-import { joinTransformCssFromRepeaterMap } from '../effects/transform-repeater-to-css';
 
 /**
  * Maps global-styles theme.json presets to Blockera block attributes so the style engine
@@ -170,10 +169,7 @@ export function getGlobalStylesFilterPresetPreviewAttributes(
 export function getGlobalStylesTransformPresetPreviewAttributes(
 	blockeraTransform: Object | null | void
 ): Object {
-	const transformCss = joinTransformCssFromRepeaterMap(
-		blockeraTransform || {}
-	);
-	if (!transformCss) {
+	if (!blockeraTransform || !Object.keys(blockeraTransform).length) {
 		return {};
 	}
 

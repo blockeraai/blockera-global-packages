@@ -32,6 +32,8 @@ export type BlockStyleProps = {
 	/** Selector token before the variation slug, e.g. `is-style-` or `is-size-`. */
 	variationClassPrefix?: string,
 	isStyleVariation?: boolean,
+	/** Overlay-only Global Styles preset hover (not persisted on the block). */
+	hasPresetPreviewPatch?: boolean,
 };
 
 export type StateStyleProps = {
