@@ -457,3 +457,31 @@ export function getAttributesWithIds(
 		blockeraId: id,
 	});
 }
+
+/**
+ * Mint a new `blockeraId` and rewrite the unique class to match.
+ *
+ * Use after Gutenberg duplicate/copy, where attributes (including identity)
+ * are cloned onto a new clientId. `getAttributesWithIds(..., true)` keeps an
+ * existing unique class, which would leave both blocks sharing a selector.
+ *
+ * @param {Object} attributes Current attributes.
+ * @return {Object} Attributes with a new id and matching unique class.
+ */
+export function remintBlockeraIdentity(attributes: Object): Object {
+	if (!attributes || typeof attributes !== 'object') {
+		return attributes || {};
+	}
+
+	const next = { ...attributes };
+	next.blockeraId = generateBlockeraAttributeId();
+	next.blockeraPropsId = undefined;
+	next.blockeraCompatId = undefined;
+
+	const stripped = stripBlockeraBlockClasses(next.className);
+
+	return withBlockeraBlockClassFromId({
+		...next,
+		className: stripped || undefined,
+	});
+}

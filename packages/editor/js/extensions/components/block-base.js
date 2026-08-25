@@ -39,6 +39,7 @@ import {
 	hasBlockeraFeatureAttributes,
 	needsLegacyBlockeraIdMigrate,
 	migrateLegacyBlockeraIds,
+	remintBlockeraIdentity,
 	stripBlockeraBlockClasses,
 	stripBlockeraIdentity,
 	withBlockeraBlockClassFromId,
@@ -102,6 +103,15 @@ import {
 } from './registered-classnames';
 
 const BLOCKERA_DELAY_EXPECTED_TIME = 1000;
+
+function remintAndRegisterIdentity(clientId: string, attributes: Object): Object {
+	const reminted = remintBlockeraIdentity(cloneObject(attributes));
+	registerClassName(
+		clientId,
+		`blockera-block-${String(reminted.blockeraId)}`
+	);
+	return reminted;
+}
 
 const GlobalStylesPanelBaseControlConfigContext: Object = createContext({
 	name: '',
@@ -540,6 +550,26 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	const attributes = pendingAttributes ?? compatibleAttributes;
 	const { className } = attributes;
 
+	// Gutenberg Duplicate clones identity onto a new clientId; remint so
+	// selectors do not collide. Drop the overlay so persist uses the new id.
+	useLayoutEffect(() => {
+		const id = getBlockeraId(blockAttributes);
+		if (
+			!id ||
+			isBlockeraEngineSkippedForClient(clientId, blockAttributes)
+		) {
+			return;
+		}
+
+		const fromId = `blockera-block-${String(id)}`;
+		if (!isClassNameDuplicate(clientId, fromId, getBlocksClassNames())) {
+			return;
+		}
+
+		setPendingAttributes(null);
+		setBlockAttributes(remintAndRegisterIdentity(clientId, blockAttributes));
+	}, [clientId, blockAttributes, getBlocksClassNames, setBlockAttributes]);
+
 	/**
 	 * Set the attributes state and the attributes ref.
 	 *
@@ -600,14 +630,20 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		} else if (
 			shouldUpdateClassName &&
 			keepBlockeraIdentity &&
+			storedMatch &&
+			isClassNameDuplicate(
+				clientId,
+				storedMatch[0],
+				getBlocksClassNames()
+			)
+		) {
+			valueToStore = remintAndRegisterIdentity(clientId, valueToStore);
+		} else if (
+			shouldUpdateClassName &&
+			keepBlockeraIdentity &&
 			uniqueClassName &&
 			storedMatch &&
-			(storedMatch[0] !== uniqueClassName ||
-				isClassNameDuplicate(
-					clientId,
-					storedMatch[0],
-					getBlocksClassNames()
-				))
+			storedMatch[0] !== uniqueClassName
 		) {
 			const prevClassName = storedClassName
 				.replace(BLOCKERA_BLOCK_REGEX, '')
