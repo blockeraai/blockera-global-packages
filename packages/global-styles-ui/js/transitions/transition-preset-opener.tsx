@@ -20,6 +20,7 @@ import {
 import { getPresetRepeaterHeaderOnClick } from '../components/preset-repeater-header-click';
 import { useCanEditGlobalStyles } from '../components/use-global-styles-preset-edit';
 import type { VariableType } from '../components/types.ts';
+import { getPresetRepeaterItemsFromVariable } from '../components/preset-repeater-value-utils';
 import { itemsToRepeaterRecord, type WpTransitionPreset } from './utils';
 import { usePresetTaxonomyHeaderLabel } from '../components';
 
@@ -45,14 +46,24 @@ export function TransitionPresetOpener({
 	const canEditGlobalStyles = useCanEditGlobalStyles();
 	const headerLabel = usePresetTaxonomyHeaderLabel(variable, contextType);
 	const getPayload = useCallback((): PresetCanvasPreviewPayload | null => {
+		const repeaterItems = getPresetRepeaterItemsFromVariable(
+			variable
+		) as WpTransitionPreset['items'];
+		const repeater = itemsToRepeaterRecord(repeaterItems);
 		const patch = getGlobalStylesTransitionPresetPreviewAttributes(
-			itemsToRepeaterRecord(variable.items || [])
+			repeater
 		);
-		if (!patch || !Object.keys(patch).length) {
+		const resolvedPatch =
+			patch && Object.keys(patch).length
+				? patch
+				: Object.keys(repeater).length
+					? { blockeraTransition: repeater }
+					: null;
+		if (!resolvedPatch) {
 			return null;
 		}
-		return { kind: 'attributes', patch };
-	}, [variable.items]);
+		return { kind: 'attributes', patch: resolvedPatch };
+	}, [variable]);
 
 	const previewHandlers = usePresetRowCanvasPreview(getPayload);
 

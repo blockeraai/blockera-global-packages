@@ -126,6 +126,40 @@ export function normalizePresetRepeaterValueToIndexKeys(
  * Theme.json preset arrays are converted with index keys; existing object maps
  * (e.g. width-size custom group, fallback catalog) are returned unchanged.
  */
+/**
+ * Theme.json preset rows store `items` at the top level. Catalog / variable-picker
+ * rows nest the same array on `value.items` ({@see mapItemsArrayPresets}).
+ *
+ * @param {unknown} variable Repeater row or catalog VariableItem.
+ * @return {Array<unknown>} Preset repeater items, or empty.
+ */
+export function getPresetRepeaterItemsFromVariable(
+	variable: unknown
+): Array<unknown> {
+	if (!variable || typeof variable !== 'object' || Array.isArray(variable)) {
+		return [];
+	}
+
+	const row = variable as Record<string, unknown>;
+
+	if (Array.isArray(row.items) && row.items.length) {
+		return row.items;
+	}
+
+	const nested = row.value;
+	if (
+		nested &&
+		typeof nested === 'object' &&
+		!Array.isArray(nested) &&
+		Array.isArray((nested as { items?: unknown }).items) &&
+		(nested as { items: Array<unknown> }).items.length
+	) {
+		return (nested as { items: Array<unknown> }).items;
+	}
+
+	return [];
+}
+
 export function variablesToPresetRepeaterValue(
 	value: unknown
 ): PresetRepeaterValue {
