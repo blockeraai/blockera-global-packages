@@ -529,7 +529,11 @@ class AppServiceProvider extends ServiceProvider {
 				continue;
 			}
 			$content = $post->post_content;
-			if ( str_contains( $content, 'blockeraPropsId' ) || str_contains( $content, '"ref"' ) ) {
+			if (
+				str_contains( $content, 'blockeraId' )
+				|| str_contains( $content, 'blockeraPropsId' )
+				|| str_contains( $content, '"ref"' )
+			) {
 				$needs_processing = true;
 				break;
 			}
