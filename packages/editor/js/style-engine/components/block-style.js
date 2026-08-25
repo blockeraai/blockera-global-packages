@@ -9,6 +9,8 @@ import type { MixedElement } from 'react';
  * Blockera dependencies
  */
 import { usePreviewInjectableStyles } from '@blockera/controls';
+import { getBlockeraId } from '@blockera/utils';
+import { isBlockeraEngineSkippedForClient } from '../../extensions/components/is-blockera-engine-skipped';
 
 /**
  * Internal dependencies
@@ -41,7 +43,14 @@ export const BlockStyle = ({
 		clientId: props.clientId,
 	});
 
-	const hasBlockeraProps = Boolean(props?.attributes?.blockeraPropsId);
+	const hasBlockeraProps = Boolean(
+		props?.attributes &&
+			getBlockeraId(props.attributes) &&
+			!isBlockeraEngineSkippedForClient(
+				props.clientId,
+				props.attributes
+			)
+	);
 
 	// Skip unless Blockera styles apply or inspector preview CSS is active.
 	if (!hasBlockeraProps && !extraPreviewCss) {

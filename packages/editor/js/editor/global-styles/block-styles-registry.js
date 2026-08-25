@@ -96,9 +96,9 @@ export const registerBlockStylesFromMetaData = (): void => {
 					return null;
 				}
 
-				// Skip blocks without blockeraPropsId attribute
+				// Skip blocks without blockeraId attribute
 				if (
-					!blockType?.attributes?.hasOwnProperty('blockeraPropsId') ||
+					!blockType?.attributes?.hasOwnProperty('blockeraId') ||
 					disabledIn?.includes(blockType.name) ||
 					!enabledIn?.includes(blockType.name)
 				) {

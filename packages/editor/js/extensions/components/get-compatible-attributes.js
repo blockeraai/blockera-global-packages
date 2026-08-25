@@ -10,25 +10,27 @@ import { getBlockType } from '@wordpress/blocks';
  * Blockera dependencies
  */
 import { detailedDiff } from 'deep-object-diff';
-import { isEquals, omitWithPattern, mergeObject } from '@blockera/utils';
+import {
+	isEquals,
+	omitWithPattern,
+	mergeObject,
+	normalizeBlockeraIds,
+	getBlockeraId,
+	getAttributesWithIds,
+	isBlockeraBlockModeBasic,
+} from '@blockera/utils';
 
 /**
  * Internal dependencies
  */
 import {
 	ignoreBlockeraAttributeKeysRegExp,
-	ignoreDefaultBlockAttributeKeysRegExp,
 } from '../libs';
 import { prepareBlockeraDefaultAttributesValues } from './utils';
 
 /**
  * Run `blockera.blockEdit.setAttributes` for each Blockera feature and accumulate
  * WordPress compatibility output with deep merge.
- *
- * Multiple controls often map into the same nested WordPress object (e.g.
- * `blockeraBorder` → `border.width` and `blockeraBorderRadius` → `border.radius`).
- * Shallow spread or a fresh `nextState` per key drops earlier siblings — only the
- * last processed control survives.
  *
  * @param {Object} params
  * @return {Object} Accumulated WordPress compatibility attributes.
@@ -72,33 +74,19 @@ export const applyBlockeraSetAttributesCompatibility = ({
 	return wordpressCompatibilityAttributes;
 };
 
-export const getCompatibleAttributes = ({
-	args,
-	isActive,
-	attributes,
-	defaultAttributes,
-	availableAttributes,
-}: {
-	args: Object,
-	isActive: boolean,
+function runWpToBlockeraFilters(
 	attributes: Object,
+	args: Object,
 	defaultAttributes: Object,
-	availableAttributes: Object,
-}): Object => {
-	/**
-	 * Filtering block attributes based on "blockeraCompatId" attribute value to running WordPress compatibilities.
-	 * Create mutable constant to prevent directly change to immutable state constant.
-	 *
-	 * hook: 'blockera.blockEdit.compatibility.attributes'
-	 *
-	 * @since 1.0.0
-	 */
+	availableAttributes: Object
+): Object {
+	const canRegister =
+		Boolean(availableAttributes?.blockeraId) ||
+		Boolean(availableAttributes?.blockeraPropsId);
+
 	let filteredAttributes = applyFilters(
 		'blockera.blockEdit.attributes',
-		// Migrate to blockera attributes for some blocks where includes attributes migrations in original core Block Edit component,
-		// if we supported them.
-		'undefined' === typeof attributes?.blockeraPropsId &&
-			availableAttributes?.blockeraPropsId
+		canRegister
 			? mergeObject(
 					prepareBlockeraDefaultAttributesValues(defaultAttributes),
 					{ ...attributes }
@@ -107,9 +95,6 @@ export const getCompatibleAttributes = ({
 		args
 	);
 
-	// Run filtering when current block is global style for block type,
-	// and it is contains `blocks` property from theme or core settings.
-	// We should run all `from wp compatibilities` for each blocks provided by external sources.
 	if (
 		filteredAttributes.hasOwnProperty('blocks') &&
 		Object.keys(filteredAttributes?.blocks || {}).length
@@ -122,15 +107,14 @@ export const getCompatibleAttributes = ({
 			}
 
 			const currentBlockAttributes = filteredAttributes.blocks[blockType];
+			const nestedHasId = Boolean(getBlockeraId(currentBlockAttributes));
 
 			const { blocks, blockeraInnerBlocks, ...latestFilteredAttributes } =
 				applyFilters(
 					'blockera.blockEdit.attributes',
-					// Migrate to blockera attributes for some blocks where includes attributes migrations in original core Block Edit component,
-					// if we supported them.
-					'undefined' ===
-						typeof currentBlockAttributes?.blockeraPropsId &&
-						blockTypeObj.attributes?.blockeraPropsId
+					!nestedHasId &&
+						(blockTypeObj.attributes?.blockeraId ||
+							blockTypeObj.attributes?.blockeraPropsId)
 						? mergeObject(
 								{ ...currentBlockAttributes },
 								prepareBlockeraDefaultAttributesValues(
@@ -175,31 +159,54 @@ export const getCompatibleAttributes = ({
 		}
 	}
 
-	const hasPropsId = attributes?.blockeraPropsId;
-	const hasCompatId = attributes?.blockeraCompatId;
+	return filteredAttributes;
+}
 
-	// Assume disabled blockera panel, so filtering attributes to clean up all blockera attributes.
-	if (!isActive && hasCompatId && hasPropsId) {
-		filteredAttributes = {
-			...attributes,
-			...omitWithPattern(
-				prepareBlockeraDefaultAttributesValues(defaultAttributes),
-				ignoreDefaultBlockAttributeKeysRegExp()
-			),
-		};
+export const getCompatibleAttributes = ({
+	args,
+	isActive,
+	attributes,
+	defaultAttributes,
+	availableAttributes,
+	runWpToBlockera = true,
+	stampIdentity = false,
+}: {
+	args: Object,
+	isActive: boolean,
+	attributes: Object,
+	defaultAttributes: Object,
+	availableAttributes: Object,
+	runWpToBlockera?: boolean,
+	stampIdentity?: boolean,
+}): Object => {
+	const normalized = normalizeBlockeraIds({ ...attributes });
+
+	if (!isActive || isBlockeraBlockModeBasic(normalized)) {
+		return normalized;
 	}
 
-	// Prevent redundant set state!
-	if (isEquals(attributes, filteredAttributes)) {
-		return attributes;
+	if (!runWpToBlockera) {
+		return normalized;
+	}
+
+	let filteredAttributes = runWpToBlockeraFilters(
+		normalized,
+		args,
+		defaultAttributes,
+		availableAttributes
+	);
+
+	if (isEquals(normalized, filteredAttributes)) {
+		return normalized;
 	}
 
 	const filteredAttributesWithoutIds = {
 		...filteredAttributes,
+		blockeraId: '',
 		blockeraPropsId: '',
 		blockeraCompatId: '',
-		...(attributes.hasOwnProperty('className')
-			? { className: attributes?.className || '' }
+		...(normalized.hasOwnProperty('className')
+			? { className: normalized?.className || '' }
 			: {}),
 	};
 
@@ -208,13 +215,19 @@ export const getCompatibleAttributes = ({
 		prepareBlockeraDefaultAttributesValues(defaultAttributes)
 	);
 
-	// Our Goal is cleanup blockera attributes of core blocks when not changed anything!
 	if (
 		!Object.keys(added).length &&
 		!Object.keys(updated).length &&
-		isEquals(attributes, filteredAttributesWithoutIds)
+		isEquals(normalized, filteredAttributesWithoutIds)
 	) {
-		return attributes;
+		return normalized;
+	}
+
+	if (stampIdentity && !getBlockeraId(filteredAttributes) && isActive) {
+		filteredAttributes = getAttributesWithIds(
+			filteredAttributes,
+			'blockeraId'
+		);
 	}
 
 	return filteredAttributes;

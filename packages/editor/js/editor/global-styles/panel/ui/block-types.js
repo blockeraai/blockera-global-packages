@@ -79,7 +79,7 @@ export const BlockTypes = ({
 				(item) =>
 					item !== null &&
 					item !== undefined &&
-					item.attributes.hasOwnProperty('blockeraPropsId')
+					item.attributes.hasOwnProperty('blockeraId')
 			)
 		: items;
 	const postId = select('core').__experimentalGetCurrentGlobalStylesId();

@@ -95,8 +95,9 @@ const cleanupStylesHelper = (styles: Object, defaultStyles: Object): Object => {
 		if (
 			[
 				'className',
-				'blockeraPropsId',
+				'blockeraId',
 				'blockeraCompatId',
+				'blockeraBlockMode',
 				'blockeraCurrentDevice',
 			].includes(key)
 		) {

@@ -176,7 +176,7 @@ export const isVariationDisabled = (
 export const isDefaultStylesSettings = (
 	sanitizedBlockGlobalStyles: Object
 ): boolean => {
-	const staticKeys = ['blockeraPropsId', 'blockeraCompatId'];
+	const staticKeys = ['blockeraId', 'blockeraCompatId', 'blockeraBlockMode'];
 	const omittedStaticKeys = omit(sanitizedBlockGlobalStyles, staticKeys);
 	const states = omittedStaticKeys.blockeraBlockStates;
 

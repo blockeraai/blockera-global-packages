@@ -904,7 +904,7 @@ export const useBlockStyleItem = ({
 		handleOnChangeAttributes('className', `blockera-block ${className}`, {
 			effectiveItems: getAttributesWithIds(
 				compatibleAttributes,
-				'blockeraPropsId',
+				'blockeraId',
 				true
 			),
 		});

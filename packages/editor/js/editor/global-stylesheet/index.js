@@ -289,7 +289,7 @@ const GlobalStylesIframeBundle: ComponentType<{}> = memo((): MixedElement => {
 	const blockSchemaFingerprint = useSelect((select) => {
 		const { getBlockTypes } = select('core/blocks');
 		const filtered = getBlockTypes().filter((blockType: Object) =>
-			blockType.attributes.hasOwnProperty('blockeraPropsId')
+			blockType.attributes.hasOwnProperty('blockeraId')
 		);
 		const fingerprint = iframeBlockTypesSchemaFingerprint(filtered);
 		const cached = blockTypesCacheRef.current;

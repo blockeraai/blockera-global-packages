@@ -100,7 +100,7 @@ export const useBlockPreviewStyles = (
 					},
 				},
 			},
-			blockeraPropsId: stableId,
+			blockeraId: stableId,
 		});
 	}, [validBlockGlobalStyles, stableId]);
 

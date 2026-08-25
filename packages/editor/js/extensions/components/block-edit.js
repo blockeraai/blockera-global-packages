@@ -30,7 +30,8 @@ export const Edit: ComponentType<any> = memo(
 		blockeraOverrideBlockAttributes,
 		...props
 	}: Object): MixedElement => {
-		const defaultAttributes = !settings.attributes?.blockeraPropsId
+		const defaultAttributes = !settings.attributes?.blockeraId &&
+			!settings.attributes?.blockeraPropsId
 			? mergeObject(blockeraOverrideBlockAttributes, settings.attributes)
 			: settings.attributes;
 

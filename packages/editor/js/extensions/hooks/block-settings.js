@@ -369,7 +369,8 @@ function mergeBlockSettings(
 		? getSharedBlockAttributes()
 		: blockeraOverrideBlockTypeAttributes;
 
-	let overrideAttributes = !settings.attributes?.blockeraPropsId
+	let overrideAttributes = !settings.attributes?.blockeraId &&
+		!settings.attributes?.blockeraPropsId
 		? mergeObject(
 				sanitizeDefaultAttributes(blockeraOverrideBlockAttributes),
 				sanitizeDefaultAttributes(settings.attributes)
