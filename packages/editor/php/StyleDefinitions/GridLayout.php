@@ -78,11 +78,16 @@ class GridLayout extends BaseStyleDefinition {
 	private function get_grid_minimum_column_width(): string {
 		$attrs = $this->get_layout_effective_attrs();
 		$a     = $attrs['blockeraGridMinimumColumnWidth'] ?? null;
-		if ( is_string( $a ) ) {
+		if ( is_string( $a ) && '' !== trim( $a ) ) {
 			return trim( $a );
 		}
-		if ( is_array( $a ) && isset( $a['value'] ) && is_string( $a['value'] ) ) {
+		if ( is_array( $a ) && isset( $a['value'] ) && is_string( $a['value'] ) && '' !== trim( $a['value'] ) ) {
 			return trim( $a['value'] );
+		}
+
+		$layout = $attrs['layout'] ?? null;
+		if ( is_array( $layout ) && isset( $layout['minimumColumnWidth'] ) && is_string( $layout['minimumColumnWidth'] ) ) {
+			return trim( $layout['minimumColumnWidth'] );
 		}
 
 		return '';

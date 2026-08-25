@@ -29,6 +29,7 @@ import {
 } from '../libs';
 import { prepareBlockeraDefaultAttributesValues } from './utils';
 import { displayFromWPCompatibility } from '../libs/layout/compatibility/display';
+import { gridAttrsFromWPCompatibility } from '../libs/layout/compatibility/grid-attrs';
 import {
 	alignItemsFromWPCompatibility,
 	directionFromWPCompatibility,
@@ -74,6 +75,7 @@ export function unwrapBlockeraStoredValue(value: mixed): mixed {
 /**
  * Keep group layout fields aligned with WP `layout` when full WP→Blockera
  * hydrate is skipped (existing feature attrs). Does not merge schema defaults.
+ * Includes grid min-width / column count from `layout.minimumColumnWidth`.
  *
  * @param {Object} attributes Current attributes.
  * @param {Object} args Block detail (`blockId`, `activeBlockVariation`, schema).
@@ -94,6 +96,9 @@ export function syncGroupLayoutFromWp(
 		blockId: args.blockId,
 		defaultValue: args.blockAttributes?.blockeraDisplay?.default,
 		activeVariation: args.activeBlockVariation?.name,
+	});
+	next = gridAttrsFromWPCompatibility({
+		attributes: next,
 	});
 	next = directionFromWPCompatibility({
 		attributes: next,
