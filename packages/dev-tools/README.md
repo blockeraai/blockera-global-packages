@@ -70,10 +70,13 @@ node_modules/git-conventional-commits/cli.js commit-msg-hook \
 After `npx lint-staged`, host `.husky/pre-commit` should call:
 
 ```sh
-bash "$(dirname -- "$0")/../packages/global-packages/packages/dev-tools/github/scripts/run-typecheck-pre-commit.sh"
+TYPECHECK_SH="$(dirname -- "$0")/../packages/global-packages/packages/dev-tools/github/scripts/run-typecheck-pre-commit.sh"
+if [ -f "${TYPECHECK_SH}" ]; then
+	bash "${TYPECHECK_SH}"
+fi
 ```
 
-Runs `tsc --noEmit` when `tsconfig.json` exists and `flow status` when `.flowconfig` exists, only if staged files include `.ts`/`.tsx`/`.js`/`.jsx`. Skip with `BLOCKERA_SKIP_TYPECHECK=1`.
+Runs `tsc --noEmit` when `tsconfig.json` exists and `flow status` when `.flowconfig` exists, only if staged files include `.ts`/`.tsx`/`.js`/`.jsx`. Skip with `BLOCKERA_SKIP_TYPECHECK=1`. If the script is missing (older submodule pin), the hook continues.
 
 ### Code Lint CI typecheck
 
