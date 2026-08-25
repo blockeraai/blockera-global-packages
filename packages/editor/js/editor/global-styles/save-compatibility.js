@@ -22,6 +22,7 @@ import { getBaseBreakpoint } from '../header-ui/components/breakpoints/helpers';
 import { blockeraExtensionsBootstrap } from '../../extensions/libs/bootstrap';
 import { prepareBlockeraDefaultAttributesValues } from '../../extensions/components/utils';
 import { getCompatibleAttributes } from '../../extensions/components/get-compatible-attributes';
+import { cleanupDefaultAttributes } from './save-compatibility-cleanup';
 
 const SAVE_BUTTON_SELECTOR = [
 	'.editor-post-publish-button__button',
@@ -197,29 +198,6 @@ const applyCompatibilityToStyleNode = (
 	);
 
 	return cleanupDefaultAttributes(compatibleAttributes, defaultAttributes);
-};
-
-const cleanupDefaultAttributes = (
-	attributes: Object,
-	defaultAttributes: Object
-): Object => {
-	const defaultValues = prepareBlockeraDefaultAttributesValues(
-		defaultAttributes,
-		{
-			context: 'block-inspector',
-		}
-	);
-	const cleanedAttributes: { [string]: any } = {};
-
-	for (const [attribute, value] of Object.entries(attributes || {})) {
-		if (isEquals(value, defaultValues[attribute])) {
-			continue;
-		}
-
-		cleanedAttributes[attribute] = value;
-	}
-
-	return cleanedAttributes;
 };
 
 const applyCompatibilityToBlockStyles = (
