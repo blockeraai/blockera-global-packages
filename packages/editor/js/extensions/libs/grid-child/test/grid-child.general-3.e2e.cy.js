@@ -68,8 +68,8 @@ describe('Grid Child', () => {
 
 	describe('Is child of a grid container', () => {
 		beforeEach(() => {
-			const code = `<!-- wp:group {"metadata":{"name":"Grid Container"},"blockeraPropsId":"4f915dbf-73b0-49a8-9409-b81a5c55aedd","blockeraCompatId":"928123345376","blockeraDisplay":{"value":"grid"},"className":"blockera-block blockera-block-gridtest","layout":{"type":"grid"}} -->
-<div class="wp-block-group blockera-block blockera-block-gridtest"><!-- wp:paragraph {"blockeraPropsId":"9d3e3db6-a502-4fed-8392-1dcd0ad8a28e","blockeraCompatId":"927125625524","className":"blockera-block blockera-block-94ppky"} -->
+			const code = `<!-- wp:group {"metadata":{"name":"Grid Container"},"blockeraId":"g0rid1","blockeraDisplay":{"value":"grid"},"className":"blockera-block blockera-block-g0rid1","layout":{"type":"grid"}} -->
+<div class="wp-block-group blockera-block blockera-block-g0rid1"><!-- wp:paragraph {"blockeraId":"94ppky","className":"blockera-block blockera-block-94ppky"} -->
 <p class="blockera-block blockera-block-94ppky">test paragraph in grid...</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:group -->`;
