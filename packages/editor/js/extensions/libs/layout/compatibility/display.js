@@ -1,5 +1,45 @@
 // @flow
 
+function isBlockeraValueEnvelope(raw: mixed): boolean {
+	return Boolean(
+		raw &&
+			typeof raw === 'object' &&
+			!Array.isArray(raw) &&
+			Object.prototype.hasOwnProperty.call(raw, 'value')
+	);
+}
+
+function getBlockeraDisplayScalar(attributes: Object): mixed {
+	const raw = attributes?.blockeraDisplay;
+
+	if (isBlockeraValueEnvelope(raw)) {
+		return (raw: { value: mixed }).value;
+	}
+
+	return raw;
+}
+
+function setBlockeraDisplayValue(attributes: Object, nextValue: mixed): void {
+	const raw = attributes?.blockeraDisplay;
+
+	if (isBlockeraValueEnvelope(raw)) {
+		attributes.blockeraDisplay = {
+			...(raw: { [string]: mixed }),
+			value: nextValue,
+		};
+		return;
+	}
+
+	if (typeof raw === 'string' || raw === '') {
+		attributes.blockeraDisplay = nextValue;
+		return;
+	}
+
+	attributes.blockeraDisplay = {
+		value: nextValue,
+	};
+}
+
 export function displayFromWPCompatibility({
 	attributes,
 	blockId,
@@ -16,7 +56,7 @@ export function displayFromWPCompatibility({
 	 * different defaults and behaviors and we need to compatible with all possibles.
 	 */
 	switch (blockId) {
-		case 'core/group':
+		case 'core/group': {
 			// different default values base on block variation
 			switch (activeVariation) {
 				case 'group-grid':
@@ -31,7 +71,9 @@ export function displayFromWPCompatibility({
 					break;
 			}
 
-			if (attributes?.blockeraDisplay?.value === defaultValue) {
+			const displayValue = getBlockeraDisplayScalar(attributes);
+
+			if (displayValue === defaultValue) {
 				return attributes;
 			}
 
@@ -39,33 +81,27 @@ export function displayFromWPCompatibility({
 				// it means the variation is switched and the value was remain from old variation and should be cleared
 				// for special display value other than `flex` and `grid` it should not cleared!
 				if (
-					['flex', 'grid'].includes(
-						attributes?.blockeraDisplay?.value
-					)
+					typeof displayValue === 'string' &&
+					['flex', 'grid'].includes(displayValue)
 				) {
-					attributes.blockeraDisplay = {
-						value: '',
-					};
+					setBlockeraDisplayValue(attributes, '');
 				}
 			} else if ('default' === attributes?.layout?.type) {
 				attributes.layout.type = undefined;
 			} else {
-				attributes.blockeraDisplay = {
-					value: attributes?.layout?.type,
-				};
+				setBlockeraDisplayValue(attributes, attributes?.layout?.type);
 			}
 
 			return attributes;
+		}
 	}
 
 	if (
-		attributes?.blockeraDisplay?.value === defaultValue &&
+		getBlockeraDisplayScalar(attributes) === defaultValue &&
 		attributes?.layout?.type &&
 		!['constrained', 'default'].includes(attributes?.layout?.type)
 	) {
-		attributes.blockeraDisplay = {
-			value: attributes?.layout?.type,
-		};
+		setBlockeraDisplayValue(attributes, attributes?.layout?.type);
 	}
 
 	return attributes;

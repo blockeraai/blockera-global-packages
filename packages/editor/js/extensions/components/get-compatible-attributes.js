@@ -12,6 +12,7 @@ import { getBlockType } from '@wordpress/blocks';
 import { detailedDiff } from 'deep-object-diff';
 import {
 	isEquals,
+	cloneObject,
 	omitWithPattern,
 	mergeObject,
 	normalizeBlockeraIds,
@@ -27,6 +28,12 @@ import {
 	ignoreBlockeraAttributeKeysRegExp,
 } from '../libs';
 import { prepareBlockeraDefaultAttributesValues } from './utils';
+import { displayFromWPCompatibility } from '../libs/layout/compatibility/display';
+import {
+	alignItemsFromWPCompatibility,
+	directionFromWPCompatibility,
+	justifyContentFromWPCompatibility,
+} from '../libs/layout/compatibility/flex-layout';
 
 /**
  * Whether to run WP→Blockera attribute filters.
@@ -49,6 +56,58 @@ export function shouldRunWpToBlockeraHydrate({
 	hasFeatures: boolean,
 }): boolean {
 	return Boolean(isActive && (pendingReturn || !hasFeatures));
+}
+
+export function unwrapBlockeraStoredValue(value: mixed): mixed {
+	if (
+		value &&
+		typeof value === 'object' &&
+		!Array.isArray(value) &&
+		Object.prototype.hasOwnProperty.call(value, 'value')
+	) {
+		return value.value;
+	}
+
+	return value;
+}
+
+/**
+ * Keep group layout fields aligned with WP `layout` when full WP→Blockera
+ * hydrate is skipped (existing feature attrs). Does not merge schema defaults.
+ *
+ * @param {Object} attributes Current attributes.
+ * @param {Object} args Block detail (`blockId`, `activeBlockVariation`, schema).
+ * @return {Object} Attributes with layout compatibility applied.
+ */
+export function syncGroupLayoutFromWp(
+	attributes: Object,
+	args: Object
+): Object {
+	if (args?.blockId !== 'core/group') {
+		return attributes;
+	}
+
+	let next = cloneObject(attributes);
+
+	next = displayFromWPCompatibility({
+		attributes: next,
+		blockId: args.blockId,
+		defaultValue: args.blockAttributes?.blockeraDisplay?.default,
+		activeVariation: args.activeBlockVariation?.name,
+	});
+	next = directionFromWPCompatibility({
+		attributes: next,
+		blockId: args.blockId,
+		activeVariation: args.activeBlockVariation?.name,
+	});
+	next = alignItemsFromWPCompatibility({
+		attributes: next,
+	});
+	next = justifyContentFromWPCompatibility({
+		attributes: next,
+	});
+
+	return next;
 }
 
 /**
@@ -209,10 +268,13 @@ export const getCompatibleAttributes = ({
 	}
 
 	if (!runWpToBlockera) {
-		if (stampIdentity && !getBlockeraId(normalized)) {
-			return getAttributesWithIds(normalized, 'blockeraId');
+		let skipped = normalized;
+
+		if (stampIdentity && !getBlockeraId(skipped)) {
+			skipped = getAttributesWithIds(skipped, 'blockeraId');
 		}
-		return normalized;
+
+		return syncGroupLayoutFromWp(skipped, args);
 	}
 
 	let filteredAttributes = runWpToBlockeraFilters(

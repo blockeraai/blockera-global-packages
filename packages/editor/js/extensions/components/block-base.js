@@ -87,6 +87,7 @@ import {
 import {
 	getCompatibleAttributes,
 	shouldRunWpToBlockeraHydrate,
+	unwrapBlockeraStoredValue,
 } from './get-compatible-attributes';
 import { isBlockeraEngineSkippedForClient } from './is-blockera-engine-skipped';
 import { getBlockCSSSelector } from '../../style-engine/get-block-css-selector';
@@ -114,6 +115,13 @@ function remintAndRegisterIdentity(clientId: string, attributes: Object): Object
 		`blockera-block-${String(reminted.blockeraId)}`
 	);
 	return reminted;
+}
+
+function storedLayoutFieldDiffers(left: mixed, right: mixed): boolean {
+	return !isEquals(
+		unwrapBlockeraStoredValue(left),
+		unwrapBlockeraStoredValue(right)
+	);
 }
 
 const GlobalStylesPanelBaseControlConfigContext: Object = createContext({
@@ -558,6 +566,59 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	resetPendingAttributesRef.current = () => setPendingAttributes(null);
 	const attributes = pendingAttributes ?? compatibleAttributes;
 	const { className } = attributes;
+
+	useLayoutEffect(() => {
+		if (!isActive) {
+			return;
+		}
+
+		if (isBlockeraEngineSkippedForClient(clientId, blockAttributes)) {
+			return;
+		}
+
+		if (
+			!getBlockeraId(blockAttributes) &&
+			!getBlockeraId(compatibleAttributes)
+		) {
+			return;
+		}
+
+		const patch = {};
+
+		if (
+			storedLayoutFieldDiffers(
+				compatibleAttributes?.blockeraDisplay,
+				blockAttributes?.blockeraDisplay
+			)
+		) {
+			patch.blockeraDisplay = compatibleAttributes.blockeraDisplay;
+		}
+
+		if (
+			storedLayoutFieldDiffers(
+				compatibleAttributes?.blockeraFlexLayout,
+				blockAttributes?.blockeraFlexLayout
+			)
+		) {
+			patch.blockeraFlexLayout = compatibleAttributes.blockeraFlexLayout;
+		}
+
+		if (!Object.keys(patch).length) {
+			return;
+		}
+
+		setPendingAttributes(null);
+		setBlockAttributes({
+			...blockAttributes,
+			...patch,
+		});
+	}, [
+		isActive,
+		clientId,
+		blockAttributes,
+		compatibleAttributes,
+		setBlockAttributes,
+	]);
 
 	// Gutenberg Duplicate clones identity onto a new clientId; remint so
 	// selectors do not collide. Drop the overlay so persist uses the new id.
