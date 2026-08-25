@@ -32,7 +32,7 @@ describe('BlockBase testing ...', () => {
 		});
 	});
 
-	it('should exists blockeraPropsId, blockeraCompatId, blockeraFontColor, and blockera classnames values on selected block when changed text-color control', () => {
+	it('should exists blockeraId, blockeraFontColor, and blockera classnames values on selected block when changed text-color control', () => {
 		cy.getByAriaControls('styles-view').click();
 
 		// Set value.
@@ -42,8 +42,7 @@ describe('BlockBase testing ...', () => {
 			const blockAttributes = getSelectedBlock(data)?.attributes;
 
 			expect(true).to.be.equal(
-				blockAttributes?.blockeraPropsId &&
-					blockAttributes?.blockeraCompatId &&
+				Boolean(blockAttributes?.blockeraId) &&
 					'#aaaaaa' === blockAttributes?.blockeraFontColor?.value &&
 					-1 !== blockAttributes?.className?.indexOf('blockera-block')
 			);

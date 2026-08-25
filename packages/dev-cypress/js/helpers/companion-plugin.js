@@ -106,7 +106,7 @@ function findHydratedDefaultParagraphBlock(data) {
 		.find(
 			(block) =>
 				block.name === defaultBlockName &&
-				block.attributes?.blockeraPropsId &&
+				block.attributes?.blockeraId &&
 				block.attributes?.className
 		);
 }
@@ -115,7 +115,7 @@ function findHydratedDefaultParagraphBlock(data) {
  * Ensure a saved default paragraph block with Blockera bootstrap attrs exists.
  *
  * Fresh post-new canvases are empty and Blockera's inspector bootstraps
- * `blockeraPropsId` / `className` when the Styles tab opens (see block-base.js
+ * `blockeraId` / `className` when the Styles tab opens (see block-base.js
  * `primePresetHover`), which marks the post dirty. Pre-hydrate + save via store
  * APIs so opening styles does not apply new customizations.
  *
@@ -134,7 +134,7 @@ export function ensureSavedHydratedDefaultParagraphBlock() {
 
 		if (!findHydratedDefaultParagraphBlock(data)) {
 			const block = win.wp.blocks.createBlock('core/paragraph', {
-				blockeraPropsId: COMPANION_CLEAN_BLOCK_PROPS_ID,
+				blockeraId: COMPANION_CLEAN_BLOCK_PROPS_ID,
 				className: COMPANION_CLEAN_BLOCK_CLASS,
 			});
 
