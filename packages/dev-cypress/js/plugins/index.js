@@ -266,6 +266,8 @@ function downgradeProPluginHeaderVersion() {
 		'$updated = str_replace($prefix . $current, $prefix . $next, $content, $count); ' +
 		"if ($count < 1 || $updated === $content) { echo 'pro_version_unchanged'; return; } " +
 		"if (false === strpos($updated, $prefix . $next)) { echo 'pro_version_invalid'; return; } " +
+		"$backup = $file . '.version-e2e-bak'; " +
+		'if (!file_exists($backup)) { file_put_contents($backup, $content); } ' +
 		"if (false === file_put_contents($file, $updated)) { echo 'pro_write_failed'; return; } " +
 		"echo 'pro_version_downgraded:' . $current . ':' . $next;";
 
@@ -286,6 +288,39 @@ function downgradeProPluginHeaderVersion() {
 
 		return {
 			ok: false,
+			message: result,
+		};
+	} catch (error) {
+		return {
+			ok: false,
+			message: error?.message || String(error),
+		};
+	}
+}
+
+/**
+ * Restore Blockera Pro plugin file from the backup taken by downgradeProPluginHeaderVersion.
+ *
+ * @return {{ ok: boolean, message: string }}
+ */
+function restoreProPluginHeaderVersion() {
+	const php =
+		"$file = WP_PLUGIN_DIR . '/blockera-pro/blockera-pro.php'; " +
+		"$backup = $file . '.version-e2e-bak'; " +
+		"if (!file_exists($backup)) { echo 'pro_no_backup'; return; } " +
+		"if (!file_exists($file)) { echo 'pro_absent'; return; } " +
+		'file_put_contents($file, file_get_contents($backup)); ' +
+		'unlink($backup); ' +
+		"echo 'pro_version_restored';";
+
+	try {
+		const result = runWpEval(php);
+
+		return {
+			ok:
+				['pro_version_restored', 'pro_no_backup'].includes(result) ||
+				String(result).includes('pro_version_restored') ||
+				String(result).includes('pro_no_backup'),
 			message: result,
 		};
 	} catch (error) {
@@ -998,6 +1033,40 @@ module.exports = (on, config, testingType = config.testingType || 'e2e') => {
 		},
 		downgradeBlockeraProVersion() {
 			return downgradeProPluginHeaderVersion();
+		},
+		restoreBlockeraProVersion() {
+			return restoreProPluginHeaderVersion();
+		},
+		/**
+		 * Activate a plugin via WP-CLI eval (avoids plugins.php, which can miss `load`).
+		 *
+		 * @param {{ plugin?: string }} options Plugin basename, e.g. `blockera-pro/blockera-pro.php`.
+		 */
+		wpPluginActivate({ plugin } = {}) {
+			const pluginFile = String(plugin || '')
+				.replace(/\\/g, '/')
+				.replace(/[^a-zA-Z0-9_./-]/g, '');
+
+			if (!pluginFile || pluginFile.includes('..')) {
+				throw new Error('wpPluginActivate requires a plugin basename');
+			}
+
+			const php =
+				"if (!function_exists('activate_plugin')) { require_once ABSPATH . 'wp-admin/includes/plugin.php'; } " +
+				"$file = '" +
+				pluginFile +
+				"'; " +
+				"if (is_plugin_active($file)) { echo 'wp_plugin_ok'; return; } " +
+				'$r = activate_plugin($file); ' +
+				"echo (!is_wp_error($r) && is_plugin_active($file)) ? 'wp_plugin_ok' : 'wp_plugin_fail';";
+
+			const result = runWpEval(php);
+
+			if (!String(result).includes('wp_plugin_ok')) {
+				throw new Error(`wpPluginActivate failed: ${result}`);
+			}
+
+			return { ok: true, message: result };
 		},
 	});
 
