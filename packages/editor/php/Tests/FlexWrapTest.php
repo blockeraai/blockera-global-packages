@@ -78,4 +78,54 @@ class FlexWrapTest extends StyleDefinitionTestCase {
 
 		$this->assertSame( $this->cssMap( [ 'flex-wrap' => 'nowrap !important' ] ), $result );
 	}
+
+	public function testNestedValueObjectUsesValAndReverse(): void {
+		$result = $this->invokeCss(
+			$this->definition(),
+			$this->setting(
+				[
+					'value' => [
+						'val'     => 'wrap',
+						'reverse' => true,
+					],
+				]
+			)
+		);
+
+		$this->assertSame( $this->cssMap( [ 'flex-wrap' => 'wrap-reverse !important' ] ), $result );
+	}
+
+	public function testMergedWrappedAndFlatKeysDoNotCastArrayToString(): void {
+		$result = $this->invokeCss(
+			$this->definition(),
+			$this->setting(
+				[
+					'value'   => [
+						'val'     => 'wrap',
+						'reverse' => false,
+					],
+					'val'     => 'wrap',
+					'reverse' => true,
+				]
+			)
+		);
+
+		$this->assertSame( $this->cssMap( [ 'flex-wrap' => 'wrap-reverse !important' ] ), $result );
+	}
+
+	public function testNestedEmptyValSkipsWithoutError(): void {
+		$result = $this->invokeCss(
+			$this->definition(),
+			$this->setting(
+				[
+					'value' => [
+						'val'     => '',
+						'reverse' => false,
+					],
+				]
+			)
+		);
+
+		$this->assertSame( [], $result );
+	}
 }
