@@ -1,4 +1,7 @@
-import { getCompatibleAttributes } from '../get-compatible-attributes';
+import {
+	getCompatibleAttributes,
+	shouldRunWpToBlockeraHydrate,
+} from '../get-compatible-attributes';
 
 const unwrappedFontSizeAddon = {
 	isValueAddon: true,
@@ -50,5 +53,44 @@ describe('getCompatibleAttributes', () => {
 
 		expect(next.blockeraId).toBeUndefined();
 		expect(next.blockeraFontSize).toEqual(unwrappedFontSizeAddon);
+	});
+});
+
+describe('shouldRunWpToBlockeraHydrate', () => {
+	it('runs when the block has no Blockera feature attrs', () => {
+		expect(
+			shouldRunWpToBlockeraHydrate({
+				isActive: true,
+				hasFeatures: false,
+			})
+		).toBe(true);
+	});
+
+	it('skips when Blockera feature attrs already exist', () => {
+		expect(
+			shouldRunWpToBlockeraHydrate({
+				isActive: true,
+				hasFeatures: true,
+			})
+		).toBe(false);
+	});
+
+	it('runs on return-to-advanced even when features exist', () => {
+		expect(
+			shouldRunWpToBlockeraHydrate({
+				isActive: true,
+				pendingReturn: true,
+				hasFeatures: true,
+			})
+		).toBe(true);
+	});
+
+	it('does not run when the engine is inactive', () => {
+		expect(
+			shouldRunWpToBlockeraHydrate({
+				isActive: false,
+				hasFeatures: false,
+			})
+		).toBe(false);
 	});
 });
