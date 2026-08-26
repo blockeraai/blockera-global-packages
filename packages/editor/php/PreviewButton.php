@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Handles the in-editor preview functionality including:
  * - Hiding the admin bar when previewing in iframe.
+ * - Blocking link navigation inside the preview iframe.
  *
  * @package Blockera
  * @since 2.0.0
@@ -39,6 +40,9 @@ class PreviewButton {
 
 		// Report document height to the parent preview overlay (wrapper scrollport).
 		add_action( 'wp_footer', array( $this, 'print_height_reporter' ), 1 );
+
+		// Block in-iframe link navigation (preview is display-only).
+		add_action( 'wp_footer', array( $this, 'print_navigation_blocker' ), 1 );
 	}
 
 	/**
@@ -156,6 +160,50 @@ class PreviewButton {
 			} else {
 				document.addEventListener('DOMContentLoaded', send);
 			}
+		})();
+		</script>
+		<?php
+	}
+
+	/**
+	 * Prevent link / area navigation inside the preview iframe.
+	 * Capture-phase so it runs before theme or Interactivity API handlers.
+	 * Does not disable non-navigation UI (for example image lightbox).
+	 */
+	public function print_navigation_blocker() {
+		if ( ! $this->is_preview_iframe_request() ) {
+			return;
+		}
+
+		?>
+		<script id="blockera-preview-navigation-blocker">
+		(function () {
+			function elementFromEvent(event) {
+				var node = event.target;
+				if (!node) {
+					return null;
+				}
+				if (node.nodeType === 1) {
+					return node;
+				}
+				return node.parentElement || null;
+			}
+			function blockNavigation(event) {
+				var el = elementFromEvent(event);
+				if (!el || !el.closest) {
+					return;
+				}
+				if (!el.closest('a[href], area[href]')) {
+					return;
+				}
+				event.preventDefault();
+				event.stopPropagation();
+				if (event.stopImmediatePropagation) {
+					event.stopImmediatePropagation();
+				}
+			}
+			document.addEventListener('click', blockNavigation, true);
+			document.addEventListener('auxclick', blockNavigation, true);
 		})();
 		</script>
 		<?php

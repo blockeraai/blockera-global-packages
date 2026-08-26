@@ -360,22 +360,29 @@ export default function PreviewOverlay({
 		};
 	}, [isLoading]);
 
-	// Block link clicks in iframe to prevent navigation
+	// Block link / area clicks in iframe to prevent navigation (not lightbox / non-link UI).
 	const blockIframeLinks = useCallback((iframeDoc: Document): void => {
-		iframeDoc.addEventListener(
-			'click',
-			(event: Event) => {
-				const target = event.target as HTMLElement;
-				const anchorLink = target.closest(
-					'a'
-				) as HTMLAnchorElement | null;
-				if (anchorLink?.href) {
-					event.preventDefault();
-					event.stopPropagation();
-				}
-			},
-			true
-		);
+		const blockNavigation = (event: Event): void => {
+			const node = event.target;
+			let el: Element | null = null;
+
+			if (node instanceof Element) {
+				el = node;
+			} else if (node instanceof Node) {
+				el = node.parentElement;
+			}
+
+			if (!el?.closest('a[href], area[href]')) {
+				return;
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+			event.stopImmediatePropagation();
+		};
+
+		iframeDoc.addEventListener('click', blockNavigation, true);
+		iframeDoc.addEventListener('auxclick', blockNavigation, true);
 	}, []);
 
 	// Block form submissions in iframe

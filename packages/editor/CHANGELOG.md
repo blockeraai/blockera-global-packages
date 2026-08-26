@@ -27,6 +27,7 @@
 - Text Orientation Feature: improve label for options.
 
 ### Bug Fixes
+- Preview mode: Clicks on links, linked images, buttons, and featured-image permalinks inside the preview iframe no longer navigate or reload the preview.
 - Global styles: When you edit which blocks use a style variation (the “used in multiple blocks” dialog) and save, the block icons shown on that style row now refresh right away instead of staying on the old list until something else updates the screen.
 - Letter-spacing, line-height, and position inset values (top, right, bottom, left) from WordPress now pass through CSS length normalization when syncing into Blockera, so bare zeros, shorthand decimals, and similar core formats match what the controls expect. Line height keeps unitless values from core without adding a `px` suffix.
 - Border radius from WordPress core: bare zero values (for example `0`) are now normalized to explicit lengths like `0px` when syncing into Blockera, so corner radius controls and generated CSS stay consistent with how border widths are handled.
