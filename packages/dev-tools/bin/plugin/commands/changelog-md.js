@@ -35,7 +35,7 @@ function normalizeVersionKey(raw) {
 
 /**
  * @param {string} body
- * @return {boolean}
+ * @return {boolean} Return value.
  */
 function unreleasedBodyHasEntries(body) {
 	return String(body || '')
@@ -45,7 +45,7 @@ function unreleasedBodyHasEntries(body) {
 
 /**
  * @param {string} content
- * @return {{ preamble: string, sections: ChangelogVersionSection[] }}
+ * @return {{ preamble: string, sections: ChangelogVersionSection[] }} Parsed changelog.
  */
 function parseChangelogDocument(content) {
 	const source = String(content || '');
@@ -103,7 +103,7 @@ function parseChangelogDocument(content) {
  * Split a changelog file into version sections (including Unreleased).
  *
  * @param {string} content
- * @return {ChangelogVersionSection[]}
+ * @return {ChangelogVersionSection[]} Return value.
  */
 function parseVersionSections(content) {
 	return parseChangelogDocument(content).sections;
@@ -111,28 +111,36 @@ function parseVersionSections(content) {
 
 /**
  * @param {{ preamble?: string, sections: ChangelogVersionSection[] }} document
- * @return {string}
+ * @param {{ keepUnreleased?: boolean }} [options]
+ * @return {string} Return value.
  */
-function serializeChangelogDocument(document) {
+function serializeChangelogDocument(document, options = {}) {
 	const parts = [];
 	const preamble = (document.preamble || '').replace(/\n+$/, '');
 	if (preamble) {
 		parts.push(preamble);
 	}
 
-	const sections = [...(document.sections || [])];
-	const unreleasedIndex = sections.findIndex(
-		(section) => section.key === '__unreleased__'
-	);
-	if (unreleasedIndex === -1) {
-		sections.unshift({
-			key: '__unreleased__',
-			heading: '## Unreleased',
-			body: '',
-		});
-	} else if (unreleasedIndex > 0) {
-		const [unreleased] = sections.splice(unreleasedIndex, 1);
-		sections.unshift(unreleased);
+	const keepUnreleased = options.keepUnreleased !== false;
+	let sections = [...(document.sections || [])];
+	if (!keepUnreleased) {
+		sections = sections.filter(
+			(section) => section.key !== '__unreleased__'
+		);
+	} else {
+		const unreleasedIndex = sections.findIndex(
+			(section) => section.key === '__unreleased__'
+		);
+		if (unreleasedIndex === -1) {
+			sections.unshift({
+				key: '__unreleased__',
+				heading: '## Unreleased',
+				body: '',
+			});
+		} else if (unreleasedIndex > 0) {
+			const [unreleased] = sections.splice(unreleasedIndex, 1);
+			sections.unshift(unreleased);
+		}
 	}
 
 	for (const section of sections) {
@@ -142,14 +150,19 @@ function serializeChangelogDocument(document) {
 		}
 	}
 
-	return parts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+	return (
+		parts
+			.join('\n\n')
+			.replace(/\n{3,}/g, '\n\n')
+			.trim() + '\n'
+	);
 }
 
 /**
  * @param {string[]} existingKeys
  * @param {string} date
  * @param {string} [suffix]
- * @return {string}
+ * @return {string} Return value.
  */
 function uniqueCutKey(existingKeys, date, suffix) {
 	const used = new Set(existingKeys);
@@ -173,15 +186,26 @@ function uniqueCutKey(existingKeys, date, suffix) {
  * Move Unreleased bullets into a dated cut (GP) or version heading (consumer).
  *
  * @param {string} content
- * @param {{ date?: string, suffix?: string, heading?: string }} [options]
- * @return {{ content: string, folded: boolean, key: string }}
+ * @param {{ date?: string, suffix?: string, heading?: string, dropUnreleased?: boolean }} [options]
+ * @return {{ content: string, folded: boolean, key: string }} Folded document.
  */
 function foldUnreleasedContent(content, options = {}) {
 	const document = parseChangelogDocument(content);
 	const unreleased = document.sections.find(
 		(section) => section.key === '__unreleased__'
 	);
+	const serializeOptions = options.dropUnreleased
+		? { keepUnreleased: false }
+		: {};
+
 	if (!unreleased || !unreleasedBodyHasEntries(unreleased.body)) {
+		if (options.dropUnreleased && unreleased) {
+			return {
+				content: serializeChangelogDocument(document, serializeOptions),
+				folded: true,
+				key: '',
+			};
+		}
 		return { content: String(content || ''), folded: false, key: '' };
 	}
 
@@ -196,7 +220,9 @@ function foldUnreleasedContent(content, options = {}) {
 			(section) => section.key === key && section.key !== '__unreleased__'
 		);
 		if (existing) {
-			existing.body = [existing.body.trim(), body].filter(Boolean).join('\n\n');
+			existing.body = [existing.body.trim(), body]
+				.filter(Boolean)
+				.join('\n\n');
 		} else {
 			const unreleasedIndex = document.sections.findIndex(
 				(section) => section.key === '__unreleased__'
@@ -208,7 +234,7 @@ function foldUnreleasedContent(content, options = {}) {
 			});
 		}
 		return {
-			content: serializeChangelogDocument(document),
+			content: serializeChangelogDocument(document, serializeOptions),
 			folded: true,
 			key,
 		};
@@ -229,7 +255,7 @@ function foldUnreleasedContent(content, options = {}) {
 	});
 
 	return {
-		content: serializeChangelogDocument(document),
+		content: serializeChangelogDocument(document, serializeOptions),
 		folded: true,
 		key,
 	};
@@ -237,7 +263,7 @@ function foldUnreleasedContent(content, options = {}) {
 
 /**
  * @param {string} filePath
- * @return {boolean}
+ * @return {boolean} Return value.
  */
 function isPackageChangelogMdPath(filePath) {
 	const normalized = String(filePath || '').replace(/\\/g, '/');
@@ -249,7 +275,7 @@ function isPackageChangelogMdPath(filePath) {
  *
  * @param {string} root
  * @param {{ skipGlobalPackages?: boolean }} [options]
- * @return {string[]}
+ * @return {string[]} Return value.
  */
 function collectPackageChangelogPaths(root, options = {}) {
 	const packagesDir = path.join(root, 'packages');
@@ -301,8 +327,8 @@ function collectPackageChangelogPaths(root, options = {}) {
 
 /**
  * @param {string} cwd
- * @param {{ date?: string, suffix?: string, heading?: string, skipGlobalPackages?: boolean }} [options]
- * @return {{ changed: boolean, files: string[], keys: string[] }}
+ * @param {{ date?: string, suffix?: string, heading?: string, skipGlobalPackages?: boolean, dropUnreleased?: boolean }} [options]
+ * @return {{ changed: boolean, files: string[], keys: string[] }} Fold result.
  */
 function foldUnreleasedTree(cwd, options = {}) {
 	const files = collectPackageChangelogPaths(cwd, options);
@@ -357,36 +383,41 @@ function assertTreeUnreleasedEmpty(cwd, options = {}) {
 }
 
 /**
- * Return ### bodies for version sections that are new or whose body changed.
- * Includes Unreleased so consumer package inboxes still accumulate until zip fold.
+ * Return ### bodies from the previous published heading (exclusive) up to the
+ * newest heading. Unreleased bullets still accumulate for consumer inboxes.
+ *
+ * After GP master fold, package files have no Unreleased; this uses
+ * `## [version] - date` (or dated cuts) between the old pin's top heading and
+ * the new pin's top heading.
  *
  * @param {string} oldContent
  * @param {string} newContent
- * @return {string}
+ * @return {string} Return value.
  */
 function extractChangedSections(oldContent, newContent) {
-	const oldMap = new Map(
-		parseVersionSections(oldContent).map((section) => [
-			section.key,
-			section.body.trim(),
-		])
-	);
+	const oldSections = parseVersionSections(oldContent);
+	const newSections = parseVersionSections(newContent);
+	const previousKey =
+		oldSections.find((section) => section.key !== '__unreleased__')?.key ||
+		null;
+	const oldUnreleased =
+		oldSections.find((section) => section.key === '__unreleased__')?.body ||
+		'';
 	const parts = [];
 
-	for (const section of parseVersionSections(newContent)) {
-		const previous = oldMap.get(section.key);
-		if (previous === undefined || previous !== section.body.trim()) {
-			let body = section.body.trim();
-			if (!body) {
-				continue;
+	for (const section of newSections) {
+		if (section.key === '__unreleased__') {
+			const body = diffUnreleasedBody(oldUnreleased, section.body.trim());
+			if (body) {
+				parts.push(ensureSectionHeadings(body));
 			}
-			if (section.key === '__unreleased__') {
-				const oldBody = previous || '';
-				body = diffUnreleasedBody(oldBody, body);
-				if (!body) {
-					continue;
-				}
-			}
+			continue;
+		}
+		if (previousKey && section.key === previousKey) {
+			break;
+		}
+		const body = section.body.trim();
+		if (body) {
 			parts.push(ensureSectionHeadings(body));
 		}
 	}
@@ -397,7 +428,7 @@ function extractChangedSections(oldContent, newContent) {
 /**
  * @param {string} oldBody
  * @param {string} newBody
- * @return {string}
+ * @return {string} Return value.
  */
 function diffUnreleasedBody(oldBody, newBody) {
 	const oldLines = new Set(
@@ -424,7 +455,7 @@ function diffUnreleasedBody(oldBody, newBody) {
 
 /**
  * @param {string} body
- * @return {string}
+ * @return {string} Return value.
  */
 function ensureSectionHeadings(body) {
 	const trimmed = String(body || '').trim();
@@ -445,7 +476,7 @@ function ensureSectionHeadings(body) {
  * @param {string} version
  * @param {string} publishDate
  * @param {string} mergedBody
- * @return {string}
+ * @return {string} Return value.
  */
 function prependRootChangelog(existing, version, publishDate, mergedBody) {
 	const heading = `## [${version}] - ${publishDate}`;
@@ -467,7 +498,7 @@ function prependRootChangelog(existing, version, publishDate, mergedBody) {
 
 /**
  * @param {string} markdown
- * @return {Set<string>}
+ * @return {Set<string>} Return value.
  */
 function extractBulletKeys(markdown) {
 	/** @type {Set<string>} */
@@ -486,7 +517,7 @@ function extractBulletKeys(markdown) {
  *
  * @param {string} markdown
  * @param {string} existingMarkdown
- * @return {string}
+ * @return {string} Return value.
  */
 function dedupeChangelogMarkdown(markdown, existingMarkdown) {
 	const seen = extractBulletKeys(existingMarkdown);

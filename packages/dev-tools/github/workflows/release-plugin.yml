@@ -72,7 +72,6 @@ jobs:
                   VERSION_TYPE: ${{ github.event.inputs.version_type }}
               run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/build-plugin-zip/compute-next-stable-branch.sh
 
-
     bump-version:
         name: Bump version
         needs: [pr-workflow-gate, compute-next-stable-branch]
@@ -130,6 +129,7 @@ jobs:
             - id: update_packages
               env:
                   NEW_VERSION: ${{ steps.get_version.outputs.new_version }}
+                  OLD_VERSION: ${{ steps.get_version.outputs.old_version }}
               run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/build-plugin-zip/update-changelogs.sh
 
             - env:
@@ -149,7 +149,6 @@ jobs:
                   CHANGELOG_COMMIT: ${{ steps.update_packages.outputs.has_commit }}
                   RELEASE_BRANCH: ${{ steps.get_version.outputs.release_branch }}
               run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/build-plugin-zip/cherry-pick-to-master.sh
-
 
     build:
         name: Build Release Artifact
@@ -192,7 +191,6 @@ jobs:
               with:
                   name: release-notes
                   path: ./release-notes.txt
-
 
     revert-version-bump:
         name: Revert version bump if build failed
@@ -237,7 +235,6 @@ jobs:
               env:
                   MASTER_COMMIT: ${{ needs.bump-version.outputs.master_commit }}
               run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/build-plugin-zip/revert-master-bump.sh
-
 
     create-release:
         name: Create Release Draft and Attach Asset

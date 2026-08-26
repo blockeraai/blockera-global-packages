@@ -27,6 +27,9 @@ const {
 const { join } = require('path');
 const { getPluginConfig } = require('../config-store');
 const { accumulateProductChangelogs } = require('./accumulate-changelogs');
+const {
+	updatePackageChangelogsOnMaster,
+} = require('./update-package-changelogs');
 
 /**
  * Release type names.
@@ -605,10 +608,23 @@ async function updatePackagesChangelog(config) {
 	});
 }
 
+async function updateMasterPackageChangelogs(config) {
+	const publishDate = new Date().toISOString().split('T')[0];
+	const semver = config.semver || config.minimumVersionBump || 'major';
+
+	await updatePackageChangelogsOnMaster({
+		semver,
+		publishDate,
+		from: config.from,
+		to: config.to,
+	});
+}
+
 module.exports = {
 	publishNpmBlockeraPlugin,
 	publishNpmBugfixLatest,
 	publishNpmBugfixWordPressCore,
 	publishNpmNext,
 	updatePackagesChangelog,
+	updateMasterPackageChangelogs,
 };

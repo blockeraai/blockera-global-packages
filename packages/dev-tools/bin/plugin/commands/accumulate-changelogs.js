@@ -8,14 +8,16 @@
  *   BLOCKERA_CHANGELOG_GP_TO                GP commit SHA (overrides gitlink at HEAD)
  *   BLOCKERA_CHANGELOG_FROM_REF             parent git ref for last product release
  *   BLOCKERA_CHANGELOG_TO_REF               parent git ref (default: HEAD)
+ *   BLOCKERA_CHANGELOG_PREVIOUS_VERSION     last product version (tag vX / X); zip job sets from OLD_VERSION
  *   BLOCKERA_CHANGELOG_CONSUMER_GLOBS       default: packages/<pkg>/CHANGELOG.md
  *   BLOCKERA_CHANGELOG_ROOT_MD              default: root CHANGELOG markdown
  *   BLOCKERA_CHANGELOG_FILE                 default: changelog.txt
- *   BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP    default: 1 (fail if GP Unreleased has entries)
+ *   BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP    default: 1 (fail if GP Unreleased still has bullets)
  *
- * Authors append bullets under ## Unreleased in each package CHANGELOG.md.
- * GP bump folds Unreleased into ## [YYYY-MM-DD]. Product zip diffs those files
- * between pins and folds consumer Unreleased into ## [product-version].
+ * GP package CHANGELOG.md files use `## [x.y.z] - date` (no Unreleased after
+ * the GP master fold). Zip accumulates ### bodies from the previous pin's top
+ * version heading (exclusive) through the current pin's newest heading.
+ * Consumer packages may still use ## Unreleased until zip fold.
  */
 
 /**
@@ -49,7 +51,7 @@ const { log } = require('../lib/logger');
 /**
  * @param {string[]} args
  * @param {{ cwd?: string }} [options]
- * @return {string}
+ * @return {string} Return value.
  */
 function git(args, options = {}) {
 	try {
@@ -65,7 +67,7 @@ function git(args, options = {}) {
 
 /**
  * @param {string} cwd
- * @return {string}
+ * @return {string} Return value.
  */
 function resolveLastReleaseRef(cwd) {
 	const fromEnv = process.env.BLOCKERA_CHANGELOG_FROM_REF;
@@ -111,7 +113,7 @@ function resolveLastReleaseRef(cwd) {
  * @param {string} cwd
  * @param {string} ref
  * @param {string} gitlinkPath
- * @return {string}
+ * @return {string} Return value.
  */
 function resolveGitlink(cwd, ref, gitlinkPath) {
 	if (!ref) {
@@ -124,7 +126,7 @@ function resolveGitlink(cwd, ref, gitlinkPath) {
  * @param {string} repoCwd
  * @param {string} rev
  * @param {string} filePath
- * @return {string}
+ * @return {string} Return value.
  */
 function gitShowFile(repoCwd, rev, filePath) {
 	if (!rev || !filePath) {
@@ -136,7 +138,7 @@ function gitShowFile(repoCwd, rev, filePath) {
 /**
  * @param {string} gpCwd
  * @param {string} rev
- * @return {string[]}
+ * @return {string[]} Return value.
  */
 function listGpChangelogFiles(gpCwd, rev) {
 	if (!rev) {
@@ -150,7 +152,7 @@ function listGpChangelogFiles(gpCwd, rev) {
 
 /**
  * @param {string} cwd
- * @return {Promise<string[]>}
+ * @return {Promise<string[]>} Return value.
  */
 async function listConsumerChangelogFiles(cwd) {
 	const raw =
@@ -174,7 +176,7 @@ async function listConsumerChangelogFiles(cwd) {
  * @param {string} fromRef
  * @param {string} toRef
  * @param {string} filePath
- * @return {string}
+ * @return {string} Return value.
  */
 function extractFileRange(cwd, fromRef, toRef, filePath) {
 	const relative = path.relative(cwd, filePath).replace(/\\/g, '/');
@@ -201,7 +203,8 @@ async function accumulateProductChangelogs(options) {
 	const cwd = options.cwd || process.cwd();
 	const publishDate =
 		options.publishDate || new Date().toISOString().split('T')[0];
-	const gpPath = process.env.BLOCKERA_CHANGELOG_GP_PATH || 'packages/global-packages';
+	const gpPath =
+		process.env.BLOCKERA_CHANGELOG_GP_PATH || 'packages/global-packages';
 	const toRef = process.env.BLOCKERA_CHANGELOG_TO_REF || 'HEAD';
 	const fromRef = resolveLastReleaseRef(cwd);
 	const gpAbs = path.resolve(cwd, gpPath);

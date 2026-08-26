@@ -5,8 +5,10 @@
 #   NEW_VERSION
 #
 # Optional:
+#   OLD_VERSION                             last product version → BLOCKERA_CHANGELOG_PREVIOUS_VERSION
 #   BLOCKERA_BUILD_ZIP_UPDATE_CHANGELOGS_CMD  default: npm run update:changelogs -- --version=…
 #   BLOCKERA_BUILD_ZIP_CHANGELOG_FILE           default: changelog.txt
+#   BLOCKERA_CHANGELOG_PREVIOUS_VERSION         last product version (if OLD_VERSION unset)
 set -euo pipefail
 
 if [[ -z "${GITHUB_OUTPUT:-}" ]]; then
@@ -18,6 +20,10 @@ NEW_VERSION="${NEW_VERSION:-}"
 if [[ -z "${NEW_VERSION}" ]]; then
 	echo "build-zip/changelogs: NEW_VERSION is required" >&2
 	exit 1
+fi
+
+if [[ -n "${OLD_VERSION:-}" && -z "${BLOCKERA_CHANGELOG_PREVIOUS_VERSION:-}" ]]; then
+	export BLOCKERA_CHANGELOG_PREVIOUS_VERSION="${OLD_VERSION}"
 fi
 
 CHANGELOG_FILE="${BLOCKERA_BUILD_ZIP_CHANGELOG_FILE:-changelog.txt}"

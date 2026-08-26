@@ -244,10 +244,17 @@ workflow; bash lives under `scripts/jobs/build-plugin-zip/`.
 Release bump runs `jobs/build-plugin-zip/update-changelogs.sh`, which calls the
 consumer `npm run update:changelogs`.
 
-**Source of truth is package `CHANGELOG.md`.** Every GP and consumer package
-file starts with an empty `## Unreleased` inbox. Authors append bullets there
+**Source of truth is package `CHANGELOG.md`.** Every consumer package file
+starts with an empty `## Unreleased` inbox. Authors append bullets there
 (Keep a Changelog headings: Added, Fixed, …). Do not add dated or version
 headings in feature PRs.
+
+The **global-packages repository** (not a consumer product) also runs
+`.github/workflows/update-changelogs.yml` on merge to `master`. That GP-only
+job folds Unreleased into `## [x.y.z] - date`, drops the inbox, and bumps
+only packages that changed since the previous merge (`--semver`, `--from`,
+`--to` on `update-master-package-changelogs`). It is not the zip
+`update:changelogs` command.
 
 **GP fold happens on submodule bump**, not on product zip:
 
@@ -255,9 +262,12 @@ headings in feature PRs.
 2. If Unreleased has entries and the pin is a branch tip, bump folds them into
    `## [YYYY-MM-DD]` (same-day suffix if needed), commits
    `chore(changelog): fold Unreleased`, and pushes that SHA.
-3. Product zip diffs `CHANGELOG.md` between the previous and new GP gitlinks
-   plus consumer `packages/*/CHANGELOG.md`. It **fails** if the pinned GP still
-   has Unreleased bullets.
+3. Product zip diffs each GP `CHANGELOG.md` between the previous and new
+   gitlink. It takes ### bodies from the **previous pin’s top version
+   heading (exclusive)** through the **current pin’s newest heading**.
+   Consumer `packages/*/CHANGELOG.md` still contribute Unreleased diffs.
+   The zip **fails** if a pinned GP file still has Unreleased *bullets*
+   (missing Unreleased is OK).
 4. Zip writes product root `CHANGELOG.md` / `changelog.txt` and folds
    **consumer** Unreleased into `## [product-version] - date`.
 
