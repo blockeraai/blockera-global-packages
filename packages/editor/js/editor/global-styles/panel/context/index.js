@@ -135,7 +135,7 @@ const cleanupStylesHelper = (styles: Object, defaultStyles: Object): Object => {
 		if (
 			styles[key] &&
 			typeof styles[key] === 'object' &&
-			Object.prototype.hasOwnProperty.call(styles[key], 'value') &&
+			styles[key].hasOwnProperty('value') &&
 			styles[key].value === undefined
 		) {
 			continue;
