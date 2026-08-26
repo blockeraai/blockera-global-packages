@@ -1,5 +1,7 @@
 ## Unreleased
 
+## [2026-08-26]
+
 ### New Features
 - Added a new feature management system that allows website developers.
 - Improved plugin flexibility by making features work seamlessly between your website and the block editor.
