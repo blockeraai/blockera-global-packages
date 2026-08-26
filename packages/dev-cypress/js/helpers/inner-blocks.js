@@ -7,19 +7,34 @@ export function setParentBlock() {
 }
 
 export function setInnerBlock(blockType) {
-	const itemSelector = `.blockera-control-inner-blocks-repeater [data-id="${blockType}"], .blockera-control-repeater div[data-id="${blockType}"]`;
-	const isNamedInnerBlock =
-		typeof blockType === 'string' &&
-		(blockType.startsWith('elements/') || blockType.startsWith('core/'));
+	const itemSelector = `.blockera-control-inner-blocks-repeater [data-cy="repeater-item"][data-id="${blockType}"]`;
+	const pickerItemSelector = `[aria-label="${blockType}"]`;
 
-	const clickInnerBlockItem = () => {
-		cy.get(`${itemSelector} [data-cy="group-control-header"]`)
-			.first()
-			.click({ force: true });
-
+	const waitForInnerBlockCard = () => {
 		cy.getByDataTest('blockera-inner-block-card', { timeout: 20000 }).should(
 			'exist'
 		);
+	};
+
+	const activateInnerBlock = () => {
+		cy.window().then((win) => {
+			win.wp.data
+				.dispatch('blockera/extensions')
+				.changeExtensionCurrentBlock(blockType);
+		});
+		waitForInnerBlockCard();
+	};
+
+	const clickInnerBlockItem = () => {
+		cy.get(itemSelector)
+			.filter(':visible')
+			.first()
+			.within(() => {
+				cy.get('.blockera-inner-block-label, span')
+					.first()
+					.click({ force: true });
+			});
+		activateInnerBlock();
 	};
 
 	cy.get('body').then(($body) => {
@@ -28,22 +43,25 @@ export function setInnerBlock(blockType) {
 			return;
 		}
 
-		// Virtual inner blocks (elements/link, core/post-date, …) appear in the
-		// repeater after WP→Blockera hydrate. The inner-blocks control has no add
-		// button; falling through to the block-state inserter waits forever for an
-		// aria-label that never exists (CI job timeout).
-		if (isNamedInnerBlock) {
-			cy.get(itemSelector, { timeout: 20000 }).should('exist');
-			clickInnerBlockItem();
-			return;
-		}
-
+		// force:false virtual inner blocks (elements/link, …) are added from the
+		// shared states/inner-blocks inserter. WP→Blockera hydrate can also put
+		// them in the repeater; only wait for that when the picker has no match.
 		openInserter();
 
 		cy.get('.blockera-component-popover')
 			.last()
-			.within(() => {
-				cy.getByAriaLabel(blockType).click({ force: true });
+			.then(($popover) => {
+				if ($popover.find(pickerItemSelector).length > 0) {
+					cy.wrap($popover).within(() => {
+						cy.getByAriaLabel(blockType).click({ force: true });
+					});
+					waitForInnerBlockCard();
+					return;
+				}
+
+				cy.get('body').type('{esc}', { force: true });
+				cy.get(itemSelector, { timeout: 20000 }).should('exist');
+				clickInnerBlockItem();
 			});
 	});
 }
