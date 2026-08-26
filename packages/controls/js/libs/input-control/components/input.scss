@@ -47,6 +47,7 @@
 		&:focus {
 			border-color: var(--blockera-controls-primary-color);
 			box-shadow: 0 0 0 1px var(--blockera-controls-primary-color);
+			outline: none;
 		}
 
 		&.invalid {
@@ -80,6 +81,7 @@
 		.blockera-control-input-tag {
 			border-color: var(--blockera-controls-primary-color) !important;
 			box-shadow: 0 0 0 1px var(--blockera-controls-primary-color) !important;
+			outline: none !important;
 		}
 	}
 
@@ -93,11 +95,13 @@
 			border-radius: var(--blockera-controls-border-radius);
 			border: 1px solid var(--blockera-controls-primary-color);
 			box-shadow: 0 0 0 1px var(--blockera-controls-primary-color);
+			outline: none !important;
 		}
 
 		&.is-focused {
 			border: 1px solid var(--blockera-controls-primary-color);
 			box-shadow: 0 0 0 1px var(--blockera-controls-primary-color);
+			outline: none !important;
 		}
 	}
 
