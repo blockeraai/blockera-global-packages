@@ -209,7 +209,7 @@ export const Dashboard = (): MixedElement => {
 					<ProCallToActions />
 
 					<Button
-						variant="tertiary"
+						variant="secondary"
 						href={
 							'https://community.blockera.ai/changelog-9l8hbrv0?utm_source=blockera-admin&utm_medium=referral&utm_campaign=changelog-page&utm_content=cta-link'
 						}
