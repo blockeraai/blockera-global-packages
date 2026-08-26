@@ -1,7 +1,5 @@
 ## Unreleased
 
-## [2026-08-26]
-
 ### New Features
 - Added `@blockera/global-styles-ui`, a dedicated package for managing theme.json preset variables in the WordPress Site Editor global styles sidebar.
 - Added global styles panel takeovers for **Colors**, **Typography**, and **Shadows**, replacing native WordPress preset navigation with Blockera variable editors while keeping WordPress navigator compatibility (pre– and post–WP 7.0 class hooks).

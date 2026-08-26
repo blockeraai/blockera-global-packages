@@ -1,7 +1,5 @@
 ## Unreleased
 
-## [2026-08-26]
-
 ### Bug Fixes:
 
 - Fixed PHP product registrants never running: `blockera/products/registry/init` now also fires on `wp_loaded` via `blockera_products_bootstrap()`, so registration no longer depends on JS localization finding a script handle.

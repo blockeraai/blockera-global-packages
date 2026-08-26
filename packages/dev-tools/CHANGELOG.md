@@ -1,7 +1,5 @@
 ## Unreleased
 
-## [2026-08-26]
-
 - Bootstrap: add `--watch` so `npm start` re-runs sync-config when `root-configs/` or `cursor/` templates change; headings show `#N` and a pulsing `● watching` marker; elapsed time sits on the Build heading only. The last line is only `Ctrl+C to stop`.
 - Root configs: move `.editorconfig` into `root-configs/` (drop the package-root copy) and remove the leftover package-root `browserslistrc`.
 - PR config jobs: detect all leftover PR-only files (`.pr-workflows.json`, `.pr-cypress.env.json`, `.pr-playwright.env.json`, `.pr-env.json`, `.pr-sync-env.json`, `.pr-github-playground.json`, plus `.pr-*`), still skipping example templates.
@@ -12,5 +10,6 @@
 - PR workflow gate: keep action in dev-tools submodule; gate jobs require BLOCKERA_GLOBAL_PACKAGES_TOKEN.
 - setup-php: strip wp-cli with composer remove --no-update and fix jq lock pruning.
 - Bundle size: truncate oversized PR comments to GitHub's 65536-character limit instead of dropping files from the report.
+
 
 ## 1.0.0 (2024-12-08)

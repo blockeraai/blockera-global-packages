@@ -1,7 +1,5 @@
 ## Unreleased
 
-## [2026-08-26]
-
 ### New Features
 - Added a way for blocks to get a unique ID automatically, making them work more smoothly.
 - Added support for blocks to better integrate with the block editor's features.
@@ -58,6 +56,7 @@
 - `Footnotes` block: `strong`, `italic`, `kbd`, `span`, `code` and `mark` inner blocks added.
 - `Preformatted` block: `strong`, `italic`, `kbd`, `span`, `code` and `mark` inner blocks added.
 - `Read More` block: `strong`, `italic`, `kbd`, `span`, `code` and `mark` inner blocks added.
+
 
 ### Automated Tests
 - Added E2E tests to check icon functionality of `Categories` block.
@@ -236,6 +235,7 @@
 - `The Icon` block by Nick Diego: support improved.
 - `Blocksy → Breadcrumb` block: css selectors improved.
 
+
 ### Automated Tests
 - Added E2E tests to check the inner blocks functionality of `Calendar` block.
 - Updated E2E tests to check the inner blocks functionality of `Categories List` block.
@@ -298,6 +298,7 @@
 - Updated E2E tests to check support of `Video` block.
 - Updated E2E tests to check support of `Icon` block by Nick Diego.
 
+
 ## 1.3.0 (2025-04-27)
 
 ### New Features
@@ -331,6 +332,7 @@
 
 ### Automated Tests
 - Improve `Table` block E2E tests to latest changes of WP 6.8.
+
 
 ## 1.1.0 (2025-03-15)
 
@@ -384,6 +386,7 @@
 - `Latest Comments` block: improve support.
 - `Button` block: improve support.
 - `Buttons` block: improve support.
+
 
 ### Automated Tests
 - Added E2E tests for all core blocks to test block functionality + inner blocks functionality. 🔥🔥
