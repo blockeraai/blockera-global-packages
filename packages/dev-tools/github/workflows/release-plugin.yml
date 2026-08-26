@@ -1,5 +1,5 @@
 # Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO / slug inputs.
-name: Build Blockera Plugin Zip
+name: Release Blockera Plugin
 
 on:
     pull_request:
@@ -47,7 +47,7 @@ jobs:
             - id: gate
               uses: ./packages/global-packages/packages/dev-tools/github/actions/pr-workflow-gate
               with:
-                  workflow-file: build-plugin-zip.yml
+                  workflow-file: release-plugin.yml
 
     compute-next-stable-branch:
         name: Compute next stable release branches

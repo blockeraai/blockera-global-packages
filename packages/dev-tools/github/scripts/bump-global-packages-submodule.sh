@@ -14,8 +14,6 @@
 #
 # Env:
 #   BLOCKERA_GLOBAL_PACKAGES_TOKEN / GITHUB_TOKEN — optional HTTPS auth for private fetch
-#   BLOCKERA_CHANGELOG_FOLD_ON_BUMP — default 1; fold package CHANGELOG.md Unreleased
-#     into ## [YYYY-MM-DD] on the GP branch tip and push before pinning
 #   NO_COLOR — disable ANSI colors when set
 #
 # Compatible with SSH or HTTPS .gitmodules urls (CI rewrites to HTTPS + PAT).
@@ -286,71 +284,6 @@ log_step "Checking out ${C_BOLD}$(git -C "${SUBMODULE}" rev-parse --short "${RES
 git -C "${SUBMODULE}" checkout --detach --force "${RESOLVED_SHA}" >/dev/null
 git -C "${SUBMODULE}" sparse-checkout init --no-cone
 git -C "${SUBMODULE}" sparse-checkout set '/packages/'
-
-# Fold Unreleased on a branch tip so product zips pin a clean GP SHA.
-fold_gp_unreleased() {
-	local fold_cli="${SUBMODULE}/packages/dev-tools/bin/plugin/fold-unreleased-cli.js"
-	local fold_output fold_changed fold_branch tip short_suffix
-
-	if [[ "${BLOCKERA_CHANGELOG_FOLD_ON_BUMP:-1}" == "0" ]]; then
-		log_info "Skipping Unreleased fold (BLOCKERA_CHANGELOG_FOLD_ON_BUMP=0)"
-		return 0
-	fi
-	if [[ ! -f "${fold_cli}" ]]; then
-		log_info "fold-unreleased CLI not in this GP SHA; skip"
-		return 0
-	fi
-	if ! command -v node >/dev/null 2>&1; then
-		log_err "node is required to fold GP CHANGELOG.md Unreleased"
-		exit 1
-	fi
-
-	short_suffix="$(git -C "${SUBMODULE}" rev-parse --short HEAD)"
-	fold_output="$(node "${fold_cli}" --cwd "${SUBMODULE}" --suffix "${short_suffix}")"
-	fold_changed="$(printf '%s\n' "${fold_output}" | sed -n 's/^changed=//p' | tail -n1)"
-	if [[ "${fold_changed}" != "true" ]]; then
-		log_info "GP Unreleased already empty"
-		return 0
-	fi
-
-	fold_branch=""
-	if git -C "${SUBMODULE}" rev-parse --verify --quiet "origin/${TARGET_REF}^{commit}" >/dev/null; then
-		tip="$(git -C "${SUBMODULE}" rev-parse "origin/${TARGET_REF}^{commit}")"
-		if [[ "${tip}" == "${RESOLVED_SHA}" ]]; then
-			fold_branch="${TARGET_REF}"
-		fi
-	fi
-	if [[ -z "${fold_branch}" ]] && git -C "${SUBMODULE}" rev-parse --verify --quiet "origin/master^{commit}" >/dev/null; then
-		tip="$(git -C "${SUBMODULE}" rev-parse "origin/master^{commit}")"
-		if [[ "${tip}" == "${RESOLVED_SHA}" ]]; then
-			fold_branch="master"
-		fi
-	fi
-	if [[ -z "${fold_branch}" ]]; then
-		git -C "${SUBMODULE}" reset --hard HEAD >/dev/null
-		log_err "GP Unreleased has entries but ${RESOLVED_SHA} is not a branch tip; pin a folded master SHA"
-		exit 1
-	fi
-
-	git -C "${SUBMODULE}" config user.name "${BLOCKERA_SYNC_GP_GIT_NAME:-blockerabot}"
-	git -C "${SUBMODULE}" config user.email "${BLOCKERA_SYNC_GP_GIT_EMAIL:-blockeraai+githubbot@gmail.com}"
-	git -C "${SUBMODULE}" add -u -- packages
-	if git -C "${SUBMODULE}" diff --cached --quiet; then
-		log_warn "fold reported changes but nothing was staged"
-		return 0
-	fi
-	git -C "${SUBMODULE}" commit -m "chore(changelog): fold Unreleased"
-	if [[ -z "${TOKEN}" ]]; then
-		log_err "folded Unreleased but cannot push without BLOCKERA_GLOBAL_PACKAGES_TOKEN"
-		exit 1
-	fi
-	log_step "Pushing Unreleased fold to origin/${fold_branch}…"
-	git -C "${SUBMODULE}" push origin "HEAD:${fold_branch}"
-	RESOLVED_SHA="$(git -C "${SUBMODULE}" rev-parse HEAD)"
-	log_ok "Folded Unreleased at ${C_BOLD}$(git -C "${SUBMODULE}" rev-parse --short HEAD)${C_RESET}"
-}
-
-fold_gp_unreleased
 
 git add "${SUBMODULE_PATH}"
 
