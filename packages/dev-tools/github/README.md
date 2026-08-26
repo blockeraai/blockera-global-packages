@@ -708,7 +708,7 @@ Check PR config files). `.pr-workflows.example.json` is the committed template.
 
 Available toolkit workflow filenames:
 
-`build-plugin-zip-tests.yml`, `build-plugin-zip.yml`, `bundle-size.yml`,
+`release-plugin-tests.yml`, `release-plugin.yml`, `bundle-size.yml`,
 `check-debugging-code.yml`, `check-pr-config-files.yml`, `code-lint.yml`,
 `create-demo-attachments.yml`, `cypress-components-tests.yml`,
 `cypress-e2e-tests.yml`, `jest-unit-tests.yml`, `performance-benchmark.yml`,

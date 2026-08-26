@@ -25,7 +25,7 @@ Options:
   --repo REPO         Repository name (default: blockera)
   --name NAME         Artifact name (default: blockera)
   --branch BRANCH     Branch name to resolve the latest successful workflow run (optional)
-  --workflow FILE     Workflow file name when using --branch (default: build-plugin-zip.yml)
+  --workflow FILE     Workflow file name when using --branch (default: release-plugin.yml)
   --url URL           GitHub Actions artifact page URL
                       (https://github.com/OWNER/REPO/actions/runs/RUN_ID/artifacts/ARTIFACT_ID)
   --output PATH       Output artifact zip file path (default: \$REPO.zip)
@@ -93,7 +93,7 @@ if [ -z "$TOKEN" ]; then
 fi
 
 OUTPUT="${OUTPUT:-${REPO}.zip}"
-WORKFLOW="${WORKFLOW:-build-plugin-zip.yml}"
+WORKFLOW="${WORKFLOW:-release-plugin.yml}"
 
 parse_artifact_url() {
 	local url="$1"
