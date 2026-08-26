@@ -26,11 +26,15 @@ export function setInnerBlock(blockType) {
 	};
 
 	const clickInnerBlockItem = () => {
+		// Parent inner-block chips stay in the DOM while another inner-block
+		// card is open, but they are not `:visible`. Cypress `.filter(':visible')`
+		// retries until timeout; force-click the chip then dispatch.
 		cy.get(itemSelector)
-			.filter(':visible')
 			.first()
 			.within(() => {
-				cy.get('.blockera-inner-block-label, span')
+				cy.get(
+					'[data-cy="group-control-header"], .blockera-inner-block-label, span'
+				)
 					.first()
 					.click({ force: true });
 			});

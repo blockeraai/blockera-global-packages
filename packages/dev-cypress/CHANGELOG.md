@@ -1,5 +1,8 @@
 ## Unreleased
 
+### Fixed
+- `setInnerBlock` force-clicks hidden parent inner-block chips instead of waiting for `:visible` (chips stay in the DOM while another inner-block card is open).
+
 ## [2026-08-26]
 
 ### Improvements
