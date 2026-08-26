@@ -1,6 +1,6 @@
 {
 	"name": "blockera/features-core",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "The Blockera Features Core package.",
 	"autoload": {
 		"psr-4": {

@@ -1,4 +1,4 @@
-## Unreleased
+## [1.4.0] - 2026-08-26
 
 ### New Features
 - Added full compatibility with the Create Block Theme plugin, allowing you to create and export custom themes while keeping all your Blockera styling intact.
@@ -28,7 +28,6 @@
 ### Bug Fixes
 - Fix `Redis Object Cache` plugin conflict error reported by Robert 🙏🏼
 
-
 ## 1.3.1 (2025-05-19)
 
 ### Automated Tests
@@ -52,7 +51,6 @@
 ### Bug Fixes
 - Fixed compatibility issue with WordPress 6.8-RC1 translate system to ensure proper text domain loading and string translations.
 - Fixed Blocksy theme compatibility bug in WP 6.8 about not showing color variables.
-
 
 ## 1.2.2 (2025-03-29)
 
@@ -88,7 +86,6 @@
 - Added automated test for checking Blocky theme color variables compatibility.
 - Added automated test for checking Blocky theme width size variables compatibility.
 
-
 ### Bug Fixes
 - Renamed the constants to avoid conflicts with other plugins. [[Bug Report](https://community.blockera.ai/bugs-mdhyb8nc/post/warning-constant-blockera-version-already-defined-uvTMUjomFS8fELi)]
 
@@ -104,7 +101,6 @@
 ### Bug Fixes
 
 - Fixed WooCommerce E2E tests for checking WooCommerce blocks support.
-
 
 ## 1.0.1 (2024-12-08)
 
@@ -142,8 +138,6 @@
 - Build: Ensured all JS and PHP files are error-free and adhere to coding standards during the Blockera plugin build.
 - Build: Automated the building and attachment of the plugin zip file to GitHub pull requests.
 - New automated test to recheck final plugin zip file in another WP setup to make sure zip and functionality are correct.
-
-
 
 ### Improvements
 

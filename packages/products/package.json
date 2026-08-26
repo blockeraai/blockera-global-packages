@@ -1,6 +1,6 @@
 {
 	"name": "@blockera/products",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "The Blockera products details registry, providing a shared store api with selectors around blockera and blockera admin contexts.",
 	"author": "The  Contributors",
 	"license": "ISC",

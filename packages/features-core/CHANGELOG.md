@@ -1,4 +1,4 @@
-## Unreleased
+## [1.1.0] - 2026-08-26
 
 ### New Features
 - Added a new feature management system that allows website developers.

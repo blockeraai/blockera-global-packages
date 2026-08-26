@@ -1,4 +1,4 @@
-## Unreleased
+## [1.5.0] - 2026-08-26
 
 ### New Features
 - Added StepperControl: a horizontal minus / value / plus number stepper for discrete counts.
@@ -50,7 +50,6 @@
 - Fix box spacing design issues.
 - Fix box position control design issues. 
 
-
 ## 1.3.2 (2025-05-24)
 
 ### Bug Fixes
@@ -58,10 +57,8 @@
 
 ## 1.3.1 (2025-05-19)
 
-
 ### Bug Fixes
 - Color picker design issue on Windows. Thanks Hoang.
-
 
 ## 1.3.0 (2025-05-19)
 
@@ -88,12 +85,10 @@
 ### Improvements
 - Design and UX improvements.
 
-
 ## 1.2.1 (2025-04-23)
 
 ### Improvements
 - Features upgrade to pro notice design improvement.
-
 
 ## 1.2.0 (2025-04-22)
 
@@ -103,7 +98,6 @@
 ### Bug Fixes
 - Design issue in popovers after setting `Hover` state for block. 
 
-
 ## 1.1.3 (2025-04-12)
 
 ### Improvements
@@ -111,7 +105,6 @@
 - Improve overall codes.
 - Improve Unit Inputs for 'No Unit' state. 
 - Border feature improved to show a warning for color if width was set and the color wasn't!
-
 
 ## 1.1.2 (2025-03-29)
 
@@ -131,7 +124,6 @@
 
 ### Bug Fixes
 - Design issue in box position control about variable values. 
-
 
 ## 1.1.1 (2025-03-17)
 
@@ -190,7 +182,6 @@
 
 ### Improvements
 - Improved variable picker to display accurate title indicating whether the variable is sourced from the block theme or block editor.
-
 
 ## 1.0.0 (2024-12-08)
 

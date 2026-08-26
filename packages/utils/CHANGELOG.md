@@ -1,4 +1,4 @@
-## Unreleased
+## [1.3.0] - 2026-08-26
 
 ### New Features
 - Added new helper functions to improve plugin functionality.
