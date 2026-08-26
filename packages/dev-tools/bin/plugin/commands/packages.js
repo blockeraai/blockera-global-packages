@@ -26,7 +26,7 @@ const {
 } = require('./common');
 const { join } = require('path');
 const { getPluginConfig } = require('../config-store');
-const { updateChangelog } = require('./changelog');
+const { accumulateProductChangelogs } = require('./accumulate-changelogs');
 
 /**
  * Release type names.
@@ -109,7 +109,7 @@ async function checkoutNpmReleaseBranch({
  * @return {?string}   The optional commit's hash when changelog files updated.
  */
 async function updatePackages(config) {
-	const { minimumVersionBump, releaseType, version } = config;
+	const { minimumVersionBump, releaseType } = config;
 
 	const changelogFiles = await glob(
 		path.resolve(process.cwd(), 'packages/(*|**/*)/CHANGELOG.md')
@@ -117,8 +117,6 @@ async function updatePackages(config) {
 
 	// e.g. "2022-11-01T00:13:26.102Z" -> "2022-11-01"
 	const publishDate = new Date().toISOString().split('T')[0];
-
-	updateChangelog(changelogFiles, version, publishDate);
 
 	const processedPackages = await Promise.all(
 		changelogFiles.map(async (changelogPath) => {
@@ -600,7 +598,11 @@ async function publishNpmNext(options) {
 }
 
 async function updatePackagesChangelog(config) {
-	await updatePackages(config);
+	const publishDate = new Date().toISOString().split('T')[0];
+	await accumulateProductChangelogs({
+		version: config.version,
+		publishDate,
+	});
 }
 
 module.exports = {
