@@ -391,6 +391,10 @@ Consumer bootstrap: `.github/actions/ensure-global-packages/` (synced via
 `sync-consumer-bootstrap.sh`). Job scripts run from the toolkit (stashed across
 target-branch checkout when the feature branch may not have the latest pin yet).
 
+Auto mode: **master/main** opens a bump PR; **feature branches are skipped** so
+the gitlink is created with local `npm run submodule:bump` (not pushed by CI).
+Explicit `workflow_dispatch` `mode=pr` or `mode=push` still updates a remote branch.
+
 | Toolkit script | Role |
 | --- | --- |
 | `jobs/sync-global-packages-submodule/resolve-targets.sh` | dispatch/schedule/manual → source/target/mode |
