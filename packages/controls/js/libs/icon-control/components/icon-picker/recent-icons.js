@@ -11,18 +11,94 @@ import {
 	controlInnerClassNames,
 	controlClassNames,
 } from '@blockera/classnames';
-import { Icon } from '@blockera/icons';
+import { Icon, getIcon, isValidIcon } from '@blockera/icons';
 
 /**
  * Internal dependencies
  */
 import { Button } from '../../../button';
 import { IconContext } from '../../context';
-import { buildRecentIconElements } from '../../utils';
 import { useDraftIconHighlight } from '../../hooks/use-draft-icon-highlight';
+import IconGrid from './icon-grid';
+
+function RecentRemoveButton({ entryId, onRemove }) {
+	return (
+		<Button
+			className={controlInnerClassNames('recent-icon-remove')}
+			data-blockera-recent-remove={entryId}
+			label={__('Remove from recently used', 'blockera')}
+			noBorder={true}
+			icon={<Icon icon="close" library="ui" iconSize={12} />}
+			onClick={(event) => {
+				event.stopPropagation();
+				onRemove(entryId);
+			}}
+			showTooltip={true}
+		/>
+	);
+}
+
+function RecentCustomIcon({ entry, onSelect, onRemove }) {
+	const label =
+		entry.uploadSVG &&
+		typeof entry.uploadSVG === 'object' &&
+		entry.uploadSVG.title
+			? entry.uploadSVG.title.replaceAll('-', ' ')
+			: __('Custom icon', 'blockera');
+
+	let preview = null;
+
+	if (entry.svgString) {
+		preview = (
+			<div
+				className={controlInnerClassNames('recent-icon-custom-preview')}
+				dangerouslySetInnerHTML={{
+					__html: entry.svgString.replace(
+						/\s*style\s*=\s*["'][^"']*["']/g,
+						''
+					),
+				}}
+			/>
+		);
+	} else if (
+		entry.uploadSVG &&
+		typeof entry.uploadSVG === 'object' &&
+		entry.uploadSVG.url
+	) {
+		preview = <img src={entry.uploadSVG.url} alt={label} />;
+	}
+
+	if (!preview) {
+		return null;
+	}
+
+	return (
+		<span
+			key={entry.id}
+			className={controlInnerClassNames(
+				'icon-control-icon',
+				'recent-icon-item',
+				'is-custom'
+			)}
+			aria-label={label}
+			title={label}
+			onClick={(event) =>
+				onSelect(event, {
+					type: 'UPDATE_SVG',
+					svgString: entry.svgString,
+					uploadSVG: entry.uploadSVG || '',
+				})
+			}
+		>
+			<RecentRemoveButton entryId={entry.id} onRemove={onRemove} />
+			{preview}
+		</span>
+	);
+}
 
 export default function RecentIcons() {
 	const libraryBodyRef = useRef(null);
+	const gridRef = useRef(null);
 
 	const {
 		recentIcons,
@@ -33,25 +109,47 @@ export default function RecentIcons() {
 		draftLibraryIcon,
 	} = useContext(IconContext);
 
-	const iconElements = useMemo(
-		() =>
-			buildRecentIconElements({
-				items: recentIcons,
-				onSelect: handleIconSelect,
-				onDoubleSelect: handleLibraryIconQuickSelect,
-				onRemove: removeRecentIcon,
-			}),
-		[
-			recentIcons,
-			handleIconSelect,
-			handleLibraryIconQuickSelect,
-			removeRecentIcon,
-		]
+	const libraryRecords = useMemo(() => {
+		const records = [];
+
+		for (const entry of recentIcons) {
+			if (entry.type !== 'library') {
+				continue;
+			}
+
+			const icon = getIcon(entry.icon, entry.library);
+
+			if (!icon || !isValidIcon(icon, entry.icon)) {
+				continue;
+			}
+
+			records.push({
+				key: entry.id,
+				iconName: icon.iconName,
+				library: icon.library,
+				icon,
+				sourceMeta: null,
+				className: 'recent-icon-item',
+				children: (
+					<RecentRemoveButton
+						entryId={entry.id}
+						onRemove={removeRecentIcon}
+					/>
+				),
+			});
+		}
+
+		return records;
+	}, [recentIcons, removeRecentIcon]);
+
+	const customItems = useMemo(
+		() => recentIcons.filter((entry) => entry.type === 'custom'),
+		[recentIcons]
 	);
 
 	useDraftIconHighlight(libraryBodyRef, draftLibraryIcon, recentIcons.length);
 
-	if (!iconElements.length) {
+	if (!libraryRecords.length && !customItems.length) {
 		return null;
 	}
 
@@ -95,9 +193,21 @@ export default function RecentIcons() {
 				className={controlInnerClassNames('library-body', 'no-fade')}
 				ref={libraryBodyRef}
 			>
-				<div className={controlInnerClassNames('library-grid')}>
-					{iconElements}
-				</div>
+				<IconGrid
+					gridRef={gridRef}
+					records={libraryRecords}
+					onSelect={handleIconSelect}
+					onDoubleSelect={handleLibraryIconQuickSelect}
+				>
+					{customItems.map((entry) => (
+						<RecentCustomIcon
+							key={entry.id}
+							entry={entry}
+							onSelect={handleIconSelect}
+							onRemove={removeRecentIcon}
+						/>
+					))}
+				</IconGrid>
 			</div>
 		</div>
 	);

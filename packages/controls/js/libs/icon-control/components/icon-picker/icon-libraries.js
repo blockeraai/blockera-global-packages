@@ -90,22 +90,26 @@ const IconLibraries = ({
 }) => {
 	const pickerReady = useIconPickerLibrariesReady();
 	const libraryComponents = useMemo(() => {
-		return Object.entries(libraries).map(([library, config]) => {
-			const iconLibraryInfo = getIconLibrary(library);
-			const title = getLibraryHeaderTitle(iconLibraryInfo[library]);
+		return Object.entries(libraries).flatMap(([library, config]) => {
 			const isActive = activeFilter === 'all' || library === activeFilter;
 
-			return (
-				<div key={library} hidden={!isActive}>
-					<IconLibrary
-						library={library}
-						lazyLoad={config.lazyLoad}
-						eager={activeFilter === library}
-						limitToPreview={activeFilter === 'all'}
-						title={title}
-					/>
-				</div>
-			);
+			if (!isActive) {
+				return [];
+			}
+
+			const iconLibraryInfo = getIconLibrary(library);
+			const title = getLibraryHeaderTitle(iconLibraryInfo[library]);
+
+			return [
+				<IconLibrary
+					key={library}
+					library={library}
+					lazyLoad={config.lazyLoad}
+					eager={activeFilter === library}
+					limitToPreview={activeFilter === 'all'}
+					title={title}
+				/>,
+			];
 		});
 	}, [libraries, activeFilter, pickerReady]);
 

@@ -829,6 +829,11 @@
 			height: 1px;
 		}
 
+		.blockera-control-library-grid-spacer {
+			flex: 1 0 100%;
+			pointer-events: none;
+		}
+
 		.blockera-control-library-more-hint {
 			margin: 12px 0 0;
 			font-size: 12px;
@@ -1026,5 +1031,34 @@
 			height: var(--icon-size, 26px);
 			object-fit: contain;
 		}
+	}
+}
+
+.blockera-control-icon-library-tooltip-flyout {
+	box-sizing: border-box;
+	width: 220px;
+	padding: 8px;
+	background: #000000;
+	color: #ffffff;
+	border-radius: 2px;
+	font-size: 12px;
+	text-align: left;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	z-index: 1000001;
+
+	.blockera-control-icon-library-tooltip {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		line-height: 1.4;
+	}
+
+	.blockera-control-icon-library-tooltip__row {
+		margin: 0;
+		color: #ffffff;
+	}
+
+	.blockera-control-icon-library-tooltip__label {
+		font-weight: 600;
 	}
 }

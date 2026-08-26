@@ -3,6 +3,7 @@
  */
 import { __, sprintf } from '@wordpress/i18n';
 import {
+	memo,
 	useState,
 	useContext,
 	useMemo,
@@ -27,12 +28,90 @@ import { Icon, useIconPickerLibrariesReady } from '@blockera/icons';
 import { IconContext } from '../../context';
 import { getIconLibraryLockType, getLibraryIcons } from '../../utils';
 import { useDraftIconHighlight } from '../../hooks/use-draft-icon-highlight';
+import { useIconGridWindow } from '../../hooks/use-icon-grid-window';
 import { FeatureWrapper } from '../../../feature-wrapper';
 import {
 	DEFAULT_LIBRARIES,
 	formatIconCount,
 	getLibrariesIconCount,
 } from './icon-libraries';
+import { SEARCH_FREE_LIMIT, SEARCH_PRO_LIMIT } from './constants';
+import IconGrid from './icon-grid';
+
+const SearchResultsGrid = memo(function SearchResultsGrid({
+	records,
+	lockType = 'none',
+	resetKey,
+	windowEnabled,
+}) {
+	const gridRef = useRef(null);
+	const {
+		startIndex,
+		endIndex,
+		remainingCount,
+		moreHintRef,
+		spacerBeforePx,
+		spacerAfterPx,
+	} = useIconGridWindow({
+		gridRef,
+		total: records.length,
+		limitToPreview: false,
+		windowEnabled,
+		resetKey,
+	});
+
+	const { handleIconSelect, handleLibraryIconQuickSelect, draftLibraryIcon } =
+		useContext(IconContext);
+
+	useDraftIconHighlight(
+		gridRef,
+		draftLibraryIcon,
+		`${resetKey}:${startIndex}:${endIndex}`
+	);
+
+	const grid = (
+		<IconGrid
+			gridRef={gridRef}
+			records={records}
+			startIndex={startIndex}
+			endIndex={endIndex}
+			spacerBeforePx={spacerBeforePx}
+			spacerAfterPx={spacerAfterPx}
+			onSelect={handleIconSelect}
+			onDoubleSelect={handleLibraryIconQuickSelect}
+		/>
+	);
+
+	return (
+		<div className={controlInnerClassNames('library-body', 'no-fade')}>
+			{lockType === 'none' ? (
+				grid
+			) : (
+				<FeatureWrapper
+					className={controlInnerClassNames('icon-library-lock')}
+					type={lockType}
+					showText="always"
+				>
+					{grid}
+				</FeatureWrapper>
+			)}
+			{remainingCount > 0 && (
+				<p
+					ref={moreHintRef}
+					className={controlInnerClassNames('library-more-hint')}
+				>
+					{sprintf(
+						// translators: %s is the number of remaining search result icons.
+						__('and more %s icons', 'blockera'),
+						Number(remainingCount).toLocaleString(
+							document.documentElement.lang || undefined
+						)
+					)}
+				</p>
+			)}
+		</div>
+	);
+});
 
 export default function Search({
 	libraries = DEFAULT_LIBRARIES,
@@ -40,65 +119,54 @@ export default function Search({
 }) {
 	const pickerReady = useIconPickerLibrariesReady();
 	const [searchInput, setSearchInput] = useState('');
+	const [committedQuery, setCommittedQuery] = useState('');
 	const [searchData, setSearchData] = useState([]);
 	const [searchData2, setSearchData2] = useState([]);
-	const searchResultsRef = useRef(null);
-
-	const { handleIconSelect, handleLibraryIconQuickSelect, draftLibraryIcon } =
-		useContext(IconContext);
 
 	const iconCount = useMemo(
 		() => getLibrariesIconCount(libraries),
 		[libraries, pickerReady]
 	);
 
-	const buildSearchResults = useCallback(
-		(value) => {
-			setSearchData(
-				getLibraryIcons({
-					library: 'search',
-					query: value,
-					onClick: handleIconSelect,
-					onDoubleClick: handleLibraryIconQuickSelect,
-					limit: 49,
-				})
-			);
-			setSearchData2(
-				getLibraryIcons({
-					library: 'search-2',
-					query: value,
-					onClick: handleIconSelect,
-					onDoubleClick: handleLibraryIconQuickSelect,
-					limit: 400,
-				})
-			);
-		},
-		[handleIconSelect, handleLibraryIconQuickSelect]
-	);
+	const buildSearchResults = useCallback((value) => {
+		setCommittedQuery(value);
+		setSearchData(
+			getLibraryIcons({
+				library: 'search',
+				query: value,
+				limit: SEARCH_FREE_LIMIT,
+			})
+		);
+		setSearchData2(
+			getLibraryIcons({
+				library: 'search-2',
+				query: value,
+				limit: SEARCH_PRO_LIMIT,
+			})
+		);
+	}, []);
 
 	const runSearchDebounced = useDebounce(buildSearchResults, 150);
 
-	useDraftIconHighlight(
-		searchResultsRef,
-		draftLibraryIcon,
-		`${searchInput}:${searchData.length}:${searchData2.length}`
-	);
+	const handleSearchChange = useCallback(
+		(value) => {
+			setSearchInput(value);
+			onSearchChange(value);
 
-	const handleSearchChange = (value) => {
-		setSearchInput(value);
-		onSearchChange(value);
-
-		if (!value) {
-			if (typeof runSearchDebounced.cancel === 'function') {
-				runSearchDebounced.cancel();
+			if (!value) {
+				if (typeof runSearchDebounced.cancel === 'function') {
+					runSearchDebounced.cancel();
+				}
+				setCommittedQuery('');
+				setSearchData([]);
+				setSearchData2([]);
+				return;
 			}
-			setSearchData([]);
-			setSearchData2([]);
-			return;
-		}
 
-		runSearchDebounced(value);
-	};
+			runSearchDebounced(value);
+		},
+		[onSearchChange, runSearchDebounced]
+	);
 
 	return (
 		<>
@@ -121,13 +189,12 @@ export default function Search({
 				/>
 			</div>
 			{searchInput && (
-				<div ref={searchResultsRef}>
+				<div>
 					<div
 						className={controlInnerClassNames(
 							'icon-library',
 							'library-search',
-							'is-rendered',
-							!searchInput ? 'is-empty' : ''
+							'is-rendered'
 						)}
 					>
 						<div
@@ -153,20 +220,12 @@ export default function Search({
 								{__('Sorry, no icons found.', 'blockera')}
 							</p>
 						) : (
-							<div
-								className={controlInnerClassNames(
-									'library-body',
-									'no-fade'
-								)}
-							>
-								<div
-									className={controlInnerClassNames(
-										'library-grid'
-									)}
-								>
-									{searchData}
-								</div>
-							</div>
+							<SearchResultsGrid
+								records={searchData}
+								// Debounced query only: live input must not remount these grids.
+								resetKey={`search:${committedQuery}`}
+								windowEnabled={false}
+							/>
 						)}
 					</div>
 
@@ -174,8 +233,7 @@ export default function Search({
 						className={controlInnerClassNames(
 							'icon-library',
 							'library-search',
-							'is-rendered',
-							!searchInput ? 'is-empty' : ''
+							'is-rendered'
 						)}
 					>
 						<div
@@ -201,28 +259,12 @@ export default function Search({
 								{__('Sorry, no icons found.', 'blockera')}
 							</p>
 						) : (
-							<div
-								className={controlInnerClassNames(
-									'library-body',
-									'no-fade'
-								)}
-							>
-								<FeatureWrapper
-									className={controlInnerClassNames(
-										'icon-library-lock'
-									)}
-									type={getIconLibraryLockType('search-2')}
-									showText="always"
-								>
-									<div
-										className={controlInnerClassNames(
-											'library-grid'
-										)}
-									>
-										{searchData2}
-									</div>
-								</FeatureWrapper>
-							</div>
+							<SearchResultsGrid
+								records={searchData2}
+								lockType={getIconLibraryLockType('search-2')}
+								resetKey={`search-2:${committedQuery}`}
+								windowEnabled={true}
+							/>
 						)}
 
 						{!searchData.length && !searchData2.length && (
