@@ -395,6 +395,7 @@ target-branch checkout when the feature branch may not have the latest pin yet).
 | `jobs/sync-global-packages-submodule/run-bump.sh` | git user + `bump-global-packages-submodule.sh` (folds GP Unreleased on branch tips) |
 | `jobs/sync-global-packages-submodule/commit-bump.sh` | commit staged gitlink |
 | `jobs/sync-global-packages-submodule/open-or-update-pr.sh` | force-push PR branch + `gh pr` |
+| `jobs/sync-global-packages-submodule/delete-bump-branch.sh` | close leftover bump PR + delete bump branch when open-pr is skipped or failed |
 
 | Env | Default |
 | --- | --- |
