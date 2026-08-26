@@ -1,7 +1,11 @@
 /**
  * Internal dependencies
  */
-import { finalizeColorString, valueCleanupColorString } from '../css-color';
+import {
+	areStoredCssColorsEqual,
+	finalizeColorString,
+	valueCleanupColorString,
+} from '../css-color';
 
 describe('valueCleanupColorString', () => {
 	it('defers 3-digit hex shorthand until finalize', () => {
@@ -38,5 +42,24 @@ describe('valueCleanupColorString', () => {
 	it('normalizes complete hex values', () => {
 		expect(valueCleanupColorString('dddddd')).toBe('#dddddd');
 		expect(valueCleanupColorString('#283f8a')).toBe('#283f8a');
+	});
+});
+
+describe('areStoredCssColorsEqual', () => {
+	it('treats identical strings as equal', () => {
+		expect(areStoredCssColorsEqual('#666666', '#666666')).toBe(true);
+	});
+
+	it('treats hex and rgb of the same pixel as equal', () => {
+		expect(areStoredCssColorsEqual('#ff0000', 'rgb(255, 0, 0)')).toBe(true);
+	});
+
+	it('returns false for different colors', () => {
+		expect(areStoredCssColorsEqual('#666666', '#888888')).toBe(false);
+	});
+
+	it('returns false for non-strings', () => {
+		expect(areStoredCssColorsEqual(null, '#fff')).toBe(false);
+		expect(areStoredCssColorsEqual('#fff', undefined)).toBe(false);
 	});
 });
