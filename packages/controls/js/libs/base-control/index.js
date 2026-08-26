@@ -23,6 +23,7 @@ export default function BaseControl({
 	controlName = 'general',
 	style = {},
 	controlProps = {},
+	fieldProps = {},
 	...props
 }: BaseControlProps): MixedElement {
 	let cssColumns = '';
@@ -32,21 +33,35 @@ export default function BaseControl({
 		columns = 'columns-custom';
 	}
 
+	const {
+		className: fieldClassName,
+		style: fieldStyle,
+		'data-cy': fieldDataCy,
+		...restFieldProps
+	} = fieldProps;
+
 	if (label === '' && columns === '') {
 		const shouldWrapControl =
-			controlName === 'empty' || (style && Object.keys(style).length > 0);
+			controlName === 'empty' ||
+			Object.keys(fieldProps).length > 0 ||
+			(style && Object.keys(style).length > 0);
 
 		if (shouldWrapControl) {
 			return (
 				<div
+					{...restFieldProps}
 					className={fieldsClassNames(
 						controlName,
 						columns,
-						className
+						className,
+						fieldClassName
 					)}
-					style={{ ...style, gridTemplateColumns: cssColumns || '' }}
-					data-cy="base-control"
-					{...props}
+					style={{
+						...style,
+						...fieldStyle,
+						gridTemplateColumns: cssColumns || '',
+					}}
+					data-cy={fieldDataCy || 'base-control'}
 				>
 					<div
 						className={fieldsInnerClassNames('control')}
@@ -63,9 +78,19 @@ export default function BaseControl({
 
 	return (
 		<div
-			className={fieldsClassNames(controlName, columns, className)}
-			style={{ ...style, gridTemplateColumns: cssColumns || '' }}
-			data-cy="base-control"
+			{...restFieldProps}
+			className={fieldsClassNames(
+				controlName,
+				columns,
+				className,
+				fieldClassName
+			)}
+			style={{
+				...style,
+				...fieldStyle,
+				gridTemplateColumns: cssColumns || '',
+			}}
+			data-cy={fieldDataCy || 'base-control'}
 		>
 			{label !== '' && (
 				<div className={fieldsClassNames('label')}>

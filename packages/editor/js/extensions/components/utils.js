@@ -128,7 +128,7 @@ const prepareBlockeraDefaultAttributesValuesImpl = (
 
 		const isGlobalStylesPanel =
 			'global-styles-panel' === context &&
-			!['blockeraPropsId', 'blockeraCompatId'].includes(key) &&
+			!['blockeraId', 'blockeraPropsId', 'blockeraCompatId', 'blockeraBlockMode'].includes(key) &&
 			ignoreBlockeraAttributeKeysRegExp().test(key);
 
 		if (rootAttributes[key].default !== undefined) {

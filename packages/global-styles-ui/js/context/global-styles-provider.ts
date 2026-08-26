@@ -17,6 +17,23 @@ import { prepare } from '@blockera/data-editor';
  */
 import { cleanEmptyObject } from '../theme-json-utils';
 
+export type GlobalStylesUserConfigSetter = (
+	callbackOrObject:
+		| ((current: Record<string, unknown>) => Record<string, unknown>)
+		| Record<string, unknown>,
+	options?: Record<string, unknown>
+) => void;
+
+export type GlobalStylesContextValue = {
+	single: unknown;
+	setUserConfig: GlobalStylesUserConfigSetter;
+	user: Record<string, unknown>;
+	base: Record<string, unknown>;
+	merged: Record<string, unknown>;
+	isReady: boolean;
+	canEditGlobalStyles: boolean;
+};
+
 export function mergeBaseAndUserConfigs(
 	base: Record<string, unknown>,
 	user: Record<string, unknown>
@@ -35,9 +52,7 @@ export function mergeBaseAndUserConfigs(
 function useGlobalStylesUserConfig(): [
 	boolean,
 	Record<string, unknown>,
-	(
-		callback: (config: Record<string, unknown>) => Record<string, unknown>
-	) => void,
+	GlobalStylesUserConfigSetter,
 	boolean,
 ] {
 	const {
@@ -207,11 +222,19 @@ type UseGlobalStylesContextOptions = {
 	from?: 'merged' | 'base' | 'user';
 };
 
+export function useGlobalStylesContext(
+	options: UseGlobalStylesContextOptions & { single: true }
+): Record<string, unknown>;
+export function useGlobalStylesContext(
+	options?: UseGlobalStylesContextOptions
+): GlobalStylesContextValue;
 export function useGlobalStylesContext({
 	path = '',
 	single: returnSingleSlice = false,
 	from = 'merged',
-}: UseGlobalStylesContextOptions = {}): Record<string, unknown> {
+}: UseGlobalStylesContextOptions = {}):
+	| GlobalStylesContextValue
+	| Record<string, unknown> {
 	const [isUserConfigReady, userConfig, setUserConfig, canEditGlobalStyles] =
 		useGlobalStylesUserConfig();
 	const [isBaseConfigReady, baseConfig] = useGlobalStylesBaseConfig();

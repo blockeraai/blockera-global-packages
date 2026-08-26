@@ -151,7 +151,8 @@ export const LayoutStyles = ({
 	// flex/grid gates (mirrors PHP WithDisplayValueTrait). Do not use inherited
 	// display for emitting the `display` property itself.
 	const layoutDisplay =
-		currentDisplayValue || getLayoutDisplayValue(props?.inheritedDisplay);
+		currentDisplayValue ||
+		getLayoutDisplayValue((props: any)?.inheritedDisplay);
 
 	const gridMinFieldActive = isActiveField(blockeraGridMinimumColumnWidth);
 	const gridCountFieldActive = isActiveField(blockeraGridColumnCount);

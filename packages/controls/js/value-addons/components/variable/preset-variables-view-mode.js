@@ -78,7 +78,7 @@ export function PresetVariablesViewModeProvider({
 
 	useEffect(() => {
 		const handleChange = (event: Event) => {
-			const detail = (event: CustomEvent<{ mode?: mixed }>).detail;
+			const detail = (event: any).detail;
 			if (isValidViewMode(detail?.mode)) {
 				setViewModeState(detail.mode);
 			}
@@ -128,7 +128,7 @@ export function usePresetVariablesViewMode(): PresetVariablesViewModeContextValu
 		}
 
 		const handleChange = (event: Event) => {
-			const detail = (event: CustomEvent<{ mode?: mixed }>).detail;
+			const detail = (event: any).detail;
 			if (isValidViewMode(detail?.mode)) {
 				setViewModeState(detail.mode);
 			}

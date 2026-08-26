@@ -2,26 +2,7 @@
  * Shared Cypress helpers for the block editor variable picker popover.
  */
 import { createPost } from './site-navigation';
-import { getBlockClientId, getSelectedBlock, getWPDataObject } from './editor';
-
-/** Preset row header targets that wire canvas hover preview (`onMouseEnter`). */
-const VARIABLE_PICKER_PRESET_HEADER_SELECTOR = [
-	'[data-cy="color-repeater-item-header"]',
-	'[data-cy="font-size-repeater-item-header"]',
-	'[data-cy="line-height-repeater-item-header"]',
-	'[data-cy="spacing-size-repeater-item-header"]',
-	'[data-cy="border-preset-repeater-item-header"]',
-	'[data-cy="border-radius-preset-repeater-item-header"]',
-	'[data-cy="shadow-preset-repeater-item-header"]',
-	'[data-cy="text-shadow-preset-repeater-item-header"]',
-	'[data-cy="filter-preset-repeater-item-header"]',
-	'[data-cy="transform-preset-repeater-item-header"]',
-	'[data-cy="transition-preset-repeater-item-header"]',
-	'[data-cy="gradient-repeater-item-header"]',
-	'[data-cy="fallback-catalog-repeater-item-header"]',
-	'[data-cy="width-size-repeater-item-header"]',
-	'.blockera-control-repeater-group-header',
-].join(', ');
+import { getSelectedBlock, getWPDataObject } from './editor';
 
 /** Opens paragraph → Style → Line Height → variable picker popover. */
 export function openParagraphLineHeightVariablePickerPopover() {
@@ -495,12 +476,42 @@ export function filterVariablePickerSearch(query) {
 	});
 }
 
-/**
- * Hovers a preset row in the open variable picker (fires canvas preview mouseenter).
- *
- * @param {string} slug Preset slug (`data-variable-slug`).
- */
-export function hoverVariablePickerPresetRow(slug) {
+/** Opener header that owns `onMouseEnter` / `onMouseLeave` for canvas preview. */
+const VARIABLE_PICKER_PRESET_OPENER_HEADER =
+	'[data-cy$="-repeater-item-header"]';
+
+function dispatchPresetRowPointerEvent($el, type) {
+	const node = $el?.[0];
+
+	if (!node || typeof node.dispatchEvent !== 'function') {
+		return;
+	}
+
+	const view = node.ownerDocument?.defaultView || window;
+	const relatedTarget = node.ownerDocument?.body || null;
+	const isEnter = type === 'mouseenter' || type === 'mouseover';
+
+	// React maps onMouseEnter/Leave to mouseover/mouseout, not native mouseenter.
+	node.dispatchEvent(
+		new view.MouseEvent(isEnter ? 'mouseover' : 'mouseout', {
+			bubbles: true,
+			cancelable: true,
+			composed: true,
+			view,
+			relatedTarget,
+		})
+	);
+	node.dispatchEvent(
+		new view.MouseEvent(isEnter ? 'mouseenter' : 'mouseleave', {
+			bubbles: false,
+			cancelable: true,
+			view,
+			relatedTarget,
+		})
+	);
+}
+
+function aliasVariablePickerPresetOpenerHeader(slug) {
 	withinVariablePickerPopover(() => {
 		cy.get(`[data-variable-slug="${slug}"]`, { timeout: 20000 })
 			.filter(':visible')
@@ -509,11 +520,26 @@ export function hoverVariablePickerPresetRow(slug) {
 			.as('variablePickerPresetRow');
 
 		cy.get('@variablePickerPresetRow')
-			.find(VARIABLE_PICKER_PRESET_HEADER_SELECTOR)
+			.find(VARIABLE_PICKER_PRESET_OPENER_HEADER)
+			.filter(':visible')
 			.first()
-			.scrollIntoView()
-			.realHover();
+			.as('variablePickerPresetOpenerHeader');
 	});
+}
+
+/**
+ * Hovers a preset row in the open variable picker (fires canvas preview mouseenter).
+ *
+ * @param {string} slug Preset slug (`data-variable-slug`).
+ */
+export function hoverVariablePickerPresetRow(slug) {
+	aliasVariablePickerPresetOpenerHeader(slug);
+
+	cy.get('@variablePickerPresetOpenerHeader')
+		.scrollIntoView()
+		.then(($header) => {
+			dispatchPresetRowPointerEvent($header, 'mouseenter');
+		});
 }
 
 /**
@@ -522,21 +548,21 @@ export function hoverVariablePickerPresetRow(slug) {
  * @param {string} slug Preset slug (`data-variable-slug`).
  */
 export function leaveVariablePickerPresetRowHover(slug) {
-	withinVariablePickerPopover(() => {
-		cy.get(`[data-variable-slug="${slug}"]`, { timeout: 20000 })
-			.filter(':visible')
-			.first()
-			.closest('[data-cy="repeater-item"]')
-			.find(VARIABLE_PICKER_PRESET_HEADER_SELECTOR)
-			.first()
-			.trigger('mouseleave', { force: true });
+	aliasVariablePickerPresetOpenerHeader(slug);
 
+	cy.get('@variablePickerPresetOpenerHeader').then(($header) => {
+		dispatchPresetRowPointerEvent($header, 'mouseleave');
+	});
+
+	withinVariablePickerPopover(() => {
 		cy.get('.blockera-control-var-picker-search input[type="search"]', {
 			timeout: 20000,
 		})
 			.filter(':visible')
 			.first()
-			.realHover();
+			.then(($search) => {
+				dispatchPresetRowPointerEvent($search, 'mouseenter');
+			});
 	});
 }
 
@@ -546,11 +572,9 @@ export function leaveVariablePickerPresetRowHover(slug) {
  * @param {string} cssNeedle Substring expected in `#blockera-styles-wrapper`.
  */
 export function assertEditorStylesWrapperIncludes(cssNeedle) {
-	cy.getIframeBody().within(() => {
-		cy.get('#blockera-styles-wrapper', { timeout: 20000 })
-			.invoke('text')
-			.should('include', cssNeedle);
-	});
+	cy.getBlockeraStylesWrapper({ timeout: 20000 })
+		.invoke('text')
+		.should('include', cssNeedle);
 }
 
 /**
@@ -559,11 +583,133 @@ export function assertEditorStylesWrapperIncludes(cssNeedle) {
  * @param {string} cssNeedle Substring that must be absent from `#blockera-styles-wrapper`.
  */
 export function assertEditorStylesWrapperExcludes(cssNeedle) {
-	cy.getIframeBody().within(() => {
-		cy.get('#blockera-styles-wrapper', { timeout: 20000 })
-			.invoke('text')
-			.should('not.include', cssNeedle);
+	cy.getBlockeraStylesWrapper({ timeout: 20000 }).should(($el) => {
+		const hasOverlayRule = String(collectWrapperEngineCss($el))
+			.split('}')
+			.some(
+				(chunk) =>
+					chunk.includes(cssNeedle) && !/--wp--preset--/.test(chunk)
+			);
+
+		expect(hasOverlayRule).to.eq(false);
 	});
+}
+
+/**
+ * Hover overlay CSS is printed by the style engine into `#blockera-styles-wrapper`
+ * (`.blockera-block-{id}` when the block has identity, otherwise `#block-{clientId}`).
+ * It must not live in `data-blockera-preview-inject` (clientId inject tags).
+ */
+function aliasSelectedBlockClientId() {
+	getWPDataObject().then((data) => {
+		const selected = getSelectedBlock(data);
+		cy.wrap(selected?.clientId).as('previewBlockClientId');
+	});
+}
+
+function collectWrapperEngineCss($wrapper) {
+	const node = $wrapper?.[0];
+
+	if (!node || typeof node.cloneNode !== 'function') {
+		return '';
+	}
+
+	const clone = node.cloneNode(true);
+	clone
+		.querySelectorAll('[data-blockera-preview-inject]')
+		.forEach((el) => el.remove());
+
+	return clone.textContent || '';
+}
+
+function collectDocumentsEngineCss(doc) {
+	if (!doc?.querySelectorAll) {
+		return '';
+	}
+
+	return Array.from(doc.querySelectorAll('#blockera-styles-wrapper'))
+		.map((el) => collectWrapperEngineCss(Cypress.$(el)))
+		.join('\n');
+}
+
+/**
+ * Hover overlay is a block-targeted rule. Seeded `:root { --wp--preset--*: … }`
+ * custom properties reuse the same fallback string and must not count.
+ */
+function hasBlockHoverPreviewRule(cssText, cssNeedle, selectorNeedle) {
+	return String(cssText)
+		.split('}')
+		.some((chunk) => {
+			if (!chunk.includes(cssNeedle) || !chunk.includes(selectorNeedle)) {
+				return false;
+			}
+
+			return !/--wp--preset--/.test(chunk);
+		});
+}
+
+function getUniqueBlockeraBlockClassName(className) {
+	return (
+		String(className || '')
+			.split(/\s+/)
+			.find(
+				(token) =>
+					token &&
+					token !== 'blockera-block' &&
+					/^blockera-block-[\w-]+$/i.test(token)
+			) || ''
+	);
+}
+
+/**
+ * Style engine uses `.blockera-block-{id}` once that unique class is on the
+ * selected block (any Blockera attribute / identity). Unused blocks have
+ * neither, so overlay CSS targets `#block-{clientId}`.
+ */
+function getHoverPreviewSelectorNeedle(blockEl, clientId) {
+	const unique = getUniqueBlockeraBlockClassName(
+		blockEl?.getAttribute?.('class') || blockEl?.className || ''
+	);
+
+	if (unique) {
+		return `.${unique}`;
+	}
+
+	return `#block-${clientId}`;
+}
+
+function collectInjectPreviewCss(docs) {
+	return docs
+		.filter(Boolean)
+		.flatMap((doc) =>
+			Array.from(doc.querySelectorAll('[data-blockera-preview-inject]'))
+		)
+		.map((el) => el.textContent || '')
+		.join('');
+}
+
+function collectEngineCssFromDocs(docs) {
+	return docs
+		.filter(Boolean)
+		.map((doc) => collectDocumentsEngineCss(doc))
+		.join('\n');
+}
+
+function getCanvasDocuments() {
+	const iframe = Cypress.$('iframe[name="editor-canvas"]')[0];
+	const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+	const parentDoc = iframeDoc?.defaultView?.parent?.document;
+	const docs = [iframeDoc];
+
+	if (parentDoc && parentDoc !== iframeDoc) {
+		docs.push(parentDoc);
+	}
+
+	if (typeof document !== 'undefined' && !docs.includes(document)) {
+		docs.push(document);
+	}
+
+	return { iframeDoc, docs };
 }
 
 /**
@@ -581,18 +727,45 @@ export function assertVariablePickerPresetHoverPreview({
 	blockCssProperty,
 	blockCssValue,
 }) {
-	getWPDataObject().then((data) => {
-		cy.wrap(getBlockClientId(data)).as('previewBlockClientId');
-	});
-
-	hoverVariablePickerPresetRow(slug);
+	aliasSelectedBlockClientId();
+	aliasVariablePickerPresetOpenerHeader(slug);
 
 	cy.get('@previewBlockClientId').then((clientId) => {
-		assertEditorStylesWrapperIncludes(`#block-${clientId}`);
+		cy.get('@variablePickerPresetOpenerHeader').then(($header) => {
+			// Keep re-entering while Cypress retries. Querying the canvas iframe
+			// otherwise fires mouseleave and clears the overlay before assert.
+			cy.wrap(null, { timeout: 20000 }).should(() => {
+				dispatchPresetRowPointerEvent($header, 'mouseenter');
+
+				const { iframeDoc, docs } = getCanvasDocuments();
+				const blockEl = iframeDoc?.getElementById(`block-${clientId}`);
+				const selectorNeedle = getHoverPreviewSelectorNeedle(
+					blockEl,
+					clientId
+				);
+
+				expect(
+					collectInjectPreviewCss(docs),
+					'hover preview must use style-engine selectors, not clientId inject'
+				).to.not.include(cssNeedle);
+
+				expect(
+					hasBlockHoverPreviewRule(
+						collectEngineCssFromDocs(docs),
+						cssNeedle,
+						selectorNeedle
+					),
+					`canvas CSS targets the selected block via ${selectorNeedle}`
+				).to.eq(true);
+			});
+		});
 	});
-	assertEditorStylesWrapperIncludes(cssNeedle);
 
 	if (blockCssProperty && blockCssValue) {
+		cy.get('@variablePickerPresetOpenerHeader').then(($header) => {
+			dispatchPresetRowPointerEvent($header, 'mouseenter');
+		});
+
 		cy.getBlock('core/paragraph').should(
 			'have.css',
 			blockCssProperty,

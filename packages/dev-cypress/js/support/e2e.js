@@ -14,6 +14,44 @@ import { registerComponentCommands } from './component-commands';
 registerCommands();
 registerComponentCommands();
 
+/**
+ * Cypress `.type('{esc}')` on `body` uses CDP key events and can hang forever in
+ * headless Chrome when a Blockera inspector popover holds focus.
+ * Only bypass CDP in that case so other specs keep native Cypress typing.
+ */
+Cypress.Commands.overwrite('type', (originalFn, subject, text, options) => {
+	const typed = String(text);
+	const isEscapeOnly = /^(\{esc\})+$/i.test(typed);
+	const node = subject?.[0];
+	const isBody = node instanceof HTMLElement && node.nodeName === 'BODY';
+
+	if (isEscapeOnly && isBody) {
+		const doc = node.ownerDocument || document;
+		const hasBlockeraPopover = Boolean(
+			doc.querySelector(
+				'.blockera-component-popover, .blockera-control-group-popover'
+			)
+		);
+
+		if (hasBlockeraPopover) {
+			doc.dispatchEvent(
+				new KeyboardEvent('keydown', {
+					key: 'Escape',
+					code: 'Escape',
+					keyCode: 27,
+					which: 27,
+					bubbles: true,
+					cancelable: true,
+				})
+			);
+
+			return cy.wrap(subject);
+		}
+	}
+
+	return originalFn(subject, text, options);
+});
+
 beforeEach(function () {
 	cy.viewport(1280, 900);
 
@@ -88,11 +126,11 @@ Cypress.Commands.add('getIframeBody', () => {
 	return cy.get('iframe[name="editor-canvas"]').its('0.contentDocument.body');
 });
 
-Cypress.Commands.add('getBlockeraStylesWrapper', () => {
+Cypress.Commands.add('getBlockeraStylesWrapper', (options = {}) => {
 	if (Cypress.$('iframe[name="editor-canvas"]').length) {
-		return cy.getIframeBody().find('#blockera-styles-wrapper');
+		return cy.getIframeBody().find('#blockera-styles-wrapper', options);
 	}
-	return cy.get('#blockera-styles-wrapper');
+	return cy.get('#blockera-styles-wrapper', options);
 });
 
 // realHover can hang headless Chrome in CI; scroll + center pointer first.

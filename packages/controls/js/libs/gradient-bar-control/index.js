@@ -34,6 +34,7 @@ export default function GradientBarControl({
 	height = 30,
 	//
 	className = '',
+	fieldProps,
 	//
 	controlAddonTypes,
 	variableTypes,
@@ -51,7 +52,7 @@ export default function GradientBarControl({
 		onChange,
 	});
 
-	const normalizedVariableTypes =
+	const normalizedVariableTypes: Array<any> =
 		typeof variableTypes === 'string'
 			? [variableTypes]
 			: variableTypes || [];
@@ -100,6 +101,7 @@ export default function GradientBarControl({
 				columns={columns}
 				controlName={field}
 				className={className}
+				fieldProps={fieldProps}
 				{...labelProps}
 			>
 				<div
@@ -125,6 +127,7 @@ export default function GradientBarControl({
 			columns={columns}
 			controlName={field}
 			className={className + ' ' + valueAddonClassNames}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<div

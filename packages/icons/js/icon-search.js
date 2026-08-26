@@ -13,11 +13,50 @@ import {
 	getIconLibrarySearchData,
 	getIconLibrariesSearchIndex,
 	isValidIconLibrary,
+	subscribeIconPickerLibraries,
 } from './icon-library';
 import { isValidIcon } from './icon';
 import { type IconLibraryTypes } from './types';
 
 const searchConfig = require('./search-config.json');
+
+const fuseCache: { [key: string]: { index: Object, fuse: Object } } = {};
+
+subscribeIconPickerLibraries(() => {
+	for (const key of Object.keys(fuseCache)) {
+		delete fuseCache[key];
+	}
+});
+
+function getCachedFuse(library: IconLibraryTypes | 'all' | 'all2'): ?Object {
+	const searchIndex = getIconLibrariesSearchIndex(library);
+
+	if (!searchIndex) {
+		return null;
+	}
+
+	const cacheKey = library === 'all2' || library === 'all' ? library : '';
+
+	if (cacheKey) {
+		const cached = fuseCache[cacheKey];
+
+		if (cached && cached.index === searchIndex) {
+			return cached.fuse;
+		}
+
+		const docs = getIconLibrarySearchData(library);
+		const fuse = new Fuse(docs, searchConfig, searchIndex);
+		fuseCache[cacheKey] = { index: searchIndex, fuse };
+
+		return fuse;
+	}
+
+	return new Fuse(
+		getIconLibrarySearchData(library),
+		searchConfig,
+		searchIndex
+	);
+}
 
 /**
  * Escape Fuse.js extended-search operators in user input.
@@ -51,20 +90,20 @@ export function iconSearch({
 	}
 
 	const getResult = () => {
-		const fuse = new Fuse(
-			getIconLibrarySearchData(library),
-			searchConfig,
-			getIconLibrariesSearchIndex(library)
-		);
+		const fuse = getCachedFuse(library);
 
-		let result = fuse.search(prepareIconSearchQuery(query));
-
-		if (!result?.length) {
-			return [];
+		if (!fuse) {
+			return {};
 		}
 
-		if (limit) {
-			result = result.slice(0, limit);
+		const searchOptions = limit ? { limit } : undefined;
+		const result = fuse.search(
+			prepareIconSearchQuery(query),
+			searchOptions
+		);
+
+		if (!result?.length) {
+			return {};
 		}
 
 		const finalResult = {};

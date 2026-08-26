@@ -36,6 +36,7 @@ import {
 	registerPopoverOpen,
 	shouldDismissPopoverFromPointerDown,
 	shouldIgnorePopoverFocusOutside,
+	hasNestedOverlayOpenAsideFrom,
 	unregisterPopoverRoot,
 } from './utils';
 import type { TPopoverProps } from './types';
@@ -146,6 +147,56 @@ export const PopoverCore: React$AbstractComponent<TPopoverCoreProps, mixed> =
 			}, [anchor, dismissPopover]);
 
 			useEffect(() => {
+				const handleEscape = (event: KeyboardEvent) => {
+					if (event.key !== 'Escape' || event.defaultPrevented) {
+						return;
+					}
+
+					const eventTarget = event.target;
+
+					if (
+						eventTarget instanceof HTMLElement &&
+						eventTarget.closest(
+							'input, textarea, select, [contenteditable="true"]'
+						)
+					) {
+						return;
+					}
+
+					const isBodyOrRoot =
+						eventTarget === document.body ||
+						eventTarget === document.documentElement ||
+						eventTarget === document;
+
+					// Leave focused popover Escape to Gutenberg. This path only
+					// covers `cy.get('body').type('{esc}')` / unfocused body events.
+					if (!isBodyOrRoot) {
+						return;
+					}
+
+					const popoverRoot = normalizePopoverRoot(
+						popoverRef.current
+					);
+
+					if (!(popoverRoot instanceof HTMLElement)) {
+						return;
+					}
+
+					if (hasNestedOverlayOpenAsideFrom(popoverRoot)) {
+						return;
+					}
+
+					dismissPopover({ skipMountGuard: true });
+				};
+
+				document.addEventListener('keydown', handleEscape);
+
+				return () => {
+					document.removeEventListener('keydown', handleEscape);
+				};
+			}, [dismissPopover]);
+
+			useEffect(() => {
 				popoverRef.current?.focus();
 				// Only steal focus when the popover first mounts — not on every re-render.
 				// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,12 +237,14 @@ export const PopoverCore: React$AbstractComponent<TPopoverCoreProps, mixed> =
 					'blockera-control-btn-toggle',
 				];
 
+				const focusTarget = e.target;
+
 				if (
-					e.target instanceof HTMLElement &&
+					focusTarget instanceof HTMLElement &&
 					excludeClasses.filter(
 						(className) =>
-							e.target.classList.contains(className) ||
-							e.target.closest(`.${className}`)
+							focusTarget.classList.contains(className) ||
+							focusTarget.closest(`.${className}`)
 					).length !== 0
 				) {
 					return;

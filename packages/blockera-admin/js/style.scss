@@ -7,7 +7,7 @@
 @use "~@wordpress/base-styles/z-index" as *;
 @use "~@wordpress/components/build-style/style" as *;
 @use "~@blockera/controls/js/libs/switch/style.scss" as *;
-@use "~@blockera/editor/js/editor/header-ui/components/breakpoints/breakpoint-settings/style.scss" as *;
+@use "../../editor/js/editor/header-ui/components/breakpoints/breakpoint-settings/style.scss" as *;
 @use "../../wordpress/js/admin/components/update/style.scss" as *;
 
 .wp-admin[class*="toplevel_page_blockera-"] {

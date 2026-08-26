@@ -25,6 +25,7 @@ import {
 import { getPresetRepeaterHeaderOnClick } from '../components/preset-repeater-header-click';
 import { useCanEditGlobalStyles } from '../components/use-global-styles-preset-edit';
 import type { VariableType } from '../components/types.ts';
+import { getPresetRepeaterItemsFromVariable } from '../components/preset-repeater-value-utils';
 import { itemsToRepeaterRecord, type WpFilterPreset } from './utils';
 import { usePresetTaxonomyHeaderLabel } from '../components';
 
@@ -67,15 +68,18 @@ export function FilterPresetOpener({
 	const previewUsage = resolveFilterPresetPreviewUsage(pickerCtx);
 
 	const getPayload = useCallback((): PresetCanvasPreviewPayload | null => {
+		const repeaterItems = getPresetRepeaterItemsFromVariable(
+			variable
+		) as WpFilterPreset['items'];
 		const patch = getGlobalStylesFilterPresetPreviewAttributes(
-			itemsToRepeaterRecord(variable.items || []),
+			itemsToRepeaterRecord(repeaterItems),
 			previewUsage
 		);
 		if (!patch || !Object.keys(patch).length) {
 			return null;
 		}
 		return { kind: 'attributes', patch };
-	}, [variable.items, previewUsage]);
+	}, [variable, previewUsage]);
 
 	const previewHandlers = usePresetRowCanvasPreview(getPayload);
 

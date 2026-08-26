@@ -236,7 +236,7 @@ function ColorGroupInner({
 			<PresetVariationsContext.Provider
 				value={taxonomy.variationsContextValue}
 			>
-				<PresetTaxonomyGroupBridge
+				<PresetTaxonomyGroupBridge<Color & Record<string, unknown>>
 					taxonomy={taxonomy}
 					controlName={controlName}
 					origin={origin}

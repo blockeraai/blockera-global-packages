@@ -47,6 +47,7 @@ export default function BorderControl({
 	__isStyleFocused,
 	controlAddonTypes,
 	variableTypes,
+	fieldProps,
 }: BorderControlProps): MixedElement {
 	const {
 		value,
@@ -109,6 +110,7 @@ export default function BorderControl({
 				columns={columns}
 				controlName={field}
 				className={className}
+				fieldProps={fieldProps}
 			>
 				<div
 					className={controlClassNames(
@@ -134,6 +136,7 @@ export default function BorderControl({
 			columns={columns}
 			controlName={field}
 			className={classNames(className, valueAddonClassNames)}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<div

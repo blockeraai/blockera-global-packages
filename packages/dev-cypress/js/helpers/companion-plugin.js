@@ -106,7 +106,7 @@ function findHydratedDefaultParagraphBlock(data) {
 		.find(
 			(block) =>
 				block.name === defaultBlockName &&
-				block.attributes?.blockeraPropsId &&
+				block.attributes?.blockeraId &&
 				block.attributes?.className
 		);
 }
@@ -115,11 +115,11 @@ function findHydratedDefaultParagraphBlock(data) {
  * Ensure a saved default paragraph block with Blockera bootstrap attrs exists.
  *
  * Fresh post-new canvases are empty and Blockera's inspector bootstraps
- * `blockeraPropsId` / `className` when the Styles tab opens (see block-base.js
+ * `blockeraId` / `className` when the Styles tab opens (see block-base.js
  * `primePresetHover`), which marks the post dirty. Pre-hydrate + save via store
  * APIs so opening styles does not apply new customizations.
  *
- * @see source-code-block-editor/packages/e2e-test-utils-playwright/src/editor/select-blocks.ts
+ * @see source-codes/block-editor/packages/e2e-test-utils-playwright/src/editor/select-blocks.ts
  * @see packages/editor/js/extensions/components/block-base.js
  */
 export function ensureSavedHydratedDefaultParagraphBlock() {
@@ -134,7 +134,7 @@ export function ensureSavedHydratedDefaultParagraphBlock() {
 
 		if (!findHydratedDefaultParagraphBlock(data)) {
 			const block = win.wp.blocks.createBlock('core/paragraph', {
-				blockeraPropsId: COMPANION_CLEAN_BLOCK_PROPS_ID,
+				blockeraId: COMPANION_CLEAN_BLOCK_PROPS_ID,
 				className: COMPANION_CLEAN_BLOCK_CLASS,
 			});
 
@@ -168,8 +168,8 @@ export function ensureSavedHydratedDefaultParagraphBlock() {
  *
  * Uses `initialPosition: -1` so Gutenberg does not focus the content area.
  *
- * @see source-code-block-editor/packages/block-editor/src/store/actions.js selectBlock
- * @see source-code-block-editor/packages/e2e-test-utils-playwright/src/editor/select-blocks.ts
+ * @see source-codes/block-editor/packages/block-editor/src/store/actions.js selectBlock
+ * @see source-codes/block-editor/packages/e2e-test-utils-playwright/src/editor/select-blocks.ts
  */
 export function selectDefaultParagraphBlockInEditor() {
 	assertBlockData((data) => {

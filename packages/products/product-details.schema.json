@@ -1,0 +1,97 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "BlockeraProductDetails",
+	"description": "Schema for details about Blockera products.",
+	"version": "1.0.0",
+	"type": "object",
+	"properties": {
+		"name": {
+			"type": "string",
+			"description": "Public name of the Blockera product."
+		},
+		"description": {
+			"type": "string",
+			"description": "A short summary of the product's purpose."
+		},
+		"slug": {
+			"type": "string",
+			"description": "Unique identifier for the product. if it is a plugin, it should be the plugin slug. if it is a theme, it should be the theme slug."
+		},
+		"version": {
+			"type": "string",
+			"description": "Version of the product, semver if possible."
+		},
+		"type": {
+			"type": "string",
+			"enum": ["plugin", "theme"],
+			"description": "Type of product (plugin, theme)."
+		},
+		"isCompanion": {
+			"type": "boolean",
+			"description": "Whether the product is a companion plugin."
+		},
+		"status": {
+			"type": "string",
+			"enum": ["active", "inactive", "deprecated", "beta", "unreleased"],
+			"description": "Activation or lifecycle status."
+		},
+		"author": {
+			"type": "string",
+			"description": "Author or company responsible for the product."
+		},
+		"homepage": {
+			"type": "string",
+			"format": "uri",
+			"description": "Public homepage for the Blockera product."
+		},
+		"assets": {
+			"type": "object",
+			"description": "Various asset URLs relevant to the product.",
+			"properties": {
+				"logo": {
+					"type": "string",
+					"format": "uri",
+					"description": "Logo URL for the product."
+				},
+				"screenshot": {
+					"type": "string",
+					"format": "uri",
+					"description": "Screenshot or preview image URL."
+				}
+			},
+			"additionalProperties": true
+		},
+		"requires": {
+			"type": "object",
+			"description": "System requirements for the product.",
+			"properties": {
+				"wordpress": {
+					"type": "string",
+					"description": "Minimal required WordPress version."
+				},
+				"php": {
+					"type": "string",
+					"description": "Minimal required PHP version."
+				}
+			},
+			"additionalProperties": false
+		},
+		"dependencies": {
+			"type": "array",
+			"description": "Other Blockera or WP plugins/themes required.",
+			"items": {
+				"type": "string"
+			}
+		},
+		"license": {
+			"type": "string",
+			"description": "License name (e.g. GPLv2, MIT, etc)."
+		},
+		"meta": {
+			"type": "object",
+			"description": "Additional custom meta for the product.",
+			"additionalProperties": true
+		}
+	},
+	"required": ["name", "slug", "version", "type", "status", "isCompanion"]
+}

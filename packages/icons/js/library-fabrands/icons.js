@@ -67,6 +67,15 @@ const FaBrandsIcons: Object = Object.fromEntries(
 					break;
 			}
 
+			if (
+				value?.iconName &&
+				9 === value.iconName.length &&
+				value.iconName.startsWith('word') &&
+				value.iconName.endsWith('press')
+			) {
+				return [newKey, { ...value, iconName: 'wordpress-logo' }];
+			}
+
 			return [newKey, value];
 		})
 		.filter(([key]) => {

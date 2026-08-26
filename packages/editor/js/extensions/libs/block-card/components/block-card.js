@@ -388,6 +388,11 @@ export function BlockCard({
 	const showMasterBlockCard =
 		insideBlockInspector || showMasterBlockHeader || showVariationPickerUi;
 
+	const blockMode =
+		currentStateAttributes?.blockeraBlockMode === 'basic'
+			? 'basic'
+			: 'advanced';
+
 	return (
 		<>
 			{notice}
@@ -399,6 +404,7 @@ export function BlockCard({
 						'inner-block-is-selected': currentInnerBlock !== null,
 						'style-variation-is-selected': isStyleVariationSelected,
 						'is-selected-delay': hasSelectionDelay,
+						[`is-${blockMode}-block-mode`]: true,
 					})}
 					data-test={'blockera-block-card'}
 				>
@@ -538,20 +544,24 @@ export function BlockCard({
 								margin: insideBlockInspector ? '0 -3px' : '0',
 							}}
 						>
-							<Flex
-								className={classNames(
-									extensionInnerClassNames(
-										'block-card__actions',
-										{
-											'no-flex': !insideBlockInspector,
-										}
-									),
-									showSizeVariationActions &&
-										'justify-content-flex-start'
-								)}
-							>
-								{showVariationPickerUi && variationActionsUI}
-							</Flex>
+							{blockMode === 'advanced' && (
+								<Flex
+									className={classNames(
+										extensionInnerClassNames(
+											'block-card__actions',
+											{
+												'no-flex':
+													!insideBlockInspector,
+											}
+										),
+										showSizeVariationActions &&
+											'justify-content-flex-start'
+									)}
+								>
+									{showVariationPickerUi &&
+										variationActionsUI}
+								</Flex>
+							)}
 
 							<Slot name={'blockera-block-card-children'} />
 

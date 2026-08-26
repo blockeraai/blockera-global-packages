@@ -10,7 +10,7 @@ import { isEquals, normalizeCssLengthValue } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
 /**
  * When WordPress stores `border.width` as a CSS shorthand (2–4 lengths, e.g. `0 0 0 2px`),
@@ -71,12 +71,10 @@ export function borderFromWPCompatibility({
 	insideBlockInspector: boolean,
 }): Object {
 	if (isBorderEmpty(attributes?.blockeraBorder?.value)) {
-		const border = runInsideBlockInspector(
-			insideBlockInspector,
-			editorSelectedBlockEvent
-		)
-			? attributes?.style?.border
-			: attributes?.border;
+		const border = getWpFromStyleOrGlobal(
+			attributes?.style?.border,
+			attributes?.border
+		);
 
 		// Core may store border widths as bare `0` or number `0`; normalize to `0px` for Blockera UI/CSS output.
 		// borderColor in root always is variable and means border type is all

@@ -48,7 +48,9 @@ export type PresetTaxonomyGroupLayoutProps<
 	resetConfirmButtonText?: string;
 };
 
-function PresetTaxonomyGroupLayoutInner<TItem extends Record<string, unknown>>({
+function PresetTaxonomyGroupLayoutInner<
+	TItem extends Record<string, unknown>,
+>({
 	origin,
 	items,
 	baseItems,
@@ -104,7 +106,7 @@ function PresetTaxonomyGroupLayoutInner<TItem extends Record<string, unknown>>({
 			<PresetVariationsContext.Provider
 				value={taxonomy.variationsContextValue}
 			>
-				<PresetTaxonomyGroupBridge
+				<PresetTaxonomyGroupBridge<TItem>
 					taxonomy={taxonomy}
 					controlName={controlName}
 					origin={origin}
@@ -116,7 +118,7 @@ function PresetTaxonomyGroupLayoutInner<TItem extends Record<string, unknown>>({
 				/>
 				<PresetGroup
 					origin={origin}
-					variables={taxonomy.mainItems}
+					variables={taxonomy.mainItems as unknown as VariableType[]}
 					onChange={taxonomy.onSimpleRepeaterChange}
 					controlName={controlName}
 					title={title}

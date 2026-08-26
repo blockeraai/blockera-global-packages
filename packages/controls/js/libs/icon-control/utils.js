@@ -3,6 +3,7 @@
 /**
  * External dependencies
  */
+import type { MixedElement } from 'react';
 import { sprintf, __ } from '@wordpress/i18n';
 import { applyFilters } from '@wordpress/hooks';
 import { createRoot } from '@wordpress/element';
@@ -19,7 +20,8 @@ import {
 	isValidIcon,
 	getIconLibraryIcons,
 	getIconLibrary,
-	getIconLibrarySearchData,
+	getIconLibrarySearchRecord,
+	subscribeIconPickerLibraries,
 	prepareIconSvgForStorage,
 	extractSvgMarkup,
 	NativeIconLibrariesList,
@@ -40,7 +42,7 @@ import ConditionalWrapper from '../conditional-wrapper';
  * @param {Object} icon The current icon state object.
  * @return {boolean} True when the icon is custom-uploaded or rendered-only custom.
  */
-export function isCustomIcon(icon) {
+export function isCustomIcon(icon: ?Object): boolean {
 	if (!icon) {
 		return false;
 	}
@@ -75,12 +77,12 @@ const SVG_PREVIEW_SIZE = 50;
  * @param {string} svgMarkup Raw SVG markup.
  * @return {boolean} True when SVG has hardcoded fill paints.
  */
-export function svgHasPreservedColors(svgMarkup) {
+export function svgHasPreservedColors(svgMarkup: string): boolean {
 	if (!svgMarkup || typeof svgMarkup !== 'string') {
 		return false;
 	}
 
-	const fills = new Set();
+	const fills: Set<string> = new Set();
 	const attrFills = svgMarkup.match(/\bfill=["']([^"']+)["']/gi) || [];
 
 	for (const match of attrFills) {
@@ -123,9 +125,9 @@ export function svgHasPreservedColors(svgMarkup) {
  * @return {string} SVG markup sized for the icon control preview.
  */
 export function prepareSvgForPreviewDisplay(
-	svgString,
-	previewSize = SVG_PREVIEW_SIZE
-) {
+	svgString: string,
+	previewSize: number = SVG_PREVIEW_SIZE
+): string {
 	if (!svgString || typeof svgString !== 'string') {
 		return '';
 	}
@@ -164,7 +166,10 @@ export function prepareSvgForPreviewDisplay(
  * @param {Object} icon The current icon state object.
  * @return {{ svgString: string, uploadSVG: ?Object }} Draft values for editing.
  */
-export function getCustomSvgDraft(icon) {
+export function getCustomSvgDraft(icon: ?Object): {
+	svgString: string,
+	uploadSVG: ?Object,
+} {
 	if (!icon) {
 		return { svgString: '', uploadSVG: null };
 	}
@@ -216,7 +221,7 @@ export function getCustomSvgDraft(icon) {
  *
  * @return {'companion'|'native'|'none'} Locked (`companion`) without the companion plugin; unlocked (`none`) when active.
  */
-export function getCustomIconFeatureType() {
+export function getCustomIconFeatureType(): 'companion' | 'native' | 'none' {
 	return applyFilters(
 		'blockera.controls.iconControl.customIcon.featureType',
 		applyFilters('blockera.products.isCompanionPlugin', false)
@@ -226,11 +231,28 @@ export function getCustomIconFeatureType() {
 }
 
 /**
+ * Resolve FeatureWrapper type for a picker library or search bucket.
+ * Pro registers a filter that returns `none` to unlock native packs.
+ *
+ * @param {string} library Library id (`lucide`) or search bucket (`search-2`).
+ * @return {'native'|'none'} Lock type for one wrapper around the whole grid.
+ */
+export function getIconLibraryLockType(library: string): 'native' | 'none' {
+	return applyFilters(
+		'blockera.controls.iconControl.utils.getLibraryIcons.type',
+		['search-2', ...NativeIconLibrariesList].includes(library)
+			? 'native'
+			: 'none',
+		library
+	);
+}
+
+/**
  * Whether custom icon file upload (drop / media library) requires the companion plugin.
  *
  * @return {boolean} True when uploads are gated; false when unlocked.
  */
-export function isCustomIconUploadLocked() {
+export function isCustomIconUploadLocked(): boolean {
 	return getCustomIconFeatureType() !== 'none';
 }
 
@@ -240,7 +262,10 @@ export function isCustomIconUploadLocked() {
  * @param {FileList|File[]} files   Dropped files.
  * @param {Function}        onRead  Callback with the SVG string.
  */
-export function readSvgFromDroppedFiles(files, onRead) {
+export function readSvgFromDroppedFiles(
+	files: FileList | Array<*>,
+	onRead: (svgString: string) => void
+): void {
 	if (!files?.length) {
 		return;
 	}
@@ -265,7 +290,11 @@ export function readSvgFromDroppedFiles(files, onRead) {
 	reader.readAsText(file);
 }
 
-const iconSearchMetadataCache = new Map();
+const iconSearchMetadataCache: Map<string, ?Object> = new Map();
+
+subscribeIconPickerLibraries(() => {
+	iconSearchMetadataCache.clear();
+});
 
 /**
  * Look up icon metadata (title, tags) from library search data.
@@ -275,7 +304,11 @@ const iconSearchMetadataCache = new Map();
  * @param {Object|null} sourceMeta Optional metadata from search results.
  * @return {Object|null} Search metadata entry or null.
  */
-export function getIconSearchMetadata(iconName, library, sourceMeta = null) {
+export function getIconSearchMetadata(
+	iconName: string,
+	library: string,
+	sourceMeta: ?Object = null
+): ?Object {
 	if (sourceMeta?.iconName) {
 		return sourceMeta;
 	}
@@ -286,13 +319,7 @@ export function getIconSearchMetadata(iconName, library, sourceMeta = null) {
 		return iconSearchMetadataCache.get(cacheKey);
 	}
 
-	const searchData = getIconLibrarySearchData(library);
-	const found =
-		searchData.find(
-			(item) => item.iconName === iconName && item.library === library
-		) ||
-		searchData.find((item) => item.iconName === iconName) ||
-		null;
+	const found = getIconLibrarySearchRecord(library, iconName) || null;
 
 	iconSearchMetadataCache.set(cacheKey, found);
 
@@ -308,10 +335,10 @@ export function getIconSearchMetadata(iconName, library, sourceMeta = null) {
  * @return {string} Display name.
  */
 export function getLibraryIconDisplayName(
-	iconName,
-	library,
-	sourceMeta = null
-) {
+	iconName: string,
+	library: string,
+	sourceMeta: ?Object = null
+): string {
 	const meta = getIconSearchMetadata(iconName, library, sourceMeta);
 
 	return meta?.title || iconName;
@@ -323,7 +350,7 @@ export function getLibraryIconDisplayName(
  * @param {string} library Library id.
  * @return {string} Library display name.
  */
-export function getLibraryDisplayName(library) {
+export function getLibraryDisplayName(library: string): string {
 	const libraryInfo = getIconLibrary(library);
 
 	return libraryInfo?.[library]?.name || library;
@@ -335,7 +362,7 @@ export function getLibraryDisplayName(library) {
  * @param {string} library Library id.
  * @return {number} Icon size in pixels.
  */
-export function getLibraryIconPreviewSize(library) {
+export function getLibraryIconPreviewSize(library: string): number {
 	return [
 		'faregular',
 		'fasolid',
@@ -359,10 +386,10 @@ export function getLibraryIconPreviewSize(library) {
  * @return {Object} React tooltip content node.
  */
 export function buildIconLibraryTooltipContent(
-	iconName,
-	library,
-	sourceMeta = null
-) {
+	iconName: string,
+	library: string,
+	sourceMeta: ?Object = null
+): MixedElement {
 	const meta = getIconSearchMetadata(iconName, library, sourceMeta);
 	const name = meta?.title || iconName;
 	const tags =
@@ -433,7 +460,10 @@ export function buildIconLibraryTooltipContent(
  * @param {string} library    Library id.
  * @return {string} SVG markup or empty string.
  */
-function libraryIconToSvgMarkupFromObject(iconObject, library) {
+function libraryIconToSvgMarkupFromObject(
+	iconObject: ?Object,
+	library: string
+): string {
 	if (!iconObject) {
 		return '';
 	}
@@ -469,7 +499,13 @@ function libraryIconToSvgMarkupFromObject(iconObject, library) {
  * @param {string} options.library Library id.
  * @return {string} Sanitized SVG string or empty string.
  */
-export function libraryIconToSvgString({ icon, library }) {
+export function libraryIconToSvgString({
+	icon,
+	library,
+}: {
+	icon: string,
+	library: string,
+}): string {
 	const iconObject = getIcon(icon, library);
 	const markup = libraryIconToSvgMarkupFromObject(iconObject, library);
 
@@ -488,20 +524,28 @@ export function libraryIconToSvgString({ icon, library }) {
  * @param {string} options.library Library id.
  * @return {Promise<string>} Sanitized SVG string.
  */
-export function libraryIconToSvgStringAsync({ icon, library }) {
+export function libraryIconToSvgStringAsync({
+	icon,
+	library,
+}: {
+	icon: string,
+	library: string,
+}): Promise<string> {
 	const syncResult = libraryIconToSvgString({ icon, library });
 
 	if (syncResult) {
 		return Promise.resolve(syncResult);
 	}
 
-	if (typeof document === 'undefined' || !document.body) {
+	const body = typeof document !== 'undefined' ? document.body : null;
+
+	if (!body) {
 		return Promise.resolve('');
 	}
 
 	return new Promise((resolve) => {
 		const iconNode = document.createElement('span');
-		document.body.appendChild(iconNode);
+		body.appendChild(iconNode);
 		const iconRoot = createRoot(iconNode);
 
 		iconRoot.render(<Icon icon={icon} library={library} iconSize={24} />);
@@ -527,7 +571,7 @@ export function libraryIconToSvgStringAsync({ icon, library }) {
  * @param {Object} event Click event from an icon grid cell.
  * @return {boolean} True when the click targets a locked Pro icon.
  */
-export function isProIconClickBlocked(event) {
+export function isProIconClickBlocked(event: Object): boolean {
 	let target = event?.target;
 
 	if (!target) {
@@ -547,9 +591,15 @@ export function getLibraryIcons({
 	onClick = () => {},
 	onDoubleClick = () => {},
 	limit = 21,
-}) {
+}: {
+	library: string,
+	query: string | Object | Function,
+	onClick?: Function,
+	onDoubleClick?: Function,
+	limit?: number,
+}): Array<*> {
 	let iconLibraryIcons = {};
-	const iconsStack = [];
+	const iconsStack: Array<*> = [];
 
 	if (
 		'suggestions' === library ||
@@ -579,14 +629,6 @@ export function getLibraryIcons({
 		iconLibraryIcons = getIconLibraryIcons(library);
 	}
 
-	const iconType = applyFilters(
-		'blockera.controls.iconControl.utils.getLibraryIcons.type',
-		['search-2', ...NativeIconLibrariesList].includes(library)
-			? 'native'
-			: 'none',
-		library
-	);
-
 	for (const iconKey in iconLibraryIcons) {
 		const sourceMeta = iconLibraryIcons[iconKey];
 		const icon = createStandardIconObject(
@@ -599,73 +641,61 @@ export function getLibraryIcons({
 
 		if (isValidIcon(icon, iconKey)) {
 			iconsStack.push(
-				<ConditionalWrapper
+				<span
 					key={`${iconKey}-${icon.iconName}`}
-					condition={iconType === 'native'}
-					wrapper={(children) => (
-						<FeatureWrapper
-							className={controlInnerClassNames('icon-wrapper')}
-							type={iconType}
-						>
-							{children}
-						</FeatureWrapper>
+					className={controlInnerClassNames(
+						'icon-control-icon',
+						'library-' + icon.library,
+						'icon-' + icon.iconName
 					)}
+					aria-label={sprintf(
+						// translators: %s is icon ID in icon libraries for example arrow-left
+						__('%s Icon', 'blockera'),
+						icon.iconName
+					)}
+					onClick={(event) =>
+						onClick(event, {
+							type: 'UPDATE_ICON',
+							icon: icon.iconName,
+							library: icon.library,
+						})
+					}
+					onDoubleClick={(event) =>
+						onDoubleClick(event, {
+							type: 'UPDATE_ICON',
+							icon: icon.iconName,
+							library: icon.library,
+						})
+					}
 				>
-					<span
-						className={controlInnerClassNames(
-							'icon-control-icon',
-							'library-' + icon.library,
-							'icon-' + icon.iconName
+					<Tooltip
+						text={buildIconLibraryTooltipContent(
+							icon.iconName,
+							icon.library,
+							sourceMeta
 						)}
-						aria-label={sprintf(
-							// translators: %s is icon ID in icon libraries for example arrow-left
-							__('%s Icon', 'blockera'),
-							icon.iconName
-						)}
-						onClick={(event) =>
-							onClick(event, {
-								type: 'UPDATE_ICON',
-								icon: icon.iconName,
-								library: icon.library,
-							})
-						}
-						onDoubleClick={(event) =>
-							onDoubleClick(event, {
-								type: 'UPDATE_ICON',
-								icon: icon.iconName,
-								library: icon.library,
-							})
-						}
+						width="220px"
 					>
-						<Tooltip
-							text={buildIconLibraryTooltipContent(
-								icon.iconName,
-								icon.library,
-								sourceMeta
-							)}
-							width="220px"
-						>
-							<Icon
-								library={icon.library}
-								icon={icon}
-								iconSize={
-									[
-										'faregular',
-										'fasolid',
-										'fabrands',
-										'feather',
-										'lucide',
-										'untitledui',
-										'tabler',
-										'tabler-filled',
-									].includes(icon.library)
-										? 18
-										: 24
-								}
-							/>
-						</Tooltip>
-					</span>
-				</ConditionalWrapper>
+						<Icon
+							library={icon.library}
+							icon={icon}
+							iconSize={
+								[
+									'faregular',
+									'fasolid',
+									'fabrands',
+									'feather',
+									'lucide',
+									'untitledui',
+									'tabler',
+									'tabler-filled',
+								].includes(icon.library)
+									? 18
+									: 24
+							}
+						/>
+					</Tooltip>
+				</span>
 			);
 		}
 	}
@@ -688,8 +718,13 @@ export function buildRecentIconElements({
 	onSelect = () => {},
 	onDoubleSelect = () => {},
 	onRemove = () => {},
-}) {
-	const elements = [];
+}: {
+	items?: Array<*>,
+	onSelect?: Function,
+	onDoubleSelect?: Function,
+	onRemove?: Function,
+}): Array<*> {
+	const elements: Array<*> = [];
 
 	for (const entry of items) {
 		if (entry.type === 'library') {
@@ -711,7 +746,7 @@ export function buildRecentIconElements({
 				<ConditionalWrapper
 					key={entry.id}
 					condition={iconType === 'native'}
-					wrapper={(children) => (
+					wrapper={(children: any) => (
 						<FeatureWrapper
 							className={controlInnerClassNames('icon-wrapper')}
 							type={iconType}
@@ -876,7 +911,7 @@ export function buildRecentIconElements({
  * @param {Document} svgDoc Parsed SVG document.
  * @return {SVGSVGElement | null} Root svg element or null when invalid.
  */
-function extractRootSvgElement(svgDoc) {
+function extractRootSvgElement(svgDoc: Document): ?Element {
 	if (!svgDoc || svgDoc.querySelector('parsererror')) {
 		return null;
 	}
@@ -911,7 +946,7 @@ function extractRootSvgElement(svgDoc) {
  * @param {Element} svgElement Root svg element.
  * @return {boolean} True when the SVG can be rendered.
  */
-function isRenderableSvgElement(svgElement) {
+function isRenderableSvgElement(svgElement: Element): boolean {
 	if (!svgElement || svgElement.nodeName.toLowerCase() !== 'svg') {
 		return false;
 	}
@@ -930,7 +965,7 @@ function isRenderableSvgElement(svgElement) {
 	);
 }
 
-export function sanitizeRawSVGString(rawString) {
+export function sanitizeRawSVGString(rawString: string): string {
 	if (!rawString || typeof rawString !== 'string') {
 		return '';
 	}
@@ -977,9 +1012,9 @@ export function sanitizeRawSVGString(rawString) {
 	return svgString;
 }
 
-function sanitizeSVGElement(svgElement) {
+function sanitizeSVGElement(svgElement: Element): void {
 	// Define whitelist of allowed SVG elements
-	const allowedElements = new Set([
+	const allowedElements: Set<string> = new Set([
 		'svg',
 		'g',
 		'defs',
@@ -1012,7 +1047,7 @@ function sanitizeSVGElement(svgElement) {
 	]);
 
 	// Define whitelist of allowed attributes
-	const allowedAttributes = new Set([
+	const allowedAttributes: Set<string> = new Set([
 		// Core attributes
 		'id',
 		'class',
@@ -1133,7 +1168,11 @@ function sanitizeSVGElement(svgElement) {
 	removeDangerousContent(svgElement, allowedElements, allowedAttributes);
 }
 
-function removeDangerousContent(element, allowedElements, allowedAttributes) {
+function removeDangerousContent(
+	element: Element,
+	allowedElements: Set<string>,
+	allowedAttributes: Set<string>
+): void {
 	// Remove dangerous elements
 	const dangerousElements = [
 		'script',

@@ -11,7 +11,11 @@ import { getColorVAFromVarString } from '@blockera/data';
  * Internal dependencies
  */
 import type { BlockDetail } from '../../block-card/block-states/types';
-import { runInsideBlockInspector } from '../../utils';
+import {
+	runInsideBlockInspector,
+	isEmptyBlockeraCompatValue,
+	getWpFromStyleOrGlobal,
+} from '../../utils';
 
 function isColorsEqual(
 	fontColor: void | string,
@@ -39,17 +43,12 @@ export function fontColorFromWPCompatibility({
 	insideBlockInspector?: boolean,
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 }): Object {
-	if (attributes?.blockeraFontColor?.value === '') {
+	if (isEmptyBlockeraCompatValue(attributes?.blockeraFontColor?.value)) {
 		// textColor attribute in root always is variable
 		// it should be changed to a Value Addon (variable)
-		if (attributes?.textColor || attributes?.color?.text) {
+		if (attributes?.textColor) {
 			const color = getColorVAFromVarString(
-				runInsideBlockInspector(
-					insideBlockInspector,
-					editorSelectedBlockEvent
-				)
-					? `var:preset|color|${attributes?.textColor}`
-					: attributes?.color?.text
+				`var:preset|color|${attributes?.textColor}`
 			);
 
 			if (color) {
@@ -61,13 +60,22 @@ export function fontColorFromWPCompatibility({
 			}
 		}
 
-		// Check block-level style (insideBlockInspector) or global style context
-		const textColor = runInsideBlockInspector(
-			insideBlockInspector,
-			editorSelectedBlockEvent
-		)
-			? attributes?.style?.color?.text
-			: attributes?.color?.text;
+		if (attributes?.color?.text) {
+			const color = getColorVAFromVarString(attributes.color.text);
+
+			if (color) {
+				attributes.blockeraFontColor = {
+					value: color,
+				};
+
+				return attributes;
+			}
+		}
+
+		const textColor = getWpFromStyleOrGlobal(
+			attributes?.style?.color?.text,
+			attributes?.color?.text
+		);
 
 		// font color is not variable
 		if (textColor) {

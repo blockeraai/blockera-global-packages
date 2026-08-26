@@ -40,9 +40,9 @@ export function colorStateFromWPCompatibility({
 		attributes?.[property] &&
 		attributes?.[property] !== defaultValue
 	) {
-		color = getColorVAFromVarString(
+		color = (getColorVAFromVarString(
 			`var:preset|color|${attributes?.[property]}`
-		);
+		): any);
 	}
 
 	if (color) {

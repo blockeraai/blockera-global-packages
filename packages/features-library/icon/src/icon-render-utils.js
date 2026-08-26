@@ -64,21 +64,22 @@ export const encodeIconMarkup = (
 
 		if (svgElement) {
 			if (color) {
-				svgElement.style.color = color;
+				const svgStyle: any = svgElement.style;
+				svgStyle.color = color;
 
 				if (
 					!preserveSvg &&
 					!isStrokeIconLibrary(library) &&
 					!isStrokeSvgMarkup(svgElement.outerHTML)
 				) {
-					svgElement.style.fill = color;
+					svgStyle.fill = color;
 				} else if (
 					preserveSvg &&
 					!isStrokeSvgMarkup(svgElement.outerHTML)
 				) {
-					svgElement.style.fill = color;
+					svgStyle.fill = color;
 				} else {
-					svgElement.style.fill = 'none';
+					svgStyle.fill = 'none';
 					svgElement.setAttribute('stroke', 'currentColor');
 				}
 			}
@@ -125,20 +126,25 @@ export const renderLibraryIconMarkup = (
 	const color = iconColor;
 	const isStrokeLibrary = isStrokeIconLibrary(iconValue.library);
 
+	const style: { [string]: mixed } = {
+		color,
+		width: iconSize ? iconSize : '1em',
+		height: iconSize ? iconSize : '1em',
+	};
+
+	if (!isStrokeLibrary && color) {
+		style.fill = color;
+	}
+
+	if (iconPosition === 'start') {
+		style.marginRight = iconGap;
+	} else if (iconPosition === 'end') {
+		style.marginLeft = iconGap;
+	}
+
 	iconRoot.render(
 		<Icon
-			style={{
-				color,
-				...(!isStrokeLibrary && color ? { fill: color } : {}),
-				width: iconSize ? iconSize : '1em',
-				height: iconSize ? iconSize : '1em',
-				...(iconPosition === 'start' && {
-					marginRight: iconGap,
-				}),
-				...(iconPosition === 'end' && {
-					marginLeft: iconGap,
-				}),
-			}}
+			style={style}
 			xmlns="http://www.w3.org/2000/svg"
 			icon={iconValue.icon}
 			library={iconValue.library}

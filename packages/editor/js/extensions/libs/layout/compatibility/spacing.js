@@ -15,7 +15,7 @@ import { isSpecialUnit } from '@blockera/controls';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
 export function spacingFromWPCompatibility({
 	attributes,
@@ -26,15 +26,10 @@ export function spacingFromWPCompatibility({
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 	insideBlockInspector?: boolean,
 }): Object {
-	// Check block-level style (insideBlockInspector) or global style context
-	// Block inspector: attributes.style.spacing.*
-	// Global styles: attributes.spacing.*
-	const spacing = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.spacing
-		: attributes?.spacing;
+	const spacing = getWpFromStyleOrGlobal(
+		attributes?.style?.spacing,
+		attributes?.spacing
+	);
 
 	if (
 		// WP have spacing value

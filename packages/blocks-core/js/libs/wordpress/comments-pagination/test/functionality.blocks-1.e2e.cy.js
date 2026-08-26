@@ -79,9 +79,11 @@ describe('Comments Pagination Block', () => {
 
 		// layout settings should be hidden
 		cy.get('.block-editor-block-inspector').within(() => {
-			cy.get('.components-panel__body-title button')
-				.contains('Layout')
-				.should('not.be.visible');
+			// Commented as in WP 7.1, Layout settings are moved to styles tab.
+			// todo: add same layout feature to the settings tab to give same feature to user.
+			// cy.get('.components-panel__body-title button')
+			// 	.contains('Layout')
+			// 	.should('not.be.visible');
 
 			cy.get('.components-tools-panel-header')
 				.contains('Settings')

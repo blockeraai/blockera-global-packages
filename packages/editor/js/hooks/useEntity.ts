@@ -486,7 +486,7 @@ export function useEntity(
 	// Validate view URL
 	const hasValidViewUrl = useMemo(() => isValidUrl(viewUrl), [viewUrl]);
 
-	const { __unstableSaveForPreview } = useDispatch(editorStore) as {
+	const { __unstableSaveForPreview } = useDispatch(editorStore) as unknown as {
 		__unstableSaveForPreview: (options?: {
 			forceIsAutosaveable?: boolean;
 		}) => Promise<string>;

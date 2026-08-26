@@ -1,0 +1,71 @@
+name: 'Blockera build-plugin-zip E2E tests'
+description: >
+    Setup Node/PHP, build the product zip, stage build fixtures, and run Cypress
+    build E2E tests. Defaults match the Blockera plugin.
+inputs:
+    php-version:
+        description: 'PHP version for wp-env and (optionally) Composer platform'
+        required: true
+    skip-if-no-specs:
+        description: 'Skip when no *.build.e2e.cy.js specs are found (true|false)'
+        required: false
+        default: 'false'
+    composer-options:
+        description: 'Composer options for setup-php'
+        required: false
+        default: '--no-dev -o --apcu-autoloader -a'
+    main-file-suffix:
+        description: 'MAIN_FILE_SUFFIX for the default plugin zip builder'
+        required: false
+        default: ''
+    zip-file:
+        description: 'Zip produced by the build'
+        required: false
+        default: 'blockera.zip'
+    build-dir:
+        description: 'Extract/run directory'
+        required: false
+        default: './build/blockera'
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Find build E2E specs
+          if: ${{ inputs.skip-if-no-specs == 'true' }}
+          id: find
+          shell: bash
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/build-plugin-zip-tests/find-specs.sh"
+
+        - name: Setup Node.js and install dependencies
+          if: ${{ inputs.skip-if-no-specs != 'true' || steps.find.outputs.file_count != '0' }}
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+
+        - name: Setup PHP Composer install dependencies
+          if: ${{ inputs.skip-if-no-specs != 'true' || steps.find.outputs.file_count != '0' }}
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-php
+          with:
+              php-version: ${{ inputs.php-version }}
+              composer-options: ${{ inputs.composer-options }}
+
+        - name: Build product zip
+          if: ${{ inputs.skip-if-no-specs != 'true' || steps.find.outputs.file_count != '0' }}
+          shell: bash
+          env:
+              BLOCKERA_DEMO_MAIN_FILE_SUFFIX: ${{ inputs.main-file-suffix }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/create-demo-attachments/build-zip.sh"
+
+        - name: Prepare build E2E environment
+          if: ${{ inputs.skip-if-no-specs != 'true' || steps.find.outputs.file_count != '0' }}
+          shell: bash
+          env:
+              BLOCKERA_BUILD_ZIP_TESTS_ZIP: ${{ inputs.zip-file }}
+              BLOCKERA_BUILD_ZIP_TESTS_BUILD_DIR: ${{ inputs.build-dir }}
+              BLOCKERA_BUILD_ZIP_TESTS_PHP_VERSION: ${{ inputs.php-version }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/build-plugin-zip-tests/prepare-build-env.sh"
+
+        - name: Run build E2E tests
+          if: ${{ inputs.skip-if-no-specs != 'true' || steps.find.outputs.file_count != '0' }}
+          shell: bash
+          env:
+              BLOCKERA_BUILD_ZIP_TESTS_BUILD_DIR: ${{ inputs.build-dir }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/build-plugin-zip-tests/run-e2e.sh"

@@ -33,7 +33,8 @@ import {
 	registerInnerBlockExtensionsSupports,
 } from '../libs';
 import { STORE_NAME } from '../store/constants';
-import { useStoreSelectors, useBlockSideEffectsRestore } from '../../hooks';
+import { useStoreSelectors } from '../../hooks/use-store-selectors';
+import { useBlockSideEffectsRestore } from '../../hooks/use-block-side-effects';
 import { sanitizeDefaultAttributes } from './utils';
 import { isBlockTypeExtension, isEnabledExtension } from '../api/utils';
 import { BlockIcon } from '../components';
@@ -368,7 +369,8 @@ function mergeBlockSettings(
 		? getSharedBlockAttributes()
 		: blockeraOverrideBlockTypeAttributes;
 
-	let overrideAttributes = !settings.attributes?.blockeraPropsId
+	let overrideAttributes = !settings.attributes?.blockeraId &&
+		!settings.attributes?.blockeraPropsId
 		? mergeObject(
 				sanitizeDefaultAttributes(blockeraOverrideBlockAttributes),
 				sanitizeDefaultAttributes(settings.attributes)

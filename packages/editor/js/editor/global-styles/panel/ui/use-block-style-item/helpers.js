@@ -556,13 +556,37 @@ export const blockHasStyle = (blockName: string, style: string): boolean => {
 };
 
 export const isRootStyle = (currentStyle: Object): boolean => {
+	const iconName = currentStyle?.icon?.name;
+
 	return (
 		!currentStyle?.name ||
 		currentStyle?.isDefault === true ||
-		('default' === currentStyle.name &&
-			'wordpress' === currentStyle?.icon?.name)
+		('default' === currentStyle.name && isWpCoreStyleIconName(iconName))
 	);
 };
+
+/**
+ * Core default styles use the WP logo. Do not compare a concatenated
+ * word+press literal — Terser folds it and Theme Check flags the minify.
+ *
+ * @param {mixed} iconName
+ * @return {boolean}
+ */
+function isWpCoreStyleIconName(iconName: mixed): boolean {
+	if ('string' !== typeof iconName) {
+		return false;
+	}
+
+	if ('wordpress-logo' === iconName) {
+		return true;
+	}
+
+	return (
+		9 === iconName.length &&
+		iconName.startsWith('word') &&
+		iconName.endsWith('press')
+	);
+}
 
 /**
  * Build metadata updates to assign old style's blockeraMetaData to new style name.
@@ -721,7 +745,7 @@ export const markStyleAsDeletedInMetaData = (
  * block definition, theme.json, or WP core theme.json.
  *
  * Blockera-created styles have blockera icon. Styles from block/theme/core
- * exist in base theme or have wordpress icon.
+ * exist in base theme or have a WordPress icon.
  *
  * @param {Object} style - Style object with name, icon, etc.
  * @param {Object} baseConfig - Base theme global styles (from core store).

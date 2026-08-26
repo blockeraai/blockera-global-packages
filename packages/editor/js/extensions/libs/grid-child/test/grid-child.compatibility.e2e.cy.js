@@ -18,15 +18,15 @@ function clearGridChildNumberInput(dataTest) {
 	cy.getByDataTest(dataTest).blur({ force: true });
 }
 
-const columnSpanHydrateMarkup = `<!-- wp:group {"metadata":{"name":"Grid Container"},"blockeraPropsId":"5f915dbf-73b0-49a8-9409-b81a5c55aee0","blockeraCompatId":"938123345376","blockeraDisplay":{"value":"grid"},"className":"blockera-block blockera-block-gridhydrate","layout":{"type":"grid"}} -->
-<div class="wp-block-group blockera-block blockera-block-gridhydrate"><!-- wp:paragraph {"blockeraPropsId":"ad3e3db6-a502-4fed-8392-1dcd0ad8a28f","blockeraCompatId":"937125625525","className":"blockera-block blockera-block-hydratep","style":{"layout":{"columnSpan":4}}} -->
-<p class="blockera-block blockera-block-hydratep">hydrate column span</p>
+const columnSpanHydrateMarkup = `<!-- wp:group {"metadata":{"name":"Grid Container"},"blockeraId":"ghyd01","blockeraDisplay":{"value":"grid"},"className":"blockera-block blockera-block-ghyd01","layout":{"type":"grid"}} -->
+<div class="wp-block-group blockera-block blockera-block-ghyd01"><!-- wp:paragraph {"blockeraId":"hydrp1","className":"blockera-block blockera-block-hydrp1","style":{"layout":{"columnSpan":4}}} -->
+<p class="blockera-block blockera-block-hydrp1">hydrate column span</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:group -->`;
 
-const rowSpanHydrateMarkup = `<!-- wp:group {"metadata":{"name":"Grid Container"},"blockeraPropsId":"6f915dbf-73b0-49a8-9409-b81a5c55aee1","blockeraDisplay":{"value":"grid"},"className":"blockera-block blockera-block-gridrowh","layout":{"type":"grid"}} -->
-<div class="wp-block-group blockera-block blockera-block-gridrowh"><!-- wp:paragraph {"blockeraPropsId":"bd3e3db6-a502-4fed-8392-1dcd0ad8a290","className":"blockera-block blockera-block-hydrater","style":{"layout":{"rowSpan":3}}} -->
-<p class="blockera-block blockera-block-hydrater">hydrate row span</p>
+const rowSpanHydrateMarkup = `<!-- wp:group {"metadata":{"name":"Grid Container"},"blockeraId":"grwh01","blockeraDisplay":{"value":"grid"},"className":"blockera-block blockera-block-grwh01","layout":{"type":"grid"}} -->
+<div class="wp-block-group blockera-block blockera-block-grwh01"><!-- wp:paragraph {"blockeraId":"hydrr1","className":"blockera-block blockera-block-hydrr1","style":{"layout":{"rowSpan":3}}} -->
+<p class="blockera-block blockera-block-hydrr1">hydrate row span</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:group -->`;
 

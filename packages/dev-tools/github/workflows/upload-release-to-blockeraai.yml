@@ -1,0 +1,77 @@
+# Template — Blockera Pro upload to Blockera AI. Copy and adjust zip/secrets as needed.
+name: Update Version and upload Blockera (PRO) plugin to Blockera AI website.
+
+on:
+    release:
+        types: [published]
+
+jobs:
+    pr-workflow-gate:
+        name: PR workflow filter
+        runs-on: ubuntu-latest
+        outputs:
+            run: ${{ steps.gate.outputs.run }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - id: gate
+              uses: ./packages/global-packages/packages/dev-tools/github/actions/pr-workflow-gate
+              with:
+                  workflow-file: upload-release-to-blockeraai.yml
+
+    get-release-branch:
+        name: Get release branch name
+        needs: pr-workflow-gate
+        if: ${{ needs.pr-workflow-gate.outputs.run == 'true' }}
+        runs-on: ubuntu-latest
+        outputs:
+            release_branch: ${{ steps.get_release_branch.outputs.release_branch }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - id: get_release_branch
+              env:
+                  TAG: ${{ github.event.release.tag_name }}
+              run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/upload-release-to-plugin-repo/compute-release-branch.sh
+
+
+    upload:
+        name: Upload release to Blockera AI
+        needs: [pr-workflow-gate, get-release-branch]
+        if: ${{ needs.pr-workflow-gate.outputs.run == 'true' && (!github.event.release.prerelease && github.event.release.assets[0]) }}
+        runs-on: ubuntu-latest
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+            BLOCKERAAI_PRODUCT_ID: ${{ secrets.BLOCKERAAI_PRODUCT_ID }}
+            RELEASE_META_KEY: ${{ secrets.RELEASE_META_KEY }}
+            RELEASE_ACTION: ${{ secrets.RELEASE_ACTION }}
+            RELEASE_ENDPOINT: ${{ secrets.RELEASE_ENDPOINT }}
+            BLOCKERABOT_API_KEY: ${{ secrets.BLOCKERABOT_API_KEY }}
+            PLUGIN_URL: ${{ github.event.release.assets[0].browser_download_url }}
+            PLUGIN_VERSION: ${{ github.event.release.tag_name }}
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            # BLOCKERA_UPLOAD_BLOCKERAAI_ZIP: blockera-pro.zip
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  ref: ${{ needs.get-release-branch.outputs.release_branch }}
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/upload-release-to-blockeraai/publish.sh

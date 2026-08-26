@@ -1,0 +1,23 @@
+# Shared Blockera PHPStan config (source of truth in @blockera/dev-tools).
+# Consumers include this from a thin root phpstan.neon.
+# Paths use %currentWorkingDirectory% so they resolve from the project root,
+# not this file's directory under packages/global-packages/.
+parameters:
+	level: 5
+	paths:
+		- %currentWorkingDirectory%/packages
+	excludePaths:
+		analyse:
+			- %currentWorkingDirectory%/packages/*/tests
+			- %currentWorkingDirectory%/packages/*/vendor
+			- %currentWorkingDirectory%/packages/*/js
+			- %currentWorkingDirectory%/packages/global-packages/packages/dev-phpunit
+			- %currentWorkingDirectory%/packages/global-packages/packages/bootstrap
+			- %currentWorkingDirectory%/vendor
+			- %currentWorkingDirectory%/node_modules
+			- %currentWorkingDirectory%/dist
+			- %currentWorkingDirectory%/tests
+			# Do not exclude consumer-specific reference trees here (source-codes vs
+			# source-code-*). Analyse paths are already limited to packages/.
+	bootstrapFiles:
+		- %currentWorkingDirectory%/vendor/php-stubs/wordpress-stubs/wordpress-stubs.php

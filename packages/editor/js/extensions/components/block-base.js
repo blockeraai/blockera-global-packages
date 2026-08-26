@@ -13,6 +13,7 @@ import {
 	useMemo,
 	useState,
 	useEffect,
+	useLayoutEffect,
 	useCallback,
 	memo,
 	// StrictMode,
@@ -29,7 +30,20 @@ import {
 	PreviewInjectableStylesContext,
 } from '@blockera/controls';
 import { useBlockFeatures } from '@blockera/features-core';
-import { isEquals, cloneObject, mergeObject } from '@blockera/utils';
+import {
+	isEquals,
+	cloneObject,
+	mergeObject,
+	getBlockeraId,
+	isBlockeraBlockModeBasic,
+	hasBlockeraFeatureAttributes,
+	needsLegacyBlockeraIdMigrate,
+	migrateLegacyBlockeraIds,
+	remintBlockeraIdentity,
+	stripBlockeraBlockClasses,
+	stripBlockeraIdentity,
+	withBlockeraBlockClassFromId,
+} from '@blockera/utils';
 import { classNames } from '@blockera/classnames';
 import { generalBlockFeatures } from '@blockera/blocks-core/js/libs/general-block-features';
 
@@ -38,13 +52,10 @@ import { generalBlockFeatures } from '@blockera/blocks-core/js/libs/general-bloc
  */
 import { BlockStyle, StylesWrapper } from '../../style-engine';
 import { BlockEditContextProvider } from '.';
-import {
-	// useIconEffect,
-	useAttributes,
-	useInnerBlocksInfo,
-	useCalculateCurrentAttributes,
-	useDisplayBlockControls,
-} from '../../hooks';
+import { useAttributes } from '../../hooks/use-attributes';
+import { useInnerBlocksInfo } from '../../hooks/use-inner-blocks-info';
+import { useCalculateCurrentAttributes } from '../../hooks/use-calculate-current-attributes';
+import { useDisplayBlockControls } from '../../hooks/use-display-block-controls';
 import { getBlockVariationSupport } from '../../editor/global-styles/panel/block-variation-support';
 import { isInnerBlock } from './utils';
 import { isBaseBreakpoint } from '../..';
@@ -54,7 +65,10 @@ import { BlockeraLayoutToolbar } from '../libs/layout/components/blockera-layout
 import { BlockPartials } from './block-partials';
 import { BlockFillPartials } from './block-fill-partials';
 import { sanitizeBlockAttributes } from '../hooks/utils';
-import { buildPresetPreviewAttributePatch } from '../libs/preset-preview-attributes';
+import {
+	buildPresetPreviewAttributePatch,
+	mergeAttributesWithPresetPreviewPatch,
+} from '../libs/preset-preview-attributes';
 import { BlockInspectorEditContent } from './block-inspector-edit-content';
 import { BlockInspectorTabSync } from './block-inspector-tab-sync';
 import { BlockBaseInspectorBundle } from './block-base-inspector-bundle';
@@ -73,7 +87,12 @@ import {
 	generalBlockStates,
 	generalInnerBlockStates,
 } from '../libs/block-card/block-states/states';
-import { getCompatibleAttributes } from './get-compatible-attributes';
+import {
+	getCompatibleAttributes,
+	shouldRunWpToBlockeraHydrate,
+	unwrapBlockeraStoredValue,
+} from './get-compatible-attributes';
+import { isBlockeraEngineSkippedForClient } from './is-blockera-engine-skipped';
 import { getBlockCSSSelector } from '../../style-engine/get-block-css-selector';
 import { useGlobalStylesPanelContext } from '../../editor/global-styles/panel/context';
 import {
@@ -83,7 +102,6 @@ import {
 import {
 	registerClassName,
 	isClassNameDuplicate,
-	generateUniqueClassName,
 	unregisterClassName,
 	hasRegisteredClassName,
 	removeRegisteredClassName,
@@ -92,6 +110,22 @@ import {
 } from './registered-classnames';
 
 const BLOCKERA_DELAY_EXPECTED_TIME = 1000;
+
+function remintAndRegisterIdentity(clientId: string, attributes: Object): Object {
+	const reminted = remintBlockeraIdentity(cloneObject(attributes));
+	registerClassName(
+		clientId,
+		`blockera-block-${String(reminted.blockeraId)}`
+	);
+	return reminted;
+}
+
+function storedLayoutFieldDiffers(left: mixed, right: mixed): boolean {
+	return !isEquals(
+		unwrapBlockeraStoredValue(left),
+		unwrapBlockeraStoredValue(right)
+	);
+}
 
 const GlobalStylesPanelBaseControlConfigContext: Object = createContext({
 	name: '',
@@ -243,7 +277,43 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		);
 	}, []);
 
-	const [isActive, setActive] = useState(true);
+	const pendingReturnCompatRef = useRef(false);
+	const persistReturnCompatRef = useRef(false);
+	const resetPendingAttributesRef = useRef(() => {});
+	const isTreeSkipped = isBlockeraEngineSkippedForClient(
+		clientId,
+		blockAttributes
+	);
+	const isActive = !isTreeSkipped;
+	const setActive = useCallback(
+		(nextActive: boolean) => {
+			const next = cloneObject(blockAttributes);
+			if (nextActive) {
+				if (isBlockeraBlockModeBasic(next)) {
+					pendingReturnCompatRef.current = true;
+					persistReturnCompatRef.current = true;
+				}
+				next.blockeraBlockMode = 'advanced';
+				const id = getBlockeraId(next);
+				if (id) {
+					const restored = withBlockeraBlockClassFromId({
+						...next,
+						blockeraId: id,
+					});
+					next.className = restored.className;
+				}
+			} else {
+				next.blockeraBlockMode = 'basic';
+				if (typeof next.className === 'string') {
+					next.className = stripBlockeraBlockClasses(next.className);
+				}
+			}
+			// Drop the overlay so WP→Blockera on return-to-advanced can persist.
+			resetPendingAttributesRef.current();
+			setBlockAttributes(next);
+		},
+		[blockAttributes, setBlockAttributes]
+	);
 
 	const {
 		changeExtensionCurrentBlock: changeExtensionCurrentBlockDispatch,
@@ -331,13 +401,17 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	// Store the unique classname for this block instance.
 	// Generate it once on mount using useMemo (runs during render, memoized by clientId).
 	const uniqueClassName = useMemo(() => {
-		const blocksClassNames = getBlocksClassNames();
-		return generateUniqueClassName(
-			clientId,
-			blockAttributes?.className,
-			blocksClassNames
-		);
-	}, [clientId, blockAttributes?.className, getBlocksClassNames]);
+		const id = getBlockeraId(blockAttributes);
+		if (
+			!id ||
+			isBlockeraEngineSkippedForClient(clientId, blockAttributes)
+		) {
+			return '';
+		}
+		const fromId = `blockera-block-${String(id)}`;
+		registerClassName(clientId, fromId);
+		return fromId;
+	}, [clientId, blockAttributes]);
 
 	// Track if this is the first calculation to ensure unique classname on mount
 	const isFirstCalculationRef = useRef(true);
@@ -359,23 +433,64 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		};
 	}, [clientId, uniqueClassName]);
 
+	useLayoutEffect(() => {
+		if (!needsLegacyBlockeraIdMigrate(blockAttributes)) {
+			return;
+		}
+
+		const migrated = migrateLegacyBlockeraIds(
+			cloneObject(blockAttributes)
+		);
+		// cloneObject drops `undefined`; Gutenberg merge needs explicit unset.
+		migrated.blockeraPropsId = undefined;
+		migrated.blockeraCompatId = undefined;
+		setBlockAttributes(migrated);
+	}, [blockAttributes, setBlockAttributes]);
+
 	const compatibleAttributes = useMemo(() => {
-		// Run compatibility filters...
+		const hasFeatures = hasBlockeraFeatureAttributes(
+			blockAttributes,
+			originDefaultAttributes
+		);
+		const shouldRunWpToBlockera = shouldRunWpToBlockeraHydrate({
+			isActive,
+			pendingReturn: pendingReturnCompatRef.current,
+			hasFeatures,
+		});
+
+		if (pendingReturnCompatRef.current && isActive) {
+			pendingReturnCompatRef.current = false;
+		}
+
 		const compatibleAttributes = getCompatibleAttributes({
 			args,
 			isActive,
 			availableAttributes,
+			runWpToBlockera: shouldRunWpToBlockera,
+			stampIdentity:
+				Boolean(getBlockeraId(blockAttributes)) ||
+				persistReturnCompatRef.current ||
+				hasFeatures,
 			attributes: cloneObject(blockAttributes),
 			defaultAttributes: originDefaultAttributes,
 		});
+
+		if (!isActive) {
+			isFirstCalculationRef.current = false;
+			return compatibleAttributes;
+		}
 
 		const classNameStr = compatibleAttributes?.className || '';
 		const isFirstCalculation = isFirstCalculationRef.current;
 
 		// On first calculation (mount), ensure unique classname is properly set
+		// only after identity exists in the Gutenberg store.
 		if (isFirstCalculation) {
-			// Update the first calculation flag to false before the calculation.
 			isFirstCalculationRef.current = false;
+
+			if (!uniqueClassName) {
+				return compatibleAttributes;
+			}
 
 			// Extract existing blockera-block classnames from className
 			const classNameParts = classNameStr.split(/\s+/).filter(Boolean);
@@ -383,18 +498,19 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 
 			classNameParts.forEach((part) => {
 				if (BLOCKERA_BLOCK_REGEX.test(part)) {
-					if (hasRegisteredClassName(part)) {
-						// Only unregister if it's not the unique classname for this block.
+					const token = uniqueClassName || part;
+					if (part !== token && hasRegisteredClassName(part)) {
 						removeRegisteredClassName(part);
-						generatedClassname += !generatedClassname
-							? uniqueClassName
-							: ` ${uniqueClassName}`;
-					} else {
-						// Add the classname to the new classname if it's not registered.
-						generatedClassname += !generatedClassname
-							? part
-							: ` ${part}`;
 					}
+					if (
+						generatedClassname &&
+						-1 !== generatedClassname.indexOf(token)
+					) {
+						return;
+					}
+					generatedClassname += !generatedClassname
+						? token
+						: ` ${token}`;
 				} else {
 					// Add the classname to the new classname if it's not a blockera-block classname.
 					generatedClassname += !generatedClassname
@@ -405,6 +521,9 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 
 			// If block default classname is empty.
 			if (!generatedClassname) {
+				if (!uniqueClassName) {
+					return compatibleAttributes;
+				}
 				return {
 					...compatibleAttributes,
 					className: classNames('blockera-block', {
@@ -421,7 +540,10 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 						? `blockera-block ${generatedClassname}`
 						: generatedClassname,
 			};
-		} else if (!classNameStr.match(BLOCKERA_BLOCK_REGEX)?.[0]) {
+		} else if (
+			uniqueClassName &&
+			!classNameStr.match(BLOCKERA_BLOCK_REGEX)?.[0]
+		) {
 			return {
 				...compatibleAttributes,
 				className: classNameStr
@@ -444,8 +566,82 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	// pendingAttributes is only set during user edits; cleared when derived value updates.
 	const [pendingAttributes, setPendingAttributes] =
 		useState(compatibleAttributes);
+	resetPendingAttributesRef.current = () => setPendingAttributes(null);
 	const attributes = pendingAttributes ?? compatibleAttributes;
 	const { className } = attributes;
+
+	useLayoutEffect(() => {
+		if (!isActive) {
+			return;
+		}
+
+		if (isBlockeraEngineSkippedForClient(clientId, blockAttributes)) {
+			return;
+		}
+
+		if (
+			!getBlockeraId(blockAttributes) &&
+			!getBlockeraId(compatibleAttributes)
+		) {
+			return;
+		}
+
+		const patch: { [string]: mixed } = {};
+
+		if (
+			storedLayoutFieldDiffers(
+				compatibleAttributes?.blockeraDisplay,
+				blockAttributes?.blockeraDisplay
+			)
+		) {
+			patch.blockeraDisplay = compatibleAttributes.blockeraDisplay;
+		}
+
+		if (
+			storedLayoutFieldDiffers(
+				compatibleAttributes?.blockeraFlexLayout,
+				blockAttributes?.blockeraFlexLayout
+			)
+		) {
+			patch.blockeraFlexLayout = compatibleAttributes.blockeraFlexLayout;
+		}
+
+		if (!Object.keys(patch).length) {
+			return;
+		}
+
+		setPendingAttributes(null);
+		setBlockAttributes({
+			...blockAttributes,
+			...patch,
+		});
+	}, [
+		isActive,
+		clientId,
+		blockAttributes,
+		compatibleAttributes,
+		setBlockAttributes,
+	]);
+
+	// Gutenberg Duplicate clones identity onto a new clientId; remint so
+	// selectors do not collide. Drop the overlay so persist uses the new id.
+	useLayoutEffect(() => {
+		const id = getBlockeraId(blockAttributes);
+		if (
+			!id ||
+			isBlockeraEngineSkippedForClient(clientId, blockAttributes)
+		) {
+			return;
+		}
+
+		const fromId = `blockera-block-${String(id)}`;
+		if (!isClassNameDuplicate(clientId, fromId, getBlocksClassNames())) {
+			return;
+		}
+
+		setPendingAttributes(null);
+		setBlockAttributes(remintAndRegisterIdentity(clientId, blockAttributes));
+	}, [clientId, blockAttributes, getBlocksClassNames, setBlockAttributes]);
 
 	/**
 	 * Set the attributes state and the attributes ref.
@@ -469,8 +665,10 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	) => {
 		const classNameStr = value?.className ?? '';
 		const match = BLOCKERA_BLOCK_REGEX.exec(classNameStr);
+		const keepBlockeraIdentity = Boolean(getBlockeraId(value));
 		const needsClassNameRewrite =
 			(shouldUpdateClassName &&
+				keepBlockeraIdentity &&
 				/^is-(?:style|size)-/.test(classNameStr) &&
 				!/\s/g.test(classNameStr)) ||
 			(match &&
@@ -492,6 +690,8 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		// We should update classname with unique generate classname while customizing style variation.
 		if (
 			shouldUpdateClassName &&
+			keepBlockeraIdentity &&
+			uniqueClassName &&
 			/^is-(?:style|size)-/.test(storedClassName) &&
 			!/\s/g.test(storedClassName)
 		) {
@@ -502,12 +702,21 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			registerClassName(clientId, uniqueClassName);
 		} else if (
 			shouldUpdateClassName &&
+			keepBlockeraIdentity &&
 			storedMatch &&
 			isClassNameDuplicate(
 				clientId,
 				storedMatch[0],
 				getBlocksClassNames()
 			)
+		) {
+			valueToStore = remintAndRegisterIdentity(clientId, valueToStore);
+		} else if (
+			shouldUpdateClassName &&
+			keepBlockeraIdentity &&
+			uniqueClassName &&
+			storedMatch &&
+			storedMatch[0] !== uniqueClassName
 		) {
 			const prevClassName = storedClassName
 				.replace(BLOCKERA_BLOCK_REGEX, '')
@@ -539,9 +748,14 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 
 	// Debounce updates to parent state to avoid unnecessary re-renders.
 	useEffect(() => {
+		const isIdentityCleanup =
+			Boolean(getBlockeraId(blockAttributes)) &&
+			!getBlockeraId(attributes);
+
 		// Skip the effect if the block is not a blockera block and not has metadata.
 		if (
-			!attributes?.blockeraPropsId &&
+			!getBlockeraId(attributes) &&
+			!isIdentityCleanup &&
 			!attributes.hasOwnProperty('metadata') &&
 			!['save-customizations', 'detach-style', 'disable-style'].includes(
 				editorSelectedBlockEvent
@@ -556,6 +770,22 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		// are properly managed or avoided (consider use of cloneObject as needed).
 		const clonedAttributes = cloneObject(attributes);
 
+		if (isIdentityCleanup) {
+			// cloneObject drops `undefined`. Restore className from the store so
+			// non-Blockera tokens (e.g. is-style-*) survive fingerprint cleanup.
+			const stripped = stripBlockeraIdentity({
+				...clonedAttributes,
+				className:
+					(typeof clonedAttributes.className === 'string' &&
+						clonedAttributes.className) ||
+					blockAttributes.className,
+			});
+			clonedAttributes.blockeraId = undefined;
+			clonedAttributes.blockeraPropsId = undefined;
+			clonedAttributes.blockeraCompatId = undefined;
+			clonedAttributes.className = stripped.className;
+		}
+
 		if (
 			'function' === typeof handleOnChangeStyleInLocalState &&
 			!isEquals(compatibleAttributes, attributes) &&
@@ -569,23 +799,29 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		}
 
 		// If inside the block inspector, update the parent state immediately.
+		const shouldPersistUserEdit = !isEquals(
+			compatibleAttributes,
+			attributes
+		);
+		const shouldPersistReturn =
+			persistReturnCompatRef.current &&
+			!isEquals(attributes, blockAttributes);
+
 		if (insideBlockInspector) {
-			// Compare the block attributes with the attributes and the attributes ref.
-			// If they are not equal, set the attributes to the block attributes.
-			if (!isEquals(compatibleAttributes, attributes)) {
+			if (shouldPersistUserEdit || shouldPersistReturn) {
 				setBlockAttributes(clonedAttributes);
+				persistReturnCompatRef.current = false;
 			}
 
 			return;
 		}
 
 		const timeoutId = setTimeout(() => {
-			// Compare the block attributes with the attributes and the attributes ref.
-			// If they are not equal, set the attributes to the block attributes.
-			if (!isEquals(compatibleAttributes, attributes)) {
+			if (shouldPersistUserEdit || shouldPersistReturn) {
 				setBlockAttributes(clonedAttributes);
+				persistReturnCompatRef.current = false;
 			}
-		}, BLOCKERA_DELAY_EXPECTED_TIME); // Update the parent state after BLOCKERA_DELAY_EXPECTED_TIME to avoid unnecessary re-renders.
+		}, BLOCKERA_DELAY_EXPECTED_TIME);
 
 		return () => clearTimeout(timeoutId);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -802,33 +1038,48 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			return;
 		}
 
-		const hasBlockeraPropsId = Boolean(blockAttributes?.blockeraPropsId);
-		const classNameEmpty =
-			!blockAttributes?.className ||
-			String(blockAttributes.className).trim() === '';
-
-		if (hasBlockeraPropsId && !classNameEmpty) {
+		if (isBlockeraEngineSkippedForClient(clientId, blockAttributes)) {
 			return;
 		}
 
+		const hasBlockeraId = Boolean(getBlockeraId(blockAttributes));
 		const partial: Object = {};
 
-		if (!hasBlockeraPropsId) {
+		if (!hasBlockeraId) {
+			if (
+				!hasBlockeraFeatureAttributes(
+					blockAttributes,
+					originDefaultAttributes
+				)
+			) {
+				return;
+			}
 			const withId = getAttributesWithIds(
 				cloneObject(blockAttributes),
-				'blockeraPropsId',
+				'blockeraId',
 				false
 			);
-			if (withId.blockeraPropsId) {
-				partial.blockeraPropsId = withId.blockeraPropsId;
+			if (withId.blockeraId) {
+				partial.blockeraId = withId.blockeraId;
 			}
-		}
-
-		if (classNameEmpty && uniqueClassName) {
-			partial.className = classNames('blockera-block', {
-				[uniqueClassName]: true,
-			});
-			registerClassName(clientId, uniqueClassName);
+			if (withId.className) {
+				partial.className = withId.className;
+				registerClassName(
+					clientId,
+					`blockera-block-${String(withId.blockeraId)}`
+				);
+			}
+		} else {
+			const aligned = withBlockeraBlockClassFromId(
+				cloneObject(blockAttributes)
+			);
+			if (aligned.className !== blockAttributes.className) {
+				partial.className = aligned.className;
+				registerClassName(
+					clientId,
+					`blockera-block-${String(getBlockeraId(blockAttributes))}`
+				);
+			}
 		}
 
 		if (Object.keys(partial).length) {
@@ -837,9 +1088,9 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	}, [
 		clientId,
 		blockAttributes,
-		uniqueClassName,
 		setBlockAttributes,
 		insideBlockInspector,
+		originDefaultAttributes,
 	]);
 
 	const setPreviewAttributePatchForContext = useCallback(
@@ -880,20 +1131,21 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			Object.keys(presetPreviewAttributePatch).length > 0;
 
 		const mergedAttributes = hasPresetPreviewPatch
-			? mergeObject(
-					cloneObject(sanitizedAttributes),
+			? mergeAttributesWithPresetPreviewPatch(
+					sanitizedAttributes,
 					presetPreviewAttributePatch
 				)
 			: sanitizedAttributes;
 		const mergedCurrentAttributes = hasPresetPreviewPatch
-			? mergeObject(
-					cloneObject(currentAttributes),
+			? mergeAttributesWithPresetPreviewPatch(
+					currentAttributes,
 					presetPreviewAttributePatch
 				)
 			: currentAttributes;
 
 		return {
 			clientId,
+			hasPresetPreviewPatch: Boolean(hasPresetPreviewPatch),
 			supports,
 			selectors,
 			additional,

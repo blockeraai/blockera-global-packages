@@ -16,6 +16,7 @@ import { controlInnerClassNames } from '@blockera/classnames';
  */
 import type { ColorPalletProps } from '../types';
 import {
+	areStoredCssColorsEqual,
 	getSketchPickerColor,
 	reactColorStateToStorageString,
 } from '../utils/css-color';
@@ -93,9 +94,17 @@ export const ColorPallet = ({
 						if (disabled) {
 							return;
 						}
-						onChangeComplete(
-							reactColorStateToStorageString(next, enableAlpha)
+
+						const stored = reactColorStateToStorageString(
+							next,
+							enableAlpha
 						);
+
+						if (areStoredCssColorsEqual(stored, color)) {
+							return;
+						}
+
+						onChangeComplete(stored);
 					}}
 					styles={sketchStyles}
 				/>

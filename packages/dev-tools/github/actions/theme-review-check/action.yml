@@ -1,0 +1,54 @@
+name: 'WordPress Theme Review Check'
+description: 'Runs Theme Check with CI-compatible wp-env teardown'
+inputs:
+    root-folder:
+        description: 'The location of your theme'
+        required: true
+    accessible-ready:
+        description: 'Whether to run the full accessibility tests'
+        default: 'false'
+runs:
+    using: 'composite'
+    steps:
+        - name: Checkout WordPress Theme Review Action
+          uses: actions/checkout@v4
+          with:
+              repository: WordPress/theme-review-action
+              ref: trunk
+              path: theme-review-action
+
+        - name: Copy theme into test environment
+          shell: bash
+          run: rsync -av --exclude=.git* "${{ inputs.root-folder }}"/* theme-review-action/test-theme/
+
+        - name: Patch upstream CI issues
+          shell: bash
+          working-directory: theme-review-action
+          run: |
+              # wp-env destroy prompts fail non-interactively in GitHub Actions.
+              sed -i 's/wp-env destroy/wp-env destroy --force/' bin/program.js
+              # npm swallows wp-cli flags unless separated with "--".
+              sed -i "s/'run', 'wp-env', 'run', 'tests-cli'/'run', 'wp-env', '--', 'run', 'tests-cli'/" bin/configure.js
+              sed -i "s/'run', 'wp-env', 'run', 'cli'/'run', 'wp-env', '--', 'run', 'cli'/" bin/configure.js
+
+        - name: Install dependencies and run theme review
+          shell: bash
+          working-directory: theme-review-action
+          run: |
+              # `theme-review-action` uses `process.env.GITHUB_ACTION_PATH` to find
+              # its internal `actions/` directory. In composite actions GitHub may
+              # set `GITHUB_ACTION_PATH` to the composite action root, which breaks
+              # that lookup. Export it explicitly for this step.
+              export GITHUB_ACTION_PATH="${{ github.workspace }}/theme-review-action"
+              npm install
+              # theme-review-action allows ^10.1.0; ensure wp-env supports destroy --force.
+              npm install @wordpress/env@^10.39.0
+              node bin/github.js
+              chmod -R 767 ./
+              npm run start -- --skipFolderCopy --githubRun --accessibleReady=${{ inputs.accessible-ready }} --debug
+
+        - name: Teardown wp-env
+          if: always()
+          shell: bash
+          working-directory: theme-review-action
+          run: npx wp-env destroy --force || printf 'y\n' | npx wp-env destroy || true

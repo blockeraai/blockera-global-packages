@@ -1,0 +1,40 @@
+name: 'Blockera Jest unit tests'
+description: 'Optional Composer/build, then run Jest. Override via env on the workflow step.'
+inputs:
+    command:
+        description: 'Jest command'
+        required: false
+        default: 'npm run test:js -- --ci --maxWorkers=2 --cacheDirectory="$HOME/.jest-cache"'
+    build:
+        description: 'Run build before Jest (true|false)'
+        required: false
+        default: 'true'
+    build-command:
+        description: 'Build command when build is true'
+        required: false
+        default: 'npm run build'
+    composer-install:
+        description: 'Run Composer before build (true|false)'
+        required: false
+        default: 'false'
+    composer-command:
+        description: 'Composer command when composer-install is true'
+        required: false
+        default: 'composer install --no-dev -o --apcu-autoloader -a'
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Install Composer packages
+          if: ${{ inputs.composer-install == 'true' }}
+          shell: bash
+          run: ${{ inputs.composer-command }}
+
+        - name: Build
+          if: ${{ inputs.build == 'true' }}
+          shell: bash
+          run: ${{ inputs.build-command }}
+
+        - name: Run Jest
+          shell: bash
+          run: ${{ inputs.command }}

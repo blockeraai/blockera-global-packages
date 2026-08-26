@@ -609,3 +609,82 @@ if (! function_exists('blockera_sort_css_by_block_number')) {
 		return $css_array;
 	}
 }
+
+if (! function_exists('blockera_sb_get_product_details')) {
+	/**
+	 * Blockera Site Builder plugin product details for the products registry.
+	 *
+	 * Shape follows blockera/products `product-details.schema.json`.
+	 * Details are read from the plugin entry file headers so version bumps
+	 * need no code change.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string,mixed> the product details.
+	 */
+	function blockera_sb_get_product_details(): array {
+		// Lightweight header read (first 8KB only) — same source as the plugins screen.
+		$headers = get_file_data(
+            BLOCKERA_SB_FILE,
+            [
+				'Name'        => 'Plugin Name',
+				'PluginURI'   => 'Plugin URI',
+				'Description' => 'Description',
+				'Author'      => 'Author',
+				'RequiresWP'  => 'Requires at least',
+				'RequiresPHP' => 'Requires PHP',
+			]
+        );
+
+		return [
+			'name'        => ! empty( $headers['Name'] ) ? $headers['Name'] : 'Blockera Site Builder',
+			'description' => ! empty( $headers['Description'] ) ? $headers['Description'] : '',
+			'slug'        => 'blockera',
+			'version'     => defined( 'BLOCKERA_SB_VERSION' ) ? BLOCKERA_SB_VERSION : '0.0.0',
+			'type'        => 'plugin',
+			// This code only runs while the plugin is active.
+			'status'      => 'active',
+			// The standalone site builder plugin is the companion product.
+			'isCompanion' => true,
+			'author'      => ! empty( $headers['Author'] ) ? $headers['Author'] : '',
+			'homepage'    => ! empty( $headers['PluginURI'] ) ? $headers['PluginURI'] : '',
+			'requires'    => [
+				'word' . 'press' => ! empty( $headers['RequiresWP'] ) ? $headers['RequiresWP'] : '',
+				'php'            => ! empty( $headers['RequiresPHP'] ) ? $headers['RequiresPHP'] : '',
+			],
+		];
+	}
+}
+
+if (! function_exists('blockera_sb_register_product')) {
+	/**
+	 * Register the Blockera Site Builder plugin into the blockera products registry.
+	 *
+	 * Hooked on `blockera/products/registry/init` (fires once, on first read
+	 * access of the registry) — see php/app.php.
+	 *
+	 * Registration is skipped when blockera runs embedded inside the
+	 * blockera-one theme: there the theme registers itself as the
+	 * `blockera-one` product and no companion plugin product exists.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	function blockera_sb_register_product(): void {
+		// The blockera/products package may be absent in repos not wired to it yet.
+		if (! function_exists('blockera_register_product') || ! defined('BLOCKERA_SB_FILE')) {
+			return;
+		}
+
+		// Companion only when the entry file lives inside the plugins directory,
+		// mirrors the pluginURI check on the javascript side (blockera/js/index.js).
+		$entry = wp_normalize_path(BLOCKERA_SB_FILE);
+
+		if (! defined('WP_PLUGIN_DIR') || 0 !== strpos($entry, trailingslashit(wp_normalize_path(WP_PLUGIN_DIR)))) {
+			return;
+		}
+
+		blockera_register_product(blockera_sb_get_product_details());
+	}
+}

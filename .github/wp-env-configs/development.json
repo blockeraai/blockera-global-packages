@@ -1,0 +1,10 @@
+{
+	"core": "https://wordpress.org/wordpress-latest.zip",
+	"mappings": {
+		"wp-content/plugins/blockera-global-packages": "."
+	},
+	"config": {
+		"SCRIPT_DEBUG": true,
+		"WP_DEBUG": true
+	}
+}

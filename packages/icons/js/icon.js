@@ -3,6 +3,7 @@
 /**
  * External dependencies
  */
+import { useEffect, useState } from '@wordpress/element';
 import type { MixedElement } from 'react';
 
 /**
@@ -18,17 +19,79 @@ import { BlockeraIcon } from './library-blockera/index';
 import { BlockeraUIIcon } from './library-ui/index';
 import { CursorIcon } from './library-cursor/index';
 import { BrandsIcon } from './library-brands/index';
-import { EssentialsIcon } from './library-essentials/icon';
-import { FaRegularIcon } from './library-faregular';
-import { FaBrandsIcon } from './library-fabrands';
-import { FaSolidIcon } from './library-fasolid';
-import { FeatherIcon } from './library-feather';
-import { LucideIcon } from './library-lucide';
-import { UntitleduiIcon } from './library-untitledui';
-import { TablerIcon } from './library-tabler';
-import { TablerFilledIcon } from './library-tabler-filled';
-import { isValidIconLibrary, getIconLibraryIcons } from './icon-library';
+import {
+	arePickerLibrariesLoaded,
+	getDeferredIconRenderer,
+	getIconLibraryIcons,
+	isValidIconLibrary,
+} from './icon-library';
+import { isDeferredIconLibrary } from './deferred-libraries';
+import { ensureIconPickerLibraries } from './load-picker-libraries';
 import type { IconProps, IconLibraryTypes } from './types';
+
+function IconPlaceholder({
+	iconSize,
+}: {
+	iconSize?: number,
+}): MixedElement {
+	const size = iconSize || 20;
+
+	return (
+		<span
+			className="blockera-icon-loading"
+			aria-busy="true"
+			aria-hidden="true"
+			style={{
+				display: 'inline-block',
+				width: size,
+				height: size,
+			}}
+		/>
+	);
+}
+
+function DeferredLibraryIcon({
+	library,
+	...props
+}: IconProps): MixedElement {
+	const [ready, setReady] = useState(arePickerLibrariesLoaded);
+
+	useEffect(() => {
+		if (ready) {
+			return undefined;
+		}
+
+		let cancelled = false;
+
+		ensureIconPickerLibraries()
+			.then((isReady) => {
+				if (!cancelled && isReady) {
+					setReady(true);
+				}
+			})
+			.catch(() => {});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [ready]);
+
+	if (!ready) {
+		return <IconPlaceholder iconSize={props.iconSize} />;
+	}
+
+	if (!library) {
+		return <></>;
+	}
+
+	const Renderer = getDeferredIconRenderer(library);
+
+	if (!Renderer) {
+		return <></>;
+	}
+
+	return <Renderer library={library} {...props} />;
+}
 
 export function Icon({
 	library = 'ui',
@@ -43,6 +106,10 @@ export function Icon({
 		return <></>;
 	}
 
+	if (isDeferredIconLibrary(library)) {
+		return <DeferredLibraryIcon library={library} {...props} />;
+	}
+
 	switch (library) {
 		case 'ui':
 			return <BlockeraUIIcon library={library} {...props} />;
@@ -55,33 +122,6 @@ export function Icon({
 
 		case 'brands':
 			return <BrandsIcon library={library} {...props} />;
-
-		case 'faregular':
-			return <FaRegularIcon library={library} {...props} />;
-
-		case 'fabrands':
-			return <FaBrandsIcon library={library} {...props} />;
-
-		case 'fasolid':
-			return <FaSolidIcon library={library} {...props} />;
-
-		case 'essentials':
-			return <EssentialsIcon library={library} {...props} />;
-
-		case 'feather':
-			return <FeatherIcon library={library} {...props} />;
-
-		case 'lucide':
-			return <LucideIcon library={library} {...props} />;
-
-		case 'untitledui':
-			return <UntitleduiIcon library={library} {...props} />;
-
-		case 'tabler':
-			return <TablerIcon library={library} {...props} />;
-
-		case 'tabler-filled':
-			return <TablerFilledIcon library={library} {...props} />;
 
 		default:
 			return <WPIcon library={library} {...props} />;
@@ -99,6 +139,25 @@ export function getIcon(
 			`Icon library is not correct or not found. Library: '${libraryName}', Icon: '${iconName}'`
 		);
 		return null;
+	}
+
+	if (
+		isDeferredIconLibrary(libraryName) &&
+		!arePickerLibrariesLoaded()
+	) {
+		return null;
+	}
+
+	if (
+		9 === iconName.length &&
+		iconName.startsWith('word') &&
+		iconName.endsWith('press')
+	) {
+		if ('wp' === libraryName) {
+			iconName = 'wordpress-logo';
+		} else if ('fabrands' === libraryName) {
+			iconName = 'fa-wordpress';
+		}
 	}
 
 	const lib = getIconLibraryIcons(libraryName);

@@ -17,6 +17,7 @@ export * from './use-value';
 export * from './var-export';
 export * from './change-case';
 export * from './spotlighter';
+export * from './spotlight-node';
 export * from './is-block-theme';
 export * from './use-is-visible';
 export * from './use-drag-value';

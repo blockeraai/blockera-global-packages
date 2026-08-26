@@ -10,6 +10,7 @@ import { isSpecialUnit } from '@blockera/controls';
  * Internal dependencies
  */
 import { resolveDimensionValueFromWP } from './dimension-variable-from-wp';
+import { isEmptyBlockeraCompatValue } from '../../utils';
 
 export function heightFromWPCompatibility({
 	attributes,
@@ -18,7 +19,7 @@ export function heightFromWPCompatibility({
 	attributes: Object,
 	blockId?: string,
 }): Object {
-	if (attributes?.blockeraHeight?.value !== '') {
+	if (!isEmptyBlockeraCompatValue(attributes?.blockeraHeight?.value)) {
 		return attributes;
 	}
 

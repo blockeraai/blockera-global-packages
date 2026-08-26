@@ -10,28 +10,42 @@ const CssMinimizerPlugin = consumerRequire('css-minimizer-webpack-plugin');
 
 const styleEntries = {};
 const editorIframeStyles = {};
-// packages/dev-tools/js/webpack → packages/
-const packagesDir = path.resolve(__dirname, '..', '..', '..');
-const styleFiles = glob.sync(path.join(packagesDir, '**/*.scss'));
+// packages/dev-tools/js/webpack → shared packages/ (submodule)
+const sharedPackagesDir = path.resolve(__dirname, '..', '..', '..');
+// Host-local packages live next to the submodule (e.g. packages/site-toolkit).
+const consumerPackagesDir = path.resolve(process.cwd(), 'packages');
 
-styleFiles.forEach((currentEntry) => {
-	const relativeFromPackages = path
-		.relative(packagesDir, currentEntry)
-		.split(path.sep)
-		.join('/');
-	const packageName = relativeFromPackages.split('/')[0];
+function addStyleFiles(packagesRoot, files) {
+	files.forEach((currentEntry) => {
+		const relativeFromPackages = path
+			.relative(packagesRoot, currentEntry)
+			.split(path.sep)
+			.join('/');
+		const packageName = relativeFromPackages.split('/')[0];
 
-	if (!packageName || -1 !== packageName.indexOf('dev-')) {
-		return;
-	}
+		if (!packageName || -1 !== packageName.indexOf('dev-')) {
+			return;
+		}
 
-	Object.assign(styleEntries, {
-		[`${packageName}-styles`]: [
-			...(styleEntries[`${packageName}-styles`] || []),
-			currentEntry,
-		],
+		const key = `${packageName}-styles`;
+
+		styleEntries[key] = [...(styleEntries[key] || []), currentEntry];
 	});
-});
+}
+
+addStyleFiles(
+	sharedPackagesDir,
+	glob.sync(path.join(sharedPackagesDir, '**/*.scss'))
+);
+
+if (consumerPackagesDir !== sharedPackagesDir) {
+	addStyleFiles(
+		consumerPackagesDir,
+		glob.sync(path.join(consumerPackagesDir, '**/*.scss'), {
+			ignore: ['**/global-packages/**', '**/node_modules/**'],
+		})
+	);
+}
 
 module.exports = {
 	entry: {

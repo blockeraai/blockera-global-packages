@@ -19,7 +19,9 @@ import { PresetTaxonomyBody } from './preset-taxonomy-body';
 import { PresetTaxonomySection } from './preset-taxonomy-section';
 import { PresetTaxonomyPresetFields } from './taxonomy-preset-fields';
 
-export type PresetTaxonomyBridgeProps<TItem extends Record<string, unknown>> = {
+export type PresetTaxonomyBridgeProps<
+	TItem extends Record<string, unknown>,
+> = {
 	controlName: string;
 	mainRepeaterValue: TItem[];
 	/** Baseline rows merged with repeater output (e.g. theme shades kept outside taxonomy slice). */
@@ -46,7 +48,9 @@ export type PresetTaxonomyBridgeProps<TItem extends Record<string, unknown>> = {
 	}> | null;
 };
 
-export function PresetTaxonomyBridge<TItem extends Record<string, unknown>>({
+export function PresetTaxonomyBridge<
+	TItem extends Record<string, unknown>,
+>({
 	controlName,
 	mainRepeaterValue,
 	baselineItems,

@@ -77,7 +77,7 @@ export const StyleVariationStylesRenderer: ComponentType<Object> = memo(
 			return sanitizeBlockAttributes({
 				...validBlockGlobalStyles,
 				blockeraBlockStates: mergedBlockStates,
-				blockeraPropsId: stablePropsId,
+				blockeraId: stablePropsId,
 			});
 		}, [validBlockGlobalStyles, stablePropsId]);
 

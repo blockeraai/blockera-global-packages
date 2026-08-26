@@ -83,4 +83,20 @@ class GridLayoutTest extends StyleDefinitionTestCase {
 		$this->assertStringContainsString( 'minmax(min(10rem, 100%), 1fr)', $result['']['grid-template-columns'] );
 		$this->assertSame( 'inline-size !important', $result['']['container-type'] );
 	}
+
+	public function testFallsBackToWpLayoutMinimumColumnWidth(): void {
+		$definition = $this->gridDefinition(
+			[
+				'blockeraGridMinimumColumnWidth' => [ 'value' => '' ],
+				'layout'                         => [
+					'type'               => 'grid',
+					'minimumColumnWidth' => '23rem',
+				],
+			]
+		);
+
+		$result = $this->invokeCss( $definition, [ 'type' => 'grid' ] );
+
+		$this->assertStringContainsString( 'minmax(min(23rem, 100%), 1fr)', $result['']['grid-template-columns'] );
+	}
 }

@@ -14,7 +14,7 @@ import { getColorVAFromVarString } from '@blockera/data';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
 /**
  * Resolved CSS `box-shadow` for a theme.json preset (`items` array or legacy `shadow` string).
@@ -544,13 +544,10 @@ export function shadowFromWPCompatibility({
 		return attributes;
 	}
 
-	// Read shadow from appropriate location based on context
-	const shadowValue = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.shadow
-		: attributes?.shadow;
+	const shadowValue = getWpFromStyleOrGlobal(
+		attributes?.style?.shadow,
+		attributes?.shadow
+	);
 
 	if (!shadowValue) {
 		return attributes;

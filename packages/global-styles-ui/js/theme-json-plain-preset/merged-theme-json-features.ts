@@ -2,6 +2,7 @@
  * External dependencies
  */
 import { useSelect } from '@wordpress/data';
+import { store as blockEditorStore } from '@wordpress/block-editor';
 
 /**
  * Blockera dependencies
@@ -16,8 +17,7 @@ export function useMergedThemeJsonExperimentalFeaturesWrapped():
 	Record<string, unknown> | undefined {
 	return useSelect((wpSelect) => {
 		try {
-			const editorSettings =
-				wpSelect('core/block-editor')?.getSettings?.();
+			const editorSettings = wpSelect(blockEditorStore).getSettings();
 			return wrapExperimentalFeaturesRaw(
 				editorSettings?.__experimentalFeatures
 			) as Record<string, unknown> | undefined;

@@ -1,0 +1,88 @@
+name: 'Blockera create demo attachments'
+description: >
+    Build product zip, upload artifact, publish to ci-artifacts, and post Playground
+    demo comment. Defaults match the Blockera plugin; override via inputs / BLOCKERA_DEMO_* env.
+inputs:
+    repo-token:
+        description: 'PAT for bot comment API (secrets.BLOCKERABOT_PAT)'
+        required: true
+    github-token:
+        description: 'Token for gh release upload (github.token)'
+        required: true
+    pr-number:
+        description: 'Pull request number'
+        required: true
+    head-sha:
+        description: 'PR head SHA (shortened in publish script)'
+        required: true
+    run-id:
+        description: 'Unique run id for Playground fingerprint'
+        required: true
+    slug:
+        description: 'Product slug used in zip/asset names'
+        required: false
+        default: 'blockera'
+    zip-file:
+        description: 'Local zip path produced by the build'
+        required: false
+        default: 'blockera.zip'
+    main-file-suffix:
+        description: 'Suffix for plugin main file during zip build'
+        required: false
+        default: ''
+    artifact-retention-days:
+        description: 'Actions artifact retention'
+        required: false
+        default: '14'
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Build product zip
+          shell: bash
+          env:
+              BLOCKERA_DEMO_MAIN_FILE_SUFFIX: ${{ inputs.main-file-suffix }}
+              BLOCKERA_DEMO_SLUG: ${{ inputs.slug }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/create-demo-attachments/build-zip.sh"
+
+        - name: Upload ZIP as Actions artifact
+          uses: actions/upload-artifact@v4
+          with:
+              name: ${{ inputs.slug }}-pr-${{ inputs.pr-number }}
+              path: ${{ inputs.zip-file }}
+              retention-days: ${{ inputs.artifact-retention-days }}
+              if-no-files-found: error
+
+        - name: Publish ZIP to ci-artifacts prerelease
+          shell: bash
+          env:
+              GH_TOKEN: ${{ inputs.github-token }}
+              PR_NUMBER: ${{ inputs.pr-number }}
+              REPO: ${{ github.repository }}
+              SHORT_SHA: ${{ inputs.head-sha }}
+              BLOCKERA_DEMO_SLUG: ${{ inputs.slug }}
+              BLOCKERA_DEMO_ZIP: ${{ inputs.zip-file }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/create-demo-attachments/publish-zip.sh"
+
+        - name: Find existing bot comment
+          shell: bash
+          env:
+              GITHUB_TOKEN: ${{ inputs.repo-token }}
+              REPO: ${{ github.repository }}
+              PR_NUMBER: ${{ inputs.pr-number }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/create-demo-attachments/find-bot-comment.sh"
+
+        - name: Encode Playground blueprint
+          shell: bash
+          env:
+              PR_NUMBER: ${{ inputs.pr-number }}
+              RUN_ID: ${{ inputs.run-id }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/create-demo-attachments/encode-playground.sh"
+
+        - name: Post or update PR comment
+          shell: bash
+          env:
+              GITHUB_TOKEN: ${{ inputs.repo-token }}
+              REPO: ${{ github.repository }}
+              PR_NUMBER: ${{ inputs.pr-number }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/create-demo-attachments/post-comment.sh"

@@ -75,10 +75,7 @@ const omitUnownedBlockeraDisplay = (
 ): Object => {
 	for (let i = 0; i < owners.length; i++) {
 		const owner = owners[i];
-		if (
-			owner &&
-			Object.prototype.hasOwnProperty.call(owner, 'blockeraDisplay')
-		) {
+		if (owner && 'blockeraDisplay' in owner) {
 			return mergedAttrs;
 		}
 	}
@@ -449,7 +446,9 @@ export const getComputedCssProps = ({
 			);
 
 			// 2- create css styles for inner blocks inside master normal state on base breakpoint.
-			Object.entries(params?.attributes?.blockeraInnerBlocks).forEach(
+			Object.entries(
+				params?.attributes?.blockeraInnerBlocks || {}
+			).forEach(
 				(innerBlock: [InnerBlockType | string, Object]): void =>
 					generateCssStyleForInnerBlocks(
 						innerBlock,
@@ -460,7 +459,7 @@ export const getComputedCssProps = ({
 		}
 
 		// 3- validate saved block-states to creating css styles for all states of blocks.
-		const states = params?.attributes?.blockeraBlockStates;
+		const states = params?.attributes?.blockeraBlockStates || {};
 		const stateItem = states[state];
 		let calculatedSelectors = calculatedProps.selectors;
 		let currentStateHasSelectors = false;
@@ -488,7 +487,7 @@ export const getComputedCssProps = ({
 			);
 		} else if (
 			!isNormalState(state) &&
-			calculatedProps.selectors[appendBlockeraPrefix(`states/${state}`)]
+			calculatedProps.selectors?.[appendBlockeraPrefix(`states/${state}`)]
 		) {
 			calculatedSelectors =
 				calculatedProps.selectors[

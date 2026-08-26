@@ -1394,7 +1394,7 @@
 	},
 	{
 		"iconName": "fa-wordpress-simple",
-		"title": "Wordpress Simple",
+		"title": "WordPress Simple",
 		"library": "fabrands",
 		"prefix": "fab",
 		"tags": []
@@ -2598,7 +2598,7 @@
 	},
 	{
 		"iconName": "fa-wordpress",
-		"title": "Wordpress",
+		"title": "WordPress",
 		"library": "fabrands",
 		"prefix": "fab",
 		"tags": []

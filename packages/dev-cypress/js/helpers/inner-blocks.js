@@ -7,23 +7,66 @@ export function setParentBlock() {
 }
 
 export function setInnerBlock(blockType) {
-	cy.get('body').then(($body) => {
-		if (
-			$body.find(`.blockera-control-repeater div[data-id="${blockType}"]`)
-				.length > 0
-		) {
-			cy.getByDataId(blockType).within(() => {
-				cy.get('span').click({ force: true });
-			});
-		} else {
-			openInserter();
+	const itemSelector = `.blockera-control-inner-blocks-repeater [data-cy="repeater-item"][data-id="${blockType}"]`;
+	const pickerItemSelector = `[aria-label="${blockType}"]`;
 
-			cy.get('.blockera-component-popover')
-				.last()
-				.within(() => {
-					cy.getByAriaLabel(blockType).click({ force: true });
-				});
+	const waitForInnerBlockCard = () => {
+		cy.getByDataTest('blockera-inner-block-card', { timeout: 20000 }).should(
+			'exist'
+		);
+	};
+
+	const activateInnerBlock = () => {
+		cy.window().then((win) => {
+			win.wp.data
+				.dispatch('blockera/extensions')
+				.changeExtensionCurrentBlock(blockType);
+		});
+		waitForInnerBlockCard();
+	};
+
+	const clickInnerBlockItem = () => {
+		// Parent inner-block chips stay in the DOM while another inner-block
+		// card is open, but they are not `:visible`. Cypress `.filter(':visible')`
+		// retries until timeout; force-click the chip then dispatch.
+		cy.get(itemSelector)
+			.first()
+			.within(() => {
+				cy.get(
+					'[data-cy="group-control-header"], .blockera-inner-block-label, span'
+				)
+					.first()
+					.click({ force: true });
+			});
+		activateInnerBlock();
+	};
+
+	cy.get('body').then(($body) => {
+		if ($body.find(itemSelector).length > 0) {
+			clickInnerBlockItem();
+			return;
 		}
+
+		// force:false virtual inner blocks (elements/link, …) are added from the
+		// shared states/inner-blocks inserter. WP→Blockera hydrate can also put
+		// them in the repeater; only wait for that when the picker has no match.
+		openInserter();
+
+		cy.get('.blockera-component-popover')
+			.last()
+			.then(($popover) => {
+				if ($popover.find(pickerItemSelector).length > 0) {
+					cy.wrap($popover).within(() => {
+						cy.getByAriaLabel(blockType).click({ force: true });
+					});
+					waitForInnerBlockCard();
+					return;
+				}
+
+				cy.get('body').type('{esc}', { force: true });
+				cy.get(itemSelector, { timeout: 20000 }).should('exist');
+				clickInnerBlockItem();
+			});
 	});
 }
 

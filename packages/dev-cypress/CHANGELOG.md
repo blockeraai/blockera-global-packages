@@ -1,5 +1,8 @@
 ## Unreleased
 
+### Improvements
+- Site Editor Templates Cypress helpers assert `blockera-builder` and literal `p=/` paths.
+
 ## 1.0.2 (2025-04-12)
 
 ### Improvements

@@ -337,6 +337,10 @@
 	z-index: 0;
 	// remove the 3 px margin left space because of the input padding
 
+	&.is-basic-block-mode {
+		margin-bottom: 1px;
+	}
+
 	.blockera-extension-block-card__title__input {
 		margin-left: -3px;
 		margin-right: -1px;

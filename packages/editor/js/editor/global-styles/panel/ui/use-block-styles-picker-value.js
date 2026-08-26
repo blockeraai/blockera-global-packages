@@ -62,7 +62,9 @@ export const useBlockStylesPickerValue = ({
 			? pickerVariationSurface
 			: panelVariationSurface;
 
-	const { isNormalState } = useBlockContext();
+	const { isNormalState: isNormalStateFn } = useBlockContext() || {};
+	const isNormalState =
+		typeof isNormalStateFn === 'function' ? isNormalStateFn : () => true;
 	const [counter, setCounter] = useBlockStylesCounter({
 		blockName,
 		baseConfig,

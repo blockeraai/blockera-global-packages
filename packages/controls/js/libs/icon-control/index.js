@@ -15,7 +15,11 @@ import {
 	controlClassNames,
 	controlInnerClassNames,
 } from '@blockera/classnames';
-import { Icon, prepareIconSvgForStorage } from '@blockera/icons';
+import {
+	Icon,
+	prepareIconSvgForStorage,
+	useIconPickerLibrariesReady,
+} from '@blockera/icons';
 import { isString, isEmpty, isUndefined } from '@blockera/utils';
 
 /**
@@ -50,6 +54,7 @@ function IconControl({
 	onChange,
 	//
 	className,
+	fieldProps,
 }: IconControlProps): MixedElement {
 	const { value, setValue, attribute, blockName, resetToDefault } =
 		useControlContext({
@@ -81,6 +86,8 @@ function IconControl({
 		value,
 		onCommit: handlePickerCommit,
 	});
+
+	useIconPickerLibrariesReady();
 
 	const { currentIcon } = iconContextValue;
 	const {
@@ -176,6 +183,7 @@ function IconControl({
 				columns={columns}
 				controlName={field}
 				className={className}
+				fieldProps={fieldProps}
 				{...{
 					attribute,
 					blockName,

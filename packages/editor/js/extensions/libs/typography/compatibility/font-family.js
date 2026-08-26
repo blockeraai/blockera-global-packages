@@ -3,7 +3,7 @@
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, isEmptyBlockeraCompatValue, getWpFromStyleOrGlobal } from '../../utils';
 
 export function fontFamilyFromWPCompatibility({
 	attributes,
@@ -14,16 +14,13 @@ export function fontFamilyFromWPCompatibility({
 	insideBlockInspector?: boolean,
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 }): Object | false {
-	// Check block-level style (insideBlockInspector) or global style context
-	const fontFamily = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.fontFamily
-		: attributes?.typography?.fontFamily;
+	const fontFamily = getWpFromStyleOrGlobal(
+		attributes?.fontFamily,
+		attributes?.typography?.fontFamily
+	);
 
 	if (
-		attributes?.blockeraFontFamily?.value === '' &&
+		isEmptyBlockeraCompatValue(attributes?.blockeraFontFamily?.value) &&
 		fontFamily !== undefined
 	) {
 		attributes.blockeraFontFamily = {

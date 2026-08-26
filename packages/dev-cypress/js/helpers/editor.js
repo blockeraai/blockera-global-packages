@@ -211,6 +211,21 @@ export function getBlockeraEntity(data, field) {
 	return data.select('blockera/data').getEntity('blockera')[field];
 }
 
+export function formatWpEntitySaveError(error) {
+	if (!error) {
+		return 'unknown error';
+	}
+
+	if (typeof error === 'string') {
+		return error;
+	}
+
+	const status = error.data?.status ?? error.status;
+	const message = error.message || error.code || JSON.stringify(error);
+
+	return status ? `${status}: ${message}` : String(message);
+}
+
 /**
  * Persist all dirty entity records (e.g. global styles) from the site or post editor.
  * Mirrors the multi-entity save flow used when clicking Save in the editor UI.
@@ -229,6 +244,8 @@ export function getBlockeraEntity(data, field) {
  *                                                  (needed for empty-entity resets —
  *                                                  compatibility re-hydrates theme
  *                                                  `styles.blocks` from base config).
+ * REST 4xx/5xx fail the test (`throwOnError` plus `getLastEntitySaveError`).
+ *
  * @return {Cypress.Chainable} Resolves when WordPress `saveEditedEntityRecord` calls complete.
  */
 export function saveSiteEditorDirtyEntities({ runCompatibility = true } = {}) {
@@ -268,10 +285,34 @@ export function saveSiteEditorDirtyEntities({ runCompatibility = true } = {}) {
 					dispatch.saveEditedEntityRecord(
 						record.kind,
 						record.name,
-						record.key
+						record.key,
+						{ throwOnError: true }
 					)
 				)
-			);
+			).then((savedRecords) => {
+				savedRecords?.forEach((saved, index) => {
+					const record = entitiesToSave[index];
+					const error = select.getLastEntitySaveError?.(
+						record.kind,
+						record.name,
+						record.key
+					);
+
+					if (error) {
+						throw new Error(
+							`Failed to save ${record.kind}/${record.name} (${record.key}): ${formatWpEntitySaveError(error)}`
+						);
+					}
+
+					if (saved == null) {
+						throw new Error(
+							`Failed to save ${record.kind}/${record.name} (${record.key}): saveEditedEntityRecord returned empty (REST save did not persist).`
+						);
+					}
+				});
+
+				return savedRecords;
+			});
 		});
 
 	// Global Styles panel writes the core entity via setStyle after a 1s debounce

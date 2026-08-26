@@ -139,7 +139,7 @@ export const GlobalStylesRenderer: ComponentType<any> = memo(
 
 		// Early return if no styles to render
 		const hasBlockeraPropsId =
-			defaultAttributes.hasOwnProperty('blockeraPropsId');
+			defaultAttributes.hasOwnProperty('blockeraId');
 		const hasSanitizedStyles =
 			sanitizedBlockGlobalStyles &&
 			Object.keys(sanitizedBlockGlobalStyles).length > 0;

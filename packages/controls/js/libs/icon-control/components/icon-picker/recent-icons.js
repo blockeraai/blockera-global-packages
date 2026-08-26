@@ -95,7 +95,9 @@ export default function RecentIcons() {
 				className={controlInnerClassNames('library-body', 'no-fade')}
 				ref={libraryBodyRef}
 			>
-				{iconElements}
+				<div className={controlInnerClassNames('library-grid')}>
+					{iconElements}
+				</div>
 			</div>
 		</div>
 	);

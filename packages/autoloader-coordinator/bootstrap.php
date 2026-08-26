@@ -16,7 +16,7 @@ if (! function_exists('blockera_bootstrap_shared_autoloader')) {
 	 * Consumers provide identity + companion descriptors so the coordinator never
 	 * hardcodes product slugs, plugin basenames, or theme stylesheets.
 	 *
-	 * Options keys when passing an array as $priority_or_options:
+	 * Options keys:
 	 * - priority (int).
 	 * - default (bool).
 	 * - file (string) Main plugin/theme file path (__FILE__).
@@ -27,18 +27,11 @@ if (! function_exists('blockera_bootstrap_shared_autoloader')) {
 	 * - defer_files_until (string[]) Companion slugs that must register first when active.
 	 * - companions (array[]) Other products that may load in the same request.
 	 *
-	 * @param string    $slug                Product slug (e.g. blockera, blockera-pro).
-	 * @param string    $dir                 Product root directory.
-	 * @param int|array $priority_or_options Priority (legacy) or options array.
-	 * @param bool      $default             Legacy default-coordinator flag used with the integer priority signature.
+	 * @param string $slug    Product slug (e.g. blockera, blockera-pro).
+	 * @param string $dir     Product root directory.
+	 * @param array  $options Product registration options.
 	 */
-	function blockera_bootstrap_shared_autoloader( string $slug, string $dir, $priority_or_options = 10, bool $default = false): void {
-		$options = is_array($priority_or_options)
-			? $priority_or_options
-			: [
-				'priority' => (int) $priority_or_options,
-				'default'  => $default,
-			];
+	function blockera_bootstrap_shared_autoloader( string $slug, string $dir, array $options = []): void {
 
 		$options['priority'] = (int) ( $options['priority'] ?? 10 );
 		$options['default']  = (bool) ( $options['default'] ?? false );

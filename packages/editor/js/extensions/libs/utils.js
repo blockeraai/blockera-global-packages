@@ -15,7 +15,7 @@ import type { ControlContextRefCurrent } from '@blockera/controls';
  * Internal dependencies
  */
 import type { TBlockProps } from './types';
-import { getBaseBreakpoint } from '../../editor/header-ui';
+import { getBaseBreakpoint } from '../../editor/header-ui/components/breakpoints/helpers';
 import { isInnerBlock, isNormalState } from '../components/utils';
 import type { BlockDetail } from './block-card/block-states/types';
 import { STORE_NAME } from './base/store/constants';
@@ -162,6 +162,24 @@ export const runInsideBlockInspector = (
 			return insideBlockInspector;
 	}
 };
+
+/**
+ * WP→Blockera source for first-time conversion.
+ * Block-level values live on `style.*`; global styles use a sibling path.
+ * Canvas conversion still needs `style.*` when the inspector is not mounted.
+ */
+export function getWpFromStyleOrGlobal(
+	styleValue: mixed,
+	globalValue: mixed
+	// WP style/global payloads vary by feature (objects, strings, presets).
+	// Call sites inspect the concrete shape after this pick.
+): any {
+	return styleValue || globalValue;
+}
+
+export function isEmptyBlockeraCompatValue(value: mixed): boolean {
+	return value === '' || value == null;
+}
 
 /**
  * Resolve the store definition key for an inner block.

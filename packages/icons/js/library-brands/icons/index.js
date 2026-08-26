@@ -45,7 +45,7 @@ export { default as Tumblr } from './tumblr.svg';
 export { default as Twitch } from './twitch.svg';
 export { default as Vimeo } from './vimeo.svg';
 export { default as Vk } from './vk.svg';
-export { default as WordPress } from './wordpress.svg';
+export { default as Wp } from './wp.svg';
 export { default as X } from './x.svg';
 export { default as Yelp } from './yelp.svg';
 export { default as Youtube } from './youtube.svg';

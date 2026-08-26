@@ -3,7 +3,7 @@
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
 function getBlockLevelTextAlign(
 	attributes: Object,
@@ -46,13 +46,10 @@ export function textAlignFromWPCompatibility({
 }): Object {
 	const isParagraph = blockId === 'core/paragraph';
 
-	// Paragraph keeps legacy `align`; other blocks use style.typography.textAlign (WP 7+).
-	const textAlign = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? getBlockLevelTextAlign(attributes, isParagraph)
-		: attributes?.typography?.textAlign;
+	const textAlign = getWpFromStyleOrGlobal(
+		getBlockLevelTextAlign(attributes, isParagraph),
+		attributes?.typography?.textAlign
+	);
 
 	// For detecting the text align changer from block editor controls
 	// we have to validate and make sure the value is correct and should be updated

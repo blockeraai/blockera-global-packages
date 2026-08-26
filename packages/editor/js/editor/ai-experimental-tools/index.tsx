@@ -141,14 +141,9 @@ function createWpBlockFromJson(input: JsonBlockInput): any {
 }
 
 /**
- * BlockStyle only prints Blockera CSS when `blockeraPropsId` is truthy.
+ * BlockStyle only prints Blockera CSS when `blockeraId` is truthy.
  * JSON/AI blocks often omit it or leave the default empty string; the canvas
  * normally assigns via editor flows — mirror that here before insert.
- *
- * Blockera often persists `blockeraPropsId` and `blockeraCompatId` as the **same**
- * string when both are bootstrapped together (see fixtures / use-calculate-current-attributes tests).
- * Generating two separate `getAttributesWithIds` timestamps can leave them out of sync with what
- * the extensions layer expects for fresh blocks.
  */
 function ensureTruthyBlockeraPropsIds(block: any): any {
 	const innerRaw = block?.innerBlocks;
@@ -159,16 +154,16 @@ function ensureTruthyBlockeraPropsIds(block: any): any {
 	}
 
 	const blockType = getBlockType(block?.name);
-	const supportsPropsId = Boolean(blockType?.attributes?.blockeraPropsId);
-	const supportsCompat = Boolean(blockType?.attributes?.blockeraCompatId);
+	const supportsId = Boolean(
+		blockType?.attributes?.blockeraId ||
+			blockType?.attributes?.blockeraPropsId
+	);
 	const attrs = block?.attributes || {};
 
-	const needsPropsId =
-		supportsPropsId && !hasTruthyBlockeraId(attrs.blockeraPropsId);
-	const needsCompatPaired =
-		supportsCompat &&
-		hasTruthyBlockeraId(attrs.blockeraPropsId) &&
-		!hasTruthyBlockeraId(attrs.blockeraCompatId);
+	const needsId =
+		supportsId &&
+		!hasTruthyBlockeraId(attrs.blockeraId) &&
+		!hasTruthyBlockeraId(attrs.blockeraPropsId);
 
 	let next = block;
 	const innersChanged =
@@ -179,24 +174,15 @@ function ensureTruthyBlockeraPropsIds(block: any): any {
 		next = cloneBlock(block, {}, mappedInner);
 	}
 
-	if (needsPropsId) {
+	if (needsId) {
 		const withId = getAttributesWithIds(
 			{ ...next.attributes },
-			'blockeraPropsId',
+			'blockeraId',
 			false
 		);
-		const bootstrapId = String(withId.blockeraPropsId ?? '').trim();
-		const patch: Record<string, unknown> = {
-			blockeraPropsId: bootstrapId,
-		};
-		if (supportsCompat && !hasTruthyBlockeraId(withId.blockeraCompatId)) {
-			patch.blockeraCompatId = bootstrapId;
-		}
-		next = cloneBlock(next, patch);
-	} else if (needsCompatPaired) {
-		const paired = String(attrs.blockeraPropsId ?? '').trim();
+		const bootstrapId = String(withId.blockeraId ?? '').trim();
 		next = cloneBlock(next, {
-			blockeraCompatId: paired,
+			blockeraId: bootstrapId,
 		});
 	}
 
@@ -451,13 +437,14 @@ export default function AIExperimentalTools(): JSX.Element {
 		}
 
 		const model = aiModel.trim();
+		let selectedClientId: string | null = null;
 
 		const payload = (() => {
 			let existingDesignBlocks: any[] | null = null;
 
 			if (intent.includes('@block')) {
 				const blockEditorSelect = select('core/block-editor') as any;
-				const selectedClientId =
+				selectedClientId =
 					(blockEditorSelect?.getSelectedBlockClientId?.() as
 						string | undefined) || null;
 				if (!selectedClientId) {

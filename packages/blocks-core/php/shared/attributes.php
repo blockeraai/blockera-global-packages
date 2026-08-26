@@ -13,13 +13,18 @@
 
 return [
 	// Identifiers.
+	'blockeraId'                        => [
+		'type'    => 'string',
+		'default' => '',
+	],
+	// Deprecated: kept registered so parse does not drop it before migrate.
 	'blockeraPropsId'                   => [
 		'type'    => 'string',
 		'default' => '',
 	],
-	'blockeraCompatId'                  => [
+	'blockeraBlockMode'                 => [
 		'type'    => 'string',
-		'default' => '',
+		'default' => 'advanced',
 	],
 	// Advanced settings.
 	'blockeraAttributes'                => [

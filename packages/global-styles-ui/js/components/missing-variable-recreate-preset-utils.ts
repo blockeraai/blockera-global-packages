@@ -156,19 +156,21 @@ function shadowFieldFromStoredValue(
 	}
 
 	if (isRepeaterRecord(value)) {
-		const items =
-			variableType === 'shadow'
-				? repeaterRecordToShadowItems(value)
-				: repeaterRecordToTextShadowItems(value);
+		if (variableType === 'shadow') {
+			const items = repeaterRecordToShadowItems(value);
+			const visible = items.filter((item) => item.isVisible !== false);
+			if (!visible.length) {
+				return '';
+			}
+			return shadowPresetItemsToCss(visible).trim();
+		}
+
+		const items = repeaterRecordToTextShadowItems(value);
 		const visible = items.filter((item) => item.isVisible !== false);
 		if (!visible.length) {
 			return '';
 		}
-		return (
-			variableType === 'shadow'
-				? shadowPresetItemsToCss(visible)
-				: textShadowPresetItemsToCss(visible)
-		).trim();
+		return textShadowPresetItemsToCss(visible).trim();
 	}
 
 	if (isPlainObject(value)) {
@@ -185,10 +187,13 @@ function shadowFieldFromStoredValue(
 		if (!visible.length) {
 			return '';
 		}
-		return (
-			variableType === 'shadow'
-				? shadowPresetItemsToCss(visible)
-				: textShadowPresetItemsToCss(visible)
+		if (variableType === 'shadow') {
+			return shadowPresetItemsToCss(
+				visible as ReturnType<typeof shadowItemsFromRaw>
+			).trim();
+		}
+		return textShadowPresetItemsToCss(
+			visible as ReturnType<typeof textShadowItemsFromRaw>
 		).trim();
 	}
 

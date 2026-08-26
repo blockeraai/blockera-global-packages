@@ -38,9 +38,9 @@ import type {
 	UseTabsReturn,
 	WorkspaceTabs,
 	TabsStorage,
-	TabsLimitsConfig,
 	TabsLimitExceededType,
 } from '../types';
+import type { TabsLimitsConfig } from '../utils/tabsConfig';
 
 /**
  * Main workspace ID constant.

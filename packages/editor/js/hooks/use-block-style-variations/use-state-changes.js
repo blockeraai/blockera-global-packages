@@ -84,8 +84,9 @@ export const useStateChanges = ({
 		Object.keys(
 			omitWithPattern(
 				omit(updated, [
-					'blockeraPropsId',
+					'blockeraId',
 					'blockeraCompatId',
+					'blockeraBlockMode',
 					'blockeraCurrentDevice',
 				]),
 				/!^blockera/i

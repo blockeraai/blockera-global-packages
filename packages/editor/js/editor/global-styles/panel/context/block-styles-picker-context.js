@@ -33,6 +33,7 @@ export const BlockStylesPickerContext: Object = createContext({
 	setChangesets: () => {},
 	isNotActive: false,
 	variationSurface: undefined,
+	pickOnly: false,
 });
 
 export const useBlockStylesPickerContext = (): Object => {

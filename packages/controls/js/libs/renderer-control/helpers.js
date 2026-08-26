@@ -12,13 +12,13 @@ import { isEmpty, isObject, truthy } from '@blockera/utils';
  * @return {Array<{label: *, value: *}>} the normalized select control options array.
  */
 export const normalizedSelectOptions = (
-	options: Array<Object>
+	options: Array<Object> | Object
 ): Array<Object> => {
-	if (!isObject(options)) {
-		return options;
+	if (!isObject(options) || Array.isArray(options)) {
+		return (options: any);
 	}
 
-	return Object.entries(options)
+	return Object.entries((options: Object))
 		.map(([value, label]) => ({
 			label,
 			value,

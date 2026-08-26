@@ -9,6 +9,7 @@ import {
 	activateMuPlugin,
 	closeWelcomeGuide,
 	deactivateMuPlugin,
+	formatWpEntitySaveError,
 	getSelectedBlock,
 	getWPDataObject,
 	saveSiteEditorDirtyEntities,
@@ -126,6 +127,36 @@ export function resetGlobalStylesEntityRecord() {
 	});
 }
 
+function getValueAtDotPath(root, dotPath) {
+	let cur = root;
+
+	for (const key of String(dotPath).split('.')) {
+		if (cur == null || typeof cur !== 'object') {
+			return undefined;
+		}
+
+		cur = cur[key];
+	}
+
+	return cur;
+}
+
+/** Custom preset arrays that afterEach reset must persist as empty. */
+const CUSTOM_PRESET_ARRAY_PATHS = [
+	'settings.color.palette.custom',
+	'settings.color.gradients.custom',
+	'settings.shadow.presets.custom',
+	'settings.spacing.spacingSizes.custom',
+	'settings.typography.fontSizes.custom',
+	'settings.typography.blockeraLineHeights.custom',
+	'settings.border.blockeraBorder.presets.custom',
+	'settings.blockeraTransform.presets.custom',
+	'settings.blockeraTransition.presets.custom',
+	'settings.blockeraFilter.presets.custom',
+	'settings.blockeraTextShadow.presets.custom',
+	'settings.blockeraWidthSizes.custom',
+];
+
 /**
  * Reopens Site Editor, clears the globalStyles entity, and persists the empty record.
  * Use in afterEach when a spec seeds/saves custom presets (e.g. hover canvas preview).
@@ -137,6 +168,9 @@ export function resetGlobalStylesEntityRecord() {
  * Free tier allows only one custom color variable — afterEach MUST persist an empty
  * `settings.color.palette.custom` or the next test's seed hits the upgrade modal /
  * picks the wrong catalog row.
+ *
+ * REST failures (4xx/5xx) fail the test via `saveSiteEditorDirtyEntities`
+ * (`throwOnError`). The persisted entity (not in-memory edits) is asserted.
  *
  * @return {Cypress.Chainable}
  */
@@ -155,34 +189,45 @@ export function resetAndSaveGlobalStylesEntityRecord() {
 
 	saveSiteEditorDirtyEntities({ runCompatibility: false });
 
-	// Confirm the persisted entity (not only the edited record) has no custom colors.
 	return cy.window({ timeout: 20000 }).should((win) => {
-		const select = win.wp.data.select('core');
-		const id =
-			typeof select.__experimentalGetCurrentGlobalStylesId === 'function'
-				? select.__experimentalGetCurrentGlobalStylesId()
-				: select.getCurrentGlobalStylesId?.();
+		const { select } = getCoreDataStoreApis(win);
+		const id = getGlobalStylesIdFromStore({ select });
 
 		expect(id, 'global styles entity id after reset').to.exist;
 
-		const record =
-			select.getEntityRecord(
-				GLOBAL_STYLES_KIND,
-				GLOBAL_STYLES_NAME,
-				id
-			) ||
-			select.getEditedEntityRecord(
-				GLOBAL_STYLES_KIND,
-				GLOBAL_STYLES_NAME,
-				id
-			);
-		const custom = record?.settings?.color?.palette?.custom;
-		const list = Array.isArray(custom) ? custom : [];
+		const saveError = select.getLastEntitySaveError?.(
+			GLOBAL_STYLES_KIND,
+			GLOBAL_STYLES_NAME,
+			id
+		);
 
 		expect(
-			list,
-			'custom color palette after resetAndSaveGlobalStylesEntityRecord'
-		).to.have.length(0);
+			saveError,
+			saveError
+				? `global styles save error after reset: ${formatWpEntitySaveError(saveError)}`
+				: 'global styles save error after reset'
+		).to.not.exist;
+
+		const persisted = select.getEntityRecord(
+			GLOBAL_STYLES_KIND,
+			GLOBAL_STYLES_NAME,
+			id
+		);
+
+		expect(
+			persisted,
+			'persisted global styles entity after reset (REST save must succeed; in-memory edits are not enough)'
+		).to.exist;
+
+		CUSTOM_PRESET_ARRAY_PATHS.forEach((path) => {
+			const value = getValueAtDotPath(persisted, path);
+			const list = Array.isArray(value) ? value : [];
+
+			expect(
+				list,
+				`${path} after resetAndSaveGlobalStylesEntityRecord`
+			).to.have.length(0);
+		});
 	});
 }
 

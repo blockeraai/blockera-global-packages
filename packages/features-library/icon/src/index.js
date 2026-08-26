@@ -9,11 +9,11 @@ import { iconConfig } from './extension/supports';
 import { IconExtension } from './extension/extension';
 import { filterSetAttributes } from './set-attributes';
 import { registerIconUploadSvgHandler } from './upload-svg-handler';
-import type { TFeature } from '@blockera/features-core/Js/types';
+import type { TFeature } from '@blockera/features-core/src/Js/types';
 
 registerIconUploadSvgHandler();
 
-export const Icon: TFeature = {
+export const Icon: TFeature = ({
 	name: 'icon',
 	filterSetAttributes,
 	styleGenerator: IconStyles,
@@ -21,7 +21,7 @@ export const Icon: TFeature = {
 	extensionSupportId: 'iconConfig',
 	ExtensionComponent: IconExtension,
 	isEnabled: (status = icon.block.status): boolean => status,
-};
+}: any);
 
 export * from './helpers';
 export {

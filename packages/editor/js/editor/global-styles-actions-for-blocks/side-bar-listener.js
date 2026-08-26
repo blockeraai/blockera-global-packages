@@ -26,7 +26,7 @@ export const AddBlockTypeIcons = ({
 	blockTypes: Array<Object>,
 }): Array<MixedElement> => {
 	return blockTypes.map((blockType, index) => {
-		if (!blockType.attributes?.blockeraPropsId) {
+		if (!blockType.attributes?.blockeraId) {
 			return <></>;
 		}
 

@@ -20,6 +20,10 @@ export type Props = {
 	 * is dense control active or not
 	 */
 	isDenseActive: boolean,
+	/**
+	 * is X/Y axis SelectControls active or not. disable to render the 3x3 matrix only
+	 */
+	isAxisControlsActive: boolean,
 };
 
 export type AlignItems = '' | 'flex-start' | 'center' | 'flex-end' | 'stretch';

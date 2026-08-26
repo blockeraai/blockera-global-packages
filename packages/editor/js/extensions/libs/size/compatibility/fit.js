@@ -1,5 +1,10 @@
 // @flow
 
+/**
+ * Internal dependencies
+ */
+import { isEmptyBlockeraCompatValue } from '../../utils';
+
 const coreWPFitValues = ['cover', 'contain'];
 
 export function fitFromWPCompatibility({
@@ -9,7 +14,7 @@ export function fitFromWPCompatibility({
 	attributes: Object,
 	blockId?: string,
 }): Object {
-	if (attributes?.blockeraFit?.value !== '') {
+	if (!isEmptyBlockeraCompatValue(attributes?.blockeraFit?.value)) {
 		return attributes;
 	}
 

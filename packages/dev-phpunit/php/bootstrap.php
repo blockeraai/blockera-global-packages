@@ -5,9 +5,10 @@
  * @package .dev/tests/phpunit/bootstrap.php
  */
 
-$root_dir = dirname(__DIR__, 3);
-
 require 'config.php';
+
+// $root_path is resolved in config.php (supports nested global-packages checkout).
+$root_dir = $root_path;
 
 // Require dependencies.
 require_once $root_dir . '/vendor/wp-phpunit/wp-phpunit/__loaded.php';
@@ -70,7 +71,7 @@ if ( 'tests-mysql' === getenv( 'WORDPRESS_DB_HOST' ) ) {
 
 tests_add_filter('muplugins_loaded', function () use ($root_dir) {
 
-	define( '__PACKAGES_DIR__', dirname( __DIR__, 2 ) );
+	define( '__PACKAGES_DIR__', dirname( __DIR__, 4 ) );
 	define( 'BLOCKERA_DEVELOPMENT', true );
 
 	include trailingslashit($root_dir) . 'tests/phpunit/bootstrap.php';

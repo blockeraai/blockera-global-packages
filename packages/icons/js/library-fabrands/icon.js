@@ -11,7 +11,7 @@ import { isString, isUndefined, snakeCase } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { getIcon } from '../index';
+import { getIcon } from '@blockera/icons';
 import { FaBrandsIcons } from './icons';
 
 export function FaBrandsIcon({
@@ -42,11 +42,10 @@ export function FaBrandsIcon({
 		icon.iconName = snakeCase(icon.iconName).replace(/_/g, '-');
 	}
 
-	// Handle regular and solid icons
 	return (
 		<FaIcon
 			style={style}
-			icon={[icon.icon.prefix, icon.iconName]}
+			icon={icon.icon}
 			{...props}
 		/>
 	);

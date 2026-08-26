@@ -41,6 +41,7 @@ export default function AnglePickerControl({
 	field = 'angle-picker',
 	//
 	className,
+	fieldProps,
 	...props
 }: AnglePickerControlProps): MixedElement {
 	const {
@@ -77,6 +78,7 @@ export default function AnglePickerControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<Flex

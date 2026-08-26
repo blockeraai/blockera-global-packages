@@ -12,6 +12,10 @@ export type ModalProps = {
 	className?: string,
 	size?: 'small' | 'medium' | 'large' | 'fill',
 	isDismissible?: boolean,
+	/** Forwarded to `@wordpress/components` Modal. */
+	shouldCloseOnClickOutside?: boolean,
+	/** Forwarded to `@wordpress/components` Modal. */
+	shouldCloseOnEsc?: boolean,
 	'data-test'?: string,
 	style?: Object,
 };

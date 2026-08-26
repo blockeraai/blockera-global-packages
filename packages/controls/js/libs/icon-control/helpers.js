@@ -20,7 +20,7 @@ export function parseUploadedMediaAndSetIcon(
 		return;
 	}
 
-	return fetch(media.url)
+	fetch(media.url)
 		.then((response) => response.text())
 		.then((rawString) => {
 			const svgString = sanitizeRawSVGString(rawString);
@@ -50,7 +50,7 @@ export function parseUploadedMediaAndSetIcon(
 
 			setSvgString(updatedSvgString);
 		})
-		.catch((error) => {
+		.catch((error: mixed) => {
 			/* @debug-ignore */
 			console.log(error);
 		});

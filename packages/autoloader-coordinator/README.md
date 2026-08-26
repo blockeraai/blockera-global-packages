@@ -16,7 +16,22 @@ Multiple Blockera products may ship the same Composer packages. Without coordina
 2. Merges package manifests when multiple products are active
 3. Selects preferred / highest compatible versions
 4. Caches the resolved map (WordPress transients; APCu when available)
-5. Uses the fast native Composer path for single-product installs
+5. Uses the fast native Composer path for single-product `--no-dev` installs
+
+## Composer install vs WordPress runtime
+
+The coordinator follows **what Composer actually installed**, not `APP_MODE` / `BLOCKERA_SB_MODE`:
+
+| Composer command | `vendor/composer/installed.php` `root.dev` | Packages loaded |
+| --- | --- | --- |
+| `composer install` | `true` | `require` **and** `require-dev` |
+| `composer install --no-dev` | `false` | `require` only |
+
+That decision happens at product entry (`functions.php` / plugin bootstrap) **before** dotenv loads, so env flags are not a reliable signal.
+
+Root `autoload-dev` (PHPUnit helpers under `tests/`) is still kept off the WordPress request path; PHPUnit bootstraps those files itself.
+
+`wp-cli/*` vendor packages are also kept off the WordPress request path. They exist as a CLI binary (`vendor/bin/wp`); loading their `files` autoload inside WordPress collides with the WP-CLI phar (`Cannot redeclare cli\render()`).
 
 ---
 
@@ -28,6 +43,13 @@ packages/autoloader-coordinator/
 ├── bootstrap.php
 ├── class-shared-autoload-coordinator.php   # Blockera\SharedAutoload\Coordinator
 ├── composer.json                           # blockera/autoloader-coordinator
+├── php/tests/                              # Tests for this repo's CI, not consumers
+│   ├── bootstrap.php
+│   ├── TestCase.php
+│   ├── CoordinatorComposerInstallTest.php
+│   ├── Unit/CoordinatorTest.php
+│   ├── Integration/CoordinatorIntegrationTest.php
+│   └── fixtures/                           # wp-env version-resolution scenarios
 └── blockera-folder-sync.json
 ```
 
@@ -76,6 +98,9 @@ Call this **at product bootstrap**, after WordPress is available (`ABSPATH` requ
 - After plugin activation, deactivation, or update, invalidate the package manifest cache.
 - Do not hard-code Pro/companion slugs inside this package; pass them via options/filters.
 - Prefer keeping this package free of feature logic — it is infrastructure only.
+- PHPUnit for this package lives in `php/tests/` (Brain Monkey unit + integration + Composer-install policy) and runs in **blockera-global-packages** CI job `test-php`.
+- wp-env version-resolution scenarios live in `php/tests/fixtures/` and run in the same workflow as job `coordinator-wp-env`.
+- Do not add these tests to consumer `phpunit.xml.dist` suites.
 
 ---
 

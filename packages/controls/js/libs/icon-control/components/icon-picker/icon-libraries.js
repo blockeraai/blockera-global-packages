@@ -7,7 +7,7 @@ import { createInterpolateElement, memo, useMemo } from '@wordpress/element';
 /**
  * Blockera dependencies
  */
-import { getIconLibrary } from '@blockera/icons';
+import { getIconLibrary, useIconPickerLibrariesReady } from '@blockera/icons';
 import { controlInnerClassNames } from '@blockera/classnames';
 
 /**
@@ -88,26 +88,26 @@ const IconLibraries = ({
 	libraries = DEFAULT_LIBRARIES,
 	activeFilter = 'all',
 }) => {
-	// Memoize the library components to prevent unnecessary re-renders
+	const pickerReady = useIconPickerLibrariesReady();
 	const libraryComponents = useMemo(() => {
-		const entries = Object.entries(libraries).filter(([library]) => {
-			return activeFilter === 'all' || library === activeFilter;
-		});
-
-		return entries.map(([library, config]) => {
+		return Object.entries(libraries).map(([library, config]) => {
 			const iconLibraryInfo = getIconLibrary(library);
 			const title = getLibraryHeaderTitle(iconLibraryInfo[library]);
+			const isActive = activeFilter === 'all' || library === activeFilter;
 
 			return (
-				<IconLibrary
-					key={library}
-					library={library}
-					lazyLoad={activeFilter === 'all' ? config.lazyLoad : false}
-					title={title}
-				/>
+				<div key={library} hidden={!isActive}>
+					<IconLibrary
+						library={library}
+						lazyLoad={config.lazyLoad}
+						eager={activeFilter === library}
+						limitToPreview={activeFilter === 'all'}
+						title={title}
+					/>
+				</div>
 			);
 		});
-	}, [libraries, activeFilter]);
+	}, [libraries, activeFilter, pickerReady]);
 
 	return (
 		<div className={controlInnerClassNames('icon-libraries')}>

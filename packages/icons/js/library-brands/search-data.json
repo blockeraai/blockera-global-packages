@@ -282,7 +282,7 @@
 		"tags": []
 	},
 	{
-		"iconName": "word-press",
+		"iconName": "wp",
 		"title": "WordPress",
 		"library": "brands",
 		"tags": ["cms", "blogging"]

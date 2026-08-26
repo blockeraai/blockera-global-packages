@@ -897,8 +897,10 @@ export const resetCurrentState = (_state: Object, action: Object): Object => {
 };
 
 const BLOCKERA_STATE_RESET_SKIP_KEYS = new Set([
+	'blockeraId',
 	'blockeraPropsId',
 	'blockeraCompatId',
+	'blockeraBlockMode',
 	'blockeraBlockStates',
 	'blockeraInnerBlocks',
 ]);

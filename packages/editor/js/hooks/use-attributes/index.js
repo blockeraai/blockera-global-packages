@@ -9,7 +9,12 @@ import { useCallback } from '@wordpress/element';
 /**
  * Blockera dependencies
  */
-import { mergeObject } from '@blockera/utils';
+import {
+	mergeObject,
+	getAttributesWithIds,
+	isBlockeraBlockModeBasic,
+	withoutBlockeraIdentityIfUnused,
+} from '@blockera/utils';
 import { getIconAttributes } from '@blockera/feature-icon';
 
 /**
@@ -29,29 +34,7 @@ import type {
 } from '../../extensions/libs/block-card/block-states/types';
 import type { InnerBlockType } from '../../extensions/libs/block-card/inner-blocks/types';
 
-export const getAttributesWithIds = (
-	state: Object,
-	identifier: string,
-	force: boolean = false
-): Object => {
-	const d = new Date();
-
-	if (state[identifier] && !force) {
-		return state;
-	}
-
-	return {
-		...state,
-		[identifier]:
-			'' +
-			d.getMonth() +
-			d.getDate() +
-			d.getHours() +
-			d.getMinutes() +
-			d.getSeconds() +
-			d.getMilliseconds(),
-	};
-};
+export { getAttributesWithIds };
 
 export const useAttributes = (
 	setAttributes: (
@@ -137,8 +120,10 @@ export const useAttributes = (
 
 			// Migrate to blockera attributes for some blocks where includes attributes migrations in original core Block Edit component, if we supported them.
 			if (
+				'undefined' === typeof _attributes?.blockeraId &&
 				'undefined' === typeof _attributes?.blockeraPropsId &&
-				availableAttributes?.blockeraPropsId
+				(availableAttributes?.blockeraId ||
+					availableAttributes?.blockeraPropsId)
 			) {
 				_attributes = mergeObject(
 					attributes,
@@ -146,19 +131,14 @@ export const useAttributes = (
 				);
 			}
 
-			// Sets "blockeraPropsId" if it is empty.
-			if (!_attributes?.blockeraPropsId) {
+			if (
+				!isBlockeraBlockModeBasic(_attributes) &&
+				!_attributes?.blockeraId
+			) {
 				_attributes = getAttributesWithIds(
 					_attributes,
-					'blockeraPropsId',
+					'blockeraId',
 					true
-				);
-			}
-			// Sets "blockeraCompatId" if it is empty.
-			if (!_attributes?.blockeraCompatId) {
-				_attributes = getAttributesWithIds(
-					_attributes,
-					'blockeraCompatId'
 				);
 			}
 
@@ -240,10 +220,23 @@ export const useAttributes = (
 				ref: { ...ref?.current },
 			});
 
+			const commitAttributes = (
+				nextAttributes: Object,
+				commitOptions: { ref?: Object, shouldUpdateClassName?: boolean }
+			): void => {
+				setAttributes(
+					withoutBlockeraIdentityIfUnused(
+						nextAttributes,
+						defaultAttributes
+					),
+					commitOptions
+				);
+			};
+
 			// Assume reference current action is 'reset_all_states'
 			if (ref?.current?.reset) {
 				setChangesets(true);
-				return setAttributes(
+				return commitAttributes(
 					reducer(
 						_attributes,
 						reset('reset_all_states' === ref.current.action)
@@ -258,7 +251,7 @@ export const useAttributes = (
 			// action = UPDATE_NORMAL_STATE
 			if (masterIsNormalState() && isNormalState()) {
 				setChangesets(true);
-				return setAttributes(
+				return commitAttributes(
 					reducer(_attributes, updateNormalState()),
 					{ shouldUpdateClassName, ref }
 				);
@@ -269,7 +262,7 @@ export const useAttributes = (
 				// Assume master block isn't in normal state!
 				// action = UPDATE_INNER_BLOCK_INSIDE_PARENT_STATE
 				if (!masterIsNormalState()) {
-					return setAttributes(
+					return commitAttributes(
 						reducer(
 							_attributes,
 							updateInnerBlockInsideParentState()
@@ -280,7 +273,7 @@ export const useAttributes = (
 				// Assume current block isn't in normal state and attributeId isn't "blockeraBlockStates" for prevent cyclic object error!
 				// action = UPDATE_INNER_BLOCK_STATES
 				if (!isNormalState() && !attributeIsBlockStates) {
-					return setAttributes(
+					return commitAttributes(
 						reducer(_attributes, updateInnerBlockStates()),
 						{ ref }
 					);
@@ -290,7 +283,7 @@ export const useAttributes = (
 			// Assume block state is normal and attributeId is equals with "blockeraBlockStates".
 			// action = UPDATE_NORMAL_STATE
 			if (attributeIsBlockStates || isNormalState()) {
-				return setAttributes(
+				return commitAttributes(
 					reducer(_attributes, updateNormalState()),
 					{ ref }
 				);
@@ -298,7 +291,9 @@ export const useAttributes = (
 
 			// handle update attributes in activated state and breakpoint for master block.
 			// action = UPDATE_BLOCK_STATES
-			setAttributes(reducer(_attributes, updateBlockStates()), { ref });
+			commitAttributes(reducer(_attributes, updateBlockStates()), {
+				ref,
+			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -318,7 +313,7 @@ export const useAttributes = (
 			activeBlockVariation,
 			currentInnerBlockState,
 			getActiveBlockVariation,
-			availableAttributes?.blockeraPropsId,
+			availableAttributes?.blockeraId,
 		]
 	);
 

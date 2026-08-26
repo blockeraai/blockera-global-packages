@@ -1,0 +1,44 @@
+name: 'Blockera build plugin zip artifact'
+description: >
+    Setup Node/PHP, build the product zip, and upload it as an Actions artifact.
+    Defaults match the Blockera plugin.
+inputs:
+    artifact-name:
+        description: 'upload-artifact name'
+        required: false
+        default: 'blockera'
+    zip-file:
+        description: 'Zip path to upload'
+        required: false
+        default: './blockera.zip'
+    composer-options:
+        description: 'Composer options for setup-php'
+        required: false
+        default: '--no-dev -o --apcu-autoloader -a'
+    main-file-suffix:
+        description: 'MAIN_FILE_SUFFIX for the default plugin zip builder'
+        required: false
+        default: ''
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Setup Node.js and install dependencies
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+
+        - name: Setup PHP Composer install dependencies
+          uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-php
+          with:
+              composer-options: ${{ inputs.composer-options }}
+
+        - name: Build product zip
+          shell: bash
+          env:
+              BLOCKERA_DEMO_MAIN_FILE_SUFFIX: ${{ inputs.main-file-suffix }}
+          run: bash "${GITHUB_WORKSPACE}/packages/global-packages/packages/dev-tools/github/scripts/jobs/create-demo-attachments/build-zip.sh"
+
+        - name: Upload artifact
+          uses: actions/upload-artifact@v4
+          with:
+              name: ${{ inputs.artifact-name }}
+              path: ${{ inputs.zip-file }}

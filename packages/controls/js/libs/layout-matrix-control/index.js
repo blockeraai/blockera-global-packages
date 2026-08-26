@@ -295,6 +295,7 @@ export default function LayoutMatrixControl({
 	isDirectionActive = true,
 	defaultDirection = '',
 	isDenseActive = false,
+	isAxisControlsActive = true,
 	//
 	id,
 	label,
@@ -316,6 +317,7 @@ export default function LayoutMatrixControl({
 	//
 	className,
 	children,
+	fieldProps,
 }: Props): MixedElement {
 	const {
 		value,
@@ -455,6 +457,7 @@ export default function LayoutMatrixControl({
 			controlName={field}
 			className={className}
 			style={style}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<Flex gap="10px" direction="column">
@@ -1526,130 +1529,140 @@ export default function LayoutMatrixControl({
 						)}
 					</div>
 
-					<Flex
-						direction="column"
-						justifyContent="space-between"
-						className={controlInnerClassNames(
-							'layout-matrix__controls'
-						)}
-						grow={1}
-					>
-						<Tooltip
-							text={getAxisTooltip(
-								xAxisKey,
-								value[xAxisKey] ?? ''
+					{/* Unmount X/Y SelectControls when unused (faster than CSS hide). */}
+					{isAxisControlsActive && (
+						<Flex
+							direction="column"
+							justifyContent="space-between"
+							className={controlInnerClassNames(
+								'layout-matrix__controls'
 							)}
+							data-test="layout-matrix-axis-controls"
+							grow={1}
 						>
-							<SelectControl
-								id={xAxisKey}
-								label={
-									<Icon
-										icon="axis-x"
-										style={{ fill: 'currentColor' }}
-									/>
-								}
-								labelPopoverTitle={__('Horizontal', 'blockera')}
-								labelDescription={
-									<>
+							<Tooltip
+								text={getAxisTooltip(
+									xAxisKey,
+									value[xAxisKey] ?? ''
+								)}
+							>
+								<SelectControl
+									id={xAxisKey}
+									label={
+										<Icon
+											icon="axis-x"
+											style={{ fill: 'currentColor' }}
+										/>
+									}
+									labelPopoverTitle={__(
+										'Horizontal',
+										'blockera'
+									)}
+									labelDescription={
+										<>
+											<p>
+												{__(
+													'Control horizontal spacing and positioning from left to right',
+													'blockera'
+												)}
+											</p>
+										</>
+									}
+									labelProps={{
+										changesetGraphPreview: {
+											type: 'string',
+										},
+									}}
+									columns="30px 1fr"
+									style={{
+										'--gap': '0',
+									}}
+									options={getAxisOptions(xAxisKey)}
+									onChange={(newValue) => {
+										if (xAxisKey === 'justifyContent') {
+											setValue({
+												...value,
+												justifyContent: newValue,
+											});
+										} else {
+											setValue({
+												...value,
+												alignItems: newValue,
+											});
+										}
+									}}
+									type="custom"
+									defaultValue={defaultValue[xAxisKey]}
+									className={classNames(
+										'input-hide-label',
+										AXIS_CLASS_NAMES[xAxisKey],
+										'selected-item-' +
+											(value[xAxisKey] || 'empty')
+									)}
+								/>
+							</Tooltip>
+
+							<Tooltip
+								text={getAxisTooltip(
+									yAxisKey,
+									value[yAxisKey] ?? ''
+								)}
+							>
+								<SelectControl
+									id={yAxisKey}
+									label={
+										<Icon
+											icon="axis-y"
+											style={{ fill: 'currentColor' }}
+										/>
+									}
+									labelPopoverTitle={__(
+										'Vertical',
+										'blockera'
+									)}
+									labelDescription={
 										<p>
 											{__(
-												'Control horizontal spacing and positioning from left to right',
+												'Control vertical spacing and positioning from top to bottom',
 												'blockera'
 											)}
 										</p>
-									</>
-								}
-								labelProps={{
-									changesetGraphPreview: {
-										type: 'string',
-									},
-								}}
-								columns="30px 1fr"
-								style={{
-									'--gap': '0',
-								}}
-								options={getAxisOptions(xAxisKey)}
-								onChange={(newValue) => {
-									if (xAxisKey === 'justifyContent') {
-										setValue({
-											...value,
-											justifyContent: newValue,
-										});
-									} else {
-										setValue({
-											...value,
-											alignItems: newValue,
-										});
 									}
-								}}
-								type="custom"
-								defaultValue={defaultValue[xAxisKey]}
-								className={classNames(
-									'input-hide-label',
-									AXIS_CLASS_NAMES[xAxisKey],
-									'selected-item-' +
-										(value[xAxisKey] || 'empty')
-								)}
-							/>
-						</Tooltip>
-
-						<Tooltip
-							text={getAxisTooltip(
-								yAxisKey,
-								value[yAxisKey] ?? ''
-							)}
-						>
-							<SelectControl
-								id={yAxisKey}
-								label={
-									<Icon
-										icon="axis-y"
-										style={{ fill: 'currentColor' }}
-									/>
-								}
-								labelPopoverTitle={__('Vertical', 'blockera')}
-								labelDescription={
-									<p>
-										{__(
-											'Control vertical spacing and positioning from top to bottom',
-											'blockera'
-										)}
-									</p>
-								}
-								labelProps={{
-									changesetGraphPreview: {
-										type: 'string',
-									},
-								}}
-								columns="30px 1fr"
-								style={{
-									'--gap': '0',
-								}}
-								options={getAxisOptions(yAxisKey)}
-								onChange={(newValue) => {
-									if (yAxisKey === 'justifyContent') {
-										setValue({
-											...value,
-											justifyContent: newValue,
-										});
-									} else {
-										setValue({
-											...value,
-											alignItems: newValue,
-										});
-									}
-								}}
-								type="custom"
-								defaultValue={defaultValue[yAxisKey]}
-								className={classNames(
-									'input-hide-label',
-									AXIS_CLASS_NAMES[yAxisKey],
-									'selected-item-' +
-										(value[yAxisKey] || 'empty')
-								)}
-							/>
-						</Tooltip>
-					</Flex>
+									labelProps={{
+										changesetGraphPreview: {
+											type: 'string',
+										},
+									}}
+									columns="30px 1fr"
+									style={{
+										'--gap': '0',
+									}}
+									options={getAxisOptions(yAxisKey)}
+									onChange={(newValue) => {
+										if (yAxisKey === 'justifyContent') {
+											setValue({
+												...value,
+												justifyContent: newValue,
+											});
+										} else {
+											setValue({
+												...value,
+												alignItems: newValue,
+											});
+										}
+									}}
+									type="custom"
+									defaultValue={defaultValue[yAxisKey]}
+									className={classNames(
+										'input-hide-label',
+										AXIS_CLASS_NAMES[yAxisKey],
+										'selected-item-' +
+											(value[yAxisKey] || 'empty')
+									)}
+								/>
+							</Tooltip>
+						</Flex>
+					)}
 				</Flex>
 
 				{isDenseActive && (

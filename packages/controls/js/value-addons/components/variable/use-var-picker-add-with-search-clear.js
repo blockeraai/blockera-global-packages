@@ -32,10 +32,10 @@ export function useVarPickerAddWithSearchClear(
 			typeof customAddAction === 'object' &&
 			'current' in customAddAction
 		) {
-			return customAddAction.current;
+			return ((customAddAction: any).current: VarPickerCustomAddAction);
 		}
 
-		return customAddAction;
+		return (customAddAction: any);
 	};
 
 	const triggerAddNew = useCallback(() => {

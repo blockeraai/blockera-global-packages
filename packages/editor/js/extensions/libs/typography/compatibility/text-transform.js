@@ -3,7 +3,7 @@
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, isEmptyBlockeraCompatValue, getWpFromStyleOrGlobal } from '../../utils';
 
 export function textTransformFromWPCompatibility({
 	attributes,
@@ -14,16 +14,13 @@ export function textTransformFromWPCompatibility({
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 	insideBlockInspector?: boolean,
 }): Object {
-	// Check block-level style (insideBlockInspector) or global style context
-	const textTransform = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.typography?.textTransform
-		: attributes?.typography?.textTransform;
+	const textTransform = getWpFromStyleOrGlobal(
+		attributes?.style?.typography?.textTransform,
+		attributes?.typography?.textTransform
+	);
 
 	if (
-		attributes?.blockeraTextTransform?.value === '' &&
+		isEmptyBlockeraCompatValue(attributes?.blockeraTextTransform?.value) &&
 		textTransform !== undefined
 	) {
 		attributes.blockeraTextTransform = {

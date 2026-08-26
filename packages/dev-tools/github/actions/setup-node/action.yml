@@ -1,0 +1,50 @@
+name: 'Setup Node.js and install npm dependencies'
+description: >
+    Shared Node setup for Blockera consumers and the global-packages monorepo.
+    Resolves retry-npm-ci.sh from this action directory so both layouts work:
+    packages/dev-tools/... (this repo) and packages/global-packages/packages/dev-tools/... (consumers).
+inputs:
+    node-version:
+        description: 'Optional Node.js version. Defaults to .nvmrc via setup-node.'
+        required: false
+        default: ''
+    chdir:
+        description: 'Optional directory to run npm ci in (relative to workspace).'
+        required: false
+        default: ''
+    cache-key-suffix:
+        description: 'Optional extra cache key segment (e.g. chdir).'
+        required: false
+        default: ''
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Setup Node.js with built-in npm cache
+          uses: actions/setup-node@v5
+          with:
+              node-version-file: '.nvmrc'
+              node-version: ${{ inputs.node-version }}
+              cache: npm
+
+        - name: Get Node.js version
+          id: node-version
+          shell: bash
+          run: echo "NODE_VERSION=$(node -v)" >> "$GITHUB_OUTPUT"
+
+        - name: Cache node_modules
+          id: cache-node_modules
+          uses: actions/cache@v5
+          with:
+              path: '**/node_modules'
+              key: node_modules-${{ runner.os }}-${{ steps.node-version.outputs.NODE_VERSION }}-${{ inputs.cache-key-suffix }}-${{ hashFiles('package-lock.json') }}
+
+        - name: Install npm dependencies
+          if: ${{ steps.cache-node_modules.outputs.cache-hit != 'true' || cancelled() }}
+          shell: bash
+          run: |
+              set -euo pipefail
+              if [ -n "${{ inputs.chdir }}" ]; then
+                cd "${{ inputs.chdir }}"
+              fi
+              bash "${GITHUB_ACTION_PATH}/../../scripts/retry-npm-ci.sh"

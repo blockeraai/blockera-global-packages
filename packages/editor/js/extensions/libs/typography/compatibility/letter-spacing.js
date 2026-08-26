@@ -9,7 +9,11 @@ import { normalizeCssLengthValue } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import {
+	runInsideBlockInspector,
+	isEmptyBlockeraCompatValue,
+	getWpFromStyleOrGlobal,
+} from '../../utils';
 
 export function letterSpacingFromWPCompatibility({
 	attributes,
@@ -20,16 +24,14 @@ export function letterSpacingFromWPCompatibility({
 	insideBlockInspector?: boolean,
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 }): Object {
-	// Check block-level style (insideBlockInspector) or global style context
-	const letterSpacing = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.typography?.letterSpacing
-		: attributes?.typography?.letterSpacing;
+	const letterSpacing = getWpFromStyleOrGlobal(
+		attributes?.style?.typography?.letterSpacing,
+		attributes?.typography?.letterSpacing
+	);
 
+	const currentLetterSpacing = attributes?.blockeraLetterSpacing?.value;
 	if (
-		attributes?.blockeraLetterSpacing?.value === '' &&
+		isEmptyBlockeraCompatValue(currentLetterSpacing) &&
 		letterSpacing !== undefined
 	) {
 		attributes.blockeraLetterSpacing = {

@@ -121,8 +121,12 @@ function FontSizeGroupComponent({
 	return (
 		<PresetTaxonomyGroupLayout<FontSizeType & Record<string, unknown>>
 			origin={origin}
-			items={sizes}
-			baseItems={baseSizes}
+			items={sizes as Array<FontSizeType & Record<string, unknown>>}
+			baseItems={
+				baseSizes as
+					| Array<FontSizeType & Record<string, unknown>>
+					| undefined
+			}
 			controlName={controlName}
 			convertRepeaterToItems={convertRepeaterToItems}
 			onPersistItems={onPersistItems}
@@ -142,28 +146,28 @@ function FontSizeGroupComponent({
 const FontSizeGroup = memo(FontSizeGroupComponent);
 
 export function FontSizesPresetContent() {
-	const [themeFontSizes, setThemeFontSizes] = useGlobalSetting(
+	const [themeFontSizes, setThemeFontSizes] = useGlobalSetting<FontSizeType[]>(
 		'typography.fontSizes.theme'
 	);
 
-	const [baseThemeFontSizes] = useGlobalSetting(
+	const [baseThemeFontSizes] = useGlobalSetting<FontSizeType[]>(
 		'typography.fontSizes.theme',
 		'',
 		'base'
 	);
-	const [defaultFontSizes, setDefaultFontSizes] = useGlobalSetting(
-		'typography.fontSizes.default'
-	);
+	const [defaultFontSizes, setDefaultFontSizes] = useGlobalSetting<
+		FontSizeType[]
+	>('typography.fontSizes.default');
 
-	const [baseDefaultFontSizes] = useGlobalSetting(
+	const [baseDefaultFontSizes] = useGlobalSetting<FontSizeType[]>(
 		'typography.fontSizes.default',
 		'',
 		'base'
 	);
 
-	const [customFontSizes = [], setCustomFontSizes] = useGlobalSetting(
-		'typography.fontSizes.custom'
-	);
+	const [customFontSizes = [], setCustomFontSizes] = useGlobalSetting<
+		FontSizeType[]
+	>('typography.fontSizes.custom');
 
 	const [defaultFontSizesEnabled] = useGlobalSetting(
 		'typography.defaultFontSizes'

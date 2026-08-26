@@ -8,7 +8,7 @@ import { isUndefined } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
 export const coreWPAspectRatioValues = [
 	'1',
@@ -59,13 +59,10 @@ export function ratioFromWPCompatibility({
 			return attributes;
 
 		case 'core/cover':
-			// Check block-level style (insideBlockInspector) or global style context
-			const aspectRatio = runInsideBlockInspector(
-				insideBlockInspector,
-				editorSelectedBlockEvent
-			)
-				? attributes?.style?.dimensions?.aspectRatio
-				: attributes?.dimensions?.aspectRatio;
+			const aspectRatio = getWpFromStyleOrGlobal(
+				attributes?.style?.dimensions?.aspectRatio,
+				attributes?.dimensions?.aspectRatio
+			);
 
 			if (!isUndefined(aspectRatio)) {
 				const _ratio = detectWPAspectRatioValue(aspectRatio);

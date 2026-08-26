@@ -320,7 +320,7 @@ export function computeInspectorPopoverOffset(
 export const POPOVER_ROOT_SELECTOR =
 	'.blockera-component-popover, .components-popover';
 
-export function getPopoverRoot(element: ?Node): ?HTMLElement {
+export function getPopoverRoot(element: mixed): ?HTMLElement {
 	if (!element || !(element instanceof Element)) {
 		return null;
 	}
@@ -554,7 +554,9 @@ function isModalOpenedFromPopoverOrNestedChild(
  * interaction root remains).
  */
 function wasLastPointerInPopoverTree(popoverRoot: HTMLElement): boolean {
-	if (!(lastPopoverPointerDownTarget instanceof Element)) {
+	const pointerTarget = lastPopoverPointerDownTarget;
+
+	if (!(pointerTarget instanceof Element)) {
 		return false;
 	}
 
@@ -564,11 +566,11 @@ function wasLastPointerInPopoverTree(popoverRoot: HTMLElement): boolean {
 		return false;
 	}
 
-	if (normalizedRoot.contains(lastPopoverPointerDownTarget)) {
+	if (normalizedRoot.contains(pointerTarget)) {
 		return true;
 	}
 
-	const nestedRoot = getPopoverRoot(lastPopoverPointerDownTarget);
+	const nestedRoot = getPopoverRoot(pointerTarget);
 
 	return (
 		nestedRoot instanceof HTMLElement &&

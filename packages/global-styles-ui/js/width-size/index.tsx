@@ -41,6 +41,8 @@ type WidthSizePreset = {
 	slug: string;
 	name: string;
 	size: string;
+	isVisible?: boolean;
+	[key: string]: unknown;
 };
 
 const widthSizePresetFieldsPropsResolver =

@@ -21,7 +21,13 @@ import { SlotFillProvider, Slot } from '@wordpress/components';
  * Blockera dependencies
  */
 import { useGlobalStylesContext } from '@blockera/global-styles-ui';
-import { isEmpty, isEquals, mergeObject, setImmutably } from '@blockera/utils';
+import {
+	isEmpty,
+	isEquals,
+	cloneObject,
+	mergeObject,
+	setImmutably,
+} from '@blockera/utils';
 
 /**
  * Internal dependencies
@@ -95,8 +101,9 @@ const cleanupStylesHelper = (styles: Object, defaultStyles: Object): Object => {
 		if (
 			[
 				'className',
-				'blockeraPropsId',
+				'blockeraId',
 				'blockeraCompatId',
+				'blockeraBlockMode',
 				'blockeraCurrentDevice',
 			].includes(key)
 		) {
@@ -120,6 +127,17 @@ const cleanupStylesHelper = (styles: Object, defaultStyles: Object): Object => {
 
 			cleanStyles[key] = styles[key];
 
+			continue;
+		}
+
+		// Drop `{ value: undefined }` so GS writes do not ping-pong against
+		// omitted keys (JSON/entity omit undefined; isEquals then never settles).
+		if (
+			styles[key] &&
+			typeof styles[key] === 'object' &&
+			styles[key].hasOwnProperty('value') &&
+			styles[key].value === undefined
+		) {
 			continue;
 		}
 
@@ -437,7 +455,21 @@ export const GlobalStylesPanelContextProvider = ({
 
 	const handleOnChangeStyle = useCallback(
 		(newStyle: Object) => {
-			const normalized = getNormalizedStyle(newStyle, defaultStyles);
+			// getNormalizedStyle deletes `style` on its argument; clone so
+			// the live GS record is not mutated during the equality check.
+			const normalized = getNormalizedStyle(
+				cloneObject(newStyle),
+				defaultStyles
+			);
+			const currentNormalized = getNormalizedStyle(
+				cloneObject(style || {}),
+				defaultStyles
+			);
+
+			if (isEquals(normalized, currentNormalized)) {
+				return;
+			}
+
 			const mergedVariationsSnapshot = mergeBlockVariationsTrees(
 				baseConfig || {},
 				userConfig || {},
@@ -505,6 +537,7 @@ export const GlobalStylesPanelContextProvider = ({
 			baseConfig,
 			userConfig,
 			usesSharedRootStyleVariation,
+			style,
 		]
 	);
 

@@ -67,7 +67,7 @@ export const BlockGlobalStylesPanelScreen = ({
 	const screenElement =
 		queryActiveGlobalStylesNavigatorScreen() ??
 		document.querySelector(screen);
-	const hasBlockeraExtensions = blockType?.attributes?.blockeraPropsId;
+	const hasBlockeraExtensions = blockType?.attributes?.blockeraId;
 	const globalStylesBlockName =
 		selectedBlockStyle || selectedBlock?.name || blockType?.name;
 	const { hasSizeVariations } = useBlockVariationSupport(

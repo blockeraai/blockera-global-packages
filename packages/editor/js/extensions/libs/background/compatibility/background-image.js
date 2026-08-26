@@ -9,7 +9,7 @@ import { isEmpty, isString, isEmptyObject, mergeObject } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 import {
 	createNoneBackgroundLayer,
 	normalizeWpGradientSentinel,
@@ -30,17 +30,10 @@ export function backgroundFromWPCompatibility({
 		return attributes;
 	}
 
-	//
-	// Background Image
-	// Check block-level style (insideBlockInspector) or global style context
-	// Block inspector: attributes.style.background.backgroundImage.*
-	// Global styles: attributes.background.backgroundImage.*
-	const bgImageSource = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.background
-		: attributes?.background;
+	const bgImageSource = getWpFromStyleOrGlobal(
+		attributes?.style?.background,
+		attributes?.background
+	);
 
 	if (bgImageSource?.backgroundImage?.url !== undefined) {
 		const bgImage = {
@@ -103,11 +96,7 @@ export function backgroundFromWPCompatibility({
 	//
 	// Gradient Background
 	//
-	const rawGradient = resolveWpGradientRawString(
-		attributes,
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	);
+	const rawGradient = resolveWpGradientRawString(attributes);
 	const gradientSentinel = normalizeWpGradientSentinel(rawGradient);
 
 	if (gradientSentinel) {
@@ -132,35 +121,19 @@ export function backgroundFromWPCompatibility({
 
 	// gradient attribute in root always is variable
 	// it should be changed to a Value Addon (variable)
-	if (
-		attributes?.gradient !== undefined ||
-		attributes?.color?.gradient !== undefined
-	) {
-		if (
-			runInsideBlockInspector(
-				insideBlockInspector,
-				editorSelectedBlockEvent
-			)
-		) {
-			gradient = getGradientVAFromVarString(
-				`var:preset|gradient|${attributes?.gradient}`
-			);
-		} else {
-			gradient = getGradientVAFromVarString(attributes?.color?.gradient);
-		}
-
+	if (attributes?.gradient !== undefined) {
+		gradient = (getGradientVAFromVarString(
+			`var:preset|gradient|${attributes?.gradient}`
+		): any);
 		gradientType = getGradientType(gradient);
-	}
-	// style.color.background is not variable
-	else if (
-		runInsideBlockInspector(
-			insideBlockInspector,
-			editorSelectedBlockEvent
-		) &&
-		attributes?.style?.color?.gradient !== undefined
-	) {
+	} else if (attributes?.style?.color?.gradient !== undefined) {
 		gradient = attributes?.style?.color?.gradient;
 		gradientType = getGradientType(attributes?.style?.color?.gradient);
+	} else if (attributes?.color?.gradient !== undefined) {
+		gradient = (getGradientVAFromVarString(
+			attributes?.color?.gradient
+		): any);
+		gradientType = getGradientType(gradient);
 	}
 
 	if (gradient !== false && gradientType !== '') {

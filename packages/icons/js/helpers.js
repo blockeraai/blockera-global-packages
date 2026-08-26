@@ -47,10 +47,10 @@ export function isStrokeSvgMarkup(svg: string): boolean {
 /**
  * Whether a fill value is an intentional solid fill (not none / gradient).
  *
- * @param {string | null | undefined} fill Fill attribute or style value.
+ * @param {string | null | void} fill Fill attribute or style value.
  * @return {boolean} True when the value is a solid accent fill.
  */
-export function isSvgFillAccentValue(fill: string | null | undefined): boolean {
+export function isSvgFillAccentValue(fill: string | null | void): boolean {
 	if (!fill || typeof fill !== 'string') {
 		return false;
 	}
@@ -63,21 +63,25 @@ export function isSvgFillAccentValue(fill: string | null | undefined): boolean {
 /**
  * Whether an SVG shape uses an explicit non-none fill (accent dot, etc.).
  *
- * @param {Element | null | undefined} node SVG element.
+ * @param {Element | null | void} node SVG element.
  * @return {boolean} True when the element has an intentional fill accent.
  */
-export function isSvgFillAccentElement(
-	node: Element | null | undefined
-): boolean {
-	if (!node || typeof node.getAttribute !== 'function') {
+export function isSvgFillAccentElement(node: Element | null | void): boolean {
+	if (!node) {
 		return false;
 	}
 
-	if (!node.hasAttribute('fill')) {
+	const element: any = node;
+
+	if (typeof element.getAttribute !== 'function') {
 		return false;
 	}
 
-	return isSvgFillAccentValue(node.getAttribute('fill'));
+	if (!element.hasAttribute('fill')) {
+		return false;
+	}
+
+	return isSvgFillAccentValue(element.getAttribute('fill'));
 }
 
 /**
@@ -144,14 +148,14 @@ export function prepareIconSvgForStorage(
 				'$1 fill="none"'
 			);
 		} else {
-			svgMarkup = svgMarkup.replace(/<svg/i, '<svg fill="none"', 1);
+			// RegExp without /g replaces only the first match.
+			svgMarkup = svgMarkup.replace(/<svg/i, '<svg fill="none"');
 		}
 
 		if (!/\bstroke=/i.test(svgMarkup)) {
 			svgMarkup = svgMarkup.replace(
 				/<svg/i,
-				'<svg stroke="currentColor"',
-				1
+				'<svg stroke="currentColor"'
 			);
 		}
 
@@ -166,15 +170,17 @@ export function prepareIconSvgForStorage(
 		return svgMarkup;
 	}
 
-	svg.setAttribute('fill', 'none');
+	const svgEl: any = svg;
 
-	if (!svg.getAttribute('stroke')) {
-		svg.setAttribute('stroke', 'currentColor');
+	svgEl.setAttribute('fill', 'none');
+
+	if (!svgEl.getAttribute('stroke')) {
+		svgEl.setAttribute('stroke', 'currentColor');
 	}
 
-	if (svg.style?.fill) {
-		svg.style.fill = '';
-		svg.style.removeProperty('fill');
+	if (svgEl.style?.fill) {
+		svgEl.style.fill = '';
+		svgEl.style.removeProperty('fill');
 	}
 
 	const shapeTags = [
@@ -188,51 +194,55 @@ export function prepareIconSvgForStorage(
 	];
 
 	shapeTags.forEach((tag) => {
-		svg.querySelectorAll(tag).forEach((node) => {
-			const isFillAccent = isSvgFillAccentElement(node);
+		svgEl.querySelectorAll(tag).forEach((node) => {
+			const shapeNode: any = node;
+			const isFillAccent = isSvgFillAccentElement(shapeNode);
 
 			if (isFillAccent) {
-				const rootStroke = svg.getAttribute('stroke') || 'currentColor';
-				const rootStrokeWidth = svg.getAttribute('stroke-width');
+				const rootStroke =
+					svgEl.getAttribute('stroke') || 'currentColor';
+				const rootStrokeWidth = svgEl.getAttribute('stroke-width');
 
-				if (!node.getAttribute('stroke')) {
-					node.setAttribute('stroke', rootStroke);
+				if (!shapeNode.getAttribute('stroke')) {
+					shapeNode.setAttribute('stroke', rootStroke);
 				}
 
-				if (rootStrokeWidth && !node.getAttribute('stroke-width')) {
-					node.setAttribute('stroke-width', rootStrokeWidth);
+				if (rootStrokeWidth && !shapeNode.getAttribute('stroke-width')) {
+					shapeNode.setAttribute('stroke-width', rootStrokeWidth);
 				}
 
-				if (node.style?.fill) {
-					node.style.fill = '';
-					node.style.removeProperty('fill');
+				if (shapeNode.style?.fill) {
+					shapeNode.style.fill = '';
+					shapeNode.style.removeProperty('fill');
 				}
 
 				return;
 			}
 
-			node.setAttribute('fill', 'none');
+			shapeNode.setAttribute('fill', 'none');
 
-			if (!node.getAttribute('stroke')) {
-				node.setAttribute('stroke', 'currentColor');
+			if (!shapeNode.getAttribute('stroke')) {
+				shapeNode.setAttribute('stroke', 'currentColor');
 			}
 
-			if (node.style?.fill) {
-				node.style.fill = '';
-				node.style.removeProperty('fill');
+			if (shapeNode.style?.fill) {
+				shapeNode.style.fill = '';
+				shapeNode.style.removeProperty('fill');
 			}
 		});
 	});
 
-	svg.querySelectorAll('[fill]').forEach((node) => {
-		if (isSvgFillAccentElement(node)) {
+	svgEl.querySelectorAll('[fill]').forEach((node) => {
+		const fillNode: any = node;
+
+		if (isSvgFillAccentElement(fillNode)) {
 			return;
 		}
 
-		if (node.getAttribute('fill') !== 'none') {
-			node.setAttribute('fill', 'none');
+		if (fillNode.getAttribute('fill') !== 'none') {
+			fillNode.setAttribute('fill', 'none');
 		}
 	});
 
-	return svg.outerHTML;
+	return svgEl.outerHTML;
 }

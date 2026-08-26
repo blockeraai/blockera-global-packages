@@ -77,7 +77,7 @@ export const BlockCardSettings = ({
 				text,
 				replacements: {
 					'brand-name': (
-						<Icon icon="wordpress" library="wp" iconSize="18" />
+						<Icon icon="wordpress-logo" library="wp" iconSize="18" />
 					),
 				},
 			});
@@ -148,7 +148,7 @@ export const BlockCardSettings = ({
 										<Flex alignItems="center" gap="10px">
 											<Icon
 												library="wp"
-												icon="wordpress"
+												icon="wordpress-logo"
 												iconSize="18"
 											/>
 											{__('Basic Mode', 'blockera')}
@@ -293,7 +293,7 @@ export const BlockCardSettings = ({
 							{text}
 						</Flex>
 					}
-					icon="wordpress"
+					icon="wordpress-logo"
 					iconLibrary="wp"
 					tooltipBg="#007cba"
 					primaryColor="#007cba"

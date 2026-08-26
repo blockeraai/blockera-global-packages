@@ -35,11 +35,11 @@ export const pickPreviewSubfield = (
 		return raw;
 	}
 
-	if (
-		isObject(raw) &&
-		Object.prototype.hasOwnProperty.call(raw, objectPickKey)
-	) {
-		return raw[objectPickKey];
+	if (isObject(raw)) {
+		const obj: { [string]: mixed } = (raw: any);
+		if (objectPickKey in obj) {
+			return obj[objectPickKey];
+		}
 	}
 
 	return raw;

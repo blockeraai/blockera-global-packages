@@ -10,7 +10,7 @@ import { isEmpty, isUndefined, mergeObject } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../../utils';
 import { elementNormalBackgroundToWPCompatibility } from './element-bg';
 import { getBlockeraInnerBlockItem } from '../utils';
 
@@ -33,13 +33,12 @@ export function elementNormalBackgroundColorFromWPCompatibility({
 		attributes?.elements?.[dataCompatibilityElement]?.color?.background
 	) {
 		const color = getColorVAFromVarString(
-			runInsideBlockInspector(
-				insideBlockInspector,
-				editorSelectedBlockEvent
+			getWpFromStyleOrGlobal(
+				attributes.style?.elements?.[dataCompatibilityElement]?.color
+					?.background,
+				attributes.elements?.[dataCompatibilityElement]?.color
+					?.background
 			)
-				? attributes.style.elements[dataCompatibilityElement].color
-						.background
-				: attributes.elements[dataCompatibilityElement].color.background
 		);
 
 		if (color) {

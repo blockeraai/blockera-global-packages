@@ -191,9 +191,29 @@
 	display: none;
 }
 
-// Inner blocks: styles-only — hide WP inspector tab chrome.
+// Inner blocks: styles-only. In the post editor, Blockera UI is an inspector
+// sibling so the tabs stack can be hidden. In pattern / content-only edit,
+// InspectorControls stay inside `__tabs`; hiding that node hides extensions.
 .block-editor-block-inspector.blockera-inner-block-inspector {
-	.block-editor-block-inspector__tabs [role="tablist"] {
+	.block-editor-block-inspector__tabs:not(
+			:has(.blockera-extension)
+		):not(:has(.blockera-state-colors-container)) {
+		display: none !important;
+	}
+
+	.block-editor-block-inspector__tabs:has(.blockera-extension),
+	.block-editor-block-inspector__tabs:has(
+			.blockera-state-colors-container
+		) {
+		[role="tablist"] {
+			display: none !important;
+		}
+	}
+
+	> .components-tools-panel,
+	> .components-panel__body:not(.blockera-control):not(
+			.blockera-extension
+		) {
 		display: none !important;
 	}
 }
@@ -217,12 +237,34 @@
 		display: none !important;
 	}
 
+	.block-editor-block-variation-transforms {
+		display: none !important;
+	}
+
 	.block-editor-block-inspector__tabs
 		[role="tabpanel"]:not([id*="-list-view"]):not(
 			[id*="-content-view"]
 		):not([id*="-settings-view"]) {
-		// Hide all core controls in the styles tabpanel.
-		> *:not(:has(.blockera-state-colors-container)) {
+		// Hide core controls in the styles tabpanel.
+		// `:has()` does not match the state-colors node itself. WP 7.1 Slot
+		// can place that node as a direct tabpanel child; excluding it keeps
+		// Blockera visible.
+		> *:not(.blockera-state-colors-container):not(
+				:has(.blockera-state-colors-container)
+			):not(.blockera-extension):not(:has(.blockera-extension)) {
+			display: none !important;
+		}
+
+		// WP 7.1 may wrap Slot + core panels in one :has(state-colors) parent.
+		.components-tools-panel:not(
+				:has(.blockera-state-colors-container)
+			):not(:has(.blockera-extension)) {
+			display: none !important;
+		}
+
+		.components-panel__body:not(.blockera-control):not(
+				.blockera-extension
+			) {
 			display: none !important;
 		}
 
@@ -241,9 +283,14 @@
 			display: none !important;
 		}
 
+		// WP 7.1 can place InspectorControls in a classless inspector child.
+		// Do not hide that host when it contains Blockera UI.
+		// Do not use [class^="css-"] here: WP tools-panels also start with css-.
 		> div:not([class^="blockera-block-inspector-controls-wrapper"]):not(
-				[class^="css-"]
-			):not(.block-editor-block-inspector__tabs) {
+				.block-editor-block-inspector__tabs
+			):not(:has(.blockera-state-colors-container)):not(
+				.components-tools-panel
+			) {
 			display: none !important;
 		}
 	}

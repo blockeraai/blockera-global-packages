@@ -48,6 +48,7 @@ import {
 import {
 	blockUsesSharedRootStyleVariation,
 	getBlockVariationSupport,
+	resolvePickOnlyVariationSurface,
 } from '../../editor/global-styles/panel/block-variation-support';
 import { STORE_NAME as EXTENSIONS_STORE_NAME } from '../../extensions/store/constants';
 import { useSizeVariationsForBlocks } from './use-size-variations-for-blocks';
@@ -100,6 +101,7 @@ export const useBlockStyleVariations = ({
 	inGlobalStylesPanel = false,
 	variationSurface: variationSurfaceProp,
 	enabled = true,
+	pickOnly = false,
 }: {
 	clientId: string,
 	blockName: string,
@@ -108,6 +110,7 @@ export const useBlockStyleVariations = ({
 	inGlobalStylesPanel?: boolean,
 	variationSurface?: string,
 	enabled?: boolean,
+	pickOnly?: boolean,
 }): Object => {
 	const {
 		currentBlockStyleVariation,
@@ -116,7 +119,6 @@ export const useBlockStyleVariations = ({
 		userConfig,
 		usesSharedRootStyleVariation: contextUsesSharedRoot = false,
 	} = useGlobalStylesPanelContext();
-	const variationSurface = variationSurfaceProp ?? contextVariationSurface;
 
 	const blockExtension = useSelect(
 		(select) => {
@@ -129,15 +131,36 @@ export const useBlockStyleVariations = ({
 		[blockName]
 	);
 
+	const variationSupport = useMemo(
+		() => getBlockVariationSupport(blockExtension),
+		[blockExtension]
+	);
+
+	const variationSurface = useMemo(() => {
+		if (!pickOnly) {
+			return variationSurfaceProp ?? contextVariationSurface;
+		}
+
+		return resolvePickOnlyVariationSurface(
+			variationSupport,
+			variationSurfaceProp,
+			contextVariationSurface,
+			VARIATION_SURFACE_SIZE
+		);
+	}, [
+		pickOnly,
+		variationSurfaceProp,
+		contextVariationSurface,
+		variationSupport,
+	]);
+
 	const usesSharedRootStyleVariation = useMemo(() => {
 		if (contextUsesSharedRoot) {
 			return true;
 		}
 
-		return blockUsesSharedRootStyleVariation(
-			getBlockVariationSupport(blockExtension)
-		);
-	}, [contextUsesSharedRoot, blockExtension]);
+		return blockUsesSharedRootStyleVariation(variationSupport);
+	}, [contextUsesSharedRoot, variationSupport]);
 
 	const inspectorThemeConfigs = useSelect(
 		(select: Function) =>
@@ -302,6 +325,19 @@ export const useBlockStyleVariations = ({
 	}, []);
 
 	useEffect(() => {
+		if (pickOnly) {
+			const hookName = activeStyle?.name ?? '';
+			const curName = currentActiveStyle?.name ?? '';
+			if (
+				hookName !== curName &&
+				previewStyleRef.current === null &&
+				!isOpen
+			) {
+				_setCurrentActiveStyle(activeStyle ?? null);
+			}
+			return;
+		}
+
 		if (variationSurface === VARIATION_SURFACE_SIZE) {
 			if (
 				undefined === currentBlockStyleVariation &&
@@ -350,6 +386,7 @@ export const useBlockStyleVariations = ({
 			setCurrentActiveStyle(currentBlockStyleVariation);
 		}
 	}, [
+		pickOnly,
 		variationSurface,
 		stylesToRender,
 		activeStyle,
@@ -459,5 +496,6 @@ export const useBlockStyleVariations = ({
 		originDefaultAttributes,
 		currentBlockStyleVariation,
 		blockeraGlobalStylesMetaData,
+		variationUiSurface: variationSurface,
 	};
 };

@@ -229,6 +229,35 @@ export function reactColorStateToStorageString(
 		.toLowerCase();
 }
 
+/**
+ * True when two stored CSS color strings paint the same pixel (hex vs rgb).
+ */
+export function areStoredCssColorsEqual(left: mixed, right: mixed): boolean {
+	if (left === right) {
+		return true;
+	}
+
+	if (typeof left !== 'string' || typeof right !== 'string') {
+		return false;
+	}
+
+	const a = left.trim();
+	const b = right.trim();
+
+	if (a === b) {
+		return true;
+	}
+
+	const ta = tinycolor(a);
+	const tb = tinycolor(b);
+
+	if (!ta.isValid() || !tb.isValid()) {
+		return false;
+	}
+
+	return ta.toHex8String().toLowerCase() === tb.toHex8String().toLowerCase();
+}
+
 function isInProgressCssKeyword(trimmed: string): boolean {
 	const norm = trimmed.toLowerCase();
 

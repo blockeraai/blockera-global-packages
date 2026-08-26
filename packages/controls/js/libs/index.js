@@ -35,6 +35,7 @@ export { ColorPickerControl } from './color-picker-control';
 export { default as GroupControl } from './group-control';
 export { default as RangeControl } from './range-control';
 export { default as InputControl } from './input-control';
+export { default as StepperControl } from './stepper-control';
 export * from './input-control/utils';
 export { default as TextAreaControl } from './textarea-control';
 export {
@@ -45,6 +46,17 @@ export {
 export type { LabelControlProps } from './label-control';
 export { default as ToggleControl } from './toggle-control';
 export { default as SelectControl } from './select-control';
+export { default as FontFamilyControl } from './font-family-control';
+export * from './font-family-control/utils';
+export type * from './font-family-control';
+export { DEFAULT_FONT_FAMILY_VALUE } from './font-family-control';
+export { default as TextAlignControl } from './text-align-control';
+export * from './text-align-control/utils';
+export type * from './text-align-control';
+export {
+	DEFAULT_TEXT_ALIGN_VALUE,
+	TEXT_ALIGN_VALUES,
+} from './text-align-control';
 export {
 	normalizeSelectControlValue,
 	getSelectedSelectOption,
@@ -91,6 +103,16 @@ export * from './box-border-control/utils';
 export { default as BorderRadiusControl } from './border-radius-control';
 export * from './border-radius-control/utils';
 export type * from './border-radius-control';
+export { default as AspectRatioControl } from './aspect-ratio-control';
+export * from './aspect-ratio-control/utils';
+export type * from './aspect-ratio-control';
+export {
+	default as ResolutionControl,
+	DEFAULT_RESOLUTION_OPTIONS,
+	DEFAULT_RESOLUTION_VALUE,
+	mapImageSizesToResolutionOptions,
+} from './resolution-control';
+export type * from './resolution-control';
 export { default as MediaImageControl } from './media-image-control';
 export { default as BoxSpacingControl } from './box-spacing-control';
 export { default as BoxPositionControl } from './box-position-control';
@@ -111,4 +133,4 @@ export { RendererControl } from './renderer-control';
 export { default as CodeControl } from './code-control';
 export { BlockeraLoading } from './blockera-loading';
 export { default as DropdownMenu, MenuItem, MenuGroup } from './dropdown-menu';
-export { PoweredBy, getDefaultPoweredByText } from './powered-by';
+export { PoweredBy, getDefaultPoweredByText, PoweredByOne } from './powered-by';

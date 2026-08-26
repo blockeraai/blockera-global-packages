@@ -365,11 +365,11 @@ describe('Width → WP Compatibility', () => {
 	describe('core/button Block', () => {
 		it('Simple Value', () => {
 			appendBlocks(
-				'<!-- wp:buttons -->\n' +
-					'<div class="wp-block-buttons"><!-- wp:button {"width":25} -->\n' +
-					'<div class="wp-block-button has-custom-width wp-block-button__width-25"><a class="wp-block-button__link wp-element-button">button</a></div>\n' +
-					'<!-- /wp:button --></div>\n' +
-					'<!-- /wp:buttons -->'
+				`<!-- wp:buttons -->
+					<div class="wp-block-buttons"><!-- wp:button {"width":25} -->
+					<div class="wp-block-button has-custom-width wp-block-button__width-25"><a class="wp-block-button__link wp-element-button">button</a></div>
+					<!-- /wp:button --></div>
+					<!-- /wp:buttons -->`
 			);
 
 			// Select target block
@@ -386,9 +386,15 @@ describe('Width → WP Compatibility', () => {
 
 			// WP data should come to Blockera
 			assertBlockData((data) => {
-				expect('25%').to.be.equal(
-					getSelectedBlock(data, 'blockeraWidth')
-				);
+				expect(
+					getSelectedBlock(data, 'blockeraWidth'),
+					JSON.stringify({
+						width: getSelectedBlock(data, 'width'),
+						style: getSelectedBlock(data, 'style'),
+						className: getSelectedBlock(data, 'className'),
+						blockeraWidth: getSelectedBlock(data, 'blockeraWidth'),
+					})
+				).to.equal('25%');
 			});
 
 			//
@@ -404,7 +410,10 @@ describe('Width → WP Compatibility', () => {
 
 			// Blockera value should be moved to WP data
 			assertBlockData((data) => {
-				expect(50).to.be.equal(getSelectedBlock(data, 'width'));
+				expect(undefined).to.be.equal(getSelectedBlock(data, 'width'));
+				expect('50%').to.be.equal(
+					getSelectedBlock(data, 'style')?.dimensions?.width
+				);
 			});
 
 			//
@@ -419,6 +428,9 @@ describe('Width → WP Compatibility', () => {
 			// WP data should be removed too
 			assertBlockData((data) => {
 				expect(undefined).to.be.equal(getSelectedBlock(data, 'width'));
+				expect(undefined).to.be.equal(
+					getSelectedBlock(data, 'style')?.dimensions?.width
+				);
 			});
 		});
 
@@ -445,41 +457,51 @@ describe('Width → WP Compatibility', () => {
 
 			// WP data should come to Blockera
 			assertBlockData((data) => {
-				expect('25%').to.be.equal(
-					getSelectedBlock(data, 'blockeraWidth')
-				);
+				expect(
+					getSelectedBlock(data, 'blockeraWidth'),
+					JSON.stringify({
+						width: getSelectedBlock(data, 'width'),
+						style: getSelectedBlock(data, 'style'),
+						className: getSelectedBlock(data, 'className'),
+						blockeraWidth: getSelectedBlock(data, 'blockeraWidth'),
+					})
+				).to.equal('25%');
 			});
 
 			//
 			// Test 2: Blockera value to WP data
 			//
 
-			// change value
-			// only % is valid for WP
+			// Special units (auto) are not written to WP dimensions.width
 			cy.get('@widthContainer').within(() => {
-				cy.get('input').as('widthInput');
-				cy.get('@widthInput').clear();
-				cy.get('@widthInput').type('50', { force: true });
-				cy.get('select').select('px');
+				cy.get('select').select('auto', {
+					force: true,
+				});
 			});
 
-			// Blockera value should be moved to WP data
 			assertBlockData((data) => {
 				expect(undefined).to.be.equal(getSelectedBlock(data, 'width'));
+				expect(undefined).to.be.equal(
+					getSelectedBlock(data, 'style')?.dimensions?.width
+				);
 			});
 
 			//
 			// Test 3: Clear Blockera value and check WP data
 			//
 
-			// clear
 			cy.get('@widthContainer').within(() => {
+				cy.get('select').select('px', {
+					force: true,
+				});
 				cy.get('input').clear({ force: true });
 			});
 
-			// WP data should be removed too
 			assertBlockData((data) => {
 				expect(undefined).to.be.equal(getSelectedBlock(data, 'width'));
+				expect(undefined).to.be.equal(
+					getSelectedBlock(data, 'style')?.dimensions?.width
+				);
 			});
 		});
 	});
@@ -487,9 +509,9 @@ describe('Width → WP Compatibility', () => {
 	describe('core/image Block', () => {
 		it('Simple Value', () => {
 			appendBlocks(
-				'<!-- wp:image {"id":60,"width":"500px","sizeSlug":"full","linkDestination":"none"} -->\n' +
-					'<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="width:500px"/></figure>\n' +
-					'<!-- /wp:image --> '
+				`<!-- wp:image {"width":"500px","sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" style="width:500px;height:auto"/></figure>
+<!-- /wp:image -->`
 			);
 
 			// Select target block
@@ -546,9 +568,9 @@ describe('Width → WP Compatibility', () => {
 
 		it('Spacing preset variable (WP → Blockera)', () => {
 			appendBlocks(
-				'<!-- wp:image {"id":60,"width":"var(--wp--preset--spacing--30, 20px)","sizeSlug":"full","linkDestination":"none"} -->\n' +
-					'<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="width:var(--wp--preset--spacing--30, 20px)"/></figure>\n' +
-					'<!-- /wp:image --> '
+				`<!-- wp:image {"width":"var(\u002d\u002dwp\u002d\u002dpreset\u002d\u002dspacing\u002d\u002d30, 20px)","sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" style="width:var(--wp--preset--spacing--30, 20px);height:auto"/></figure>
+<!-- /wp:image -->`
 			);
 
 			cy.getBlock('core/image').click();

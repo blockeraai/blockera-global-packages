@@ -722,7 +722,7 @@ function resolveCompatibleBlockCssSelector({
 	const $shouldPreferBlockTypeRootSelector =
 		shouldPreferBlockTypeRootSelector(
 			trimmedSelector,
-			blockTypeRoot,
+			blockTypeRoot || undefined,
 			blockPart
 		);
 	let preferredRoot =
@@ -874,7 +874,7 @@ export function prepareBlockCssSelector(params: {
 
 	// Fallback for sub feature of support to return selector.
 	if (!selector) {
-		let fallbackSelector;
+		let fallbackSelector: ?string;
 
 		// Create fallback selector from fallback support id as an array.
 		// Match PHP: take the first non-empty string selector (do not join all).
@@ -1129,9 +1129,9 @@ const hasBlockVariationClasses = (selector: string): boolean =>
  * @return {boolean} True when preferBlockTypeRootSelector should run.
  */
 const shouldPreferBlockTypeRootSelector = (
-	trimmedSelector?: string,
-	blockTypeRoot?: string,
-	blockPart?: string
+	trimmedSelector?: ?string,
+	blockTypeRoot?: ?string,
+	blockPart?: ?string
 ): boolean => {
 	if (!trimmedSelector || !blockTypeRoot || !blockPart) {
 		return false;

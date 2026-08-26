@@ -3,7 +3,7 @@
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, isEmptyBlockeraCompatValue, getWpFromStyleOrGlobal } from '../../utils';
 
 export function textOrientationFromWPCompatibility({
 	attributes,
@@ -14,16 +14,13 @@ export function textOrientationFromWPCompatibility({
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 	insideBlockInspector?: boolean,
 }): Object {
-	// Check block-level style (insideBlockInspector) or global style context
-	const writingMode = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
-	)
-		? attributes?.style?.typography?.writingMode
-		: attributes?.typography?.writingMode;
+	const writingMode = getWpFromStyleOrGlobal(
+		attributes?.style?.typography?.writingMode,
+		attributes?.typography?.writingMode
+	);
 
 	if (
-		attributes?.blockeraTextOrientation?.value === '' &&
+		isEmptyBlockeraCompatValue(attributes?.blockeraTextOrientation?.value) &&
 		writingMode !== undefined
 	) {
 		if (writingMode === 'horizontal-tb') {

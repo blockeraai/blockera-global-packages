@@ -19,6 +19,17 @@ type StorageBackend = {
 	length: number,
 };
 
+type ScopedStorage = {
+	// Return `any` so consumers can narrow stored string values without Flow friction.
+	getItem: (key: string) => any,
+	setItem: (key: string, value: string) => void,
+	removeItem: (key: string) => void,
+	getJSON: (key: string) => any,
+	setJSON: (key: string, value: any) => void,
+	updateJSON: (key: string, updatedValue: any) => any,
+	freshItem: (cacheKey: string, startsWith: string) => void,
+};
+
 /**
  * Resolve site + user scoped browser storage key.
  *
@@ -85,7 +96,7 @@ const getBackend = (
  */
 const createScopedStorage = (
 	backendName: 'localStorage' | 'sessionStorage'
-) => {
+): ScopedStorage => {
 	/**
 	 * Read a string value (mirrors Storage.getItem).
 	 *
@@ -254,9 +265,11 @@ const createScopedStorage = (
 /**
  * Site-scoped localStorage API (mirrors Storage for common methods + JSON helpers).
  */
-export const localStorage = createScopedStorage('localStorage');
+export const localStorage: ScopedStorage =
+	createScopedStorage('localStorage');
 
 /**
  * Site-scoped sessionStorage API (mirrors Storage for common methods).
  */
-export const sessionStorage = createScopedStorage('sessionStorage');
+export const sessionStorage: ScopedStorage =
+	createScopedStorage('sessionStorage');

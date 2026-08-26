@@ -65,6 +65,13 @@ class AssetsLoader {
 	protected array $fallback_args = [];
 
 	/**
+	 * Whether the icons-picker prefetch hint is already hooked for this request.
+	 *
+	 * @var bool
+	 */
+	protected static bool $icon_picker_prefetch_hooked = false;
+
+	/**
 	 * AssetsProvider constructor method,
 	 * when create new instance of current class,
 	 * fire the appropriate WordPress enqueue hooks.
@@ -224,6 +231,33 @@ class AssetsLoader {
 				$asset['version'],
 				$footer_args
 			);
+
+			if ( '@blockera/icons' === $name ) {
+
+				$picker_info = $this->assetInfo( 'icons-picker' );
+
+				if ( ! empty( $picker_info['script'] ) ) {
+
+					$picker_url = $picker_info['script'];
+
+					if ( ! empty( $picker_info['version'] ) ) {
+
+						$picker_url = add_query_arg(
+							'ver',
+							$picker_info['version'],
+							$picker_url
+						);
+					}
+
+					wp_add_inline_script(
+						$handle,
+						'window.blockeraIconPickerScriptUrl = ' . wp_json_encode( $picker_url ) . ';',
+						'after'
+					);
+
+					$this->enqueueIconPickerPrefetch( $picker_url );
+				}
+			}
 		}
 
 		if ( ! $load_scripts ) {
@@ -275,6 +309,38 @@ class AssetsLoader {
 				$after_inline_script,
 			);
 		}
+	}
+
+	/**
+	 * Print a low-priority prefetch hint for the deferred icons-picker script.
+	 *
+	 * WordPress only emits `wp_resource_hints` on `wp_head` (not `admin_head`),
+	 * so the editor needs an explicit head tag. `admin_enqueue_scripts` and
+	 * `enqueue_block_editor_assets` both run before `admin_head`.
+	 *
+	 * @param string $picker_url Versioned icons-picker script URL.
+	 *
+	 * @return void
+	 */
+	protected function enqueueIconPickerPrefetch( string $picker_url ): void {
+
+		if ( self::$icon_picker_prefetch_hooked || '' === $picker_url ) {
+
+			return;
+		}
+
+		self::$icon_picker_prefetch_hooked = true;
+
+		add_action(
+			'admin_head',
+			static function () use ( $picker_url ): void {
+				printf(
+					"<link rel='prefetch' as='script' href='%s' />\n",
+					esc_url( $picker_url )
+				);
+			},
+			2
+		);
 	}
 
 	/**

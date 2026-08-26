@@ -1,0 +1,73 @@
+# Template — Blockera plugin is the base. Copy to consumer and change OWNER/REPO / plugin slug env.
+name: Update Changelog and upload Blockera plugin to WordPress.org plugin repo
+
+on:
+    release:
+        types: [published]
+
+jobs:
+    pr-workflow-gate:
+        name: PR workflow filter
+        runs-on: ubuntu-latest
+        outputs:
+            run: ${{ steps.gate.outputs.run }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - id: gate
+              uses: ./packages/global-packages/packages/dev-tools/github/actions/pr-workflow-gate
+              with:
+                  workflow-file: upload-release-to-plugin-repo.yml
+
+    get-release-branch:
+        name: Get release branch name
+        needs: pr-workflow-gate
+        if: ${{ needs.pr-workflow-gate.outputs.run == 'true' }}
+        runs-on: ubuntu-latest
+        outputs:
+            release_branch: ${{ steps.get_release_branch.outputs.release_branch }}
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - id: get_release_branch
+              env:
+                  TAG: ${{ github.event.release.tag_name }}
+              run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/upload-release-to-plugin-repo/compute-release-branch.sh
+
+
+    upload:
+        name: Publish as trunk (and tag)
+        needs: [pr-workflow-gate, get-release-branch]
+        if: ${{ needs.pr-workflow-gate.outputs.run == 'true' && (!github.event.release.prerelease && github.event.release.assets[0]) }}
+        runs-on: ubuntu-latest
+        environment: wp.org plugin
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+            BLOCKERA_UPLOAD_PLUGIN_REPO_URL: 'https://plugins.svn.wordpress.org/blockera'
+            SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+            SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+            VERSION: ${{ github.event.release.name }}
+            PLUGIN_URL: ${{ github.event.release.assets[0].browser_download_url }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+
+            - name: Ensure global-packages submodule
+              uses: ./.github/actions/ensure-global-packages
+
+            - run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/upload-release-to-plugin-repo/publish-to-svn.sh

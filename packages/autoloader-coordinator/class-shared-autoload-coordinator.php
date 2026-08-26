@@ -382,13 +382,15 @@ if (! \class_exists(Coordinator::class)) {
 
 			$context = $this->getInstalledPackagesContext($plugin['vendor_dir']);
 
-			// Production install (`composer install --no-dev`): Composer autoload matches runtime.
+			// `composer install --no-dev` (or missing installed.php): vendor/autoload.php is production-only.
 			if (null === $context || empty($context['include_dev'])) {
 				return true;
 			}
 
-			// Dev install: native autoload only when dev runtime explicitly allows dev deps.
-			return $this->isBlockeraDevelopmentRuntime();
+			// `composer install` with require-dev: Composer's autoload also registers root
+			// autoload-dev (PHPUnit helpers). Stay coordinated so require-dev packages load
+			// while those test paths stay off the WordPress runtime.
+			return false;
 		}
 
 		/**
@@ -492,53 +494,18 @@ if (! \class_exists(Coordinator::class)) {
 		}
 
 		/**
-		 * Whether Blockera is running in an explicit development runtime.
-		 * Defaults to production-safe behavior during WordPress bootstrap.
-		 */
-		private function isBlockeraDevelopmentRuntime(): bool {
-			if (defined('BLOCKERA_SB_MODE') && 'production' === BLOCKERA_SB_MODE) {
-				return false;
-			}
-
-			if (defined('BLOCKERA_PRO_APP_MODE') && 'production' === BLOCKERA_PRO_APP_MODE) {
-				return false;
-			}
-
-			$app_mode = null;
-
-			if (isset($_ENV['APP_MODE'])) {
-				$app_mode = sanitize_text_field(wp_unslash($_ENV['APP_MODE']));
-			} elseif (isset($_SERVER['APP_MODE'])) {
-				$app_mode = sanitize_text_field(wp_unslash($_SERVER['APP_MODE']));
-			} else {
-				$env_value = getenv('APP_MODE');
-
-				if (false !== $env_value && is_string($env_value)) {
-					$app_mode = sanitize_text_field($env_value);
-				}
-			}
-
-			if (null !== $app_mode && 'development' === $app_mode) {
-				return true;
-			}
-
-			if (defined('BLOCKERA_SB_MODE') && 'development' === BLOCKERA_SB_MODE) {
-				return true;
-			}
-
-			if (defined('BLOCKERA_PRO_APP_MODE') && 'development' === BLOCKERA_PRO_APP_MODE) {
-				return true;
-			}
-
-			return false;
-		}
-
-		/**
 		 * Resolve autoload policy for a plugin vendor tree (computed once, cached per request).
 		 *
-		 * Production installs (`composer install --no-dev`) already omit dev autoload entries
-		 * from vendor/composer/autoload_*.php. When Composer was installed with dev dependencies
-		 * but Blockera is running in production mode, dev paths are filtered at runtime.
+		 * Composer install is the source of truth — not APP_MODE / BLOCKERA_SB_MODE:
+		 * - `composer install` (require + require-dev) → load both package sets
+		 * - `composer install --no-dev` → load production packages only
+		 *
+		 * Root `autoload-dev` (PHPUnit helpers) is still kept off the WordPress runtime;
+		 * PHPUnit bootstraps those paths itself.
+		 *
+		 * `wp-cli/*` vendor packages are also kept off the WordPress runtime. WP-CLI's
+		 * phar already ships those libraries; loading plugin copies (especially
+		 * php-cli-tools `files` autoload) fatals with "Cannot redeclare cli\\render()".
 		 *
 		 * @param string $vendorDir Vendor directory path.
 		 * @param string $pluginDir Plugin root directory path.
@@ -553,7 +520,7 @@ if (! \class_exists(Coordinator::class)) {
 
 			$context             = $this->getInstalledPackagesContext($vendorDir);
 			$composerIncludesDev = $context['include_dev'] ?? false;
-			$includeDev          = $composerIncludesDev && $this->isBlockeraDevelopmentRuntime();
+			$includeDev          = $composerIncludesDev;
 
 			$allowedPackages = null;
 			$devDirPrefixes  = [];
@@ -563,30 +530,30 @@ if (! \class_exists(Coordinator::class)) {
 				'dirs'  => [],
 			];
 
-			// Root autoload-dev paths are only relevant when dev packages remain in vendor metadata.
-			if ($composerIncludesDev && ! $includeDev) {
+			if ($composerIncludesDev) {
 				$runtimeExcluded = $this->getRootAutoloadDevPathRules($pluginDir);
 			}
 
 			if (null !== $context) {
-				if ($includeDev) {
-					$allowedPackages = array_fill_keys(array_keys($context['packages']), true);
-				} else {
-					$allowedPackages = [];
+				$allowedPackages = [];
 
-					foreach ($context['packages'] as $name => $package) {
-						if (empty($package['dev_requirement'])) {
-							$allowedPackages[ $name ] = true;
-							continue;
-						}
+				foreach ($context['packages'] as $name => $package) {
+					$installPath = ! empty($package['install_path'])
+						? $this->normalizePath(rtrim( (string) $package['install_path'], '/\\'))
+						: '';
 
-						if (empty($package['install_path'])) {
-							continue;
-						}
+					// WP-CLI vendor copies collide with the WP-CLI phar (`cli\render()`).
+					if (is_string($name) && 0 === strpos($name, 'wp-cli/') && '' !== $installPath) {
+						$runtimeExcluded['dirs'][] = $installPath . '/';
+					}
 
-						$prefix = $this->normalizePath(rtrim($package['install_path'], '/\\'));
+					if ($includeDev || empty($package['dev_requirement'])) {
+						$allowedPackages[ $name ] = true;
+						continue;
+					}
 
-						$devDirPrefixes[] = $prefix . '/';
+					if ('' !== $installPath) {
+						$devDirPrefixes[] = $installPath . '/';
 					}
 				}
 			}
@@ -634,7 +601,7 @@ if (! \class_exists(Coordinator::class)) {
 				return false;
 			}
 
-			$includeDev = $context['include_dev'] && $this->isBlockeraDevelopmentRuntime();
+			$includeDev = $context['include_dev'];
 
 			$this->include_dev_dependencies_by_vendor[ $vendorDir ] = $includeDev;
 
@@ -701,8 +668,8 @@ if (! \class_exists(Coordinator::class)) {
 
 		/**
 		 * Resolve root-project autoload-dev path rules from composer.json.
-		 * These paths are excluded from WordPress runtime autoloading in all modes.
-		 * PHPUnit bootstraps load them explicitly.
+		 * These paths are excluded from WordPress runtime even when Composer installed
+		 * require-dev packages. PHPUnit bootstraps load them explicitly.
 		 *
 		 * @param string $pluginDir Plugin root directory path.
 		 * @return array{files:array<string,bool>,dirs:array<int,string>}
@@ -1467,25 +1434,10 @@ if (! \class_exists(Coordinator::class)) {
 			// Request-level cache for realpath() calls to reduce filesystem overhead.
 			static $realpathCache = [];
 
-			// Find which package this prefix belongs to.
-			$bestPath    = null;
-			$bestVersion = '0.0.0';
-
-			// Cache preferred plugin real path if needed.
-			$preferredRealDir = null;
-			if (null !== $preferredPlugin && isset($this->plugins[ $preferredPlugin ])) {
-				$preferredDir = $this->plugins[ $preferredPlugin ]['plugin_dir'] . '/';
-				if (! isset($realpathCache[ $preferredDir ])) {
-					$realpathCache[ $preferredDir ] = realpath($preferredDir);
-				}
-				$preferredRealDir = ( false !== $realpathCache[ $preferredDir ] ) 
-					? $realpathCache[ $preferredDir ] . '/' 
-					: $preferredDir;
-			}
+			$pathEntries = [];
 
 			foreach ($paths as $path) {
 				$pathStr = (string) $path;
-				// Resolve symlinks to real path for comparison (cached).
 				if (! isset($realpathCache[ $pathStr ])) {
 					$realpathCache[ $pathStr ] = realpath($pathStr);
 				}
@@ -1493,35 +1445,76 @@ if (! \class_exists(Coordinator::class)) {
 					$pathStr = $realpathCache[ $pathStr ];
 				}
 
-				// Check if this path belongs to the preferred plugin.
-				if (null !== $preferredRealDir && 0 === strpos($pathStr, $preferredRealDir)) {
-					return [ $path ];
+				$pluginSlug = null;
+				foreach ($this->plugins as $slug => $plugin) {
+					$pluginDir = $plugin['plugin_dir'] . '/';
+					if (! isset($realpathCache[ $pluginDir ])) {
+						$realpathCache[ $pluginDir ] = realpath($pluginDir);
+					}
+					$pluginRealDir = ( false !== $realpathCache[ $pluginDir ] )
+						? $realpathCache[ $pluginDir ] . '/'
+						: $pluginDir;
+
+					if (0 === strpos($pathStr, $pluginRealDir)) {
+						$pluginSlug = $slug;
+						break;
+					}
 				}
 
-				// Find version from package manifest.
-				foreach ($packageVersions as $packageName => $meta) {
-					if (isset($meta['vendor_dir'])) {
+				$packageInfo = $this->detectPackageFromPath( (string) $path );
+				$version     = $packageInfo['version'] ?? '0.0.0';
+
+				if ('0.0.0' === $version) {
+					foreach ($packageVersions as $meta) {
+						if (! isset($meta['vendor_dir'])) {
+							continue;
+						}
+
 						$vendorPrefix = $meta['vendor_dir'] . '/';
-						// Cache vendor prefix realpath.
 						if (! isset($realpathCache[ $vendorPrefix ])) {
 							$realpathCache[ $vendorPrefix ] = realpath($vendorPrefix);
 						}
-						$vendorRealPrefix = ( false !== $realpathCache[ $vendorPrefix ] ) 
-							? $realpathCache[ $vendorPrefix ] . '/' 
+						$vendorRealPrefix = ( false !== $realpathCache[ $vendorPrefix ] )
+							? $realpathCache[ $vendorPrefix ] . '/'
 							: $vendorPrefix;
-						
+
 						if (0 === strpos($pathStr, $vendorRealPrefix)) {
-							if (version_compare($meta['version'], $bestVersion) > 0) {
-								$bestVersion = $meta['version'];
-								$bestPath    = $path;
-							}
+							$version = $meta['version'];
 							break;
 						}
 					}
 				}
+
+				$pathEntries[] = [
+					'path'    => $path,
+					'version' => $version,
+					'plugin'  => $pluginSlug,
+				];
 			}
 
-			return null !== $bestPath ? [ $bestPath ] : [ $paths[0] ];
+			usort(
+				$pathEntries,
+				function ( $a, $b) use ( $preferredPlugin) {
+					$version_compare = version_compare($a['version'], $b['version']);
+
+					if (0 !== $version_compare) {
+						return $version_compare < 0 ? 1 : -1;
+					}
+
+					if (null !== $preferredPlugin) {
+						if ($a['plugin'] === $preferredPlugin) {
+							return -1;
+						}
+						if ($b['plugin'] === $preferredPlugin) {
+							return 1;
+						}
+					}
+
+					return 0;
+				}
+			);
+
+			return [ $pathEntries[0]['path'] ];
 		}
 
 		/**
@@ -1569,18 +1562,6 @@ if (! \class_exists(Coordinator::class)) {
 
 			// Request-level cache for realpath() calls to reduce filesystem overhead.
 			static $realpathCache = [];
-
-			// Cache preferred plugin real path if needed (calculated once per method call).
-			$preferredDirForComparison = null;
-			if (null !== $preferredPlugin && isset($this->plugins[ $preferredPlugin ])) {
-				$preferredDir = $this->plugins[ $preferredPlugin ]['plugin_dir'] . '/';
-				if (! isset($realpathCache[ $preferredDir ])) {
-					$realpathCache[ $preferredDir ] = realpath($preferredDir);
-				}
-				$preferredDirForComparison = ( false !== $realpathCache[ $preferredDir ] ) 
-					? $realpathCache[ $preferredDir ] . '/' 
-					: $preferredDir;
-			}
 
 			// Collect all classmap entries with their package info.
 			$classmapEntries = [];
@@ -1639,30 +1620,30 @@ if (! \class_exists(Coordinator::class)) {
                 );
 
 				if (! empty($blockeraEntries)) {
-					// Prefer preferred plugin if set.
-					if (null !== $preferredDirForComparison) {
-						foreach ($blockeraEntries as $entry) {
-							if (0 === strpos($entry['real_path'], $preferredDirForComparison)) {
-								$deduplicated[ $className ] = $entry['file'];
-								continue 2;
+					usort(
+						$blockeraEntries,
+						function ( $a, $b) use ( $preferredPlugin) {
+							$version_compare = version_compare($a['version'], $b['version']);
+
+							if (0 !== $version_compare) {
+								return $version_compare < 0 ? 1 : -1;
 							}
-						}
-					}
 
-					// Select best version.
-					$bestEntry   = null;
-					$bestVersion = '0.0.0';
-					foreach ($blockeraEntries as $entry) {
-						if (version_compare($entry['version'], $bestVersion) > 0) {
-							$bestVersion = $entry['version'];
-							$bestEntry   = $entry;
-						}
-					}
+							if (null !== $preferredPlugin) {
+								if ($a['plugin'] === $preferredPlugin) {
+									return -1;
+								}
+								if ($b['plugin'] === $preferredPlugin) {
+									return 1;
+								}
+							}
 
-					if (null !== $bestEntry) {
-						$deduplicated[ $className ] = $bestEntry['file'];
-						continue;
-					}
+							return 0;
+						}
+					);
+
+					$deduplicated[ $className ] = $blockeraEntries[0]['file'];
+					continue;
 				}
 
 				// For non-Blockera packages or if no Blockera entries, use first entry.

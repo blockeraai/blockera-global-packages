@@ -10,7 +10,7 @@ import { getColorVAFromVarString } from '@blockera/data';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
 export function backgroundColorFromWPCompatibility({
 	attributes,
@@ -43,19 +43,11 @@ export function backgroundColorFromWPCompatibility({
 	}
 
 	// style.color.background is not variable
-	else if (
-		runInsideBlockInspector(
-			insideBlockInspector,
-			editorSelectedBlockEvent
-		) &&
-		attributes?.style?.color?.background
-	) {
+	else if (attributes?.style?.color?.background) {
 		attributes.blockeraBackgroundColor = {
 			value: attributes?.style?.color?.background,
 		};
-	}
-	// color.background is not variable
-	else if (!insideBlockInspector && attributes?.color?.background) {
+	} else if (attributes?.color?.background) {
 		const bg = attributes?.color?.background;
 		attributes.blockeraBackgroundColor = {
 			value: bg.startsWith('var') ? getColorVAFromVarString(bg) : bg,

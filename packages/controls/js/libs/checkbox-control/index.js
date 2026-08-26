@@ -35,6 +35,7 @@ export default function CheckboxControl({
 	isBold = false,
 	//
 	className,
+	fieldProps,
 	...props
 }: CheckboxControlProps): MixedElement {
 	const {
@@ -71,6 +72,7 @@ export default function CheckboxControl({
 			columns={columns}
 			controlName={field}
 			className={className}
+			fieldProps={fieldProps}
 			{...labelProps}
 		>
 			<WPCheckboxControl

@@ -23,6 +23,7 @@ import { applyFilters } from '@wordpress/hooks';
 import { Icon } from '@blockera/icons';
 import { classNames, controlInnerClassNames } from '@blockera/classnames';
 import { STORE_NAME } from '@blockera/data';
+import type { VariableItem } from '@blockera/data';
 
 /**
  * Internal dependencies
@@ -403,8 +404,8 @@ export default function ({
 
 	const handleOnClickVar = useCallback(
 		(
-			data: Parameters<ValueAddonControlProps['handleOnClickVar']>[0],
-			options?: Parameters<ValueAddonControlProps['handleOnClickVar']>[1]
+			data: VariableItem,
+			options?: { keepPickerOpen?: boolean }
 		) => {
 			if (!options?.keepPickerOpen) {
 				markVarPickerClosing();
@@ -474,16 +475,18 @@ export default function ({
 				return;
 			}
 
+			const target: any = event.target;
+
 			if (
-				isElementInsideVariablePickerSelectionTarget(event.target) ||
-				isElementInsideVariablePickerPopover(event.target)
+				isElementInsideVariablePickerSelectionTarget(target) ||
+				isElementInsideVariablePickerPopover(target)
 			) {
 				return;
 			}
 
 			// Preset edit popovers portal outside the picker but must not dismiss it
 			// (e.g. toggling color shades off while the base preset is selected).
-			if (isClickInsideOpenInspectorRepeaterPopover(event.target)) {
+			if (isClickInsideOpenInspectorRepeaterPopover(target)) {
 				return;
 			}
 

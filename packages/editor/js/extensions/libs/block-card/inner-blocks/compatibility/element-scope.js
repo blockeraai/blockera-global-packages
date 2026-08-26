@@ -9,7 +9,7 @@ import { mergeObject, normalizeCssLengthValue } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { runInsideBlockInspector } from '../../../utils';
+import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../../utils';
 import { getBaseBreakpoint } from '../../../../../editor/header-ui';
 import { getBlockeraInnerBlockItem } from '../utils';
 import type { InnerBlockCompatEntry } from './registry';
@@ -37,14 +37,10 @@ export function getElementSlice({
 	insideBlockInspector: boolean,
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 }): Object {
-	const useStyle = runInsideBlockInspector(
-		insideBlockInspector,
-		editorSelectedBlockEvent
+	const elementsRoot = getWpFromStyleOrGlobal(
+		attributes?.style?.elements,
+		attributes?.elements
 	);
-
-	const elementsRoot = useStyle
-		? attributes?.style?.elements
-		: attributes?.elements;
 	let elementData = elementsRoot?.[dataCompatibilityElement] || {};
 
 	if (state !== 'normal') {

@@ -967,7 +967,7 @@ export const registerCommands = () => {
 		);
 
 		cy.get('@transition').within(() => {
-			cy.getByAriaLabel('Add New Transition').click();
+			cy.getByAriaLabel('Add New Transition').click({ force: true });
 		});
 	});
 
@@ -1021,8 +1021,8 @@ export const registerCommands = () => {
 			.within(() => {
 				cy.getByDataTest('transition-input-duration').clear();
 				cy.getByDataTest('transition-input-duration').type(
-					duration,
-					delay
+					String(duration),
+					{ delay: 0 }
 				);
 
 				cy.getParentContainer('Timing').within(() => {
@@ -1036,7 +1036,9 @@ export const registerCommands = () => {
 				});
 
 				cy.getByDataTest('transition-input-delay').clear();
-				cy.getByDataTest('transition-input-delay').type(2000);
+				cy.getByDataTest('transition-input-delay').type(String(delay), {
+					delay: 0,
+				});
 			});
 	});
 
@@ -1715,10 +1717,8 @@ export const registerCommands = () => {
 
 	/** Clicks the site editor view-mode toggle (companion limit bypass). */
 	Cypress.Commands.add('tabsClickSiteEditorViewModeToggle', () => {
-		cy.get('.edit-site-editor__view-mode-toggle', { timeout: 60000 })
+		cy.get('button[aria-label="Open Navigation"]', { timeout: 60000 })
 			.should('be.visible')
-			.find('button')
-			.first()
 			.click({ force: true });
 	});
 
