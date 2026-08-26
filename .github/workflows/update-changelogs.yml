@@ -113,6 +113,6 @@ jobs:
                     echo "No changelog/version changes to commit."
                     exit 0
                   fi
-                  git commit -m "Update Changelog for ${{ steps.get_version.outputs.new_version }}"
+                  git commit -m "build: Update Changelog for ${{ steps.get_version.outputs.new_version }}"
                   git push origin master
                   echo "Committed and pushed $(git rev-parse --short HEAD) to master"

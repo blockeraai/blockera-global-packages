@@ -400,7 +400,7 @@ target-branch checkout when the feature branch may not have the latest pin yet).
 | --- | --- |
 | `BLOCKERA_SYNC_GP_DEFAULT_BRANCH` | `master` |
 | `BLOCKERA_SYNC_GP_PR_BRANCH` | `chore/bump-global-packages` |
-| `BLOCKERA_SYNC_GP_PR_LABEL` | `dependencies` |
+| `BLOCKERA_SYNC_GP_PR_LABEL` | `dependencies` (created if missing; skipped if create fails). Empty disables labeling. |
 
 ## Plugin check (PCP + PHP security)
 
