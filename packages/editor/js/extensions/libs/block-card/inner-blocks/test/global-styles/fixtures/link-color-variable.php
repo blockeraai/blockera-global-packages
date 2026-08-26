@@ -20,26 +20,6 @@ add_filter(
 		if ( ! isset( $data['styles']['blocks'][ $block ]['elements'] ) ) {
 			$data['styles']['blocks'][ $block ]['elements'] = array();
 		}
-		if ( ! isset( $data['settings']['color']['palette'] ) ) {
-			$data['settings']['color']['palette'] = array();
-		}
-
-		foreach ( array( 'accent-3' => '#503AA8', 'accent-4' => '#686868' ) as $slug => $color ) {
-			$found = false;
-			foreach ( $data['settings']['color']['palette'] as $entry ) {
-				if ( isset( $entry['slug'] ) && $entry['slug'] === $slug ) {
-					$found = true;
-					break;
-				}
-			}
-			if ( ! $found ) {
-				$data['settings']['color']['palette'][] = array(
-					'slug'  => $slug,
-					'color' => $color,
-					'name'  => ucfirst( str_replace( '-', ' ', $slug ) ),
-				);
-			}
-		}
 
 		$data['styles']['blocks'][ $block ]['elements']['link'] = array_replace_recursive(
 			$data['styles']['blocks'][ $block ]['elements']['link'] ?? array(),

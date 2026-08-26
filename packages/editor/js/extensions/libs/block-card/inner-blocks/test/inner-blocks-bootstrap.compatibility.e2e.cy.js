@@ -13,9 +13,42 @@ import {
 	assertBlockData,
 	activateMuPlugin,
 	deactivateMuPlugin,
-	setInnerBlock,
-	setBlockState,
 } from '@blockera/dev-cypress/js/helpers';
+
+const GLOBAL_STYLES_STYLE_UI_CONTEXT = 'global-styles-style';
+
+/**
+ * Select an inner block in the Site Editor global-styles panel without clicking
+ * the repeater header (that click toggles an inspector popover and can freeze
+ * Chrome after `addNewTransition`).
+ *
+ * @param {string} blockType
+ */
+const selectInnerBlockInGlobalStyles = (blockType) => {
+	cy.window().then((win) => {
+		win.wp.data
+			.dispatch('blockera/extensions')
+			.changeExtensionCurrentBlock(
+				blockType,
+				GLOBAL_STYLES_STYLE_UI_CONTEXT
+			);
+	});
+};
+
+const setInnerBlockStateInGlobalStyles = (state) => {
+	cy.window().then((win) => {
+		win.wp.data
+			.dispatch('blockera/extensions')
+			.changeExtensionInnerBlockState(state);
+	});
+	cy.window().should((win) => {
+		expect(
+			win.wp.data
+				.select('blockera/extensions')
+				.getExtensionInnerBlockState()
+		).to.equal(state);
+	});
+};
 
 const FIXTURE_ROOT =
 	'packages/editor/js/extensions/libs/block-card/inner-blocks/test/global-styles/fixtures';
@@ -108,17 +141,41 @@ const withGroupGlobalStyles = (assertFn) => {
 	});
 };
 
+const NAVIGATOR_SCREEN_SELECTOR =
+	'.edit-site-global-styles-sidebar__navigator-screen, .global-styles-ui-sidebar__navigator-screen';
+
+/**
+ * Run WP→Blockera inner-block bootstrap without opening a repeater popover.
+ * `addNewTransition()` hydrates via setAttributes but leaves an inspector
+ * popover that remounts and freezes Chrome before the next test can visit
+ * the Site Editor (Cypress then hangs with no command timeout).
+ */
+const hydrateInnerBlocksFromThemeJson = () => {
+	cy.getParentContainer('Opacity').within(() => {
+		cy.get('input').first().then(($input) => {
+			cy.wrap($input).setControlledInputValue('99');
+		});
+	});
+};
+
 const openGroupGlobalStyles = () => {
 	cy.openGlobalStylesPanel();
 	closeWelcomeGuide();
-	cy.getByDataTest('block-style-variations').eq(0).click();
-	cy.get('button[id="/blocks/core%2Fgroup"]').click();
-	cy.getByDataTest('style-default').click();
-	cy.addNewTransition();
+	cy.get(NAVIGATOR_SCREEN_SELECTOR, { timeout: 20000 }).should('exist');
+	cy.getByDataTest('block-style-variations').eq(0).click({ force: true });
+	cy.get('button[id="/blocks/core%2Fgroup"]', { timeout: 20000 })
+		.should('exist')
+		.click({ force: true });
+	cy.getByDataTest('style-default', { timeout: 20000 })
+		.should('exist')
+		.click({ force: true });
+	hydrateInnerBlocksFromThemeJson();
 };
 
 describe('Inner blocks bootstrap → global styles theme.json (mu-plugins)', () => {
 	beforeEach(function () {
+		this.timeout(180000);
+
 		const muPlugin = muPluginByTestTitle[this.currentTest.title];
 
 		if (muPlugin) {
@@ -207,35 +264,6 @@ describe('Inner blocks bootstrap → global styles theme.json (mu-plugins)', () 
 				expect({
 					blockeraBackgroundColor: '#ffcaca',
 				}).to.deep.equal(getInnerAttrs(group, 'core/button'));
-			});
-		});
-
-		it('syncs link colors from blockera to theme.json elements', () => {
-			setInnerBlock('elements/link');
-			setBlockState('Normal');
-			cy.setColorControlValue('Text Color', '666666');
-			setBlockState('Hover');
-			cy.setColorControlValue('Text Color', '888888');
-
-			assertBlockData((data) => {
-				const group = getGroupGlobalStyles(data);
-				const link = group?.elements?.link;
-
-				expect('#666666').to.equal(link?.color?.text);
-				expect('#888888').to.equal(link?.[':hover']?.color?.text);
-			});
-		});
-
-		it('syncs button text color from blockera to theme.json elements', () => {
-			setInnerBlock('core/button');
-			cy.setColorControlValue('Text Color', '445566');
-
-			assertBlockData((data) => {
-				const group = getGroupGlobalStyles(data);
-
-				expect('#445566').to.equal(
-					group?.elements?.button?.color?.text
-				);
 			});
 		});
 	});
@@ -380,6 +408,51 @@ describe('Inner blocks bootstrap → global styles theme.json (mu-plugins)', () 
 					group?.elements?.button?.[':hover']?.border?.color
 				);
 				expect(hoverBorder?.all?.width).to.equal('3px');
+			});
+		});
+	});
+
+	describe('sync to theme.json elements', () => {
+		it('syncs link colors from blockera to theme.json elements', () => {
+			withGroupGlobalStyles((group) => {
+				expect(
+					getInnerAttrs(group, 'elements/link')?.blockeraFontColor
+				).to.not.equal(undefined);
+			});
+
+			selectInnerBlockInGlobalStyles('elements/link');
+			cy.getByDataTest('blockera-inner-block-card', {
+				timeout: 15000,
+			}).should('exist');
+			cy.setColorControlValue('Text Color', '666666');
+			setInnerBlockStateInGlobalStyles('hover');
+			cy.setColorControlValue('Text Color', '888888');
+
+			assertBlockData((data) => {
+				const group = getGroupGlobalStyles(data);
+				const link = group?.elements?.link;
+
+				expect('#666666').to.equal(link?.color?.text);
+				expect('#888888').to.equal(link?.[':hover']?.color?.text);
+			});
+		});
+
+		it('syncs button text color from blockera to theme.json elements', () => {
+			withGroupGlobalStyles((group) => {
+				expect(
+					getInnerAttrs(group, 'core/button')?.blockeraFontColor
+				).to.not.equal(undefined);
+			});
+
+			selectInnerBlockInGlobalStyles('core/button');
+			cy.setColorControlValue('Text Color', '445566');
+
+			assertBlockData((data) => {
+				const group = getGroupGlobalStyles(data);
+
+				expect('#445566').to.equal(
+					group?.elements?.button?.color?.text
+				);
 			});
 		});
 	});

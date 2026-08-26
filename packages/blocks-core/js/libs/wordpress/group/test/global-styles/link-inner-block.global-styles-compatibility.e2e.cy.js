@@ -8,12 +8,16 @@ import {
 	assertBlockData,
 	activateMuPlugin,
 	deactivateMuPlugin,
-	setInnerBlock,
-	setBlockState,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
+
+const GLOBAL_STYLES_STYLE_UI_CONTEXT = 'global-styles-style';
 
 const FIXTURE_ROOT =
 	'packages/blocks-core/js/libs/wordpress/group/test/global-styles/fixtures';
+
+const NAVIGATOR_SCREEN_SELECTOR =
+	'.edit-site-global-styles-sidebar__navigator-screen, .global-styles-ui-sidebar__navigator-screen';
 
 const muPluginByTestTitle = {
 	'Simple color for inner block (normal + hover)': {
@@ -28,18 +32,78 @@ const muPluginByTestTitle = {
 
 const activeMuPlugins = new Map();
 
-const getGroupGlobalStyles = (data) =>
-	getEditedGlobalStylesRecord(data, 'styles', 'blocks')?.['core/group'];
+/**
+ * Select an inner block in the Site Editor global-styles panel without clicking
+ * the repeater header (that click toggles an inspector popover and can freeze
+ * Chrome).
+ *
+ * @param {string} blockType
+ */
+const selectInnerBlockInGlobalStyles = (blockType) => {
+	cy.window().then((win) => {
+		win.wp.data
+			.dispatch('blockera/extensions')
+			.changeExtensionCurrentBlock(
+				blockType,
+				GLOBAL_STYLES_STYLE_UI_CONTEXT
+			);
+	});
+	cy.getByDataTest('blockera-inner-block-card', { timeout: 20000 }).should(
+		'exist'
+	);
+};
+
+const setInnerBlockStateInGlobalStyles = (state) => {
+	cy.window().then((win) => {
+		win.wp.data
+			.dispatch('blockera/extensions')
+			.changeExtensionInnerBlockState(state);
+	});
+	cy.window().should((win) => {
+		expect(
+			win.wp.data
+				.select('blockera/extensions')
+				.getExtensionInnerBlockState()
+		).to.equal(state);
+	});
+};
+
+const getGroupGlobalStyles = (data) => {
+	const group =
+		getEditedGlobalStylesRecord(data, 'styles', 'blocks')?.['core/group'];
+
+	if (!group || typeof group !== 'object') {
+		return group;
+	}
+
+	return JSON.parse(JSON.stringify(group));
+};
 
 const openGroupGlobalStyles = () => {
 	cy.openGlobalStylesPanel();
 	closeWelcomeGuide();
-	cy.getByDataTest('block-style-variations').eq(0).click();
-	cy.get('button[id="/blocks/core%2Fgroup"]').click();
+	cy.get(NAVIGATOR_SCREEN_SELECTOR, { timeout: 20000 }).should('exist');
+	cy.getByDataTest('block-style-variations').eq(0).click({ force: true });
+	cy.get('button[id="/blocks/core%2Fgroup"]', { timeout: 20000 })
+		.should('exist')
+		.click({ force: true });
+	cy.getByDataTest('style-default', { timeout: 20000 })
+		.should('exist')
+		.click({ force: true });
+	// Any Blockera attribute write hydrates `blockeraInnerBlocks` from
+	// theme.json. `addNewTransition()` leaves a remounting inspector popover
+	// that freezes Chrome before the next test can run.
+	cy.getParentContainer('Opacity').within(() => {
+		cy.get('input').first().then(($input) => {
+			cy.wrap($input).setControlledInputValue('99');
+		});
+	});
 };
 
 describe('Group Block → Link Inner Block → WP Data Compatibility (Global Styles)', () => {
 	beforeEach(function () {
+		this.timeout(180000);
+
 		const muPlugin = muPluginByTestTitle[this.currentTest.title];
 
 		if (muPlugin) {
@@ -51,6 +115,7 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 		}
 
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		openGroupGlobalStyles();
 	});
 
@@ -67,9 +132,9 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 	});
 
 	it('Simple color for inner block (normal + hover)', () => {
-		cy.getByDataTest('style-default').click();
-		cy.addNewTransition();
-
+		//
+		// Test 1: WP data to Blockera
+		//
 		assertBlockData((data) => {
 			const root = getGroupGlobalStyles(data);
 			const linkElement = root?.elements?.link;
@@ -95,12 +160,15 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 			}).to.deep.equal(linkInnerBlock?.attributes);
 		});
 
-		setInnerBlock('elements/link');
+		//
+		// Test 2: Blockera value to WP data
+		//
+		selectInnerBlockInGlobalStyles('elements/link');
 
-		setBlockState('Normal');
+		setInnerBlockStateInGlobalStyles('normal');
 		cy.setColorControlValue('Text Color', '666666');
 
-		setBlockState('Hover');
+		setInnerBlockStateInGlobalStyles('hover');
 		cy.setColorControlValue('Text Color', '888888');
 
 		assertBlockData((data) => {
@@ -128,10 +196,13 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 			expect('#888888').to.equal(linkElement?.[':hover']?.color?.text);
 		});
 
-		setBlockState('Normal');
+		//
+		// Test 3: Clear Blockera value and check WP data
+		//
+		setInnerBlockStateInGlobalStyles('normal');
 		cy.clearColorControlValue('Text Color');
 
-		setBlockState('Hover');
+		setInnerBlockStateInGlobalStyles('hover');
 		cy.clearColorControlValue('Text Color');
 
 		assertBlockData((data) => {
@@ -158,9 +229,9 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 	});
 
 	it('Variable color value for inner block (normal + hover)', () => {
-		cy.getByDataTest('style-default').click();
-		cy.addNewTransition();
-
+		//
+		// Test 1: WP data to Blockera
+		//
 		assertBlockData((data) => {
 			const root = getGroupGlobalStyles(data);
 			const linkElement = root?.elements?.link;
@@ -220,16 +291,19 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 			}).to.deep.equal(linkInnerBlock?.attributes);
 		});
 
-		setInnerBlock('elements/link');
+		//
+		// Test 2: Blockera value to WP data
+		//
+		selectInnerBlockInGlobalStyles('elements/link');
 
-		setBlockState('Normal');
-		cy.getParentContainer('Text Color').within(() => {
+		setInnerBlockStateInGlobalStyles('normal');
+		cy.getParentContainer('Text Color').last().within(() => {
 			cy.clickValueAddonButton();
 		});
 		cy.selectValueAddonItem('contrast');
 
-		setBlockState('Hover');
-		cy.getParentContainer('Text Color').within(() => {
+		setInnerBlockStateInGlobalStyles('hover');
+		cy.getParentContainer('Text Color').last().within(() => {
 			cy.clickValueAddonButton();
 		});
 		cy.selectValueAddonItem('accent-1');
@@ -293,13 +367,16 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 			);
 		});
 
-		setBlockState('Normal');
-		cy.getParentContainer('Text Color').within(() => {
+		//
+		// Test 3: Clear Blockera value and check WP data
+		//
+		setInnerBlockStateInGlobalStyles('normal');
+		cy.getParentContainer('Text Color').last().within(() => {
 			cy.removeValueAddon();
 		});
 
-		setBlockState('Hover');
-		cy.getParentContainer('Text Color').within(() => {
+		setInnerBlockStateInGlobalStyles('hover');
+		cy.getParentContainer('Text Color').last().within(() => {
 			cy.removeValueAddon();
 		});
 
