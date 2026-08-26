@@ -65,8 +65,7 @@ const UNKNOWN_FEATURE_FALLBACK_NAME = 'Uncategorized';
  */
 /**
  * Label → product-friendly section (user notes + development changelog).
- * Keep a Changelog equivalents for package MD are handled separately when authors
- * write Added/Changed/Fixed headings under ## Unreleased.
+ * Keep a Changelog headings (Added/Changed/Fixed) live under dated ## [x.y.z] sections.
  */
 const LABEL_TYPE_MAPPING = {
 	'[Type] Developer Documentation': 'Documentation',
@@ -939,41 +938,21 @@ async function getCommitCountSinceLastRelease() {
 	}
 }
 
-async function updateChangelog(changelogs, version, publishDate) {
-	const config = getPluginConfig();
-	const start =
-		'== Changelog ==\n\n### Version ' +
-		version.trim() +
-		' - ' +
-		publishDate +
-		'\n\n';
-	let changelog = '';
-
-	for (const changelogPath of changelogs) {
-		const content = fs.readFileSync(changelogPath, 'utf8');
-		const unreleasedSection = content.match(
-			/## Unreleased[\s\S]+?(?=\n## |\n$)/
-		);
-
-		if (unreleasedSection) {
-			changelog += unreleasedSection[0].replace(/##\sUnreleased/g, '');
-		}
-	}
-
-	changelog = combineChangelogSections(changelog);
-
-	let end = '\n\n### More\n\n';
-	if (config.changelog.includeCommitCount !== false) {
-		const commitCount = await getCommitCountSinceLastRelease();
-		end += `This release includes ${commitCount} commits since the last release.\n\n`;
-	}
-	const archiveLabel = config.changelog.archiveLabel || config.name;
-	end += `To read the changelog for older ${archiveLabel} releases, please navigate to the [releases page](${config.changelog.archiveUrl}).\n`;
-
-	fs.writeFileSync(
-		path.resolve(process.cwd(), 'changelog.txt'),
-		start + changelog + end
-	);
+/**
+ * @deprecated Prefer accumulateProductChangelogs. Kept as a thin writer for tests.
+ *
+ * @param {string} mergedBody Combined ### sections
+ * @param {string} version
+ * @param {string} publishDate
+ */
+async function updateChangelog(mergedBody, version, publishDate) {
+	const { writeChangelogTxt } = require('./accumulate-changelogs');
+	await writeChangelogTxt({
+		cwd: process.cwd(),
+		version,
+		publishDate,
+		mergedBody: combineChangelogSections(mergedBody || ''),
+	});
 }
 
 /**
@@ -1343,6 +1322,7 @@ async function getReleaseChangelog(options) {
 	getContributorProps,
 	getContributorsList,
 	updateChangelog,
+	getCommitCountSinceLastRelease,
 	getDevelopmentChangelog,
 	getUniqueByUsername,
 	skipCreatedByBots,

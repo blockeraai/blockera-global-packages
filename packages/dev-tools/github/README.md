@@ -241,6 +241,52 @@ workflow; bash lives under `scripts/jobs/build-plugin-zip/`.
 | `BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX` | `Blockera` |
 | `artifact-name` / `zip-file` (action) | `blockera` / `./blockera.zip` |
 
+Release bump runs `jobs/build-plugin-zip/update-changelogs.sh`, which calls the
+consumer `npm run update:changelogs`.
+
+**Source of truth is package `CHANGELOG.md`.** Every GP and consumer package
+file starts with an empty `## Unreleased` inbox. Authors append bullets there
+(Keep a Changelog headings: Added, Fixed, …). Do not add dated or version
+headings in feature PRs.
+
+**GP fold happens on submodule bump**, not on product zip:
+
+1. Consumer sync/bump pins global-packages.
+2. If Unreleased has entries and the pin is a branch tip, bump folds them into
+   `## [YYYY-MM-DD]` (same-day suffix if needed), commits
+   `chore(changelog): fold Unreleased`, and pushes that SHA.
+3. Product zip diffs `CHANGELOG.md` between the previous and new GP gitlinks
+   plus consumer `packages/*/CHANGELOG.md`. It **fails** if the pinned GP still
+   has Unreleased bullets.
+4. Zip writes product root `CHANGELOG.md` / `changelog.txt` and folds
+   **consumer** Unreleased into `## [product-version] - date`.
+
+Set `BLOCKERA_CHANGELOG_FOLD_ON_BUMP=0` to skip the bump-time fold (zip will
+still refuse a dirty GP Unreleased). `BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP=0`
+disables the zip guard (tests only).
+
+Each consumer only sees notes inside **its** pin window.
+
+```yaml
+# Theme-style example
+env:
+    BLOCKERA_CHANGELOG_CONSUMER_GLOBS: |
+        packages/blockera-one/CHANGELOG.md
+        packages/blockera-admin-one/CHANGELOG.md
+```
+
+| Env | Default |
+| --- | --- |
+| `BLOCKERA_CHANGELOG_GP_PATH` | `packages/global-packages` |
+| `BLOCKERA_CHANGELOG_GP_FROM` / `BLOCKERA_CHANGELOG_GP_TO` | gitlink at last release ref … `HEAD` |
+| `BLOCKERA_CHANGELOG_FROM_REF` / `BLOCKERA_CHANGELOG_TO_REF` | last `origin/release/*` or `v$OLD_VERSION` … `HEAD` |
+| `BLOCKERA_CHANGELOG_PREVIOUS_VERSION` | set from `OLD_VERSION` in the zip job |
+| `BLOCKERA_CHANGELOG_CONSUMER_GLOBS` | `packages/*/CHANGELOG.md` (required) |
+| `BLOCKERA_CHANGELOG_ROOT_MD` | `CHANGELOG.md` |
+| `BLOCKERA_CHANGELOG_FILE` | `changelog.txt` |
+| `BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP` | `1` |
+| `BLOCKERA_CHANGELOG_FOLD_ON_BUMP` | `1` (bump script) |
+
 ## Update WordPress.org assets
 
 ```yaml
@@ -336,7 +382,7 @@ target-branch checkout when the feature branch may not have the latest pin yet).
 | Toolkit script | Role |
 | --- | --- |
 | `jobs/sync-global-packages-submodule/resolve-targets.sh` | dispatch/schedule/manual → source/target/mode |
-| `jobs/sync-global-packages-submodule/run-bump.sh` | git user + `bump-global-packages-submodule.sh` |
+| `jobs/sync-global-packages-submodule/run-bump.sh` | git user + `bump-global-packages-submodule.sh` (folds GP Unreleased on branch tips) |
 | `jobs/sync-global-packages-submodule/commit-bump.sh` | commit staged gitlink |
 | `jobs/sync-global-packages-submodule/open-or-update-pr.sh` | force-push PR branch + `gh pr` |
 

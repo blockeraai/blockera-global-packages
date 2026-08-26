@@ -18,9 +18,14 @@ OLD_VERSION="${OLD_VERSION:-}"
 CHANGELOG_COMMIT="${CHANGELOG_COMMIT:-}"
 RELEASE_BRANCH="${RELEASE_BRANCH:-}"
 
-if [[ -z "${OLD_VERSION}" || -z "${CHANGELOG_COMMIT}" || -z "${RELEASE_BRANCH}" ]]; then
-	echo "build-zip/cherry-pick: OLD_VERSION, CHANGELOG_COMMIT, RELEASE_BRANCH required" >&2
+if [[ -z "${OLD_VERSION}" || -z "${RELEASE_BRANCH}" ]]; then
+	echo "build-zip/cherry-pick: OLD_VERSION and RELEASE_BRANCH required" >&2
 	exit 1
+fi
+
+if [[ -z "${CHANGELOG_COMMIT}" ]]; then
+	echo "build-zip/cherry-pick: no changelog commit to cherry-pick"
+	exit 0
 fi
 
 if [[ "${GITHUB_REF:-}" != "refs/heads/master" ]]; then
