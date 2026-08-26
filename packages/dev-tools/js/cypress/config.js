@@ -106,6 +106,7 @@ function createCypressConfig(options = {}) {
 	return defineConfig({
 		chromeWebSecurity: false,
 		defaultCommandTimeout: 15000,
+		taskTimeout: 45000,
 		e2e: {
 			setupNodeEvents: setupE2ENodeEvents,
 			specPattern: env.e2e.specPattern,

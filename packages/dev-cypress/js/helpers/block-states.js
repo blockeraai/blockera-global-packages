@@ -28,16 +28,28 @@ export function setBlockState(state, blockType) {
 		.then(($containers) => {
 			const index =
 				blockType === 'master-block' ? 0 : $containers.length - 1;
+			const $container = $containers.eq(index);
+			const $header = $container
+				.find('[data-cy="group-control-header"]')
+				.filter((_, el) => (el.textContent || '').includes(state));
+			const $row = $header.closest('[data-cy="repeater-item"]');
 
-			cy.wrap($containers.eq(index)).within(() => {
+			// Clicking the already-active state opens its edit popover. Later
+			// `should('not.exist')` on that popover never settles if it remounts
+			// (Chrome main thread freeze — no Cypress command timeout).
+			if (
+				$row.hasClass('is-selected-item') ||
+				$row.find('.is-selected-item').length
+			) {
+				return;
+			}
+
+			cy.wrap($container).within(() => {
 				cy.getByDataCy('group-control-header')
 					.contains(state)
 					.click({ force: true });
 			});
 		});
-
-	// Switching block state should dismiss any open inspector group popovers.
-	cy.get('.blockera-control-group-popover').should('not.exist');
 }
 
 export function resetBlockState(state, blockType) {

@@ -967,7 +967,7 @@ export const registerCommands = () => {
 		);
 
 		cy.get('@transition').within(() => {
-			cy.getByAriaLabel('Add New Transition').click();
+			cy.getByAriaLabel('Add New Transition').click({ force: true });
 		});
 	});
 

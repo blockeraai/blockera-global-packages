@@ -46,7 +46,7 @@ let WP_ENV_BIN = path.join(
 	'.bin',
 	'wp-env'
 );
-const WP_EVAL_TIMEOUT_MS = 120000;
+const WP_EVAL_TIMEOUT_MS = 30000;
 
 /**
  * @param {string} pluginRoot
@@ -230,7 +230,10 @@ function runWpEval(phpCode) {
 				cwd: BLOCKERA_PLUGIN_ROOT,
 				encoding: 'utf8',
 				timeout: WP_EVAL_TIMEOUT_MS,
-				stdio: ['pipe', 'pipe', 'pipe'],
+				killSignal: 'SIGKILL',
+				// `pipe` stdin can deadlock wp-env/docker exec until the CI job
+				// timeout (60m). Ignore stdin; PHP comes from the eval argument.
+				stdio: ['ignore', 'pipe', 'pipe'],
 			})
 		);
 	} catch (error) {

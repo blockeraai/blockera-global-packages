@@ -7,23 +7,44 @@ export function setParentBlock() {
 }
 
 export function setInnerBlock(blockType) {
-	cy.get('body').then(($body) => {
-		if (
-			$body.find(`.blockera-control-repeater div[data-id="${blockType}"]`)
-				.length > 0
-		) {
-			cy.getByDataId(blockType).within(() => {
-				cy.get('span').click({ force: true });
-			});
-		} else {
-			openInserter();
+	const itemSelector = `.blockera-control-inner-blocks-repeater [data-id="${blockType}"], .blockera-control-repeater div[data-id="${blockType}"]`;
+	const isNamedInnerBlock =
+		typeof blockType === 'string' &&
+		(blockType.startsWith('elements/') || blockType.startsWith('core/'));
 
-			cy.get('.blockera-component-popover')
-				.last()
-				.within(() => {
-					cy.getByAriaLabel(blockType).click({ force: true });
-				});
+	const clickInnerBlockItem = () => {
+		cy.get(`${itemSelector} [data-cy="group-control-header"]`)
+			.first()
+			.click({ force: true });
+
+		cy.getByDataTest('blockera-inner-block-card', { timeout: 20000 }).should(
+			'exist'
+		);
+	};
+
+	cy.get('body').then(($body) => {
+		if ($body.find(itemSelector).length > 0) {
+			clickInnerBlockItem();
+			return;
 		}
+
+		// Virtual inner blocks (elements/link, core/post-date, …) appear in the
+		// repeater after WP→Blockera hydrate. The inner-blocks control has no add
+		// button; falling through to the block-state inserter waits forever for an
+		// aria-label that never exists (CI job timeout).
+		if (isNamedInnerBlock) {
+			cy.get(itemSelector, { timeout: 20000 }).should('exist');
+			clickInnerBlockItem();
+			return;
+		}
+
+		openInserter();
+
+		cy.get('.blockera-component-popover')
+			.last()
+			.within(() => {
+				cy.getByAriaLabel(blockType).click({ force: true });
+			});
 	});
 }
 
