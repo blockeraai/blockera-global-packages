@@ -354,6 +354,9 @@ export function getActiveMasterState(
 /**
  * Get inner block state with client identifier and block type params.
  *
+ * Falls back to the store-wide `currentInnerBlockState` when this client has
+ * no per-inner-block active state (GS panel uses a synthetic clientId).
+ *
  * @param {Object} blockExtensions the block extension details.
  * @param {string} clientId the block client identifier.
  * @param {InnerBlockType} blockType the one of available inner block types.
@@ -364,9 +367,11 @@ export function getActiveInnerState(
 	clientId: string,
 	blockType: InnerBlockType
 ): TStates {
-	return blockExtensions[clientId]
-		? blockExtensions[clientId][blockType + '-active-state'] || 'normal'
-		: 'normal';
+	return (
+		blockExtensions[clientId]?.[blockType + '-active-state'] ||
+		blockExtensions?.currentInnerBlockState ||
+		'normal'
+	);
 }
 
 /**
