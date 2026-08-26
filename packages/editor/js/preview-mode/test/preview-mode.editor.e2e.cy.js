@@ -13,6 +13,8 @@
  *   `window.open` (stubbed).
  * - **Scrollbar**: Overlay is the scrollport for tall fixture content at 100% and at 50% zoom;
  *   preview iframe is grown (`scrolling="no"`), not the inner scrollport.
+ * - **Click navigation**: Paragraph links, linked images, buttons, and featured-image permalinks
+ *   must not navigate or reload the preview iframe.
  *
  * Selectors: `test-id` values from `packages/editor/js/preview-mode/constants/testIds.ts`
  * (Cypress: `cy.getByTestId`, `cy.previewStubWindowOpen`, `cy.previewClickToggle`,
@@ -23,6 +25,7 @@
 import { appendBlocks, createPost } from '@blockera/dev-cypress/js/helpers';
 import { PREVIEW_MODE_TEST_ID } from 'blockera-editor-preview-test-ids';
 import { loadE2ETallScrollBlocks } from '../../test/fixtures/e2e-tall-scroll-content';
+import { loadE2EPreviewNavBlocks } from '../../test/fixtures/e2e-preview-nav-content';
 
 describe('Blockera preview mode', () => {
 	/**
@@ -291,5 +294,74 @@ describe('Blockera preview mode', () => {
 		}).should('have.class', 'is-zoomed-out');
 
 		assertPreviewOverlayScrollport();
+	});
+
+	const getPreviewIframeBody = () =>
+		cy
+			.getByTestId(PREVIEW_MODE_TEST_ID.iframe, { timeout: 30000 })
+			.should(($iframe) => {
+				const body = $iframe[0].contentDocument?.body;
+				expect(body, 'preview iframe body').to.exist;
+				expect(body.childElementCount, 'preview iframe body children').to.be
+					.greaterThan(0);
+			})
+			.then(($iframe) => cy.wrap($iframe[0].contentDocument.body));
+
+	const assertPreviewIframeDidNotNavigate = (hrefBefore) => {
+		cy.getByTestId(PREVIEW_MODE_TEST_ID.iframe).should(($iframe) => {
+			const href = $iframe[0].contentWindow?.location?.href || '';
+			expect(href, 'preview iframe location').to.equal(hrefBefore);
+			expect(href).to.include('blockera-hide-admin-bar');
+			expect(href).to.not.include('example.com');
+		});
+		cy.previewExpectOverlayOpen();
+	};
+
+	it('should not navigate the preview iframe when clicking links, images, buttons, or featured image', () => {
+		loadE2EPreviewNavBlocks().then((blocks) => {
+			appendBlocks(blocks);
+		});
+
+		cy.getIframeBody()
+			.find('.blockera-e2e-preview-nav-fixture', {
+				timeout: 30000,
+			})
+			.should('exist');
+
+		cy.previewClickToggle();
+		cy.previewExpectOverlayOpen();
+
+		cy.getByTestId(PREVIEW_MODE_TEST_ID.iframe, { timeout: 30000 }).should(
+			'have.class',
+			'blockera-preview-overlay__iframe--loaded'
+		);
+
+		getPreviewIframeBody()
+			.find('.blockera-e2e-preview-paragraph-link', { timeout: 30000 })
+			.should('be.visible');
+		getPreviewIframeBody()
+			.find('.blockera-e2e-preview-linked-image a img')
+			.should('be.visible');
+		getPreviewIframeBody()
+			.find('.blockera-e2e-preview-button-link')
+			.should('be.visible');
+		getPreviewIframeBody()
+			.find('.blockera-e2e-preview-featured-image a')
+			.should('be.visible');
+
+		cy.getByTestId(PREVIEW_MODE_TEST_ID.iframe).then(($iframe) => {
+			const hrefBefore = $iframe[0].contentWindow.location.href;
+			expect(hrefBefore).to.include('blockera-hide-admin-bar');
+
+			const clickInPreview = (selector) => {
+				getPreviewIframeBody().find(selector).click({ force: true });
+				assertPreviewIframeDidNotNavigate(hrefBefore);
+			};
+
+			clickInPreview('.blockera-e2e-preview-paragraph-link');
+			clickInPreview('.blockera-e2e-preview-linked-image a img');
+			clickInPreview('.blockera-e2e-preview-button-link');
+			clickInPreview('.blockera-e2e-preview-featured-image a');
+		});
 	});
 });

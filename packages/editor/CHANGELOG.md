@@ -34,6 +34,7 @@
 - Cursor feature: Fix pointer option icon and improve auto icon.
 
 ### Automated Tests
+- Preview mode: e2e coverage that clicking paragraph links, linked images, buttons, and featured-image permalinks does not navigate the preview iframe.
 - Automated test to check `font color` WP data compatibility if variables not found. 
 - Automated test to check `background color` WP data compatibility if variables not found. 
 - Automated test to check `background image` WP data compatibility if variables not found. 
