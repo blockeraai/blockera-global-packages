@@ -33,8 +33,6 @@ import {
  */
 import { Button } from '../button';
 import { Tooltip } from '../tooltip';
-import { FeatureWrapper } from '../feature-wrapper';
-import ConditionalWrapper from '../conditional-wrapper';
 
 /**
  * Whether the current icon value represents a custom SVG (not a library icon).
@@ -734,98 +732,78 @@ export function buildRecentIconElements({
 				continue;
 			}
 
-			const iconType = applyFilters(
-				'blockera.controls.iconControl.utils.getLibraryIcons.type',
-				NativeIconLibrariesList.includes(entry.library)
-					? 'native'
-					: 'none',
-				entry.library
-			);
-
 			elements.push(
-				<ConditionalWrapper
+				<span
 					key={entry.id}
-					condition={iconType === 'native'}
-					wrapper={(children: any) => (
-						<FeatureWrapper
-							className={controlInnerClassNames('icon-wrapper')}
-							type={iconType}
-						>
-							{children}
-						</FeatureWrapper>
+					className={controlInnerClassNames(
+						'icon-control-icon',
+						'recent-icon-item',
+						'library-' + icon.library,
+						'icon-' + icon.iconName
 					)}
+					aria-label={sprintf(
+						// translators: %s is icon ID in icon libraries for example arrow-left
+						__('%s Icon', 'blockera'),
+						icon.iconName
+					)}
+					onClick={(event) =>
+						onSelect(event, {
+							type: 'UPDATE_ICON',
+							icon: icon.iconName,
+							library: icon.library,
+						})
+					}
+					onDoubleClick={(event) =>
+						onDoubleSelect(event, {
+							type: 'UPDATE_ICON',
+							icon: icon.iconName,
+							library: icon.library,
+						})
+					}
 				>
-					<span
+					<Button
 						className={controlInnerClassNames(
-							'icon-control-icon',
-							'recent-icon-item',
-							'library-' + icon.library,
-							'icon-' + icon.iconName
+							'recent-icon-remove'
 						)}
-						aria-label={sprintf(
-							// translators: %s is icon ID in icon libraries for example arrow-left
-							__('%s Icon', 'blockera'),
-							icon.iconName
-						)}
-						onClick={(event) =>
-							onSelect(event, {
-								type: 'UPDATE_ICON',
-								icon: icon.iconName,
-								library: icon.library,
-							})
+						label={__('Remove from recently used', 'blockera')}
+						noBorder={true}
+						icon={
+							<Icon icon="close" library="ui" iconSize={12} />
 						}
-						onDoubleClick={(event) =>
-							onDoubleSelect(event, {
-								type: 'UPDATE_ICON',
-								icon: icon.iconName,
-								library: icon.library,
-							})
-						}
-					>
-						<Button
-							className={controlInnerClassNames(
-								'recent-icon-remove'
-							)}
-							label={__('Remove from recently used', 'blockera')}
-							noBorder={true}
-							icon={
-								<Icon icon="close" library="ui" iconSize={12} />
-							}
-							onClick={(event) => {
-								event.stopPropagation();
-								onRemove(entry.id);
-							}}
-							showTooltip={true}
-						/>
+						onClick={(event) => {
+							event.stopPropagation();
+							onRemove(entry.id);
+						}}
+						showTooltip={true}
+					/>
 
-						<Tooltip
-							text={buildIconLibraryTooltipContent(
-								icon.iconName,
-								icon.library
-							)}
-							width="220px"
-						>
-							<Icon
-								library={icon.library}
-								icon={icon}
-								iconSize={
-									[
-										'faregular',
-										'fasolid',
-										'fabrands',
-										'feather',
-										'lucide',
-										'untitledui',
-										'tabler',
-										'tabler-filled',
-									].includes(icon.library)
-										? 18
-										: 24
-								}
-							/>
-						</Tooltip>
-					</span>
-				</ConditionalWrapper>
+					<Tooltip
+						text={buildIconLibraryTooltipContent(
+							icon.iconName,
+							icon.library
+						)}
+						width="220px"
+					>
+						<Icon
+							library={icon.library}
+							icon={icon}
+							iconSize={
+								[
+									'faregular',
+									'fasolid',
+									'fabrands',
+									'feather',
+									'lucide',
+									'untitledui',
+									'tabler',
+									'tabler-filled',
+								].includes(icon.library)
+									? 18
+									: 24
+							}
+						/>
+					</Tooltip>
+				</span>
 			);
 
 			continue;
