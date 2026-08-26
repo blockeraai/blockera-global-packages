@@ -36,6 +36,9 @@ class PreviewButton {
 
 		// Add inline CSS to ensure admin bar is hidden.
 		add_action( 'wp_head', array( $this, 'hide_admin_bar_styles' ), 100 );
+
+		// Report document height to the parent preview overlay (wrapper scrollport).
+		add_action( 'wp_footer', array( $this, 'print_height_reporter' ), 1 );
 	}
 
 	/**
@@ -101,6 +104,60 @@ class PreviewButton {
 				padding-top: 0 !important;
 			}
 		</style>
+		<?php
+	}
+
+	/**
+	 * Post document height to the parent preview overlay so the iframe can grow
+	 * and the overlay wrapper becomes the only scrollport.
+	 */
+	public function print_height_reporter() {
+		if ( ! $this->is_preview_iframe_request() ) {
+			return;
+		}
+
+		?>
+		<script id="blockera-preview-height-reporter">
+		(function () {
+			if (!window.parent || window.parent === window) {
+				return;
+			}
+			var t = null;
+			function send() {
+				if (t) {
+					clearTimeout(t);
+				}
+				t = setTimeout(function () {
+					var body = document.body;
+					var root = document.documentElement;
+					var height = 0;
+					if (body) {
+						height = Math.max(body.scrollHeight || 0, body.offsetHeight || 0);
+					}
+					if (root) {
+						height = Math.max(
+							height,
+							root.scrollHeight || 0,
+							root.offsetHeight || 0
+						);
+					}
+					if (height > 0) {
+						window.parent.postMessage({ type: 'IFRAME_HEIGHT', height: height }, '*');
+					}
+				}, 50);
+			}
+			if (window.ResizeObserver && document.body) {
+				new ResizeObserver(send).observe(document.body);
+			}
+			window.addEventListener('load', send);
+			window.addEventListener('resize', send);
+			if (document.readyState === 'complete') {
+				send();
+			} else {
+				document.addEventListener('DOMContentLoaded', send);
+			}
+		})();
+		</script>
 		<?php
 	}
 }
