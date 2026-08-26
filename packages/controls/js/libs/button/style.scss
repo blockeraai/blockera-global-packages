@@ -250,6 +250,9 @@
 
 		&.is-focus:not(.no-border, .is-busy) {
 			background: var(--blockera-controls-background-color);
+			box-shadow:
+				0 0 0 1px var(--blockera-controls-background-color),
+				0 0 0 2.5px var(--blockera-controls-primary-color) !important;
 		}
 
 		&.is-focus:not(:disabled, .is-busy),
