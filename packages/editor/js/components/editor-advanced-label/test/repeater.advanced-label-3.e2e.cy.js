@@ -14,10 +14,29 @@ describe('Repeater Control label testing (Image & Gradient)', () => {
 		cy.getByAriaControls('styles-view').click();
 	});
 
+	const getBackgroundPopover = () =>
+		cy.get('.blockera-component-popover').filter(':visible').last();
+
+	const getBackgroundPopoverLabel = (ariaLabel) =>
+		getBackgroundPopover().find(
+			`[data-cy="label-control"][aria-label="${ariaLabel}"]`
+		);
+
 	const openBackgroundItem = (index = 0) => {
 		cy.getParentContainer('Image & Gradient').within(() => {
 			cy.getByDataCy('group-control-header').eq(index).click();
 		});
+	};
+
+	const ensureBackgroundPopover = (index = 0) => {
+		cy.get('body').then(($body) => {
+			if ($body.find('.blockera-component-popover:visible').length) {
+				return;
+			}
+
+			openBackgroundItem(index);
+		});
+		getBackgroundPopover().should('be.visible');
 	};
 
 	it('should display changed value on Image & Gradient -> Normal -> Desktop', () => {
@@ -334,75 +353,88 @@ describe('Repeater Control label testing (Image & Gradient)', () => {
 
 	it('repeater nested items test...', () => {
 		cy.getByAriaLabel('Add New Background').click();
+		getBackgroundPopover().should('be.visible');
+		cy.getByAriaLabel('Linear Gradient').click();
 
-		cy.getByDataTest('popover-body').within(() => {
-			cy.getByAriaLabel('Linear Gradient').click();
-
-			// Alias
-			cy.getByAriaLabel('Type').as('type');
-			cy.getByAriaLabel('Angle').as('angle');
-			cy.getByAriaLabel('Scroll Attachment').as('effect');
-
-			// Assert label in normal state
-			cy.get('@type').should('have.class', 'changed-in-normal-state');
-		});
+		getBackgroundPopoverLabel('Type').should(
+			'have.class',
+			'changed-in-normal-state'
+		);
 
 		setBlockState('Hover');
-		openBackgroundItem();
+		ensureBackgroundPopover();
 
-		// Assert Type label
-		cy.get('@type').should('have.class', 'changed-in-normal-state');
+		getBackgroundPopoverLabel('Type').should(
+			'have.class',
+			'changed-in-normal-state'
+		);
 
-		// Assert angle label before set value
-		cy.get('@angle').should('not.have.class', 'changed-in-normal-state');
+		getBackgroundPopoverLabel('Angle').should(
+			'not.have.class',
+			'changed-in-normal-state'
+		);
 
-		// Set value
 		cy.getByAriaLabel('Rotate Anti-clockwise').click();
 
-		// Assert Angle label
-		cy.get('@angle').should('have.class', 'changed-in-secondary-state');
+		getBackgroundPopoverLabel('Angle').should(
+			'have.class',
+			'changed-in-secondary-state'
+		);
 
-		// Assert effect label before set value
-		cy.get('@effect').should('not.have.class', 'changed-in-normal-state');
+		getBackgroundPopoverLabel('Scroll Attachment').should(
+			'not.have.class',
+			'changed-in-normal-state'
+		);
 
-		// Set value
 		cy.getByAriaLabel('Parallax').click();
 
-		// Assert effect label
-		cy.get('@effect').should('have.class', 'changed-in-secondary-state');
+		getBackgroundPopoverLabel('Scroll Attachment').should(
+			'have.class',
+			'changed-in-secondary-state'
+		);
 
 		setBlockState('Normal');
-		openBackgroundItem();
+		ensureBackgroundPopover();
 
-		// Assert Type label
-		cy.get('@type').should('have.class', 'changed-in-normal-state');
+		getBackgroundPopoverLabel('Type').should(
+			'have.class',
+			'changed-in-normal-state'
+		);
 
-		// Assert angle label
-		cy.get('@angle').should('have.class', 'changed-in-other-state');
+		getBackgroundPopoverLabel('Angle').should(
+			'have.class',
+			'changed-in-other-state'
+		);
 
-		// Assert Effect label
-		cy.get('@effect').should('have.class', 'changed-in-other-state');
+		getBackgroundPopoverLabel('Scroll Attachment').should(
+			'have.class',
+			'changed-in-other-state'
+		);
 
-		// Set effect
 		cy.getByAriaLabel('Parallax').click();
 
-		// Assert Effect label
-		cy.get('@effect').should('have.class', 'changed-in-normal-state');
+		getBackgroundPopoverLabel('Scroll Attachment').should(
+			'have.class',
+			'changed-in-normal-state'
+		);
 
 		/**
 		 * Hover / Tablet
 		 */
 		setDeviceType('Tablet');
-		openBackgroundItem();
+		ensureBackgroundPopover();
 
-		// Assert Type label
-		cy.get('@type').should('have.class', 'changed-in-normal-state');
+		getBackgroundPopoverLabel('Type').should(
+			'have.class',
+			'changed-in-normal-state'
+		);
 
-		// Assert angle label
-		cy.get('@angle').should('have.class', 'changed-in-other-state');
+		getBackgroundPopoverLabel('Angle').should(
+			'have.class',
+			'changed-in-other-state'
+		);
 
-		// Assert Effect label
-		cy.getByAriaLabel('Scroll Attachment').should(
+		getBackgroundPopoverLabel('Scroll Attachment').should(
 			'have.class',
 			'changed-in-normal-state'
 		);
@@ -411,16 +443,17 @@ describe('Repeater Control label testing (Image & Gradient)', () => {
 		 * Normal/Tablet
 		 */
 		setBlockState('Normal');
-		openBackgroundItem();
+		ensureBackgroundPopover();
 
-		// Assert Effect label
-		cy.getByAriaLabel('Scroll Attachment').should(
+		getBackgroundPopoverLabel('Scroll Attachment').should(
 			'have.class',
 			'changed-in-normal-state'
 		);
 
-		// Assert angle label
-		cy.get('@angle').should('have.class', 'changed-in-other-state');
+		getBackgroundPopoverLabel('Angle').should(
+			'have.class',
+			'changed-in-other-state'
+		);
 	});
 
 	describe('reset action testing...', () => {
