@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Resolve source/target/mode for a global-packages pin sync. Writes to GITHUB_OUTPUT.
 #
+# Auto mode:
+#   master/main → mode=pr
+#   feature branch → skip_sync (local `npm run submodule:bump` only)
+# Explicit workflow_dispatch mode=push or mode=pr still runs.
+#
 # Expected env (from the workflow):
 #   EVENT_NAME, DISPATCH_SHA, DISPATCH_BRANCH, DISPATCH_MESSAGE
 #   INPUT_SOURCE_REF, INPUT_TARGET_BRANCH, INPUT_MODE
@@ -61,7 +66,9 @@ if [[ "${MODE}" == "auto" ]]; then
 	if [[ "${TARGET_BRANCH}" == "master" || "${TARGET_BRANCH}" == "main" ]]; then
 		MODE="pr"
 	else
-		MODE="push"
+		# Feature-branch pins are created locally (`npm run submodule:bump`), not auto-pushed.
+		SKIP_SYNC="true"
+		MODE="skip"
 	fi
 fi
 
