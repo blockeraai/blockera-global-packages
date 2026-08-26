@@ -13,7 +13,10 @@ const {
 	parseVersionSections,
 	extractChangedSections,
 	prependRootChangelog,
+	listConsumerChangelogFiles,
+	accumulateProductChangelogs,
 } = require('../accumulate-changelogs');
+const { setPluginConfig } = require('../../config-store');
 const {
 	unreleasedBodyHasEntries,
 	foldUnreleasedContent,
@@ -281,9 +284,6 @@ ${oldContent}`
 			process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS =
 				'packages/**/CHANGELOG.md';
 			try {
-				const {
-					listConsumerChangelogFiles,
-				} = require('../accumulate-changelogs');
 				const files = await listConsumerChangelogFiles(dir);
 				expect(files).toHaveLength(1);
 				expect(files[0]).toContain('theme-pkg');
@@ -293,6 +293,131 @@ ${oldContent}`
 				} else {
 					process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS = previous;
 				}
+				fs.rmSync(dir, { recursive: true, force: true });
+			}
+		});
+
+		it('returns no files for a global-packages-only tree with the default glob', async () => {
+			const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'changelogs-'));
+			fs.mkdirSync(
+				path.join(dir, 'packages', 'global-packages', 'packages', 'gp'),
+				{ recursive: true }
+			);
+			fs.writeFileSync(
+				path.join(
+					dir,
+					'packages',
+					'global-packages',
+					'packages',
+					'gp',
+					'CHANGELOG.md'
+				),
+				'## Unreleased\n'
+			);
+
+			const previous = process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS;
+			delete process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS;
+			try {
+				const files = await listConsumerChangelogFiles(dir);
+				expect(files).toHaveLength(0);
+			} finally {
+				if (previous === undefined) {
+					delete process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS;
+				} else {
+					process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS = previous;
+				}
+				fs.rmSync(dir, { recursive: true, force: true });
+			}
+		});
+	});
+
+	describe('accumulateProductChangelogs', () => {
+		function restoreEnv(key, previous) {
+			if (previous === undefined) {
+				delete process.env[key];
+			} else {
+				process.env[key] = previous;
+			}
+		}
+
+		it('accumulates GP-only products when no consumer CHANGELOG.md files exist', async () => {
+			const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'changelogs-'));
+			fs.mkdirSync(
+				path.join(dir, 'packages', 'global-packages', 'packages', 'gp'),
+				{ recursive: true }
+			);
+			fs.writeFileSync(
+				path.join(
+					dir,
+					'packages',
+					'global-packages',
+					'packages',
+					'gp',
+					'CHANGELOG.md'
+				),
+				'## Unreleased\n'
+			);
+
+			const previousGlobs = process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS;
+			const previousFold = process.env.BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP;
+			delete process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS;
+			process.env.BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP = '0';
+			setPluginConfig({
+				name: 'Blockera',
+				changelog: {
+					archiveUrl: 'https://example.com/releases',
+					includeCommitCount: false,
+				},
+			});
+
+			try {
+				await accumulateProductChangelogs({
+					cwd: dir,
+					version: '1.12.3-rc.1',
+					publishDate: '2026-08-26',
+				});
+				expect(console).toHaveLogged();
+				expect(
+					fs.existsSync(path.join(dir, 'CHANGELOG.md'))
+				).toBe(true);
+				expect(
+					fs.existsSync(path.join(dir, 'changelog.txt'))
+				).toBe(true);
+			} finally {
+				restoreEnv('BLOCKERA_CHANGELOG_CONSUMER_GLOBS', previousGlobs);
+				restoreEnv(
+					'BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP',
+					previousFold
+				);
+				fs.rmSync(dir, { recursive: true, force: true });
+			}
+		});
+
+		it('throws when BLOCKERA_CHANGELOG_CONSUMER_GLOBS is set and matches nothing', async () => {
+			const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'changelogs-'));
+			const previousGlobs = process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS;
+			const previousFold = process.env.BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP;
+			process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS =
+				'packages/missing/CHANGELOG.md';
+			process.env.BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP = '0';
+
+			try {
+				await expect(
+					accumulateProductChangelogs({
+						cwd: dir,
+						version: '1.12.3-rc.1',
+						publishDate: '2026-08-26',
+					})
+				).rejects.toThrow(
+					'no consumer package CHANGELOG.md files matched BLOCKERA_CHANGELOG_CONSUMER_GLOBS'
+				);
+				expect(console).toHaveLogged();
+			} finally {
+				restoreEnv('BLOCKERA_CHANGELOG_CONSUMER_GLOBS', previousGlobs);
+				restoreEnv(
+					'BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP',
+					previousFold
+				);
 				fs.rmSync(dir, { recursive: true, force: true });
 			}
 		});
