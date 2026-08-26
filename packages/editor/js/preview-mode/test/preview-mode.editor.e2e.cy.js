@@ -11,6 +11,8 @@
  * - **Keyboard**: Primary+P toggles overlay (matches registered shortcut).
  * - **New tab**: Primary+Shift+P, Cmd/Ctrl+click on toggle, and overlay “open in new tab” call
  *   `window.open` (stubbed).
+ * - **Scrollbar**: Overlay is the scrollport for tall fixture content at 100% and at 50% zoom;
+ *   preview iframe is grown (`scrolling="no"`), not the inner scrollport.
  *
  * Selectors: `test-id` values from `packages/editor/js/preview-mode/constants/testIds.ts`
  * (Cypress: `cy.getByTestId`, `cy.previewStubWindowOpen`, `cy.previewClickToggle`,
@@ -18,8 +20,9 @@
  *
  * Blockera dependencies
  */
-import { createPost } from '@blockera/dev-cypress/js/helpers';
+import { appendBlocks, createPost } from '@blockera/dev-cypress/js/helpers';
 import { PREVIEW_MODE_TEST_ID } from 'blockera-editor-preview-test-ids';
+import { loadE2ETallScrollBlocks } from '../../test/fixtures/e2e-tall-scroll-content';
 
 describe('Blockera preview mode', () => {
 	/**
@@ -206,5 +209,87 @@ describe('Blockera preview mode', () => {
 						expect(bpWidth).to.be.at.most(desktopWidth);
 					});
 			});
+	});
+
+	const assertPreviewOverlayScrollport = () => {
+		cy.getByTestId(PREVIEW_MODE_TEST_ID.overlay, { timeout: 30000 }).should(
+			($overlay) => {
+				const overlay = $overlay[0];
+				expect(
+					overlay.scrollHeight,
+					'preview overlay scrollHeight'
+				).to.be.greaterThan(overlay.clientHeight + 100);
+
+				overlay.scrollTop = 400;
+				expect(
+					overlay.scrollTop,
+					'preview overlay scrollTop'
+				).to.be.greaterThan(0);
+			}
+		);
+
+		cy.getByTestId(PREVIEW_MODE_TEST_ID.iframe, { timeout: 30000 }).should(
+			($iframe) => {
+				const iframe = $iframe[0];
+				expect(iframe.getAttribute('scrolling'), 'iframe scrolling').to.equal(
+					'no'
+				);
+
+				const overlay = Cypress.$(
+					`[test-id="${PREVIEW_MODE_TEST_ID.overlay}"]`
+				)[0];
+				expect(overlay, 'preview overlay element').to.exist;
+
+				const iframeHeight =
+					parseFloat(iframe.style.height) ||
+					iframe.getBoundingClientRect().height;
+
+				expect(
+					iframeHeight,
+					'preview iframe grown past overlay viewport'
+				).to.be.greaterThan(overlay.clientHeight);
+			}
+		);
+	};
+
+	it('should scroll the preview overlay over tall fixture content', () => {
+		loadE2ETallScrollBlocks().then((blocks) => {
+			appendBlocks(blocks);
+		});
+
+		cy.getIframeBody()
+			.find('[data-test="blockera-e2e-tall-scroll-fixture"]', {
+				timeout: 30000,
+			})
+			.should('exist');
+
+		cy.previewClickToggle();
+		cy.previewExpectOverlayOpen();
+		assertPreviewOverlayScrollport();
+	});
+
+	it('should scroll the preview overlay when zoomed out over tall fixture content', () => {
+		loadE2ETallScrollBlocks().then((blocks) => {
+			appendBlocks(blocks);
+		});
+
+		cy.getIframeBody()
+			.find('[data-test="blockera-e2e-tall-scroll-fixture"]', {
+				timeout: 30000,
+			})
+			.should('exist');
+
+		cy.zoomOpenDropdown();
+		cy.getByDataTest('blockera-zoom-menu-zoom-to-50').click();
+		cy.getByDataTest('blockera-zoom-control').should('contain', '50%');
+
+		cy.previewClickToggle();
+		cy.previewExpectOverlayOpen();
+
+		cy.get('.blockera-preview-overlay__iframe-container', {
+			timeout: 30000,
+		}).should('have.class', 'is-zoomed-out');
+
+		assertPreviewOverlayScrollport();
 	});
 });
