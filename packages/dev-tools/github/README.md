@@ -265,9 +265,11 @@ only packages that changed since the previous merge (`--semver`, `--from`,
 3. Product zip diffs each GP `CHANGELOG.md` between the previous and new
    gitlink. It takes ### bodies from the **previous pin’s top version
    heading (exclusive)** through the **current pin’s newest heading**.
-   Consumer `packages/*/CHANGELOG.md` still contribute Unreleased diffs.
-   The zip **fails** if a pinned GP file still has Unreleased *bullets*
-   (missing Unreleased is OK).
+   Consumer `packages/*/CHANGELOG.md` still contribute Unreleased diffs when
+   present. Products with only global-packages may have none; the zip then
+   writes GP notes only. The zip **fails** if `BLOCKERA_CHANGELOG_CONSUMER_GLOBS`
+   is set and matches no files, or if a pinned GP file still has Unreleased
+   *bullets* (missing Unreleased is OK).
 4. Zip writes product root `CHANGELOG.md` / `changelog.txt` and folds
    **consumer** Unreleased into `## [product-version] - date`.
 
@@ -291,7 +293,7 @@ env:
 | `BLOCKERA_CHANGELOG_GP_FROM` / `BLOCKERA_CHANGELOG_GP_TO` | gitlink at last release ref … `HEAD` |
 | `BLOCKERA_CHANGELOG_FROM_REF` / `BLOCKERA_CHANGELOG_TO_REF` | last `origin/release/*` or `v$OLD_VERSION` … `HEAD` |
 | `BLOCKERA_CHANGELOG_PREVIOUS_VERSION` | set from `OLD_VERSION` in the zip job |
-| `BLOCKERA_CHANGELOG_CONSUMER_GLOBS` | `packages/*/CHANGELOG.md` (required) |
+| `BLOCKERA_CHANGELOG_CONSUMER_GLOBS` | `packages/*/CHANGELOG.md` (optional; required only when set) |
 | `BLOCKERA_CHANGELOG_ROOT_MD` | `CHANGELOG.md` |
 | `BLOCKERA_CHANGELOG_FILE` | `changelog.txt` |
 | `BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP` | `1` |

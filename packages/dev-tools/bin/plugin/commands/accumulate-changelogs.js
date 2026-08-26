@@ -10,6 +10,7 @@
  *   BLOCKERA_CHANGELOG_TO_REF               parent git ref (default: HEAD)
  *   BLOCKERA_CHANGELOG_PREVIOUS_VERSION     last product version (tag vX / X); zip job sets from OLD_VERSION
  *   BLOCKERA_CHANGELOG_CONSUMER_GLOBS       default: packages/<pkg>/CHANGELOG.md
+ *                                           (optional; GP-only products may match none)
  *   BLOCKERA_CHANGELOG_ROOT_MD              default: root CHANGELOG markdown
  *   BLOCKERA_CHANGELOG_FILE                 default: changelog.txt
  *   BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP    default: 1 (fail if GP Unreleased still has bullets)
@@ -243,9 +244,19 @@ async function accumulateProductChangelogs(options) {
 	}
 
 	const consumerFiles = await listConsumerChangelogFiles(cwd);
-	if (!consumerFiles.length) {
+	const explicitConsumerGlobs = String(
+		process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS || ''
+	).trim();
+
+	if (!consumerFiles.length && explicitConsumerGlobs) {
 		throw new Error(
 			'accumulate-changelogs: no consumer package CHANGELOG.md files matched BLOCKERA_CHANGELOG_CONSUMER_GLOBS'
+		);
+	}
+
+	if (!consumerFiles.length) {
+		log(
+			'>> No consumer package CHANGELOG.md files; accumulating global-packages notes only'
 		);
 	}
 
