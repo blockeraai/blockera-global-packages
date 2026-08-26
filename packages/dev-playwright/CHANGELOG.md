@@ -1,5 +1,3 @@
-## Unreleased
-
 ## 1.0.0 (2025-01-XX)
 
 ### Added
@@ -7,4 +5,3 @@
 - Test fixtures for WordPress editor
 - Helper utilities for common editor operations
 - Global setup configuration for WordPress authentication
-

@@ -1,4 +1,4 @@
-## Unreleased
+## [1.2.0] - 2026-08-26
 
 ### New Features
 - Added support for icons in blocks, allowing users to easily add and customize icons in their content.
@@ -73,4 +73,3 @@
 ### Automated Tests
 
 - Added new test suites to fully test the new helper functions in the `blockera/wordpress` package.
- 

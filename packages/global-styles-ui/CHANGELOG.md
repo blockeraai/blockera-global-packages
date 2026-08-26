@@ -1,4 +1,4 @@
-## Unreleased
+## [1.1.0] - 2026-08-26
 
 ### New Features
 - Added `@blockera/global-styles-ui`, a dedicated package for managing theme.json preset variables in the WordPress Site Editor global styles sidebar.

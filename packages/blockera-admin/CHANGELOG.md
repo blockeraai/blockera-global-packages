@@ -1,5 +1,3 @@
-## Unreleased
-
 ## 1.3.0 (2025-07-16)
 
 ### New Features
@@ -20,10 +18,8 @@
 ### Improvements
 - Blockera admin pages design improvement.
 
-
 ### Bug Fixes
 - Fix design issue on Blockera admin pages.
-
 
 ## 1.1.1 (2025-03-29)
 
@@ -51,7 +47,6 @@
 - Fixed an issue where the "Upgrade to Pro" menu did not open in a new tab.
 - Fixed the "Upgrade to Pro" menu item was not styled correctly in translated languages.
 
-
 ## 1.0.1 (2025-01-22)
 
 ### Bugs
@@ -59,4 +54,3 @@
 - Fixed Pro submenu items were not linked and styled correctly.
 
 ## 1.0.0 (2024-12-08)
-

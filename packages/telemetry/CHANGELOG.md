@@ -1,5 +1,3 @@
-## Unreleased
-
 ## 1.0.2 (2025-04-22)
 
 ### Automated maintenance

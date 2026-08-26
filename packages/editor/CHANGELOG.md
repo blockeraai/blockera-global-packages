@@ -1,4 +1,4 @@
-## Unreleased
+## [2.1.0] - 2026-08-26
 
 ### New Features
 - Added Grid Settings: The grid columns count and columns min width setting while support in breakpoints. 
@@ -123,7 +123,6 @@
 
 ### Automated Tests
 - Added E2E tests to check `Flex` display on `Columns` block.
-
 
 ## 1.7.1 (2025-05-25)
 

@@ -1,4 +1,4 @@
-## Unreleased
+## [1.1.0] - 2026-08-26
 
 ### New Features
 - Added a new feature to better organize and simplify how website assets (like styles and scripts) are loaded

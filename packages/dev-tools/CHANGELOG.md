@@ -1,4 +1,4 @@
-## Unreleased
+## [2.0.0] - 2026-08-26
 
 - GitHub workflows: rename `build-plugin-zip.yml` to `release-plugin.yml` (title: Release Blockera Plugin) and `build-plugin-zip-tests.yml` to `release-plugin-tests.yml`.
 - Master changelog workflow: run on merge to master (major by default), fold `## Unreleased` into a dated version heading and drop the inbox, bump only packages that changed since the previous merge, and synthesize notes when CHANGELOG.md was not edited.
@@ -12,6 +12,5 @@
 - PR workflow gate: keep action in dev-tools submodule; gate jobs require BLOCKERA_GLOBAL_PACKAGES_TOKEN.
 - setup-php: strip wp-cli with composer remove --no-update and fix jq lock pruning.
 - Bundle size: truncate oversized PR comments to GitHub's 65536-character limit instead of dropping files from the report.
-
 
 ## 1.0.0 (2024-12-08)
