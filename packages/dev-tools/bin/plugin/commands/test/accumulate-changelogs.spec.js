@@ -95,7 +95,7 @@ ${oldContent}`
 			expect(changed).not.toContain('- Old fix');
 		});
 
-		it('includes a version section whose body changed', () => {
+		it('stops at the previous pin top heading (exclusive)', () => {
 			const changed = extractChangedSections(
 				oldContent,
 				`## [1.1.0] - 2024-12-01
@@ -106,7 +106,17 @@ ${oldContent}`
 `
 			);
 
-			expect(changed).toContain('- Extra bullet');
+			expect(changed).toBe('');
+		});
+
+		it('takes GP folded versions after Unreleased is dropped', () => {
+			const changed = extractChangedSections(
+				'## Unreleased\n\n### Added\n- Pending\n\n## [1.0.0] - 2024-01-01\n\n### Fixed\n- Old\n',
+				'## [2.0.0] - 2026-08-26\n\n### Added\n- Pending\n\n## [1.0.0] - 2024-01-01\n\n### Fixed\n- Old\n'
+			);
+
+			expect(changed).toContain('- Pending');
+			expect(changed).not.toContain('- Old');
 		});
 
 		it('includes new Unreleased bullets only', () => {
@@ -135,9 +145,7 @@ ${oldContent}`
 			expect(folded.content).toMatch(
 				/## Unreleased\s+## \[2026-08-25\]/s
 			);
-			expect(() =>
-				assertUnreleasedEmpty(folded.content)
-			).not.toThrow();
+			expect(() => assertUnreleasedEmpty(folded.content)).not.toThrow();
 		});
 
 		it('disambiguates same-day cuts with a suffix', () => {
@@ -166,6 +174,29 @@ ${oldContent}`
 				date: '2026-08-25',
 			});
 			expect(folded.folded).toBe(false);
+		});
+
+		it('drops the Unreleased heading after folding when requested', () => {
+			const folded = foldUnreleasedContent(
+				'## Unreleased\n\n### Added\n- New API\n\n## [1.0.0]\n\n### Fixed\n- Old\n',
+				{ heading: '## [2.0.0] - 2026-08-26', dropUnreleased: true }
+			);
+
+			expect(folded.folded).toBe(true);
+			expect(folded.content).not.toContain('## Unreleased');
+			expect(folded.content).toContain('## [2.0.0] - 2026-08-26');
+			expect(folded.content).toContain('- New API');
+		});
+
+		it('removes an empty Unreleased heading when dropUnreleased is set', () => {
+			const folded = foldUnreleasedContent(
+				'## Unreleased\n\n## [1.0.0]\n\n### Fixed\n- Old\n',
+				{ dropUnreleased: true }
+			);
+
+			expect(folded.folded).toBe(true);
+			expect(folded.content).not.toContain('## Unreleased');
+			expect(folded.content).toContain('## [1.0.0]');
 		});
 	});
 

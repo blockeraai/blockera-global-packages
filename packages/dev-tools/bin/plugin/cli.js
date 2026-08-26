@@ -56,6 +56,29 @@ function createPluginCli(configInput, options = {}) {
 		);
 
 	program
+		.command('update-master-package-changelogs')
+		.option(
+			'--semver <semver>',
+			'Minimum package version bump (major|minor|patch). Default: major'
+		)
+		.option(
+			'--from <sha>',
+			'Git range start (defaults to previous master merge)'
+		)
+		.option('--to <sha>', 'Git range end (defaults to HEAD merge)')
+		.description(
+			'GP master only: fold package CHANGELOG.md notes and bump versions for packages that changed between merge commits.'
+		)
+		.action(
+			catchException(async (...args) => {
+				const {
+					updateMasterPackageChangelogs,
+				} = require('./commands/packages');
+				return updateMasterPackageChangelogs(...args);
+			})
+		);
+
+	program
 		.command('fold-unreleased')
 		.option('--cwd <cwd>', 'Repo root that contains packages/')
 		.option('--date <date>', 'Dated cut YYYY-MM-DD (GP default)')
@@ -69,7 +92,9 @@ function createPluginCli(configInput, options = {}) {
 		)
 		.action(
 			catchException(async (cmd) => {
-				const { foldUnreleasedTree } = require('./commands/changelog-md');
+				const {
+					foldUnreleasedTree,
+				} = require('./commands/changelog-md');
 				const result = foldUnreleasedTree(cmd.cwd || process.cwd(), {
 					date: cmd.date,
 					suffix: cmd.suffix,

@@ -1,12 +1,14 @@
 name: Update Changelogs
 
 on:
+    push:
+        branches: [master]
     workflow_dispatch:
         inputs:
             version_type:
                 description: 'Your version type?'
                 required: true
-                default: 'patch'
+                default: 'major'
                 type: 'choice'
                 options:
                     - 'major'
@@ -21,8 +23,6 @@ jobs:
     update-changelogs:
         name: Update changelogs and commit to master
         runs-on: ubuntu-latest
-        # Always target master; refuse accidental runs from non-master dispatches
-        # that would still rewrite master without an explicit checkout below.
         permissions:
             contents: write
 
@@ -35,26 +35,45 @@ jobs:
                   fetch-depth: 0
                   show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
+            - name: Continue only for merge commits or manual dispatch
+              id: gate
+              run: |
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                    echo "run=true" >> $GITHUB_OUTPUT
+                    exit 0
+                  fi
+                  if git rev-parse -q --verify HEAD^2 >/dev/null; then
+                    echo "run=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "HEAD is not a merge commit; skip follow-up changelog push."
+                    echo "run=false" >> $GITHUB_OUTPUT
+                  fi
+
             - name: Configure git user name and email
+              if: steps.gate.outputs.run == 'true'
               run: |
                   git config user.name "blockerabot"
                   git config user.email blockeraai+githubbot@gmail.com
 
             - name: Setup Node.js
+              if: steps.gate.outputs.run == 'true'
               uses: actions/setup-node@v5
               with:
                   node-version-file: '.nvmrc'
                   cache: npm
 
             - name: Install npm dependencies
+              if: steps.gate.outputs.run == 'true'
               run: npm ci
 
             - name: Compute new version
+              if: steps.gate.outputs.run == 'true'
               id: get_version
               run: |
                   OLD_VERSION=$(jq --raw-output '.version' package.json)
                   echo "old_version=${OLD_VERSION}" >> $GITHUB_OUTPUT
-                  VERSION_TYPE="${{ github.event.inputs.version_type }}"
+                  VERSION_TYPE="${{ github.event.inputs.version_type || 'major' }}"
+                  echo "version_type=${VERSION_TYPE}" >> $GITHUB_OUTPUT
                   if [[ "${VERSION_TYPE}" == "major" ]]; then
                     NEW_VERSION=$(npx semver "${OLD_VERSION}" -i major)
                   elif [[ "${VERSION_TYPE}" == "minor" ]]; then
@@ -65,23 +84,29 @@ jobs:
                   echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
                   echo "Bumping ${OLD_VERSION} -> ${NEW_VERSION} (${VERSION_TYPE})"
 
-            - name: Update the changelog of packages
+            - name: Update package changelogs
+              if: steps.gate.outputs.run == 'true'
               id: update_packages
               run: |
-                  npm run update:changelogs -- \
-                    --version="${{ steps.get_version.outputs.new_version }}" \
-                    --semver="${{ github.event.inputs.version_type }}"
+                  npm run update:master-package-changelogs -- \
+                    --semver="${{ steps.get_version.outputs.version_type }}"
 
             - name: Bump root package version
+              if: steps.gate.outputs.run == 'true'
               env:
                   VERSION: ${{ steps.get_version.outputs.new_version }}
               run: |
-                  cat <<< $(jq --tab --arg version "${VERSION}" '.version = $version' package.json) > package.json
-                  if [ -f package-lock.json ]; then
-                    cat <<< $(jq --tab --arg version "${VERSION}" '.version = $version | .packages[""].version = $version' package-lock.json) > package-lock.json
+                  if git diff --name-only | grep -E '^packages/.+/(package|composer)\.json$' >/dev/null; then
+                    cat <<< $(jq --tab --arg version "${VERSION}" '.version = $version' package.json) > package.json
+                    if [ -f package-lock.json ]; then
+                      cat <<< $(jq --tab --arg version "${VERSION}" '.version = $version | .packages[""].version = $version' package-lock.json) > package-lock.json
+                    fi
+                  else
+                    echo "No package version bumps; leave root package.json unchanged."
                   fi
 
             - name: Commit changeset to master
+              if: steps.gate.outputs.run == 'true'
               run: |
                   git add -A
                   if git diff --cached --quiet; then

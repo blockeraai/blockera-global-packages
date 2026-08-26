@@ -212,6 +212,7 @@
 		"lint:css:fix": "npm run lint:css -- --fix",
 		"lint:php": "composer run lint",
 		"update:changelogs": "node ./bin/plugin/cli.js update-packages-changelog",
+		"update:master-package-changelogs": "node ./bin/plugin/cli.js update-master-package-changelogs",
 		"other:changelog": "node ./bin/plugin/cli.js changelog",
 		"plugin-zip": "wp-scripts plugin-zip",
 		"start": "rm -rf dist && wp-scripts start --progress --mode development",
