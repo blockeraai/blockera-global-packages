@@ -1307,3 +1307,11 @@ body:not(.blockera-tabs-add-tab-mode)
 .blockera-tabs-wrapper ~ .editor-text-editor .editor-text-editor__toolbar {
 	top: var(--blockera-panel-tabs-height);
 }
+
+/**
+ * Remove padding from visual editor when tabs are visible.
+ */
+.blockera-tabs-wrapper
+	~ .editor-visual-editor.has-vertical-padding.has-horizontal-padding {
+	padding: 0 !important;
+}
