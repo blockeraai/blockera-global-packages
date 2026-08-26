@@ -6,6 +6,7 @@ const { goTo } = require('@blockera/dev-playwright/js/utils/helpers');
 const {
 	test,
 	expect,
+	applyDomSearchReplace,
 } = require('@blockera/dev-playwright/js/support/commands');
 
 test.describe('Blockera Dashboard → Visual Test', () => {
@@ -54,6 +55,19 @@ test.describe('Blockera Dashboard → Visual Test', () => {
 			width: 1600,
 			height: 1500,
 		});
+
+		await page
+			.locator('.blockera-settings-header-version')
+			.first()
+			.waitFor({ state: 'visible' });
+
+		// Keep the plugin version static so package bumps do not flake snapshots
+		await applyDomSearchReplace(body, [
+			{
+				search: '(<span class="blockera-settings-header-version">)[^<]+(</span>)',
+				replace: '$1vX.Y.Z$2',
+			},
+		]);
 
 		// Soft assertion keeps the failure on this test (avoid try/catch + afterAll,
 		// which can be misreported as flaky on CI retries).
