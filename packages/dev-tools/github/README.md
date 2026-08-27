@@ -77,7 +77,7 @@ github/
     list-test-categories.js / list-visual-snapshot-batches.js
     lib/                     # walk-files, list-test-categories, retry.sh, package-match
     sync-consumer-bootstrap.sh
-  workflows/             # Blockera-base templates
+  workflows/             # Blockera-base templates (release-plugin.yml, release-theme.yml, …)
 ```
 
 Consumer has **no** `.github/scripts/`. The only consumer-local bootstrap is
@@ -235,6 +235,10 @@ Multi-job release flow: bump version → build zip artifact → revert on failur
 draft GitHub release. Job graph / `if:` stay in the consumer workflow; bash
 lives under `scripts/jobs/build-plugin-zip/`.
 
+Templates: `workflows/release-plugin.yml` (plugin) and `workflows/release-theme.yml`
+(theme). Copy into the consumer `.github/workflows/` and set OWNER/REPO, zip
+slug, and env knobs. Same scripts; product identity stays in the thin workflow.
+
 Dispatch **Release** from `master` (or an existing `release/*` branch). Resolve
 the line with `resolve-release-branch.sh` (`release/x.y.z`, or leftover
 `release/x.y.z-rc`), checkout/create it, then compute old→new from that
@@ -248,10 +252,20 @@ those commits onto `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` (default `master`).
 
 | Env | Default (Blockera base) |
 | --- | --- |
-| `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` |
+| `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` (theme consumer: `style.css`) |
 | `BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX` | `Blockera` |
 | `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` | `master` (stable cherry-pick target; unused for rc) |
 | `artifact-name` / `zip-file` (action) | `blockera` / `./blockera.zip` |
+
+```yaml
+# Theme-style consumer env (release-theme.yml)
+env:
+    BLOCKERA_BUILD_ZIP_MAIN_FILE: style.css
+    BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX: Blockera One
+    BLOCKERA_CHANGELOG_CONSUMER_GLOBS: |
+        packages/blockera-one/CHANGELOG.md
+        packages/blockera-admin-one/CHANGELOG.md
+```
 
 Release bump runs `jobs/build-plugin-zip/update-changelogs.sh`, which calls the
 consumer `npm run update:changelogs`.
