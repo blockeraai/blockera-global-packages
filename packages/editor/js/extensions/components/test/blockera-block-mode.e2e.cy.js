@@ -35,9 +35,9 @@ describe('blockeraBlockMode + WP→Blockera timing', () => {
 
 	it('shows WP→Blockera in controls without changing markup until the first edit', () => {
 		const originalMarkup =
-			'<!-- wp:paragraph {"style":{"typography":{"fontSize":"16px"}}} -->\n' +
-			'<p style="font-size:16px">The font size is set</p>\n' +
-			'<!-- /wp:paragraph -->';
+			`<!-- wp:paragraph {"style":{"typography":{"fontSize":"16px"}}} -->
+<p style="font-size:16px">The font size is set</p>
+<!-- /wp:paragraph -->`;
 
 		appendBlocks(originalMarkup);
 
@@ -83,9 +83,7 @@ describe('blockeraBlockMode + WP→Blockera timing', () => {
 
 	it('keeps Blockera attrs and strips classes when switching to Basic Mode', () => {
 		appendBlocks(
-			'<!-- wp:paragraph {"blockeraId":"keep1","blockeraFontSize":{"value":"20px"},"className":"blockera-block blockera-block-keep1","style":{"typography":{"fontSize":"20px"}}} -->' +
-				'<p class="blockera-block blockera-block-keep1" style="font-size:20px">Test paragraph</p>' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph {"blockeraId":"keep1","blockeraFontSize":{"value":"20px"},"className":"blockera-block blockera-block-keep1","style":{"typography":{"fontSize":"20px"}}} --><p class="blockera-block blockera-block-keep1" style="font-size:20px">Test paragraph</p><!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();
@@ -108,9 +106,7 @@ describe('blockeraBlockMode + WP→Blockera timing', () => {
 
 	it('does not mint blockeraId while the block is saved as basic', () => {
 		appendBlocks(
-			'<!-- wp:paragraph {"blockeraBlockMode":"basic"} -->' +
-				'<p>Basic only</p>' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph {"blockeraBlockMode":"basic"} --><p>Basic only</p><!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();
@@ -128,9 +124,7 @@ describe('blockeraBlockMode + WP→Blockera timing', () => {
 
 	it('mints id and runs first-time compatibility when returning to Advanced Mode', () => {
 		appendBlocks(
-			'<!-- wp:paragraph {"blockeraBlockMode":"basic","style":{"typography":{"fontSize":"18px"}}} -->' +
-				'<p style="font-size:18px">Back to advanced</p>' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph {"blockeraBlockMode":"basic","style":{"typography":{"fontSize":"18px"}}} --><p style="font-size:18px">Back to advanced</p><!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();
@@ -153,9 +147,7 @@ describe('blockeraBlockMode + WP→Blockera timing', () => {
 
 	it('on return to advanced, keeps filled Blockera values and fills empty ones from core', () => {
 		appendBlocks(
-			'<!-- wp:paragraph {"blockeraId":"abc123","blockeraFontSize":{"value":"20px"},"blockeraBlockMode":"basic","style":{"typography":{"fontSize":"99px","letterSpacing":"3px"}},"className":""} -->' +
-				'<p style="font-size:99px;letter-spacing:3px">Priority</p>' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph {"blockeraId":"abc123","blockeraFontSize":{"value":"20px"},"blockeraBlockMode":"basic","style":{"typography":{"fontSize":"99px","letterSpacing":"3px"}},"className":""} --><p style="font-size:99px;letter-spacing:3px">Priority</p><!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();
@@ -174,11 +166,7 @@ describe('blockeraBlockMode + WP→Blockera timing', () => {
 
 	it('disables Blockera classes on a parent Group in Basic Mode without dropping inner attrs', () => {
 		appendBlocks(
-			'<!-- wp:group {"blockeraId":"grp1","blockeraDisplay":{"value":"flex"},"className":"blockera-block blockera-block-grp1","layout":{"type":"flex"}} -->' +
-				'<div class="wp-block-group"><!-- wp:paragraph {"blockeraId":"p1","blockeraFontSize":{"value":"16px"},"className":"blockera-block blockera-block-p1"} -->' +
-				'<p>Inner</p>' +
-				'<!-- /wp:paragraph --></div>' +
-				'<!-- /wp:group -->'
+			`<!-- wp:group {"blockeraId":"grp1","blockeraDisplay":{"value":"flex"},"className":"blockera-block blockera-block-grp1","layout":{"type":"flex"}} --><div class="wp-block-group"><!-- wp:paragraph {"blockeraId":"p1","blockeraFontSize":{"value":"16px"},"className":"blockera-block blockera-block-p1"} --><p>Inner</p><!-- /wp:paragraph --></div><!-- /wp:group -->`
 		);
 
 		cy.getBlock('core/group').click();
@@ -204,9 +192,7 @@ describe('blockeraBlockMode + WP→Blockera timing', () => {
 		// Custom sizes at/above the fluid threshold become clamp() on the front
 		// end; 12px stays a literal so we can assert core vs Blockera (30px).
 		appendBlocks(
-			'<!-- wp:paragraph {"blockeraId":"fe1","blockeraFontSize":{"value":"30px"},"style":{"typography":{"fontSize":"12px"}},"className":"blockera-block blockera-block-fe1"} -->' +
-				'<p class="blockera-block blockera-block-fe1" style="font-size:12px">Core 12 Blockera 30</p>' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph {"blockeraId":"fe1","blockeraFontSize":{"value":"30px"},"style":{"typography":{"fontSize":"12px"}},"className":"blockera-block blockera-block-fe1"} --><p class="blockera-block blockera-block-fe1" style="font-size:12px">Core 12 Blockera 30</p><!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();
@@ -250,9 +236,7 @@ describe('blockeraBlockMode + WP→Blockera timing', () => {
 
 	it('still maps Blockera font size to core in Advanced Mode', () => {
 		appendBlocks(
-			'<!-- wp:paragraph {"style":{"typography":{"fontSize":"20px"}}} -->' +
-				'<p style="font-size:20px">To WP</p>' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph {"style":{"typography":{"fontSize":"20px"}}} --><p style="font-size:20px">To WP</p><!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();

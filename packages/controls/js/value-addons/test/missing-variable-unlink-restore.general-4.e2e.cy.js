@@ -512,9 +512,7 @@ describe('Missing variable → recreate + unlink (consolidated per type)', () =>
 		//
 		createPost();
 		appendBlocks(
-			'<!-- wp:paragraph {"blockeraFontSize":{"isValueAddon":true,"valueType":"variable","name":"Missing FS","settings":{"id":"missing-fs-empty","name":"Missing FS","type":"font-size","var":"--wp--preset--font-size--missing-fs-empty"}}} -->' +
-				'<p>Missing font size without cached value</p>' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph {"blockeraFontSize":{"isValueAddon":true,"valueType":"variable","name":"Missing FS","settings":{"id":"missing-fs-empty","name":"Missing FS","type":"font-size","var":"--wp--preset--font-size--missing-fs-empty"}}} --><p>Missing font size without cached value</p><!-- /wp:paragraph -->`
 		);
 		cy.getBlock('core/paragraph').first().click();
 		cy.getParentContainer('Font Size').as('container');
@@ -533,9 +531,7 @@ describe('Missing variable → recreate + unlink (consolidated per type)', () =>
 		// Section 2: color binding with no cached settings.value on second block
 		//
 		appendBlocks(
-			'<!-- wp:paragraph {"blockeraFontColor":{"isValueAddon":true,"valueType":"variable","name":"Missing Color","settings":{"id":"missing-color-empty","name":"Missing Color","type":"color","var":"--wp--preset--color--missing-color-empty"}}} -->' +
-				'<p>Missing color without cached value</p>' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph {"blockeraFontColor":{"isValueAddon":true,"valueType":"variable","name":"Missing Color","settings":{"id":"missing-color-empty","name":"Missing Color","type":"color","var":"--wp--preset--color--missing-color-empty"}}} --><p>Missing color without cached value</p><!-- /wp:paragraph -->`
 		);
 		cy.getBlock('core/paragraph').last().click();
 		cy.getParentContainer('Text Color').as('container');

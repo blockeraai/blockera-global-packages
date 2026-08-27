@@ -164,7 +164,9 @@ describe('Blockera editor zoom', () => {
 		createPostClearingZoomStorage();
 
 		appendBlocks(
-			'<!-- wp:paragraph -->\n<p>Zoom fit content</p>\n<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph -->
+<p>Zoom fit content</p>
+<!-- /wp:paragraph -->`
 		);
 
 		cy.getByDataTest('blockera-zoom-control').click({ force: true });

@@ -16,9 +16,7 @@ describe('Font Size → WP Compatibility', () => {
 	describe('Paragraph Block', () => {
 		it('Simple value', () => {
 			appendBlocks(
-				'<!-- wp:paragraph {"style":{"typography":{"fontSize":"20px"}}} -->' +
-					'<p style="font-size:20px">Test paragraph</p>' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"style":{"typography":{"fontSize":"20px"}}} --><p style="font-size:20px">Test paragraph</p><!-- /wp:paragraph -->`
 			);
 
 			// Select target block
@@ -89,9 +87,9 @@ describe('Font Size → WP Compatibility', () => {
 
 		it('Variable value', () => {
 			appendBlocks(
-				'<!-- wp:paragraph {"fontSize":"small"} -->\n' +
-					'<p class="has-small-font-size">Test paragraph</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Test paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			// Select target block

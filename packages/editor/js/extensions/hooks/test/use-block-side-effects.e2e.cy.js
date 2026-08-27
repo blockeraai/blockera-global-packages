@@ -3,9 +3,9 @@ import { createPost } from '@blockera/dev-cypress/js/helpers/site-navigation';
 import { setBlockState } from '@blockera/dev-cypress/js/helpers/block-states';
 
 const SOCIAL_LINKS_BLOCK =
-	'<!-- wp:social-links {"className":"is-style-default"} -->\n' +
-	'<ul class="wp-block-social-links is-style-default"><!-- wp:social-link {"service":"wordpress"} /--></ul>\n' +
-	'<!-- /wp:social-links -->';
+	`<!-- wp:social-links {"className":"is-style-default"} -->
+<ul class="wp-block-social-links is-style-default"><!-- wp:social-link {"service":"wordpress"} /--></ul>
+<!-- /wp:social-links -->`;
 
 describe('useBlockSideEffects Testing ...', () => {
 	beforeEach(() => {

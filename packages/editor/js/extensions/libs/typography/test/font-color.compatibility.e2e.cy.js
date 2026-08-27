@@ -19,9 +19,8 @@ describe('Font Color → WP Compatibility', () => {
 		describe('Simple Value', () => {
 			it('Reset font color to check inner blocks color while not the same', () => {
 				appendBlocks(
-					'<!-- wp:paragraph {"style":{"elements":{"link":{"color":{"text":"#98cc08"}}},"color":{"text":"#98cc08"}}} -->\n' +
-						'<p class="has-text-color has-link-color" style="color:#98cc08">Test paragraph</p>' +
-						'<!-- /wp:paragraph -->'
+					`<!-- wp:paragraph {"style":{"elements":{"link":{"color":{"text":"#98cc08"}}},"color":{"text":"#98cc08"}}} -->
+<p class="has-text-color has-link-color" style="color:#98cc08">Test paragraph</p><!-- /wp:paragraph -->`
 				);
 
 				// Select target block
@@ -133,9 +132,8 @@ describe('Font Color → WP Compatibility', () => {
 
 			it('Same font color and link color', () => {
 				appendBlocks(
-					'<!-- wp:paragraph {"style":{"elements":{"link":{"color":{"text":"#98cc08"}}},"color":{"text":"#98cc08"}}} -->\n' +
-						'<p class="has-text-color has-link-color" style="color:#98cc08">Test paragraph</p>' +
-						'<!-- /wp:paragraph -->'
+					`<!-- wp:paragraph {"style":{"elements":{"link":{"color":{"text":"#98cc08"}}},"color":{"text":"#98cc08"}}} -->
+<p class="has-text-color has-link-color" style="color:#98cc08">Test paragraph</p><!-- /wp:paragraph -->`
 				);
 
 				// Select target block
@@ -224,9 +222,9 @@ describe('Font Color → WP Compatibility', () => {
 
 			it('Different font color and link color', () => {
 				appendBlocks(
-					'<!-- wp:paragraph {"style":{"elements":{"link":{"color":{"text":"#10d55c"}}},"color":{"text":"#df4414"}}} -->\n' +
-						'<p class="has-text-color has-link-color" style="color:#df4414">Test paragraph</p>\n' +
-						'<!-- /wp:paragraph -->'
+					`<!-- wp:paragraph {"style":{"elements":{"link":{"color":{"text":"#10d55c"}}},"color":{"text":"#df4414"}}} -->
+<p class="has-text-color has-link-color" style="color:#df4414">Test paragraph</p>
+<!-- /wp:paragraph -->`
 				);
 
 				// Select target block
@@ -301,9 +299,9 @@ describe('Font Color → WP Compatibility', () => {
 		describe('Variable Value', () => {
 			it('Same font color and link color', () => {
 				appendBlocks(
-					'<!-- wp:paragraph {"style":{"elements":{"link":{"color":{"text":"var:preset|color|accent-3"}}}},"textColor":"accent-3"} -->\n' +
-						'<p class="has-accent-3-color has-text-color has-link-color">Test paragraph</p>\n' +
-						'<!-- /wp:paragraph -->'
+					`<!-- wp:paragraph {"style":{"elements":{"link":{"color":{"text":"var:preset|color|accent-3"}}}},"textColor":"accent-3"} -->
+<p class="has-accent-3-color has-text-color has-link-color">Test paragraph</p>
+<!-- /wp:paragraph -->`
 				);
 
 				// Select target block
@@ -428,9 +426,9 @@ describe('Font Color → WP Compatibility', () => {
 
 			it('Different font color and link color', () => {
 				appendBlocks(
-					'<!-- wp:paragraph {"style":{"elements":{"link":{"color":{"text":"var:preset|color|accent-4"}}}},"textColor":"accent-3"} -->\n' +
-						'<p class="has-accent-3-color has-text-color has-link-color">Test paragraph with <a href="#a">link</a></p>\n' +
-						'<!-- /wp:paragraph -->'
+					`<!-- wp:paragraph {"style":{"elements":{"link":{"color":{"text":"var:preset|color|accent-4"}}}},"textColor":"accent-3"} -->
+<p class="has-accent-3-color has-text-color has-link-color">Test paragraph with <a href="#a">link</a></p>
+<!-- /wp:paragraph -->`
 				);
 
 				// Select target block

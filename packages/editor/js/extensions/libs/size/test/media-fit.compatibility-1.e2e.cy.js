@@ -17,9 +17,9 @@ describe('Media Fit → WP Compatibility', () => {
 	describe('core/image Block', () => {
 		it('Simple Value', () => {
 			appendBlocks(
-				'<!-- wp:image {"id":60,"aspectRatio":"4/3","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->\n' +
-					'<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="aspect-ratio:4/3;object-fit:cover"/></figure>\n' +
-					'<!-- /wp:image -->'
+				`<!-- wp:image {"id":60,"aspectRatio":"4/3","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="aspect-ratio:4/3;object-fit:cover"/></figure>
+<!-- /wp:image -->`
 			);
 
 			// Select target block
@@ -74,9 +74,9 @@ describe('Media Fit → WP Compatibility', () => {
 
 		it('Use WP not supported value', () => {
 			appendBlocks(
-				'<!-- wp:image {"id":60,"aspectRatio":"4/3","scale":"contain","sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->\n' +
-					'<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="aspect-ratio:4/3;object-fit:contain"/></figure>\n' +
-					'<!-- /wp:image -->'
+				`<!-- wp:image {"id":60,"aspectRatio":"4/3","scale":"contain","sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="aspect-ratio:4/3;object-fit:contain"/></figure>
+<!-- /wp:image -->`
 			);
 			// Select target block
 			cy.getBlock('core/image').click();

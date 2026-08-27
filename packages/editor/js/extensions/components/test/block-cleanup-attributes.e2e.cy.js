@@ -52,9 +52,9 @@ describe('BlockBase testing ...', () => {
 		createPost();
 
 		appendBlocks(
-			'<!-- wp:paragraph -->\n' +
-				'<p>test</p>\n' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph -->
+<p>test</p>
+<!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();
@@ -63,9 +63,9 @@ describe('BlockBase testing ...', () => {
 	it('should not exists any value of blockera attributes on selected block when not changed anything', () => {
 		assertBlockData((data) => {
 			expect(
-				'<!-- wp:paragraph -->\n' +
-					'<p>test</p>\n' +
-					'<!-- /wp:paragraph -->'.trim()
+				`<!-- wp:paragraph -->
+<p>test</p>
+<!-- /wp:paragraph -->`.trim()
 			).to.be.equal(getEditorContent(data).trim());
 		});
 	});
@@ -183,9 +183,9 @@ describe('WordPress style empty-object cleanup', () => {
 		createPost();
 
 		appendBlocks(
-			'<!-- wp:paragraph {"style":{"typography":{}}} -->\n' +
-				'<p>sadasdadasdasd</p>\n' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph {"style":{"typography":{}}} -->
+<p>sadasdadasdasd</p>
+<!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();
@@ -220,9 +220,9 @@ describe('WordPress style empty-object cleanup', () => {
 			expect(getSelectedBlock(data, 'style')).to.equal(undefined);
 			expect(content).to.not.include('blockeraFontSize');
 			expect(content.trim()).to.equal(
-				'<!-- wp:paragraph -->\n' +
-					'<p>sadasdadasdasd</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph -->
+<p>sadasdadasdasd</p>
+<!-- /wp:paragraph -->`
 			);
 		});
 	});
@@ -251,9 +251,9 @@ describe('WordPress style empty-object cleanup', () => {
 			assertNoEmptyWpStyle(content);
 			expect(getSelectedBlock(data, 'style')).to.equal(undefined);
 			expect(content.trim()).to.equal(
-				'<!-- wp:paragraph -->\n' +
-					'<p>sadasdadasdasd</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph -->
+<p>sadasdadasdasd</p>
+<!-- /wp:paragraph -->`
 			);
 		});
 	});

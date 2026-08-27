@@ -147,9 +147,9 @@ describe('Typography MoreFeatures → promote edited features', () => {
 			createPost();
 
 			appendBlocks(
-				'<!-- wp:paragraph {"style":{"typography":{"letterSpacing":"2px"}}} -->\n' +
-					'<p style="letter-spacing:2px">Test paragraph</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"style":{"typography":{"letterSpacing":"2px"}}} -->
+<p style="letter-spacing:2px">Test paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			cy.getBlock('core/paragraph').click();
@@ -211,7 +211,13 @@ describe('Typography MoreFeatures → promote edited features', () => {
 			createPost();
 
 			appendBlocks(
-				'<!-- wp:paragraph -->\n<p>First paragraph</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Second paragraph</p>\n<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph -->
+<p>First paragraph</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Second paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			cy.getBlock('core/paragraph').first().click();

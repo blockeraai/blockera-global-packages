@@ -17,9 +17,9 @@ describe('Text Transform → WP Compatibility', () => {
 	describe('Paragraph Block', () => {
 		it('Simple value', () => {
 			appendBlocks(
-				'<!-- wp:paragraph {"style":{"typography":{"textTransform":"uppercase"}}} -->\n' +
-					'<p style="text-transform:uppercase">Test paragraph</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"style":{"typography":{"textTransform":"uppercase"}}} -->
+<p style="text-transform:uppercase">Test paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			// Select target block

@@ -18,9 +18,15 @@ import {
 } from '@blockera/dev-cypress/js/helpers';
 
 const PARAGRAPH_MARKUP =
-	'<!-- wp:paragraph -->\n<p>One</p>\n<!-- /wp:paragraph -->\n' +
-	'<!-- wp:paragraph -->\n<p>Two</p>\n<!-- /wp:paragraph -->\n' +
-	'<!-- wp:paragraph -->\n<p>Three</p>\n<!-- /wp:paragraph -->';
+	`<!-- wp:paragraph -->
+<p>One</p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph -->
+<p>Two</p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph -->
+<p>Three</p>
+<!-- /wp:paragraph -->`;
 
 function createPostWithBlockBaseRenderDebug() {
 	const testURL = Cypress.env('testURL');

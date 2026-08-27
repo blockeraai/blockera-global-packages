@@ -38,9 +38,9 @@ describe('Background → WP Compatibility', () => {
 
 			it('Simple Value', () => {
 				appendBlocks(
-					'<!-- wp:paragraph {"style":{"color":{"gradient":"linear-gradient(135deg,rgb(135,254,56) 1%,rgb(255,147,147) 97%)"}}} -->\n' +
-						'<p class="has-background" style="background:linear-gradient(135deg,rgb(135,254,56) 1%,rgb(255,147,147) 97%)">Paragraph with linear gradient background (simple colors)</p>\n' +
-						'<!-- /wp:paragraph -->'
+					`<!-- wp:paragraph {"style":{"color":{"gradient":"linear-gradient(135deg,rgb(135,254,56) 1%,rgb(255,147,147) 97%)"}}} -->
+<p class="has-background" style="background:linear-gradient(135deg,rgb(135,254,56) 1%,rgb(255,147,147) 97%)">Paragraph with linear gradient background (simple colors)</p>
+<!-- /wp:paragraph -->`
 				);
 
 				// Select target block
@@ -297,9 +297,9 @@ describe('Background → WP Compatibility', () => {
 		describe('Radial Gradient Background', () => {
 			it('Simple Value', () => {
 				appendBlocks(
-					'<!-- wp:paragraph {"style":{"color":{"gradient":"radial-gradient(rgb(194,169,144) 27%,rgb(254,95,95) 92%)"}}} -->\n' +
-						'<p class="has-background" style="background:radial-gradient(rgb(194,169,144) 27%,rgb(254,95,95) 92%)">Paragraph with linear gradient background (simple colors)</p>\n' +
-						'<!-- /wp:paragraph -->'
+					`<!-- wp:paragraph {"style":{"color":{"gradient":"radial-gradient(rgb(194,169,144) 27%,rgb(254,95,95) 92%)"}}} -->
+<p class="has-background" style="background:radial-gradient(rgb(194,169,144) 27%,rgb(254,95,95) 92%)">Paragraph with linear gradient background (simple colors)</p>
+<!-- /wp:paragraph -->`
 				);
 
 				// Select target block
@@ -390,9 +390,9 @@ describe('Background → WP Compatibility', () => {
 
 			it('should map gradient "none" to none background layer', () => {
 				appendBlocks(
-					'<!-- wp:paragraph {"style":{"color":{"gradient":"none"}}} -->\n' +
-						'<p class="has-background" style="background:none">Paragraph with none gradient sentinel</p>\n' +
-						'<!-- /wp:paragraph -->'
+					`<!-- wp:paragraph {"style":{"color":{"gradient":"none"}}} -->
+<p class="has-background" style="background:none">Paragraph with none gradient sentinel</p>
+<!-- /wp:paragraph -->`
 				);
 
 				cy.getBlock('core/paragraph').click();
@@ -423,9 +423,9 @@ describe('Background → WP Compatibility', () => {
 
 			it('should map gradient "transparent none" to none layer and transparent background color', () => {
 				appendBlocks(
-					'<!-- wp:paragraph {"style":{"color":{"gradient":"transparent none"}}} -->\n' +
-						'<p class="has-background" style="background:transparent none">Paragraph with transparent none gradient sentinel</p>\n' +
-						'<!-- /wp:paragraph -->'
+					`<!-- wp:paragraph {"style":{"color":{"gradient":"transparent none"}}} -->
+<p class="has-background" style="background:transparent none">Paragraph with transparent none gradient sentinel</p>
+<!-- /wp:paragraph -->`
 				);
 
 				cy.getBlock('core/paragraph').click();
@@ -460,11 +460,11 @@ describe('Background → WP Compatibility', () => {
 		describe('Background Image', () => {
 			it('simple value background image', () => {
 				appendBlocks(
-					'<!-- wp:group {"style":{"background":{"backgroundImage":{"url":"https://placehold.co/600x400","id":87,"source":"file","title":"about-sofia"}}},"layout":{"type":"constrained"}} -->\n' +
-						'<div class="wp-block-group"><!-- wp:paragraph -->\n' +
-						'<p>Paragraph inside group block</p>\n' +
-						'<!-- /wp:paragraph --></div>\n' +
-						'<!-- /wp:group -->'
+					`<!-- wp:group {"style":{"background":{"backgroundImage":{"url":"https://placehold.co/600x400","id":87,"source":"file","title":"about-sofia"}}},"layout":{"type":"constrained"}} -->
+<div class="wp-block-group"><!-- wp:paragraph -->
+<p>Paragraph inside group block</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->`
 				);
 
 				// Select target block

@@ -16,9 +16,9 @@ describe('Legacy blockeraPropsId / blockeraCompatId migrate', () => {
 
 	it('rewrites legacy ids to blockeraId and matches canvas CSS', () => {
 		appendBlocks(
-			'<!-- wp:paragraph {"blockeraPropsId":"d03e38bb-a490-42dc-8a2c-9016a8e40f6c","blockeraCompatId":"rdnm2t","blockeraFontColor":{"value":"#e82121"},"blockeraFontSize":{"value":"22px"},"className":"blockera-block blockera-block--ohw5i7","style":{"typography":{"fontSize":"22px"},"color":{"text":"#e82121"}}} -->\n' +
-				'<p class="blockera-block blockera-block--ohw5i7 has-text-color" style="color:#e82121;font-size:22px">Our vision is to make Block Editor the ultimate no-code platform.</p>\n' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph {"blockeraPropsId":"d03e38bb-a490-42dc-8a2c-9016a8e40f6c","blockeraCompatId":"rdnm2t","blockeraFontColor":{"value":"#e82121"},"blockeraFontSize":{"value":"22px"},"className":"blockera-block blockera-block--ohw5i7","style":{"typography":{"fontSize":"22px"},"color":{"text":"#e82121"}}} -->
+<p class="blockera-block blockera-block--ohw5i7 has-text-color" style="color:#e82121;font-size:22px">Our vision is to make Block Editor the ultimate no-code platform.</p>
+<!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();

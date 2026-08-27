@@ -16,9 +16,9 @@ describe('Height → WP Compatibility', () => {
 	describe('core/image Block', () => {
 		it('Simple Value', () => {
 			appendBlocks(
-				'<!-- wp:image {"id":60,"height":"500px","sizeSlug":"full","linkDestination":"none"} -->\n' +
-					'<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="height:500px"/></figure>\n' +
-					'<!-- /wp:image -->'
+				`<!-- wp:image {"id":60,"height":"500px","sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="height:500px"/></figure>
+<!-- /wp:image -->`
 			);
 
 			// Select target block
@@ -75,9 +75,9 @@ describe('Height → WP Compatibility', () => {
 
 		it('Use WP not supported value', () => {
 			appendBlocks(
-				'<!-- wp:image {"id":60,"sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->\n' +
-					'<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60"/></figure>\n' +
-					'<!-- /wp:image -->'
+				`<!-- wp:image {"id":60,"sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60"/></figure>
+<!-- /wp:image -->`
 			);
 
 			// Select target block

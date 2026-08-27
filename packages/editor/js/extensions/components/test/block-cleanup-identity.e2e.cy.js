@@ -27,9 +27,9 @@ describe('Blockera identity cleanup', () => {
 
 	it('drops blockeraId and blockera-block when the last feature is cleared', () => {
 		appendBlocks(
-			'<!-- wp:paragraph -->\n' +
-				'<p>test</p>\n' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph -->
+<p>test</p>
+<!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();
@@ -68,9 +68,9 @@ describe('Blockera identity cleanup', () => {
 
 	it('keeps non-Blockera class names when identity is stripped', () => {
 		appendBlocks(
-			'<!-- wp:paragraph {"className":"is-style-text-subtitle"} -->\n' +
-				'<p class="is-style-text-subtitle">Fleurs is a flower delivery business.</p>\n' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph {"className":"is-style-text-subtitle"} -->
+<p class="is-style-text-subtitle">Fleurs is a flower delivery business.</p>
+<!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();
