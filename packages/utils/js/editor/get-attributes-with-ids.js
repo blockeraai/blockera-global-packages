@@ -157,7 +157,19 @@ function isEmptyBlockeraFeatureValue(value: mixed): boolean {
 	}
 
 	if (typeof unwrapped === 'object') {
-		return Object.keys(unwrapped).length === 0;
+		const keys = Object.keys(unwrapped);
+
+		if (keys.length === 0) {
+			return true;
+		}
+
+		for (let i = 0; i < keys.length; i++) {
+			if (!isEmptyBlockeraFeatureValue(unwrapped[keys[i]])) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	return false;
@@ -273,10 +285,390 @@ function isEmptyInnerBlocksTree(
 	return true;
 }
 
+const BLOCKERA_BLOCK_STATES_KEY = 'blockeraBlockStates';
+const BLOCK_STATE_KNOWN_KEYS: { [string]: boolean } = {
+	breakpoints: true,
+	isVisible: true,
+	'css-class': true,
+	content: true,
+};
+
+function isEmptyArrayOrEmptyObject(value: mixed): boolean {
+	if (value == null) {
+		return true;
+	}
+
+	if (Array.isArray(value)) {
+		return value.length === 0;
+	}
+
+	if (typeof value === 'object') {
+		return Object.keys(value).length === 0;
+	}
+
+	return false;
+}
+
+function isMeaningfulStateFlag(value: mixed): boolean {
+	if (value === false) {
+		return true;
+	}
+
+	if (typeof value === 'string' && value !== '') {
+		return true;
+	}
+
+	if (value != null && typeof value === 'object') {
+		return !isEmptyArrayOrEmptyObject(value);
+	}
+
+	return false;
+}
+
+/**
+ * Nested breakpoint/state attribute maps are not Gutenberg-registered keys.
+ * Unused Blockera features are dropped (not reset to defaults).
+ */
+function pruneNestedFeatureAttributes(
+	attributes: mixed,
+	defaultAttributes: ?Object
+): Object {
+	if (attributes == null || typeof attributes !== 'object') {
+		return {};
+	}
+
+	if (Array.isArray(attributes)) {
+		return attributes.length === 0 ? {} : { ...attributes };
+	}
+
+	const record: { [string]: mixed } = (attributes: any);
+	const next: { [string]: mixed } = {};
+
+	for (const key in record) {
+		if (!BLOCKERA_ATTR_KEY.test(key) || BLOCKERA_META_ATTRIBUTE_KEYS[key]) {
+			if (!isEmptyBlockeraFeatureValue(record[key])) {
+				next[key] = record[key];
+			}
+			continue;
+		}
+
+		if (
+			isUnusedBlockeraFeatureValue(
+				record[key],
+				getRegisteredDefaultValue(defaultAttributes, key),
+				defaultAttributes,
+				key
+			)
+		) {
+			continue;
+		}
+
+		next[key] = record[key];
+	}
+
+	return next;
+}
+
+function isEmptyBreakpointAttributes(
+	attributes: mixed,
+	defaultAttributes: ?Object
+): boolean {
+	if (isEmptyArrayOrEmptyObject(attributes)) {
+		return true;
+	}
+
+	if (typeof attributes !== 'object') {
+		return false;
+	}
+
+	const pruned = pruneNestedFeatureAttributes(attributes, defaultAttributes);
+
+	return Object.keys(pruned).length === 0;
+}
+
+function stateHasUnknownKeys(state: Object): boolean {
+	for (const key in state) {
+		if (!BLOCK_STATE_KNOWN_KEYS[key]) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function isEmptyBlockStateEntry(
+	state: mixed,
+	defaultAttributes: ?Object
+): boolean {
+	if (state == null) {
+		return true;
+	}
+
+	if (typeof state !== 'object' || Array.isArray(state)) {
+		return false;
+	}
+
+	const record: { [string]: mixed } = (state: any);
+
+	if (stateHasUnknownKeys(record)) {
+		return false;
+	}
+
+	if (record.isVisible === false) {
+		return false;
+	}
+
+	if (isMeaningfulStateFlag(record['css-class'])) {
+		return false;
+	}
+
+	if (isMeaningfulStateFlag(record.content)) {
+		return false;
+	}
+
+	const breakpoints = record.breakpoints;
+
+	if (isEmptyArrayOrEmptyObject(breakpoints)) {
+		return true;
+	}
+
+	if (typeof breakpoints !== 'object') {
+		return false;
+	}
+
+	const breakpointMap: { [string]: mixed } = (breakpoints: any);
+
+	for (const breakpointType in breakpointMap) {
+		const breakpoint = breakpointMap[breakpointType];
+
+		if (breakpoint == null) {
+			continue;
+		}
+
+		if (typeof breakpoint !== 'object' || Array.isArray(breakpoint)) {
+			if (!isEmptyArrayOrEmptyObject(breakpoint)) {
+				return false;
+			}
+			continue;
+		}
+
+		if (
+			!isEmptyBreakpointAttributes(
+				(breakpoint: any).attributes,
+				defaultAttributes
+			)
+		) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+ * True when every state/breakpoint slot is empty, including PHP `attributes: []`.
+ */
+export function isEmptyBlockStatesValue(
+	value: mixed,
+	defaultAttributes: ?Object
+): boolean {
+	const unwrapped = unwrapBlockeraAttributeValue(value);
+
+	if (isEmptyArrayOrEmptyObject(unwrapped)) {
+		return true;
+	}
+
+	if (typeof unwrapped !== 'object') {
+		return false;
+	}
+
+	const states: { [string]: mixed } = (unwrapped: any);
+
+	for (const stateId in states) {
+		if (!isEmptyBlockStateEntry(states[stateId], defaultAttributes)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+function wrapBlockStatesValue(original: mixed, unwrappedNext: Object): Object {
+	if (
+		original != null &&
+		typeof original === 'object' &&
+		!Array.isArray(original) &&
+		'value' in (original: any)
+	) {
+		return { value: unwrappedNext };
+	}
+
+	return unwrappedNext;
+}
+
+function pruneBlockStateBreakpoints(
+	breakpoints: mixed,
+	defaultAttributes: ?Object
+): { next: { [string]: Object }, changed: boolean } {
+	if (breakpoints == null) {
+		return { next: {}, changed: false };
+	}
+
+	if (Array.isArray(breakpoints) && breakpoints.length === 0) {
+		return { next: {}, changed: true };
+	}
+
+	if (
+		typeof breakpoints === 'object' &&
+		!Array.isArray(breakpoints) &&
+		Object.keys(breakpoints).length === 0
+	) {
+		return { next: {}, changed: false };
+	}
+
+	if (typeof breakpoints !== 'object') {
+		return { next: {}, changed: true };
+	}
+
+	const breakpointMap: { [string]: mixed } = (breakpoints: any);
+	const next: { [string]: Object } = {};
+	let changed = false;
+
+	for (const breakpointType in breakpointMap) {
+		const breakpoint = breakpointMap[breakpointType];
+
+		if (breakpoint == null) {
+			changed = true;
+			continue;
+		}
+
+		if (typeof breakpoint !== 'object' || Array.isArray(breakpoint)) {
+			if (!isEmptyArrayOrEmptyObject(breakpoint)) {
+				next[breakpointType] = breakpoint;
+			} else {
+				changed = true;
+			}
+			continue;
+		}
+
+		const record: { [string]: mixed } = (breakpoint: any);
+		const prunedAttributes = pruneNestedFeatureAttributes(
+			record.attributes,
+			defaultAttributes
+		);
+
+		if (Object.keys(prunedAttributes).length === 0) {
+			changed = true;
+			continue;
+		}
+
+		if (!isEquals(record.attributes, prunedAttributes)) {
+			changed = true;
+			next[breakpointType] = {
+				...record,
+				attributes: prunedAttributes,
+			};
+			continue;
+		}
+
+		next[breakpointType] = record;
+	}
+
+	if (
+		!changed &&
+		Object.keys(next).length !== Object.keys(breakpointMap).length
+	) {
+		changed = true;
+	}
+
+	return { next, changed };
+}
+
+/**
+ * Drop empty breakpoint/state slots. Preserve `{ value }` wrapping.
+ * Returns the original reference when nothing changes.
+ */
+export function normalizeBlockeraBlockStatesValue(
+	value: mixed,
+	defaultAttributes: ?Object
+): mixed {
+	if (value == null) {
+		return value;
+	}
+
+	const hadWrapper =
+		typeof value === 'object' &&
+		!Array.isArray(value) &&
+		'value' in (value: any);
+	const unwrapped = unwrapBlockeraAttributeValue(value);
+
+	if (isEmptyArrayOrEmptyObject(unwrapped)) {
+		const empty = hadWrapper ? { value: {} } : {};
+
+		return isEquals(value, empty) ? value : empty;
+	}
+
+	if (typeof unwrapped !== 'object') {
+		return value;
+	}
+
+	const states: { [string]: mixed } = (unwrapped: any);
+	const nextStates: { [string]: mixed } = {};
+	let changed = false;
+
+	for (const stateId in states) {
+		const state = states[stateId];
+
+		if (state === undefined) {
+			nextStates[stateId] = undefined;
+			changed = true;
+			continue;
+		}
+
+		if (state == null || typeof state !== 'object' || Array.isArray(state)) {
+			nextStates[stateId] = state;
+			continue;
+		}
+
+		const record: { [string]: mixed } = (state: any);
+		const prunedBreakpoints = pruneBlockStateBreakpoints(
+			record.breakpoints,
+			defaultAttributes
+		);
+
+		if (prunedBreakpoints.changed) {
+			changed = true;
+		}
+
+		const nextState = prunedBreakpoints.changed
+			? {
+					...record,
+					breakpoints: prunedBreakpoints.next,
+				}
+			: record;
+
+		if (isEmptyBlockStateEntry(nextState, defaultAttributes)) {
+			changed = true;
+			continue;
+		}
+
+		nextStates[stateId] = nextState;
+	}
+
+	if (!changed && Object.keys(nextStates).length === Object.keys(states).length) {
+		return value;
+	}
+
+	const wrapped = wrapBlockStatesValue(value, nextStates);
+
+	return isEquals(value, wrapped) ? value : wrapped;
+}
+
 function isUnusedBlockeraFeatureValue(
 	current: mixed,
 	registeredDefault: mixed,
-	defaultAttributes: ?Object
+	defaultAttributes: ?Object,
+	key?: string
 ): boolean {
 	if (current === undefined) {
 		return true;
@@ -295,6 +687,10 @@ function isUnusedBlockeraFeatureValue(
 		) {
 			return true;
 		}
+	}
+
+	if (key === BLOCKERA_BLOCK_STATES_KEY) {
+		return isEmptyBlockStatesValue(current, defaultAttributes);
 	}
 
 	if (isEmptyBlockeraFeatureValue(current)) {
@@ -333,7 +729,8 @@ export function hasBlockeraFeatureAttributes(
 			!isUnusedBlockeraFeatureValue(
 				attributes[key],
 				getRegisteredDefaultValue(defaultAttributes, key),
-				defaultAttributes
+				defaultAttributes,
+				key
 			)
 		) {
 			return true;
@@ -371,13 +768,28 @@ export function omitUnusedBlockeraFeatureAttributes(
 			key
 		);
 
+		const current =
+			key === BLOCKERA_BLOCK_STATES_KEY
+				? normalizeBlockeraBlockStatesValue(
+						attributes[key],
+						defaultAttributes
+					)
+				: attributes[key];
+
 		if (
 			!isUnusedBlockeraFeatureValue(
-				attributes[key],
+				current,
 				registeredDefault,
-				defaultAttributes
+				defaultAttributes,
+				key
 			)
 		) {
+			if (key === BLOCKERA_BLOCK_STATES_KEY && current !== attributes[key]) {
+				if (!next) {
+					next = { ...attributes };
+				}
+				next[key] = current;
+			}
 			continue;
 		}
 
@@ -403,6 +815,86 @@ export function omitUnusedBlockeraFeatureAttributes(
 	}
 
 	return next || attributes;
+}
+
+/**
+ * Remove nested empty objects/arrays from WordPress `style` trees.
+ *
+ * PHP JSON round-trips empty objects as `[]` (`color: []`, `elements.link.color: []`).
+ * Those must be dropped so Gutenberg omits them. Non-empty arrays (e.g. duotone)
+ * are kept. Falsy scalars (`''`, `0`, `false`) are kept.
+ *
+ * @see source-codes/block-editor/packages/block-editor/src/hooks/utils.js `cleanEmptyObject`
+ *
+ * @param {*} object Nested value.
+ * @return {*} Cleaned value, or `undefined` when the tree is empty.
+ */
+export function cleanEmptyObject(object: mixed): mixed {
+	if (Array.isArray(object)) {
+		return object.length === 0 ? undefined : object;
+	}
+
+	if (object === null || typeof object !== 'object') {
+		return object;
+	}
+
+	const record: { [string]: mixed } = (object: any);
+	const keys = Object.keys(record);
+	let next: { [string]: mixed } | null = null;
+
+	for (let i = 0; i < keys.length; i++) {
+		const key = keys[i];
+		const value = record[key];
+		const cleaned = cleanEmptyObject(value);
+
+		if (cleaned === undefined) {
+			if (!next) {
+				next = { ...record };
+			}
+			delete next[key];
+			continue;
+		}
+
+		if (cleaned !== value) {
+			if (!next) {
+				next = { ...record };
+			}
+			next[key] = cleaned;
+		}
+	}
+
+	if (next) {
+		return Object.keys(next).length ? next : undefined;
+	}
+
+	return keys.length ? record : undefined;
+}
+
+/**
+ * Deep-clean WordPress `style` so empty branches do not serialize.
+ *
+ * @param {Object} attributes Block attributes.
+ * @return {Object} Attributes with an empty `style` tree unset.
+ */
+export function withCleanedWpStyle(attributes: Object): Object {
+	if (!attributes || typeof attributes !== 'object') {
+		return attributes;
+	}
+
+	if (!('style' in attributes)) {
+		return attributes;
+	}
+
+	const cleanedStyle = cleanEmptyObject(attributes.style);
+
+	if (cleanedStyle === attributes.style) {
+		return attributes;
+	}
+
+	return {
+		...attributes,
+		style: cleanedStyle,
+	};
 }
 
 /**
@@ -444,9 +936,8 @@ export function withoutBlockeraIdentityIfUnused(
 		return attributes || {};
 	}
 
-	const next = omitUnusedBlockeraFeatureAttributes(
-		attributes,
-		defaultAttributes
+	const next = withCleanedWpStyle(
+		omitUnusedBlockeraFeatureAttributes(attributes, defaultAttributes)
 	);
 
 	if (
