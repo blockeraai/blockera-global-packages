@@ -16,11 +16,11 @@ describe('Border & Border Radius Together → WP Compatibility', () => {
 		describe('Simple Value', () => {
 			it('Compacted borders', () => {
 				appendBlocks(
-					'<!-- wp:buttons -->\n' +
-						'<div class="wp-block-buttons"><!-- wp:button {"style":{"border":{"radius":"10px","color":"#ff4848","width":"1px"}}} -->\n' +
-						'<div class="wp-block-button"><a class="wp-block-button__link has-border-color wp-element-button" style="border-color:#ff4848;border-width:1px;border-radius:10px">button</a></div>\n' +
-						'<!-- /wp:button --></div>\n' +
-						'<!-- /wp:buttons -->'
+					`<!-- wp:buttons -->
+						<div class="wp-block-buttons"><!-- wp:button {"style":{"border":{"radius":"10px","color":"#ff4848","width":"1px"}}} -->
+						<div class="wp-block-button"><a class="wp-block-button__link has-border-color wp-element-button" style="border-color:#ff4848;border-width:1px;border-radius:10px">button</a></div>
+						<!-- /wp:button --></div>
+						<!-- /wp:buttons -->`
 				);
 
 				// Select target block
@@ -103,10 +103,6 @@ describe('Border & Border Radius Together → WP Compatibility', () => {
 						color: '#ff4848',
 						width: '20px',
 						style: 'solid',
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
 					}).to.be.deep.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
@@ -147,16 +143,7 @@ describe('Border & Border Radius Together → WP Compatibility', () => {
 						getSelectedBlock(data, 'blockeraBorder')
 					);
 
-					expect({
-						radius: undefined,
-						color: undefined,
-						style: undefined,
-						width: undefined,
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
-					}).to.be.deep.equal(
+					expect(undefined).to.be.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
 				});
@@ -164,11 +151,11 @@ describe('Border & Border Radius Together → WP Compatibility', () => {
 
 			it('Custom side borders', () => {
 				appendBlocks(
-					'<!-- wp:buttons -->\n' +
-						'<div class="wp-block-buttons"><!-- wp:button {"style":{"border":{"radius":{"topLeft":"10px","topRight":"20px","bottomLeft":"40px","bottomRight":"30px"},"top":{"radius":"10px","color":"#ff4848","width":"1px"},"right":{"radius":"10px","color":"#ff4848","width":"2px"},"bottom":{"radius":"10px","color":"#ff4848","width":"3px"},"left":{"radius":"10px","color":"#ff4848","width":"4px"}}}} -->\n' +
-						'<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" style="border-top-left-radius:10px;border-top-right-radius:20px;border-bottom-left-radius:40px;border-bottom-right-radius:30px;border-top-color:#ff4848;border-top-width:1px;border-right-color:#ff4848;border-right-width:2px;border-bottom-color:#ff4848;border-bottom-width:3px;border-left-color:#ff4848;border-left-width:4px">button</a></div>\n' +
-						'<!-- /wp:button --></div>\n' +
-						'<!-- /wp:buttons -->'
+					`<!-- wp:buttons -->
+						<div class="wp-block-buttons"><!-- wp:button {"style":{"border":{"radius":{"topLeft":"10px","topRight":"20px","bottomLeft":"40px","bottomRight":"30px"},"top":{"radius":"10px","color":"#ff4848","width":"1px"},"right":{"radius":"10px","color":"#ff4848","width":"2px"},"bottom":{"radius":"10px","color":"#ff4848","width":"3px"},"left":{"radius":"10px","color":"#ff4848","width":"4px"}}}} -->
+						<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" style="border-top-left-radius:10px;border-top-right-radius:20px;border-bottom-left-radius:40px;border-bottom-right-radius:30px;border-top-color:#ff4848;border-top-width:1px;border-right-color:#ff4848;border-right-width:2px;border-bottom-color:#ff4848;border-bottom-width:3px;border-left-color:#ff4848;border-left-width:4px">button</a></div>
+						<!-- /wp:button --></div>
+						<!-- /wp:buttons -->`
 				);
 
 				// Select target block
@@ -352,9 +339,6 @@ describe('Border & Border Radius Together → WP Compatibility', () => {
 					);
 
 					expect({
-						width: undefined,
-						color: undefined,
-						style: undefined,
 						radius: {
 							topLeft: '50px',
 							topRight: '60px',
@@ -461,16 +445,7 @@ describe('Border & Border Radius Together → WP Compatibility', () => {
 						getSelectedBlock(data, 'blockeraBorder')
 					);
 
-					expect({
-						color: undefined,
-						style: undefined,
-						width: undefined,
-						radius: undefined,
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
-					}).to.be.deep.equal(
+					expect(undefined).to.be.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
 				});

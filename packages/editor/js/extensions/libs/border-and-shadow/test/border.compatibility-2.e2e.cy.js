@@ -91,10 +91,6 @@ describe('Border → WP Compatibility', () => {
 						color: '#ffb2b2',
 						style: 'solid',
 						width: '10px',
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
 					}).to.be.deep.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
@@ -126,10 +122,6 @@ describe('Border → WP Compatibility', () => {
 						color: '#ffb2b2',
 						style: 'solid',
 						width: '',
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
 					}).to.be.deep.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
@@ -162,15 +154,7 @@ describe('Border → WP Compatibility', () => {
 						getSelectedBlock(data, 'blockeraBorder')
 					);
 
-					expect({
-						color: undefined,
-						style: undefined,
-						width: undefined,
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
-					}).to.be.deep.equal(
+					expect(undefined).to.be.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
 				});
@@ -307,9 +291,6 @@ describe('Border → WP Compatibility', () => {
 					);
 
 					expect({
-						width: undefined,
-						color: undefined,
-						style: undefined,
 						top: {
 							color: '#ffb2b2',
 							width: '10px',
@@ -396,15 +377,7 @@ describe('Border → WP Compatibility', () => {
 						getSelectedBlock(data, 'blockeraBorder')
 					);
 
-					expect({
-						color: undefined,
-						style: undefined,
-						width: undefined,
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
-					}).to.be.deep.equal(
+					expect(undefined).to.be.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
 				});
@@ -536,15 +509,7 @@ describe('Border → WP Compatibility', () => {
 						getSelectedBlock(data, 'blockeraBorder')
 					);
 
-					expect({
-						color: undefined,
-						style: undefined,
-						width: undefined,
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
-					}).to.be.deep.equal(
+					expect(undefined).to.be.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
 				});
@@ -653,12 +618,7 @@ describe('Border → WP Compatibility', () => {
 
 					expect({
 						width: '10px',
-						color: undefined,
 						style: 'solid',
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
 					}).to.be.deep.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
@@ -691,15 +651,7 @@ describe('Border → WP Compatibility', () => {
 						getSelectedBlock(data, 'borderColor')
 					);
 
-					expect({
-						color: undefined,
-						style: undefined,
-						width: undefined,
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
-					}).to.be.deep.equal(
+					expect(undefined).to.be.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
 				});
@@ -995,9 +947,6 @@ describe('Border → WP Compatibility', () => {
 					);
 
 					expect({
-						width: undefined,
-						color: undefined,
-						style: undefined,
 						top: {
 							width: '10px',
 							color: 'var:preset|color|contrast',
@@ -1102,15 +1051,7 @@ describe('Border → WP Compatibility', () => {
 						getSelectedBlock(data, 'blockeraBorder')
 					);
 
-					expect({
-						color: undefined,
-						style: undefined,
-						width: undefined,
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
-					}).to.be.deep.equal(
+					expect(undefined).to.be.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
 				});
@@ -1203,15 +1144,7 @@ describe('Border → WP Compatibility', () => {
 						getSelectedBlock(data, 'borderColor')
 					);
 
-					expect({
-						color: undefined,
-						style: undefined,
-						width: undefined,
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
-					}).to.be.deep.equal(
+					expect(undefined).to.be.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
 				});
@@ -1418,15 +1351,7 @@ describe('Border → WP Compatibility', () => {
 						getSelectedBlock(data, 'blockeraBorder')
 					);
 
-					expect({
-						color: undefined,
-						style: undefined,
-						width: undefined,
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
-					}).to.be.deep.equal(
+					expect(undefined).to.be.equal(
 						getSelectedBlock(data, 'style')?.border
 					);
 				});
