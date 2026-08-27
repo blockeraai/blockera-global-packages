@@ -15,6 +15,9 @@ const {
 	prependRootChangelog,
 	listConsumerChangelogFiles,
 	accumulateProductChangelogs,
+	isPrereleaseVersion,
+	latestStableTag,
+	resolveLastReleaseRef,
 } = require('../accumulate-changelogs');
 const { setPluginConfig } = require('../../config-store');
 const {
@@ -718,6 +721,58 @@ ${oldContent}`
 					)
 				).toContain('## [1.0.0] - 2026-08-25');
 			} finally {
+				fs.rmSync(dir, { recursive: true, force: true });
+			}
+		});
+	});
+
+	describe('resolveLastReleaseRef', () => {
+		const { execFileSync } = require('child_process');
+
+		it('treats rc versions as prerelease', () => {
+			expect(isPrereleaseVersion('2.0.0-rc.1')).toBe(true);
+			expect(isPrereleaseVersion('v2.0.0-rc.1')).toBe(true);
+			expect(isPrereleaseVersion('2.0.0')).toBe(false);
+		});
+
+		it('skips a prerelease PREVIOUS_VERSION and uses the last stable tag', () => {
+			const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'changelogs-'));
+			const git = (args) =>
+				execFileSync('git', args, { cwd: dir, stdio: 'pipe' });
+			const prev = process.env.BLOCKERA_CHANGELOG_PREVIOUS_VERSION;
+			const fromRef = process.env.BLOCKERA_CHANGELOG_FROM_REF;
+			try {
+				git(['init']);
+				git(['config', 'user.email', 'dev@example.com']);
+				git(['config', 'user.name', 'Dev']);
+				fs.writeFileSync(path.join(dir, 'README.md'), 'a\n');
+				git(['add', '.']);
+				git(['commit', '-m', 'init']);
+				git(['tag', 'v1.12.2']);
+				fs.writeFileSync(path.join(dir, 'README.md'), 'b\n');
+				git(['add', '.']);
+				git(['commit', '-m', 'rc']);
+				git(['tag', 'v2.0.0-rc.1']);
+
+				expect(latestStableTag(dir)).toBe('v1.12.2');
+
+				delete process.env.BLOCKERA_CHANGELOG_FROM_REF;
+				process.env.BLOCKERA_CHANGELOG_PREVIOUS_VERSION = '2.0.0-rc.1';
+				expect(resolveLastReleaseRef(dir)).toBe('v1.12.2');
+
+				process.env.BLOCKERA_CHANGELOG_PREVIOUS_VERSION = '1.12.2';
+				expect(resolveLastReleaseRef(dir)).toBe('v1.12.2');
+			} finally {
+				if (prev === undefined) {
+					delete process.env.BLOCKERA_CHANGELOG_PREVIOUS_VERSION;
+				} else {
+					process.env.BLOCKERA_CHANGELOG_PREVIOUS_VERSION = prev;
+				}
+				if (fromRef === undefined) {
+					delete process.env.BLOCKERA_CHANGELOG_FROM_REF;
+				} else {
+					process.env.BLOCKERA_CHANGELOG_FROM_REF = fromRef;
+				}
 				fs.rmSync(dir, { recursive: true, force: true });
 			}
 		});
