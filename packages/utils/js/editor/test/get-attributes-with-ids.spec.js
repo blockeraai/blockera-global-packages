@@ -3,6 +3,7 @@ import {
 	getAttributesWithIds,
 	hasBlockeraFeatureAttributes,
 	migrateLegacyBlockeraIds,
+	omitUnusedBlockeraFeatureAttributes,
 	remintBlockeraIdentity,
 	needsLegacyBlockeraIdMigrate,
 	normalizeBlockeraIds,
@@ -251,14 +252,14 @@ describe('remintBlockeraIdentity', () => {
 
 describe('withoutBlockeraIdentityIfUnused', () => {
 	const schemaDefaults = {
-		blockeraFontSize: { type: 'object', default: '' },
+		blockeraFontSize: { type: 'object', default: { value: '' } },
 		blockeraBackgroundClip: {
 			type: 'object',
-			default: 'none',
+			default: { value: 'none' },
 		},
-		blockeraInnerBlocks: { type: 'object', default: {} },
-		blockeraZIndex: { type: 'object', default: '' },
-		blockeraHidden: { type: 'object', default: '' },
+		blockeraInnerBlocks: { type: 'object', default: { value: {} } },
+		blockeraZIndex: { type: 'object', default: { value: '' } },
+		blockeraHidden: { type: 'object', default: { value: '' } },
 	};
 
 	it('keeps non-Blockera class names and drops empty className', () => {
@@ -294,14 +295,209 @@ describe('withoutBlockeraIdentityIfUnused', () => {
 		expect(next.blockeraId).toBeUndefined();
 		expect(next.className).toBe('extra');
 		expect(next.blockeraFontSize).toEqual({ value: '' });
+		expect(next.blockeraBackgroundClip).toEqual({ value: 'none' });
+		expect(next.blockeraInnerBlocks).toEqual({ value: {} });
 		expect(hasBlockeraFeatureAttributes(next, schemaDefaults)).toBe(false);
+	});
+
+	it('rewraps unwrapped unused values to registered { value } defaults', () => {
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraFontColor: '',
+				blockeraBackgroundClip: 'none',
+				blockeraBorder: {
+					type: 'all',
+					all: { width: '', style: '', color: '' },
+				},
+				blockeraCustomCSS: '& {\n    \n}\n',
+				content: 'Hello',
+			},
+			{
+				...schemaDefaults,
+				blockeraFontColor: { type: 'object', default: { value: '' } },
+				blockeraBorder: {
+					type: 'object',
+					default: {
+						value: {
+							type: 'all',
+							all: { width: '', style: '', color: '' },
+						},
+					},
+				},
+				blockeraCustomCSS: {
+					type: 'object',
+					default: { value: '& {\n    \n}\n' },
+				},
+			}
+		);
+
+		expect(next.blockeraFontColor).toEqual({ value: '' });
+		expect(next.blockeraBackgroundClip).toEqual({ value: 'none' });
+		expect(next.blockeraBorder).toEqual({
+			value: {
+				type: 'all',
+				all: { width: '', style: '', color: '' },
+			},
+		});
+		expect(next.blockeraCustomCSS).toEqual({
+			value: '& {\n    \n}\n',
+		});
+		expect(next.content).toBe('Hello');
+	});
+
+	it('resets unused values to schema defaults after a font-color reset (dual-shape + empty inner blocks)', () => {
+		const defaultCustomCss = '& {\n    \n}\n';
+		const flexDefault = {
+			value: {
+				direction: 'row',
+				alignItems: '',
+				justifyContent: '',
+			},
+		};
+		const schema = {
+			...schemaDefaults,
+			blockeraFontColor: { type: 'object', default: { value: '' } },
+			blockeraCustomCSS: {
+				type: 'object',
+				default: { value: defaultCustomCss },
+			},
+			blockeraFlexLayout: {
+				type: 'object',
+				default: flexDefault,
+			},
+			blockeraCursor: { type: 'object', default: { value: 'default' } },
+		};
+
+		const next = withoutBlockeraIdentityIfUnused(
+			{
+				blockeraId: 'ol4b0z',
+				blockeraFontColor: '',
+				blockeraBackgroundClip: 'none',
+				blockeraCustomCSS: defaultCustomCss,
+				blockeraCursor: 'default',
+				blockeraFlexLayout: {
+					value: {
+						direction: 'row',
+						alignItems: '',
+						justifyContent: '',
+					},
+					direction: 'row',
+					alignItems: '',
+					justifyContent: '',
+				},
+				blockeraInnerBlocks: {
+					value: {
+						'elements/link': {
+							attributes: {},
+						},
+					},
+				},
+				className: 'blockera-block blockera-block-ol4b0z',
+			},
+			schema
+		);
+
+		expect(next.blockeraId).toBeUndefined();
+		expect(next.className).toBeUndefined();
+		expect(next.blockeraFontColor).toEqual({ value: '' });
+		expect(next.blockeraBackgroundClip).toEqual({ value: 'none' });
+		expect(next.blockeraCustomCSS).toEqual({ value: defaultCustomCss });
+		expect(next.blockeraCursor).toEqual({ value: 'default' });
+		expect(next.blockeraFlexLayout).toEqual(flexDefault);
+		expect(next.blockeraInnerBlocks).toEqual({ value: {} });
+		expect(hasBlockeraFeatureAttributes(next, schema)).toBe(false);
+	});
+
+	it('resets unused keys to schema defaults while keeping a real feature and identity', () => {
+		const next = withoutBlockeraIdentityIfUnused(
+			{
+				blockeraId: 'abc123',
+				blockeraFontSize: { value: '18px' },
+				blockeraBackgroundClip: { value: 'none' },
+				blockeraInnerBlocks: {
+					value: {
+						'elements/link': {
+							attributes: {},
+						},
+					},
+				},
+				className: 'blockera-block blockera-block-abc123',
+			},
+			schemaDefaults
+		);
+
+		expect(next.blockeraId).toBe('abc123');
+		expect(next.className).toBe('blockera-block blockera-block-abc123');
+		expect(next.blockeraFontSize).toEqual({ value: '18px' });
+		expect(next.blockeraBackgroundClip).toEqual({ value: 'none' });
+		expect(next.blockeraInnerBlocks).toEqual({ value: {} });
+		expect(hasBlockeraFeatureAttributes(next, schemaDefaults)).toBe(true);
+	});
+
+	it('maps PHP empty-array defaults to { value: {} } so Gutenberg can omit them', () => {
+		const phpArraySchema = {
+			blockeraBackground: { type: 'object', default: { value: [] } },
+			blockeraBoxShadow: { type: 'object', default: { value: [] } },
+			blockeraInnerBlocks: { type: 'object', default: { value: [] } },
+			blockeraAttributes: { type: 'object', default: { value: [] } },
+		};
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraBackground: { value: [] },
+				blockeraBoxShadow: [],
+				blockeraInnerBlocks: { value: [] },
+				blockeraAttributes: { value: [] },
+				content: 'Hello',
+			},
+			phpArraySchema
+		);
+
+		expect(next.blockeraBackground).toEqual({ value: {} });
+		expect(next.blockeraBoxShadow).toEqual({ value: {} });
+		expect(next.blockeraInnerBlocks).toEqual({ value: {} });
+		expect(next.blockeraAttributes).toEqual({ value: {} });
+		expect(next.content).toBe('Hello');
+		expect(hasBlockeraFeatureAttributes(next, phpArraySchema)).toBe(false);
+	});
+
+	it('maps registered empty-object array defaults the same way', () => {
+		const registeredArraySchema = {
+			blockeraBackground: {
+				type: 'object',
+				default: { value: {} },
+			},
+		};
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraBackground: { value: [] },
+			},
+			registeredArraySchema
+		);
+
+		expect(next.blockeraBackground).toEqual({ value: {} });
+	});
+
+	it('normalizes unused keys to registered defaults so Gutenberg can omit them', () => {
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraFontSize: { value: '' },
+				blockeraBackgroundClip: { value: 'none' },
+				content: 'Hello',
+			},
+			schemaDefaults
+		);
+
+		expect(next.blockeraFontSize).toEqual({ value: '' });
+		expect(next.blockeraBackgroundClip).toEqual({ value: 'none' });
+		expect(next.content).toBe('Hello');
 	});
 
 	it('keeps identity when a feature value remains', () => {
 		const state = {
 			blockeraId: 'abc123',
 			blockeraFontSize: { value: '18px' },
-			blockeraBackgroundClip: { value: 'none' },
 			className: 'blockera-block blockera-block-abc123',
 		};
 
@@ -333,17 +529,21 @@ describe('withoutBlockeraIdentityIfUnused', () => {
 	});
 
 	it('keeps blockeraId in basic mode even with empty features', () => {
-		const state = {
-			blockeraId: 'abc123',
-			blockeraBlockMode: 'basic',
-			blockeraFontSize: { value: '' },
-			blockeraBackgroundClip: { value: 'none' },
-			className: 'extra',
-		};
-
-		expect(withoutBlockeraIdentityIfUnused(state, schemaDefaults)).toBe(
-			state
+		const next = withoutBlockeraIdentityIfUnused(
+			{
+				blockeraId: 'abc123',
+				blockeraBlockMode: 'basic',
+				blockeraFontSize: { value: '' },
+				blockeraBackgroundClip: { value: 'none' },
+				className: 'extra',
+			},
+			schemaDefaults
 		);
-		expect(state.blockeraId).toBe('abc123');
+
+		expect(next.blockeraId).toBe('abc123');
+		expect(next.blockeraBlockMode).toBe('basic');
+		expect(next.className).toBe('extra');
+		expect(next.blockeraFontSize).toEqual({ value: '' });
+		expect(next.blockeraBackgroundClip).toEqual({ value: 'none' });
 	});
 });
