@@ -149,8 +149,10 @@ return [
 	'blockeraTransformSelfOrigin'       => [
 		'type'    => 'object',
 		'default' => [
-			'top'  => '',
-			'left' => '',
+			'value' => [
+				'top'  => '',
+				'left' => '',
+			],
 		],
 	],
 	'blockeraBackfaceVisibility'        => [
@@ -174,8 +176,10 @@ return [
 	'blockeraTransformChildOrigin'      => [
 		'type'    => 'object',
 		'default' => [
-			'top'  => '',
-			'left' => '',
+			'value' => [
+				'top'  => '',
+				'left' => '',
+			],
 		],
 	],
 	'blockeraTransition'                => [
