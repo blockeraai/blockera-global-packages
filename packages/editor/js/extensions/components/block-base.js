@@ -44,6 +44,7 @@ import {
 	stripBlockeraIdentity,
 	withBlockeraBlockClassFromId,
 	withoutBlockeraIdentityIfUnused,
+	withCleanedWpStyle,
 } from '@blockera/utils';
 import { classNames } from '@blockera/classnames';
 import { generalBlockFeatures } from '@blockera/blocks-core/js/libs/general-block-features';
@@ -120,6 +121,20 @@ function remintAndRegisterIdentity(clientId: string, attributes: Object): Object
 		`blockera-block-${String(reminted.blockeraId)}`
 	);
 	return reminted;
+}
+
+function getBlockeraPersistSchema(
+	availableAttributes: ?Object,
+	originDefaultAttributes: ?Object
+): ?Object {
+	if (
+		availableAttributes?.blockeraId ||
+		availableAttributes?.blockeraPropsId
+	) {
+		return availableAttributes;
+	}
+
+	return originDefaultAttributes;
 }
 
 function storedLayoutFieldDiffers(left: mixed, right: mixed): boolean {
@@ -459,13 +474,50 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			return;
 		}
 
-		const migrated = migrateLegacyBlockeraIds(
-			cloneObject(blockAttributes)
+		const persistSchema = getBlockeraPersistSchema(
+			availableAttributes,
+			originDefaultAttributes
+		);
+
+		const migrated = withoutBlockeraIdentityIfUnused(
+			migrateLegacyBlockeraIds(cloneObject(blockAttributes)),
+			persistSchema
 		);
 		// cloneObject drops `undefined`; Gutenberg merge needs explicit unset.
 		migrated.blockeraPropsId = undefined;
 		migrated.blockeraCompatId = undefined;
+		if (blockAttributes.style && !migrated.style) {
+			migrated.style = undefined;
+		}
+
+		if (isEquals(migrated, blockAttributes)) {
+			return;
+		}
+
+		// Persistent on purpose: the post entity only records persistent
+		// block edits, so cleanup must land in saved markup.
 		setBlockAttributes(migrated);
+	}, [
+		blockAttributes,
+		setBlockAttributes,
+		availableAttributes,
+		originDefaultAttributes,
+	]);
+
+	useLayoutEffect(() => {
+		if (!blockAttributes?.style) {
+			return;
+		}
+
+		const cleaned = withCleanedWpStyle(blockAttributes);
+
+		if (isEquals(cleaned.style, blockAttributes.style)) {
+			return;
+		}
+
+		setBlockAttributes({
+			style: cleaned.style,
+		});
 	}, [blockAttributes, setBlockAttributes]);
 
 	const compatibleAttributes = useMemo(() => {
@@ -633,10 +685,9 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		}
 
 		setPendingAttributes(null);
-		setBlockAttributes({
-			...blockAttributes,
-			...patch,
-		});
+		// Merge only layout fields. Spreading `blockAttributes` re-applies
+		// unused defaults that legacy-id migrate just cleaned.
+		setBlockAttributes(patch);
 	}, [
 		isActive,
 		clientId,
@@ -818,10 +869,10 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 
 		const persistableAttributes = withoutBlockeraIdentityIfUnused(
 			clonedAttributes,
-			availableAttributes?.blockeraId ||
-				availableAttributes?.blockeraPropsId
-				? availableAttributes
-				: originDefaultAttributes
+			getBlockeraPersistSchema(
+				availableAttributes,
+				originDefaultAttributes
+			)
 		);
 
 		if (
