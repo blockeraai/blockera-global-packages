@@ -24,6 +24,15 @@ if [[ -z "${NEW_VERSION}" || -z "${RELEASE_BRANCH}" ]]; then
 fi
 
 git add "${MAIN_FILE}" package.json package-lock.json
+if [[ -f composer.json ]] && jq --exit-status '.version != null' composer.json >/dev/null 2>&1; then
+	git add composer.json
+fi
+
+if git diff --cached --quiet; then
+	echo "build-zip/commit-release: no version-file changes (package.json=$(jq --raw-output '.version' package.json); expected ${NEW_VERSION})" >&2
+	exit 1
+fi
+
 git commit -m "Bump plugin version to ${NEW_VERSION}"
 git push --set-upstream origin "${RELEASE_BRANCH}"
 echo "version_bump_commit=$(git rev-parse --verify --short HEAD)" >>"${GITHUB_OUTPUT}"
