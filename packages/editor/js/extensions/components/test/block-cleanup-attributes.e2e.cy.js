@@ -258,3 +258,73 @@ describe('WordPress style empty-object cleanup', () => {
 		});
 	});
 });
+
+describe('Load-from-content unused Blockera attributes', () => {
+	beforeEach(() => {
+		createPost();
+	});
+
+	it('strips wrapped defaults and empty breakpoints when a feature is edited', () => {
+		appendBlocks(
+			`<!-- wp:paragraph {"blockeraId":"p7a15o","blockeraTransformSelfOrigin":{"value":{"top":"","left":""}},"blockeraTransformChildOrigin":{"value":{"top":"","left":""}},"blockeraBlockStates":{"value":{"normal":{"breakpoints":{"tablet":{"attributes":[]},"mobile":{"attributes":[]}},"isVisible":true}}},"blockeraFontColor":{"value":"#75879a"},"className":"blockera-block blockera-block-p7a15o"} -->
+<p class="blockera-block blockera-block-p7a15o">About our vision, story and team</p>
+<!-- /wp:paragraph -->`
+		);
+
+		cy.getBlock('core/paragraph').click();
+
+		cy.getByAriaControls('styles-view').click();
+
+		cy.getParentContainer('Font Size').within(() => {
+			cy.get('input[type="text"]').clear({ force: true });
+			cy.get('input[type="text"]').type('18', { force: true });
+		});
+
+		assertBlockData((data) => {
+			const content = getEditorContent(data);
+
+			expect(getSelectedBlock(data, 'blockeraFontSize')).to.equal('18px');
+			expect(getSelectedBlock(data, 'blockeraFontColor')).to.equal(
+				'#75879a'
+			);
+			expect(content).to.include('blockeraFontSize');
+			expect(content).to.include('blockeraFontColor');
+			expect(content).to.not.include('blockeraTransformSelfOrigin');
+			expect(content).to.not.include('blockeraTransformChildOrigin');
+			expect(content).to.not.include('blockeraBlockStates');
+			expect(content).to.not.include('"attributes":[]');
+			expect(getSelectedBlock(data, 'blockeraId') || '').to.match(
+				/^[0-9a-z]{6}$/
+			);
+		});
+	});
+
+	it('strips PHP empty-array style.color when a feature is edited', () => {
+		appendBlocks(
+			`<!-- wp:paragraph {"blockeraId":"b83u76","blockeraInnerBlocks":{"value":{"elements/link":{"attributes":{"blockeraFontColor":"#1e2731"}}}},"className":"blockera-block blockera-block-b83u76","style":{"color":[],"elements":{"link":{"color":[]}}}} -->
+<p class="blockera-block blockera-block-b83u76 has-link-color">By transforming the core block editor into a powerful unified tool.</p>
+<!-- /wp:paragraph -->`
+		);
+
+		cy.getBlock('core/paragraph').click();
+
+		cy.getByAriaControls('styles-view').click();
+
+		cy.getParentContainer('Font Size').within(() => {
+			cy.get('input[type="text"]').clear({ force: true });
+			cy.get('input[type="text"]').type('18', { force: true });
+		});
+
+		assertBlockData((data) => {
+			const content = getEditorContent(data);
+
+			expect(getSelectedBlock(data, 'blockeraFontSize')).to.equal('18px');
+			expect(content).to.include('blockeraFontSize');
+			expect(content).to.include('blockeraInnerBlocks');
+			expect(content).to.include('#1e2731');
+			expect(content).to.not.include('"color":[]');
+			expect(content).to.not.include('"elements"');
+			expect(content).to.include('"fontSize":"18px"');
+		});
+	});
+});
