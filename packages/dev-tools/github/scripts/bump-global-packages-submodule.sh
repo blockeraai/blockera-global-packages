@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# Point packages/global-packages at a remote SHA/branch tip, stage the gitlink, and commit
-# locally in the consumer (never git push). Uncommitted submodule work is stashed across
-# the force checkout and restored afterward.
+# Point packages/global-packages at a remote SHA/branch tip, stage the gitlink, and commit.
 #
 # Usage:
 #   bump-global-packages-submodule.sh [sha|branch] [repo-root]
@@ -134,35 +132,6 @@ format_bump_subject() {
 		printf 'submodule: update global-packages (%s commits) %s' "${n}" "${range_url}"
 	else
 		printf 'submodule: update global-packages %s' "${range_url}"
-	fi
-}
-
-# Preserve staged / unstaged / untracked (not ignored) files across --force checkout.
-GP_DID_STASH=0
-
-gp_submodule_has_changes() {
-	[[ -n "$(git -C "${SUBMODULE}" status --porcelain --untracked-files=normal 2>/dev/null || true)" ]]
-}
-
-stash_gp_worktree() {
-	GP_DID_STASH=0
-	if ! gp_submodule_has_changes; then
-		return 0
-	fi
-	log_step "Stashing uncommitted submodule changes…"
-	git -C "${SUBMODULE}" stash push --include-untracked --quiet \
-		-m "${SCRIPT_NAME}: preserve worktree before pin checkout"
-	GP_DID_STASH=1
-}
-
-restore_gp_worktree() {
-	if [[ "${GP_DID_STASH}" != "1" ]]; then
-		return 0
-	fi
-	GP_DID_STASH=0
-	log_step "Restoring stashed submodule changes…"
-	if ! git -C "${SUBMODULE}" stash pop --quiet; then
-		log_warn "could not apply stashed submodule changes cleanly; they remain in git stash"
 	fi
 }
 
@@ -311,13 +280,10 @@ if [ -z "${RESOLVED_SHA}" ]; then
 fi
 
 log_step "Checking out ${C_BOLD}$(git -C "${SUBMODULE}" rev-parse --short "${RESOLVED_SHA}")${C_RESET}…"
-stash_gp_worktree
-trap restore_gp_worktree EXIT
 # Quiet the "HEAD is now at …" noise; failures still surface on stderr.
 git -C "${SUBMODULE}" checkout --detach --force "${RESOLVED_SHA}" >/dev/null
 git -C "${SUBMODULE}" sparse-checkout init --no-cone
 git -C "${SUBMODULE}" sparse-checkout set '/packages/'
-restore_gp_worktree
 
 git add "${SUBMODULE_PATH}"
 
@@ -389,5 +355,4 @@ emit_kv "commit" "${PARENT_SHORT}"
 printf '\n'
 log_ok "Committed ${C_BOLD}${COMMIT_SUBJECT}${C_RESET}"
 log_kv "commit" "${PARENT_SHORT}"
-log_info "Local consumer commit only — not pushed to origin"
 printf '\n'
