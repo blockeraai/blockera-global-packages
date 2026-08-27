@@ -239,22 +239,31 @@ Templates: `workflows/release-plugin.yml` (plugin) and `workflows/release-theme.
 (theme). Copy into the consumer `.github/workflows/` and set OWNER/REPO, zip
 slug, and env knobs. Same scripts; product identity stays in the thin workflow.
 
-Dispatch **Release** from `master` (or an existing `release/*` branch). Resolve
-the line with `resolve-release-branch.sh` (`release/x.y.z`, or leftover
-`release/x.y.z-rc`), checkout/create it, then compute old→new from that
-branch’s `package.json` so a second RC becomes `rc.2` instead of rewriting `rc.1`.
+Dispatch **Release**. Each run (rc or stable) **forks the release branch from
+`origin/<default-branch>` HEAD** (`BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH`, default
+`master`) — it does not continue an existing `release/*` or RC tip.
+`resolve-release-branch.sh` names:
+
+- **rc** → `release/x.y.z-rc`
+- **stable** → `release/x.y.z`
+
+Versions are computed from that default-branch `package.json`. The push uses
+`--force-with-lease` because the branch was recreated from master (an existing
+`release/*` is replaced, not continued). A second RC from the same master
+version starts at `rc.1` again. Changelog accumulation always starts from the
+last **stable** tag.
 Do not pre-create the branch in GitHub. On a failed build, a newly created
 branch is deleted; an existing one has the bump commit reverted.
 
-**RC** changelog and version commits stay on `release/x.y.z` only
+**RC** changelog and version commits stay on `release/x.y.z-rc` only
 (`cherry-pick-to-master.sh` skips when `RELEASE_TYPE=rc`). **Stable** cherry-picks
 those commits onto `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` (default `master`).
 
 | Env | Default (Blockera base) |
 | --- | --- |
-| `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` (theme consumer: `style.css`) |
-| `BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX` | `Blockera` |
-| `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` | `master` (stable cherry-pick target; unused for rc) |
+| `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` (theme consumer: `style.css`). Zip bump sets the WordPress `Version:` header in that file to `NEW_VERSION`. |
+| `BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX` | `Blockera` (title is `"${prefix} ${major}.${minor}"`, quoted so RC notes look up `Blockera 2.0` not `Blockera`) |
+| `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` | `master` (fork source for every rc/stable release branch; stable cherry-pick target) |
 | `artifact-name` / `zip-file` (action) | `blockera` / `./blockera.zip` |
 
 ```yaml
