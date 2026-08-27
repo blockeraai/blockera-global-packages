@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Bug Fixes
+- Zip version bump: set the WordPress `Version:` header in `BLOCKERA_BUILD_ZIP_MAIN_FILE` (theme `style.css` or plugin bootstrap) to `NEW_VERSION` even when it did not match `OLD_VERSION`.
 - Release branches: RC uses `release/x.y.z-rc`; stable always uses `release/x.y.z` (fork from the RC tip when that branch is new) instead of committing on the RC branch.
 - Zip changelog accumulation: ignore a prerelease `OLD_VERSION` / previous tag so RC and stable both accumulate from the last stable product tag.
 - Release notes: quote `--milestone="Blockera 2.0"` so Commander does not look up a milestone titled only `Blockera`; complete a truncated title from the release version; fail the job instead of writing the stack into the GitHub release body.

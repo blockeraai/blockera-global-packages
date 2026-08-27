@@ -33,6 +33,6 @@ if git diff --cached --quiet; then
 	exit 1
 fi
 
-git commit -m "Bump plugin version to ${NEW_VERSION}"
+git commit -m "Bump version to ${NEW_VERSION}"
 git push --set-upstream origin "${RELEASE_BRANCH}"
 echo "version_bump_commit=$(git rev-parse --verify --short HEAD)" >>"${GITHUB_OUTPUT}"

@@ -259,7 +259,7 @@ those commits onto `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` (default `master`).
 
 | Env | Default (Blockera base) |
 | --- | --- |
-| `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` (theme consumer: `style.css`) |
+| `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` (theme consumer: `style.css`). Zip bump sets the WordPress `Version:` header in that file to `NEW_VERSION`. |
 | `BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX` | `Blockera` (title is `"${prefix} ${major}.${minor}"`, quoted so RC notes look up `Blockera 2.0` not `Blockera`) |
 | `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` | `master` (stable cherry-pick target; unused for rc) |
 | `artifact-name` / `zip-file` (action) | `blockera` / `./blockera.zip` |
