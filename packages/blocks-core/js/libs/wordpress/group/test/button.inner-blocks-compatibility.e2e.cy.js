@@ -95,7 +95,7 @@ describe('Group Block → Button Inner Block → WP Data Compatibility', () => {
 			cy.clearColorControlValue('Text Color');
 
 			assertBlockData((data) => {
-				expect({}).to.be.deep.equal(
+				expect(undefined).to.be.equal(
 					getSelectedBlock(data, 'blockeraInnerBlocks')['core/button']
 						?.attributes
 				);
@@ -219,7 +219,7 @@ describe('Group Block → Button Inner Block → WP Data Compatibility', () => {
 			});
 
 			assertBlockData((data) => {
-				expect({}).to.be.deep.equal(
+				expect(undefined).to.be.equal(
 					getSelectedBlock(data, 'blockeraInnerBlocks')['core/button']
 						?.attributes
 				);
@@ -316,7 +316,7 @@ describe('Group Block → Button Inner Block → WP Data Compatibility', () => {
 				cy.clearColorControlValue('BG Color');
 
 				assertBlockData((data) => {
-					expect({}).to.be.deep.equal(
+					expect(undefined).to.be.equal(
 						getSelectedBlock(data, 'blockeraInnerBlocks')[
 							'core/button'
 						]?.attributes
@@ -443,7 +443,7 @@ describe('Group Block → Button Inner Block → WP Data Compatibility', () => {
 				});
 
 				assertBlockData((data) => {
-					expect({}).to.be.deep.equal(
+					expect(undefined).to.be.equal(
 						getSelectedBlock(data, 'blockeraInnerBlocks')[
 							'core/button'
 						]?.attributes
