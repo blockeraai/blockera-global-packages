@@ -3,6 +3,7 @@
  * External dependencies
  */
 import type { MixedElement } from 'react';
+import { useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -23,6 +24,7 @@ import { checkVisibleItemLength } from '@blockera/utils';
  */
 import { generateExtensionId } from '../../utils';
 import type { TBlockProps, THandleOnChangeAttributes } from '../../types';
+import { normalizeTransformOriginForControl } from '../transform-origin-value';
 
 export function SelfPerspective({
 	block,
@@ -60,6 +62,18 @@ export function SelfPerspective({
 		mode: 'advanced',
 		path: attribute,
 	};
+
+	const originValue = useMemo(
+		() => normalizeTransformOriginForControl(transformSelfOrigin),
+		[transformSelfOrigin]
+	);
+	const originDefault = useMemo(
+		() =>
+			normalizeTransformOriginForControl(
+				transformSelfOriginDefaultValue
+			),
+		[transformSelfOriginDefaultValue]
+	);
 
 	return (
 		<>
@@ -117,7 +131,7 @@ export function SelfPerspective({
 					<ControlContextProvider
 						value={{
 							name: generateExtensionId(block, 'self-origin'),
-							value: transformSelfOrigin,
+							value: originValue,
 							attribute: 'blockeraTransformSelfOrigin',
 							blockName: block.blockName,
 						}}
@@ -137,7 +151,7 @@ export function SelfPerspective({
 							)}
 							alignmentMatrixLabel={__('Self Origin', 'blockera')}
 							size="small"
-							defaultValue={transformSelfOriginDefaultValue}
+							defaultValue={originDefault}
 							onChange={({ top, left }, ref) => {
 								handleOnChangeAttributes(
 									'blockeraTransformSelfOrigin',
