@@ -262,20 +262,25 @@ only packages that changed since the previous merge (`--semver`, `--from`,
 2. If Unreleased has entries and the pin is a branch tip, bump folds them into
    `## [YYYY-MM-DD]` (same-day suffix if needed), commits
    `chore(changelog): fold Unreleased`, and pushes that SHA.
-3. Product zip diffs each GP `CHANGELOG.md` between the previous and new
-   gitlink. It takes ### bodies from the **previous pin’s top version
-   heading (exclusive)** through the **current pin’s newest heading**.
+3. Product zip diffs each GP package **version** between the previous product
+   release and the current pin (`package.json`, then `composer.json`). The
+   previous version is read from the GP gitlink when that path exists at the
+   last release; otherwise it uses inlined `packages/<name>` on that ref
+   (pre-submodule products such as Blockera). Unchanged packages are skipped.
+   For packages that bumped, it takes ### bodies from the **previous package
+   version (exclusive)** through the **current version**, including leftover
+   `## Unreleased` bullets. Dated cuts between those versions are kept.
    Consumer `packages/*/CHANGELOG.md` still contribute Unreleased diffs when
    present. Products with only global-packages may have none; the zip then
    writes GP notes only. The zip **fails** if `BLOCKERA_CHANGELOG_CONSUMER_GLOBS`
-   is set and matches no files, or if a pinned GP file still has Unreleased
-   *bullets* (missing Unreleased is OK).
+   is set and matches no files. Set `BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP=1`
+   to also fail when a GP file still has Unreleased *bullets*.
 4. Zip writes product root `CHANGELOG.md` / `changelog.txt` and folds
    **consumer** Unreleased into `## [product-version] - date`.
 
-Set `BLOCKERA_CHANGELOG_FOLD_ON_BUMP=0` to skip the bump-time fold (zip will
-still refuse a dirty GP Unreleased). `BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP=0`
-disables the zip guard (tests only).
+Set `BLOCKERA_CHANGELOG_FOLD_ON_BUMP=0` to skip the bump-time fold.
+`BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP=1` makes the zip fail on a dirty GP
+Unreleased (off by default so GP-only products can still accumulate).
 
 Each consumer only sees notes inside **its** pin window.
 
@@ -296,7 +301,7 @@ env:
 | `BLOCKERA_CHANGELOG_CONSUMER_GLOBS` | `packages/*/CHANGELOG.md` (optional; required only when set) |
 | `BLOCKERA_CHANGELOG_ROOT_MD` | `CHANGELOG.md` |
 | `BLOCKERA_CHANGELOG_FILE` | `changelog.txt` |
-| `BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP` | `1` |
+| `BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP` | unset (`1` to fail on GP Unreleased bullets) |
 | `BLOCKERA_CHANGELOG_FOLD_ON_BUMP` | `1` (bump script) |
 
 ## Update WordPress.org assets
