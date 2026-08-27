@@ -163,6 +163,36 @@ function isEmptyBlockeraFeatureValue(value: mixed): boolean {
 	return false;
 }
 
+/**
+ * Gutenberg registration (`sanitizeDefaultAttributes`) converts empty-array
+ * defaults to `{ value: {} }`. PHP still ships `{ value: [] }`. Writing `[]`
+ * fails `===` against the registered default, so the key is serialized.
+ */
+function normalizeRegisteredEmptyArrayDefault(value: mixed): mixed {
+	if (Array.isArray(value) && value.length === 0) {
+		return { value: {} };
+	}
+
+	if (value == null || typeof value !== 'object' || Array.isArray(value)) {
+		return value;
+	}
+
+	const record: { [string]: mixed } = (value: any);
+
+	if (!Array.isArray(record.value) || record.value.length !== 0) {
+		return value;
+	}
+
+	if (Object.keys(record).length === 1) {
+		return { value: {} };
+	}
+
+	return {
+		...record,
+		value: {},
+	};
+}
+
 function getRegisteredDefaultValue(
 	defaultAttributes: ?Object,
 	key: string
@@ -172,17 +202,106 @@ function getRegisteredDefaultValue(
 	}
 
 	const entry = defaultAttributes[key];
-	if (entry == null || typeof entry !== 'object' || Array.isArray(entry)) {
-		return entry;
+	if (entry == null) {
+		return undefined;
+	}
+
+	if (typeof entry !== 'object' || Array.isArray(entry)) {
+		return normalizeRegisteredEmptyArrayDefault(entry);
 	}
 
 	const record: { [string]: mixed } = (entry: any);
 
 	if ('type' in record && 'default' in record) {
-		return record.default;
+		return normalizeRegisteredEmptyArrayDefault(record.default);
 	}
 
-	return entry;
+	return normalizeRegisteredEmptyArrayDefault(entry);
+}
+
+/**
+ * Inner-block maps from WP↔Blockera hydrate look like
+ * `{ 'elements/link': { attributes: {} } }` (optionally `{ value: ... }`).
+ * Empty slots must not keep identity or serialize as used features.
+ */
+function isEmptyInnerBlocksTree(
+	value: mixed,
+	defaultAttributes: ?Object
+): boolean {
+	const unwrapped = unwrapBlockeraAttributeValue(value);
+
+	if (unwrapped == null) {
+		return true;
+	}
+
+	if (Array.isArray(unwrapped)) {
+		return unwrapped.length === 0;
+	}
+
+	if (typeof unwrapped !== 'object') {
+		return false;
+	}
+
+	const keys = Object.keys(unwrapped);
+
+	if (keys.length === 0) {
+		return true;
+	}
+
+	for (let i = 0; i < keys.length; i++) {
+		const item = unwrapped[keys[i]];
+
+		if (
+			!item ||
+			typeof item !== 'object' ||
+			Array.isArray(item) ||
+			!('attributes' in item)
+		) {
+			return false;
+		}
+
+		if (
+			hasBlockeraFeatureAttributes(
+				(item: any).attributes || {},
+				defaultAttributes
+			)
+		) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+function isUnusedBlockeraFeatureValue(
+	current: mixed,
+	registeredDefault: mixed,
+	defaultAttributes: ?Object
+): boolean {
+	if (current === undefined) {
+		return true;
+	}
+
+	if (registeredDefault !== undefined) {
+		if (isEquals(current, registeredDefault)) {
+			return true;
+		}
+
+		if (
+			isEquals(
+				unwrapBlockeraAttributeValue(current),
+				unwrapBlockeraAttributeValue(registeredDefault)
+			)
+		) {
+			return true;
+		}
+	}
+
+	if (isEmptyBlockeraFeatureValue(current)) {
+		return true;
+	}
+
+	return isEmptyInnerBlocksTree(current, defaultAttributes);
 }
 
 /**
@@ -190,7 +309,8 @@ function getRegisteredDefaultValue(
  *
  * Meta keys (`blockeraId`, legacy ids, `blockeraBlockMode`) do not count.
  * Values equal to the registered default do not count (e.g. `{ value: 'none' }`).
- * Empty wrappers, `''`, `[]`, and `{}` do not count. `0` and `false` do.
+ * Empty wrappers, `''`, `[]`, `{}`, and empty inner-block slots do not count.
+ * `0` and `false` do.
  *
  * @param {?Object} attributes Block attributes.
  * @param {?Object} defaultAttributes Registered schema or prepared default values.
@@ -209,31 +329,80 @@ export function hasBlockeraFeatureAttributes(
 			continue;
 		}
 
-		const current = attributes[key];
-		const registeredDefault = getRegisteredDefaultValue(
-			defaultAttributes,
-			key
-		);
-
-		// Schema defaults may be unwrapped (`defaultWithoutValue`); stored attrs
-		// still use `{ value }`. Compare both shapes.
 		if (
-			registeredDefault !== undefined &&
-			(isEquals(current, registeredDefault) ||
-				isEquals(
-					unwrapBlockeraAttributeValue(current),
-					unwrapBlockeraAttributeValue(registeredDefault)
-				))
+			!isUnusedBlockeraFeatureValue(
+				attributes[key],
+				getRegisteredDefaultValue(defaultAttributes, key),
+				defaultAttributes
+			)
 		) {
-			continue;
-		}
-
-		if (!isEmptyBlockeraFeatureValue(current)) {
 			return true;
 		}
 	}
 
 	return false;
+}
+
+/**
+ * Gutenberg omits attributes that strictly equal the registered default.
+ * Unused/wrong-shape values are reset to that default (not `undefined`).
+ *
+ * @param {Object} attributes Block attributes.
+ * @param {?Object} defaultAttributes Registered schema or prepared default values.
+ * @return {Object} Attributes with unused Blockera features set to schema defaults.
+ */
+export function omitUnusedBlockeraFeatureAttributes(
+	attributes: Object,
+	defaultAttributes: ?Object
+): Object {
+	if (!attributes || typeof attributes !== 'object') {
+		return attributes || {};
+	}
+
+	let next = null;
+
+	for (const key in attributes) {
+		if (!BLOCKERA_ATTR_KEY.test(key) || BLOCKERA_META_ATTRIBUTE_KEYS[key]) {
+			continue;
+		}
+
+		const registeredDefault = getRegisteredDefaultValue(
+			defaultAttributes,
+			key
+		);
+
+		if (
+			!isUnusedBlockeraFeatureValue(
+				attributes[key],
+				registeredDefault,
+				defaultAttributes
+			)
+		) {
+			continue;
+		}
+
+		if (registeredDefault === undefined) {
+			if (attributes[key] !== undefined) {
+				if (!next) {
+					next = { ...attributes };
+				}
+				next[key] = undefined;
+			}
+			continue;
+		}
+
+		if (isEquals(attributes[key], registeredDefault)) {
+			continue;
+		}
+
+		if (!next) {
+			next = { ...attributes };
+		}
+
+		next[key] = registeredDefault;
+	}
+
+	return next || attributes;
 }
 
 /**
@@ -259,12 +428,13 @@ export function stripBlockeraIdentity(attributes: Object): Object {
 }
 
 /**
- * In Advanced Mode, remove identity when no feature attributes remain.
- * Basic Mode keeps `blockeraId` even with empty features.
+ * Reset unused Blockera feature keys to registered defaults so Gutenberg
+ * omits them from markup. In Advanced Mode, also remove identity when no
+ * feature attributes remain. Basic Mode keeps `blockeraId`.
  *
  * @param {Object} attributes Block attributes.
  * @param {?Object} defaultAttributes Registered schema or prepared default values.
- * @return {Object} Attributes, possibly without identity.
+ * @return {Object} Attributes with unused features normalized (and maybe identity stripped).
  */
 export function withoutBlockeraIdentityIfUnused(
 	attributes: Object,
@@ -274,14 +444,19 @@ export function withoutBlockeraIdentityIfUnused(
 		return attributes || {};
 	}
 
+	const next = omitUnusedBlockeraFeatureAttributes(
+		attributes,
+		defaultAttributes
+	);
+
 	if (
-		isBlockeraBlockModeBasic(attributes) ||
-		hasBlockeraFeatureAttributes(attributes, defaultAttributes)
+		isBlockeraBlockModeBasic(next) ||
+		hasBlockeraFeatureAttributes(next, defaultAttributes)
 	) {
-		return attributes;
+		return next;
 	}
 
-	return stripBlockeraIdentity(attributes);
+	return stripBlockeraIdentity(next);
 }
 
 /**

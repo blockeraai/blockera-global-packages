@@ -3,6 +3,9 @@
 ### New Features
 - Added new helper functions to improve plugin functionality.
 
+### Bug Fixes
+- Unused repeater attributes now reset to Gutenberg's registered default (`{ value: {} }`) instead of PHP's empty array (`{ value: [] }`), so they are omitted from saved block markup.
+
 ### Improvements
 - Site Editor SPA URLs keep `/` and `:` literal in the query string (`p` and custom params), including the address bar on first load.
 - Length values used in block styles (for example borders and shadows) are normalized more reliably when saved data uses shorthand decimals or omits a unit; the `normalizeCssLengthValue` helper also accepts an optional default unit (defaults to `px`, or use an empty string to keep numbers unitless).
