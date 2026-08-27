@@ -1,33 +1,39 @@
 #!/usr/bin/env bash
-# Create or checkout the release branch based on release_type / old_version.
+# Checkout origin/RELEASE_BRANCH when it exists; otherwise create it from HEAD.
+# Dispatch from the default branch does not require creating the branch in GitHub first.
 #
 # Required env:
-#   RELEASE_TYPE     rc|stable
-#   OLD_VERSION
 #   RELEASE_BRANCH
+#
+# Optional env (ignored; kept so older workflows can still pass them):
+#   RELEASE_TYPE
+#   OLD_VERSION
+#
+# Outputs (GITHUB_OUTPUT):
+#   created   true when origin did not have the branch
 set -euo pipefail
 
-RELEASE_TYPE="${RELEASE_TYPE:-}"
-OLD_VERSION="${OLD_VERSION:-}"
 RELEASE_BRANCH="${RELEASE_BRANCH:-}"
-
-if [[ -z "${RELEASE_TYPE}" || -z "${OLD_VERSION}" || -z "${RELEASE_BRANCH}" ]]; then
-	echo "build-zip/prepare-branch: RELEASE_TYPE, OLD_VERSION, RELEASE_BRANCH required" >&2
+if [[ -z "${RELEASE_BRANCH}" ]]; then
+	echo "build-zip/prepare-branch: RELEASE_BRANCH required" >&2
 	exit 1
 fi
 
-if [[ "${RELEASE_TYPE}" == "rc" && "${OLD_VERSION}" != *"rc"* ]]; then
+created=false
+
+if git ls-remote --exit-code --heads origin "${RELEASE_BRANCH}" >/dev/null 2>&1; then
+	echo "build-zip/prepare-branch: checkout origin/${RELEASE_BRANCH}"
+	git fetch origin "${RELEASE_BRANCH}"
+	git checkout -B "${RELEASE_BRANCH}" "origin/${RELEASE_BRANCH}"
+elif [[ "$(git branch --show-current)" == "${RELEASE_BRANCH}" ]]; then
+	echo "build-zip/prepare-branch: already on ${RELEASE_BRANCH} (not on origin)"
+	created=true
+else
 	echo "build-zip/prepare-branch: create ${RELEASE_BRANCH}"
 	git checkout -b "${RELEASE_BRANCH}"
-	exit 0
+	created=true
 fi
 
-if [[ "${RELEASE_TYPE}" == "stable" || "${OLD_VERSION}" == *"rc"* ]]; then
-	echo "build-zip/prepare-branch: checkout ${RELEASE_BRANCH}"
-	git fetch --depth=1 origin "${RELEASE_BRANCH}"
-	git checkout "${RELEASE_BRANCH}"
-	exit 0
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+	echo "created=${created}" >>"${GITHUB_OUTPUT}"
 fi
-
-echo "build-zip/prepare-branch: no branch action for release_type=${RELEASE_TYPE}" >&2
-exit 1
