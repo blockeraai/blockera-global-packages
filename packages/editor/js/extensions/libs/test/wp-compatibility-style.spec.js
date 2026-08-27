@@ -21,6 +21,15 @@ describe('cleanEmptyObject (Gutenberg style trees)', () => {
 		expect(cleanEmptyObject({ typography: {} })).toEqual(undefined);
 	});
 
+	it('removes PHP empty-array style.color and nested elements.link.color', () => {
+		expect(
+			cleanEmptyObject({
+				color: [],
+				elements: { link: { color: [] } },
+			})
+		).toEqual(undefined);
+	});
+
 	it('keeps sibling branches that still have values', () => {
 		expect(
 			cleanEmptyObject({
@@ -57,6 +66,15 @@ describe('withCleanedWpStyle', () => {
 
 		expect(next.style).toBeUndefined();
 		expect(next.content).toBe('Hello');
+	});
+
+	it('unsets style when PHP empty-array color trees remain', () => {
+		const next = withCleanedWpStyle({
+			content: 'Hello',
+			style: { color: [], elements: { link: { color: [] } } },
+		});
+
+		expect(next.style).toBeUndefined();
 	});
 
 	it('leaves attributes without style unchanged', () => {
@@ -136,5 +154,17 @@ describe('sanitizeWPCompatibilityAttributes', () => {
 
 		expect(next.style).toBeUndefined();
 		expect(next.content).toBe('Hello');
+	});
+
+	it('cleans PHP empty-array style.color imported from WordPress', () => {
+		const next = sanitizeWPCompatibilityAttributes(
+			{
+				content: 'Hello',
+				style: { color: [], elements: { link: { color: [] } } },
+			},
+			paragraphDetail
+		);
+
+		expect(next.style).toBeUndefined();
 	});
 });
