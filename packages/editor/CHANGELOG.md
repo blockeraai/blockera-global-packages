@@ -28,6 +28,8 @@
 - Text Orientation Feature: improve label for options.
 
 ### Bug Fixes
+- After resetting a control, unused Blockera repeater attributes are no longer saved as `{ "value": [] }` in block markup.
+- WordPress `style` written during feature compatibility is deep-cleaned so empty objects (for example `"style":{"typography":{}}`) are not saved in block markup.
 - Preview mode: Clicks on links, linked images, buttons, and featured-image permalinks inside the preview iframe no longer navigate or reload the preview.
 - Global styles: When you edit which blocks use a style variation (the “used in multiple blocks” dialog) and save, the block icons shown on that style row now refresh right away instead of staying on the old list until something else updates the screen.
 - Letter-spacing, line-height, and position inset values (top, right, bottom, left) from WordPress now pass through CSS length normalization when syncing into Blockera, so bare zeros, shorthand decimals, and similar core formats match what the controls expect. Line height keeps unitless values from core without adding a `px` suffix.
@@ -35,6 +37,8 @@
 - Cursor feature: Fix pointer option icon and improve auto icon.
 
 ### Automated Tests
+- WordPress `style` cleanup: unit tests for empty-object pruning after compatibility merges, and e2e coverage that leftover `"style":{"typography":{}}` is not saved after font-size or text-color reset.
+- Block cleanup: e2e asserts unused repeater attributes are not saved as `{ "value": [] }` after a text-color reset.
 - BlockBase: e2e coverage that idle time and sibling-block edits do not re-render every mounted BlockBase instance.
 - Preview mode: e2e coverage that clicking paragraph links, linked images, buttons, and featured-image permalinks does not navigate the preview iframe.
 - Automated test to check `font color` WP data compatibility if variables not found. 

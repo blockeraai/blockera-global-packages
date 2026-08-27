@@ -270,6 +270,85 @@ export function omitUnregisteredInnerBlockData(
 }
 
 /**
+ * Remove nested empty objects the same way Gutenberg does for `style`.
+ * Empty `{}` (and trees of only `undefined`) become `undefined` so they are
+ * omitted from saved block markup. Falsy values (`''`, `0`, `false`) are kept.
+ *
+ * @see source-codes/block-editor/packages/block-editor/src/hooks/utils.js `cleanEmptyObject`
+ *
+ * @param {*} object Nested value.
+ * @return {*} Cleaned value, or `undefined` when the object is empty.
+ */
+export function cleanEmptyObject(object: mixed): mixed {
+	if (
+		object === null ||
+		typeof object !== 'object' ||
+		Array.isArray(object)
+	) {
+		return object;
+	}
+
+	const record: { [string]: mixed } = (object: any);
+	const keys = Object.keys(record);
+	let next: { [string]: mixed } | null = null;
+
+	for (let i = 0; i < keys.length; i++) {
+		const key = keys[i];
+		const value = record[key];
+		const cleaned = cleanEmptyObject(value);
+
+		if (cleaned === undefined) {
+			if (!next) {
+				next = { ...record };
+			}
+			delete next[key];
+			continue;
+		}
+
+		if (cleaned !== value) {
+			if (!next) {
+				next = { ...record };
+			}
+			next[key] = cleaned;
+		}
+	}
+
+	if (next) {
+		return Object.keys(next).length ? next : undefined;
+	}
+
+	return keys.length ? record : undefined;
+}
+
+/**
+ * Deep-clean WordPress `style` so empty branches (e.g. `{ typography: {} }`)
+ * do not serialize after compatibility writes.
+ *
+ * @param {Object} attributes Block attributes.
+ * @return {Object} Attributes with an empty `style` tree unset.
+ */
+export function withCleanedWpStyle(attributes: Object): Object {
+	if (!attributes || typeof attributes !== 'object') {
+		return attributes;
+	}
+
+	if (!('style' in attributes)) {
+		return attributes;
+	}
+
+	const cleanedStyle = cleanEmptyObject(attributes.style);
+
+	if (cleanedStyle === attributes.style) {
+		return attributes;
+	}
+
+	return {
+		...attributes,
+		style: cleanedStyle,
+	};
+}
+
+/**
  * Merge WordPress compatibility output while omitting unregistered inner-block data.
  *
  * @param {Object} nextState Current attribute state.
@@ -305,10 +384,12 @@ export function mergeWPCompatibility(
 		...Object,
 	} = sanitized;
 
-	return mergeObject(nextState, attributePatch, {
-		forceUpdated: forceUpdated ?? [],
-		deletedProps: deletedProps ?? [],
-	});
+	return withCleanedWpStyle(
+		mergeObject(nextState, attributePatch, {
+			forceUpdated: forceUpdated ?? [],
+			deletedProps: deletedProps ?? [],
+		})
+	);
 }
 
 /**
@@ -321,11 +402,11 @@ export function mergeWPCompatibility(
  *
  * @param {Object} attributes Block attributes.
  * @param {BlockDetail} blockDetail Current block detail.
- * @return {Object} Attributes unchanged.
+ * @return {Object} Attributes with empty WordPress `style` trees removed.
  */
 export function sanitizeWPCompatibilityAttributes(
 	attributes: Object,
 	_blockDetail: BlockDetail // eslint-disable-line no-unused-vars
 ): Object {
-	return attributes;
+	return withCleanedWpStyle(attributes);
 }
