@@ -7,6 +7,8 @@
 #
 # Optional:
 #   BLOCKERA_BUILD_ZIP_MAIN_FILE  default: blockera.php
+#
+# Pushes with --force-with-lease because the branch was recreated from master.
 set -euo pipefail
 
 if [[ -z "${GITHUB_OUTPUT:-}" ]]; then
@@ -34,5 +36,6 @@ if git diff --cached --quiet; then
 fi
 
 git commit -m "Bump version to ${NEW_VERSION}"
-git push --set-upstream origin "${RELEASE_BRANCH}"
+git fetch origin "${RELEASE_BRANCH}" || true
+git push --force-with-lease --set-upstream origin "${RELEASE_BRANCH}"
 echo "version_bump_commit=$(git rev-parse --verify --short HEAD)" >>"${GITHUB_OUTPUT}"

@@ -1,8 +1,8 @@
 ## Unreleased
 
 ### Bug Fixes
+- Release branches: every rc and stable run forks `release/*` from origin/master HEAD (not from an existing release or RC tip); push uses `--force-with-lease`.
 - Zip version bump: set the WordPress `Version:` header in `BLOCKERA_BUILD_ZIP_MAIN_FILE` (theme `style.css` or plugin bootstrap) to `NEW_VERSION` even when it did not match `OLD_VERSION`.
-- Release branches: RC uses `release/x.y.z-rc`; stable always uses `release/x.y.z` (fork from the RC tip when that branch is new) instead of committing on the RC branch.
 - Zip changelog accumulation: ignore a prerelease `OLD_VERSION` / previous tag so RC and stable both accumulate from the last stable product tag.
 - Release notes: quote `--milestone="Blockera 2.0"` so Commander does not look up a milestone titled only `Blockera`; complete a truncated title from the release version; fail the job instead of writing the stack into the GitHub release body.
 - Sync global-packages submodule: skip auto-push on matching feature branches so `npm run submodule:bump` is not followed by a duplicate blockerabot commit. Master still opens/updates the bump PR; use workflow_dispatch `mode=push` or `mode=pr` for a remote feature-branch pin.

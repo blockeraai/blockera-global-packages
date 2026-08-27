@@ -7,6 +7,8 @@
 #
 # Optional:
 #   BLOCKERA_BUILD_ZIP_PACKAGE_JSON   default: package.json
+#
+# Run after prepare-release-branch.sh so package.json is default-branch HEAD.
 set -euo pipefail
 
 if [[ -z "${GITHUB_OUTPUT:-}" ]]; then

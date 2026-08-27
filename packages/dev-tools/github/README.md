@@ -239,17 +239,19 @@ Templates: `workflows/release-plugin.yml` (plugin) and `workflows/release-theme.
 (theme). Copy into the consumer `.github/workflows/` and set OWNER/REPO, zip
 slug, and env knobs. Same scripts; product identity stays in the thin workflow.
 
-Dispatch **Release** from `master` (or an existing `release/*` branch).
-`resolve-release-branch.sh` picks:
+Dispatch **Release**. Each run (rc or stable) **forks the release branch from
+`origin/<default-branch>` HEAD** (`BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH`, default
+`master`) — it does not continue an existing `release/*` or RC tip.
+`resolve-release-branch.sh` names:
 
-- **rc** → `release/x.y.z-rc` (create from HEAD if missing)
-- **stable** → `release/x.y.z` (never land on the `-rc` branch). If that
-  branch is missing and `release/x.y.z-rc` exists, create stable from the RC
-  tip (`SOURCE_BRANCH`).
+- **rc** → `release/x.y.z-rc`
+- **stable** → `release/x.y.z`
 
-Then compute old→new from the checked-out branch’s `package.json` so a second
-RC becomes `rc.2`. Changelog accumulation always starts from the last **stable**
-tag (a prerelease `OLD_VERSION` is not used as the previous product ref).
+Versions are computed from that default-branch `package.json`. The push uses
+`--force-with-lease` because the branch was recreated from master (an existing
+`release/*` is replaced, not continued). A second RC from the same master
+version starts at `rc.1` again. Changelog accumulation always starts from the
+last **stable** tag.
 Do not pre-create the branch in GitHub. On a failed build, a newly created
 branch is deleted; an existing one has the bump commit reverted.
 
@@ -261,7 +263,7 @@ those commits onto `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` (default `master`).
 | --- | --- |
 | `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` (theme consumer: `style.css`). Zip bump sets the WordPress `Version:` header in that file to `NEW_VERSION`. |
 | `BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX` | `Blockera` (title is `"${prefix} ${major}.${minor}"`, quoted so RC notes look up `Blockera 2.0` not `Blockera`) |
-| `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` | `master` (stable cherry-pick target; unused for rc) |
+| `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` | `master` (fork source for every rc/stable release branch; stable cherry-pick target) |
 | `artifact-name` / `zip-file` (action) | `blockera` / `./blockera.zip` |
 
 ```yaml
