@@ -11,6 +11,10 @@ class ChildOrigin extends BaseStyleDefinition {
 
 		$childOrigin = $setting['child-origin'] ?? null;
 
+		if ( is_array( $childOrigin ) && isset( $childOrigin['value'] ) && is_array( $childOrigin['value'] ) ) {
+			$childOrigin = $childOrigin['value'];
+		}
+
 		if ( ! is_array( $childOrigin ) || ! isset( $childOrigin['top'], $childOrigin['left'] ) ) {
 			return $this->css;
 		}
