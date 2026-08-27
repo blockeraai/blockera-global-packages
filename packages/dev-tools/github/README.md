@@ -241,10 +241,15 @@ origin (`prepare-release-branch.sh`, output `created`). Do not pre-create the
 branch in GitHub. On a failed build, a newly created branch is deleted; an
 existing one has the bump commit reverted.
 
+**RC** changelog and version commits stay on `release/x.y.z` only
+(`cherry-pick-to-master.sh` skips when `RELEASE_TYPE=rc`). **Stable** cherry-picks
+those commits onto `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` (default `master`).
+
 | Env | Default (Blockera base) |
 | --- | --- |
 | `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` |
 | `BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX` | `Blockera` |
+| `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` | `master` (stable cherry-pick target; unused for rc) |
 | `artifact-name` / `zip-file` (action) | `blockera` / `./blockera.zip` |
 
 Release bump runs `jobs/build-plugin-zip/update-changelogs.sh`, which calls the
