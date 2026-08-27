@@ -73,4 +73,39 @@ class ChildOriginTest extends StyleDefinitionTestCase {
 
 		$this->assertSame( $this->cssMap( [ 'perspective-origin' => '50% 25%' ] ), $result );
 	}
+
+	public function testEmitsPerspectiveOriginFromWrappedValue(): void {
+		$result = $this->invokeCss(
+			$this->definition(),
+			[
+				'type'         => 'child-origin',
+				'child-origin' => [
+					'value' => [
+						'top'  => '50%',
+						'left' => '25%',
+					],
+				],
+			]
+		);
+
+		$this->assertSame( $this->cssMap( [ 'perspective-origin' => '50% 25%' ] ), $result );
+	}
+
+	public function testSkipsWrappedEmptyOrigin(): void {
+		$this->assertSame(
+			[],
+			$this->invokeCss(
+				$this->definition(),
+				[
+					'type'         => 'child-origin',
+					'child-origin' => [
+						'value' => [
+							'top'  => '',
+							'left' => '',
+						],
+					],
+				]
+			)
+		);
+	}
 }
