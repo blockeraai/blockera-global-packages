@@ -43,6 +43,7 @@ import {
 	stripBlockeraBlockClasses,
 	stripBlockeraIdentity,
 	withBlockeraBlockClassFromId,
+	withoutBlockeraIdentityIfUnused,
 } from '@blockera/utils';
 import { classNames } from '@blockera/classnames';
 import { generalBlockFeatures } from '@blockera/blocks-core/js/libs/general-block-features';
@@ -815,6 +816,14 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			clonedAttributes.className = stripped.className;
 		}
 
+		const persistableAttributes = withoutBlockeraIdentityIfUnused(
+			clonedAttributes,
+			availableAttributes?.blockeraId ||
+				availableAttributes?.blockeraPropsId
+				? availableAttributes
+				: originDefaultAttributes
+		);
+
 		if (
 			'function' === typeof handleOnChangeStyleInLocalState &&
 			!isEquals(compatibleAttributes, attributes) &&
@@ -824,7 +833,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			)
 		) {
 			// It just will be called if outside of the block inspector. (See: canvas-editor/components/block-global-styles-panel-screen/context.js)
-			handleOnChangeStyleInLocalState(clonedAttributes);
+			handleOnChangeStyleInLocalState(persistableAttributes);
 		}
 
 		// If inside the block inspector, update the parent state immediately.
@@ -838,7 +847,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 
 		if (insideBlockInspector) {
 			if (shouldPersistUserEdit || shouldPersistReturn) {
-				setBlockAttributes(clonedAttributes);
+				setBlockAttributes(persistableAttributes);
 				persistReturnCompatRef.current = false;
 			}
 
@@ -847,7 +856,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 
 		const timeoutId = setTimeout(() => {
 			if (shouldPersistUserEdit || shouldPersistReturn) {
-				setBlockAttributes(clonedAttributes);
+				setBlockAttributes(persistableAttributes);
 				persistReturnCompatRef.current = false;
 			}
 		}, BLOCKERA_DELAY_EXPECTED_TIME);
@@ -948,6 +957,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		currentState,
 		blockVariations,
 		defaultAttributes,
+		originDefaultAttributes,
 		currentBreakpoint,
 		availableAttributes,
 		masterIsNormalState,

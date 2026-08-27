@@ -56,6 +56,7 @@ export const useAttributes = (
 		blockVariations,
 		currentBreakpoint,
 		defaultAttributes,
+		originDefaultAttributes,
 		availableAttributes,
 		masterIsNormalState,
 		blockeraInnerBlocks,
@@ -70,6 +71,7 @@ export const useAttributes = (
 		currentState: TStates,
 		blockVariations: Object,
 		defaultAttributes: Object,
+		originDefaultAttributes?: Object,
 		availableAttributes: Object,
 		blockeraInnerBlocks: Object,
 		isNormalState: () => boolean,
@@ -118,6 +120,16 @@ export const useAttributes = (
 				);
 			}
 
+			// Gutenberg omits attrs that strictly equal the registered default.
+			// `availableAttributes` is getBlockType().attributes after
+			// sanitizeDefaultAttributes (`{ value: {} }` for empty arrays).
+			// PHP origin schema still uses `{ value: [] }`, which serializes.
+			const persistSchema =
+				availableAttributes?.blockeraId ||
+				availableAttributes?.blockeraPropsId
+					? availableAttributes
+					: originDefaultAttributes || defaultAttributes;
+
 			// Migrate to blockera attributes for some blocks where includes attributes migrations in original core Block Edit component, if we supported them.
 			if (
 				'undefined' === typeof _attributes?.blockeraId &&
@@ -127,7 +139,7 @@ export const useAttributes = (
 			) {
 				_attributes = mergeObject(
 					attributes,
-					prepareBlockeraDefaultAttributesValues(defaultAttributes)
+					prepareBlockeraDefaultAttributesValues(persistSchema)
 				);
 			}
 
@@ -227,7 +239,7 @@ export const useAttributes = (
 				setAttributes(
 					withoutBlockeraIdentityIfUnused(
 						nextAttributes,
-						defaultAttributes
+						persistSchema
 					),
 					commitOptions
 				);
@@ -308,12 +320,14 @@ export const useAttributes = (
 			blockVariations,
 			currentBreakpoint,
 			defaultAttributes,
+			originDefaultAttributes,
 			masterIsNormalState,
 			// blockeraInnerBlocks,
 			activeBlockVariation,
 			currentInnerBlockState,
 			getActiveBlockVariation,
 			availableAttributes?.blockeraId,
+			availableAttributes?.blockeraPropsId,
 		]
 	);
 
