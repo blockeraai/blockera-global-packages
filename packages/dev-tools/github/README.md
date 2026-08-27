@@ -231,9 +231,15 @@ env:
 
 ## Build plugin zip (release)
 
-Multi-job release flow: compute next branch → bump version → build zip artifact →
-revert on failure → draft GitHub release. Job graph / `if:` stay in the consumer
-workflow; bash lives under `scripts/jobs/build-plugin-zip/`.
+Multi-job release flow: bump version → build zip artifact → revert on failure →
+draft GitHub release. Job graph / `if:` stay in the consumer workflow; bash
+lives under `scripts/jobs/build-plugin-zip/`.
+
+Dispatch **Release** from `master` (or an existing `release/*` branch). The bump
+job creates `release/x.y.z` from the current HEAD when that branch is not on
+origin (`prepare-release-branch.sh`, output `created`). Do not pre-create the
+branch in GitHub. On a failed build, a newly created branch is deleted; an
+existing one has the bump commit reverted.
 
 | Env | Default (Blockera base) |
 | --- | --- |
