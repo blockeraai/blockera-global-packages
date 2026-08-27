@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Bug Fixes
+- Release notes: quote `--milestone="Blockera 2.0"` so Commander does not look up a milestone titled only `Blockera`; complete a truncated title from the release version; fail the job instead of writing the stack into the GitHub release body.
 - Sync global-packages submodule: skip auto-push on matching feature branches so `npm run submodule:bump` is not followed by a duplicate blockerabot commit. Master still opens/updates the bump PR; use workflow_dispatch `mode=push` or `mode=pr` for a remote feature-branch pin.
 - Zip changelog accumulation: allow products with no consumer `packages/*/CHANGELOG.md` (global-packages only); fail only when `BLOCKERA_CHANGELOG_CONSUMER_GLOBS` is set and matches nothing.
 - Zip changelog accumulation: include GP notes only for packages whose `package.json` / `composer.json` version changed since the previous product release pin, from that previous version through the new version (do not dump unchanged package history).

@@ -1267,11 +1267,57 @@ async function createChangelog(settings) {
 		);
 	} catch (error) {
 		if (error instanceof Error) {
-			releaselog = formats.error(error.stack);
+			log(formats.error(error.stack));
 		}
+		throw error;
 	}
 
 	log(releaselog);
+}
+
+/**
+ * Milestone title for GitHub lookup.
+ * A truncated `--milestone=Blockera` (unquoted "Blockera 2.0") is completed
+ * from --version / package.json as `Blockera 2.0`.
+ *
+ * @param {WPChangelogCommandOptions} options
+ * @param {ReturnType<typeof getPluginConfig>} config
+ * @param {{ version?: string }} manifest
+ * @return {string} Milestone title.
+ */
+function resolveMilestoneTitle(options, config, manifest) {
+	const passed = options.milestone;
+	if (typeof passed === 'string' && /\d/.test(passed)) {
+		return passed;
+	}
+
+	const parsed =
+		semver.parse(options.version) ||
+		semver.coerce(options.version) ||
+		semver.parse(manifest.version) ||
+		semver.coerce(manifest.version);
+
+	if (parsed) {
+		// Disable reason: valid-sprintf applies to `@wordpress/i18n` where
+		// strings are expected to need to be extracted, and thus variables are
+		// not allowed. This string will not need to be extracted.
+		// eslint-disable-next-line @wordpress/valid-sprintf
+		return sprintf(config.versionMilestoneFormat, {
+			...config,
+			...parsed,
+		});
+	}
+
+	if (passed !== undefined) {
+		return passed;
+	}
+
+	const next = semver.parse(getNextMajorVersion(manifest.version));
+	// eslint-disable-next-line @wordpress/valid-sprintf
+	return sprintf(config.versionMilestoneFormat, {
+		...config,
+		...next,
+	});
 }
 
 /**
@@ -1287,17 +1333,7 @@ async function getReleaseChangelog(options) {
 		owner: config.githubRepositoryOwner,
 		repo: config.githubRepositoryName,
 		token: options.token,
-		milestone:
-			options.milestone === undefined
-				? // Disable reason: valid-sprintf applies to `@wordpress/i18n` where
-					// strings are expected to need to be extracted, and thus variables are
-					// not allowed. This string will not need to be extracted.
-					// eslint-disable-next-line @wordpress/valid-sprintf
-					sprintf(config.versionMilestoneFormat, {
-						...config,
-						...semver.parse(getNextMajorVersion(manifest.version)),
-					})
-				: options.milestone,
+		milestone: resolveMilestoneTitle(options, config, manifest),
 		unreleased: options.unreleased,
 		file: options?.file || '',
 		version: options?.version || '',
@@ -1313,6 +1349,7 @@ async function getReleaseChangelog(options) {
 	addTrailingPeriod,
 	getNormalizedTitle,
 	getReleaseChangelog,
+	resolveMilestoneTitle,
 	getIssueType,
 	getIssueFeature,
 	sortGroup,

@@ -21,14 +21,26 @@ if [[ -z "${NEW_VERSION}" ]]; then
 	exit 1
 fi
 
-IFS='.' read -r -a VERSION_ARRAY <<<"${NEW_VERSION}"
-MILESTONE="${MILESTONE_PREFIX} ${VERSION_ARRAY[0]}.${VERSION_ARRAY[1]}"
+# 2.0.0-rc.1 → 2.0 (do not split on the rc counter).
+BASE_VERSION="${NEW_VERSION%%-*}"
+IFS='.' read -r MAJOR MINOR _ <<<"${BASE_VERSION}"
+MILESTONE="${MILESTONE_PREFIX} ${MAJOR}.${MINOR}"
 
 printf '%s' "${CHANGELOG}" | sed 's/\\n/\n/g' >release-note.txt
 
-OTHER_CMD="${BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD:-npm run other:changelog -- --milestone=${MILESTONE} --unreleased --file=release-note.txt --version=${NEW_VERSION}}"
-echo "build-zip/notes: ${OTHER_CMD}"
-eval "${OTHER_CMD}" >release-notes.txt
+# Quote --milestone: "Blockera 2.0" must stay one argv or Commander keeps only "Blockera".
+if [[ -n "${BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD:-}" ]]; then
+	echo "build-zip/notes: ${BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD}"
+	eval "${BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD}" >release-notes.txt
+else
+	echo "build-zip/notes: npm run other:changelog -- --milestone=${MILESTONE} --unreleased --file=release-note.txt --version=${NEW_VERSION}"
+	npm run other:changelog -- \
+		--milestone="${MILESTONE}" \
+		--unreleased \
+		--file=release-note.txt \
+		--version="${NEW_VERSION}" \
+		>release-notes.txt
+fi
 sed -ie '1,6d' release-notes.txt
 
 if [[ "${NEW_VERSION}" != *"rc"* ]]; then
