@@ -59,6 +59,9 @@ describe('Blockera identity cleanup', () => {
 			expect(content).to.not.include('blockeraId');
 			expect(content).to.not.include('blockera-block');
 			expect(content).to.not.include('blockeraFontSize');
+			expect(content).to.not.include('"typography":{}');
+			expect(content).to.not.include('"style":{');
+			expect(getSelectedBlock(data, 'style')).to.equal(undefined);
 			expect(getSelectedBlock(data, 'blockeraId') || '').to.equal('');
 		});
 	});
