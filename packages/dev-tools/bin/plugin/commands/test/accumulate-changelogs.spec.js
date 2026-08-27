@@ -131,6 +131,135 @@ ${oldContent}`
 			expect(changed).toContain('- New note');
 			expect(changed).not.toContain('- Old note');
 		});
+
+		it('skips a package whose version did not change', () => {
+			const changelog = `## [1.1.6] - 2025-07-16
+
+### Fixed
+- Old fix
+`;
+			const changed = extractChangedSections(changelog, changelog, {
+				previousVersion: '1.1.6',
+				currentVersion: '1.1.6',
+			});
+
+			expect(changed).toBe('');
+		});
+
+		it('uses the previous package.json version even when old changelog content is missing', () => {
+			const changed = extractChangedSections(
+				'',
+				`## [1.2.0] - 2026-08-26
+
+### Added
+- New API
+
+## 1.1.6 (2025-07-16)
+
+### Fixed
+- Old fix
+
+## 1.0.0 (2024-12-08)
+
+### Added
+- Ancient
+`,
+				{
+					previousVersion: '1.1.6',
+					currentVersion: '1.2.0',
+				}
+			);
+
+			expect(changed).toContain('- New API');
+			expect(changed).not.toContain('- Old fix');
+			expect(changed).not.toContain('- Ancient');
+		});
+
+		it('includes dated cuts between the previous and current package versions', () => {
+			const changed = extractChangedSections(
+				'## [1.0.0]\n\n### Fixed\n- Old\n',
+				`## [2.0.0] - 2026-08-26
+
+### Added
+- Versioned
+
+## [2026-08-25]
+
+### Added
+- Dated cut
+
+## [1.0.0]
+
+### Fixed
+- Old
+`,
+				{
+					previousVersion: '1.0.0',
+					currentVersion: '2.0.0',
+				}
+			);
+
+			expect(changed).toContain('- Versioned');
+			expect(changed).toContain('- Dated cut');
+			expect(changed).not.toContain('- Old');
+		});
+
+		it('includes only the current version for a newly added package', () => {
+			const changed = extractChangedSections(
+				'',
+				`## Unreleased
+
+### Added
+- Inbox note
+
+## [1.2.0] - 2026-08-26
+
+### Added
+- New package API
+
+## 1.1.6 (2025-07-16)
+
+### Fixed
+- History
+`,
+				{
+					currentVersion: '1.2.0',
+				}
+			);
+
+			expect(changed).toContain('- Inbox note');
+			expect(changed).toContain('- New package API');
+			expect(changed).not.toContain('- History');
+		});
+
+		it('includes Unreleased together with new version headings', () => {
+			const changed = extractChangedSections(
+				'## [1.0.0]\n\n### Fixed\n- Old\n',
+				`## Unreleased
+
+### Added
+- Still open
+
+## [2.0.0] - 2026-08-26
+
+### Added
+- Bump
+
+## [1.0.0]
+
+### Fixed
+- Old
+`,
+				{
+					previousVersion: '1.0.0',
+					currentVersion: '2.0.0',
+				}
+			);
+
+			expect(changed).toContain('- Still open');
+			expect(changed).toContain('- Bump');
+			expect(changed).not.toContain('- Old');
+		});
 	});
 
 	describe('foldUnreleased', () => {
@@ -383,6 +512,120 @@ ${oldContent}`
 				expect(
 					fs.existsSync(path.join(dir, 'changelog.txt'))
 				).toBe(true);
+			} finally {
+				restoreEnv('BLOCKERA_CHANGELOG_CONSUMER_GLOBS', previousGlobs);
+				restoreEnv(
+					'BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP',
+					previousFold
+				);
+				fs.rmSync(dir, { recursive: true, force: true });
+			}
+		});
+
+		it('accumulates GP Unreleased for GP-only products without a gitlink', async () => {
+			const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'changelogs-'));
+			const gpPkg = path.join(
+				dir,
+				'packages',
+				'global-packages',
+				'packages',
+				'gp'
+			);
+			fs.mkdirSync(gpPkg, { recursive: true });
+			fs.writeFileSync(
+				path.join(gpPkg, 'package.json'),
+				JSON.stringify({ name: '@blockera/gp', version: '1.2.0' })
+			);
+			fs.writeFileSync(
+				path.join(gpPkg, 'CHANGELOG.md'),
+				`## Unreleased
+
+### Added
+- Pending GP note
+
+## [1.2.0] - 2026-08-26
+
+### Added
+- Versioned note
+
+## [1.0.0] - 2024-12-08
+
+### Fixed
+- Ancient
+`
+			);
+
+			const previousGlobs = process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS;
+			const previousFold = process.env.BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP;
+			const previousFrom = process.env.BLOCKERA_CHANGELOG_FROM_REF;
+			delete process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS;
+			delete process.env.BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP;
+			process.env.BLOCKERA_CHANGELOG_FROM_REF = 'no-such-ref';
+			setPluginConfig({
+				name: 'Blockera',
+				changelog: {
+					archiveUrl: 'https://example.com/releases',
+					includeCommitCount: false,
+				},
+			});
+
+			try {
+				await accumulateProductChangelogs({
+					cwd: dir,
+					version: '2.0.0-rc.1',
+					publishDate: '2026-08-27',
+				});
+				expect(console).toHaveLogged();
+				const root = fs.readFileSync(
+					path.join(dir, 'CHANGELOG.md'),
+					'utf8'
+				);
+				expect(root).toContain('- Pending GP note');
+				expect(root).toContain('- Versioned note');
+				expect(root).not.toContain('- Ancient');
+			} finally {
+				restoreEnv('BLOCKERA_CHANGELOG_CONSUMER_GLOBS', previousGlobs);
+				restoreEnv(
+					'BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP',
+					previousFold
+				);
+				restoreEnv('BLOCKERA_CHANGELOG_FROM_REF', previousFrom);
+				fs.rmSync(dir, { recursive: true, force: true });
+			}
+		});
+
+		it('throws when BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP=1 and GP Unreleased has bullets', async () => {
+			const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'changelogs-'));
+			fs.mkdirSync(
+				path.join(dir, 'packages', 'global-packages', 'packages', 'gp'),
+				{ recursive: true }
+			);
+			fs.writeFileSync(
+				path.join(
+					dir,
+					'packages',
+					'global-packages',
+					'packages',
+					'gp',
+					'CHANGELOG.md'
+				),
+				'## Unreleased\n\n### Added\n- Pending\n'
+			);
+
+			const previousGlobs = process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS;
+			const previousFold = process.env.BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP;
+			delete process.env.BLOCKERA_CHANGELOG_CONSUMER_GLOBS;
+			process.env.BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP = '1';
+
+			try {
+				await expect(
+					accumulateProductChangelogs({
+						cwd: dir,
+						version: '2.0.0-rc.1',
+						publishDate: '2026-08-27',
+					})
+				).rejects.toThrow(/Fold Unreleased/);
+				expect(console).toHaveLogged();
 			} finally {
 				restoreEnv('BLOCKERA_CHANGELOG_CONSUMER_GLOBS', previousGlobs);
 				restoreEnv(
