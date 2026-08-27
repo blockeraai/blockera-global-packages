@@ -1,14 +1,18 @@
 import {
+	cleanEmptyObject,
 	generateBlockeraAttributeId,
 	getAttributesWithIds,
 	hasBlockeraFeatureAttributes,
+	isEmptyBlockStatesValue,
 	migrateLegacyBlockeraIds,
+	normalizeBlockeraBlockStatesValue,
 	omitUnusedBlockeraFeatureAttributes,
 	remintBlockeraIdentity,
 	needsLegacyBlockeraIdMigrate,
 	normalizeBlockeraIds,
 	stripBlockeraBlockClasses,
 	stripBlockeraIdentity,
+	withCleanedWpStyle,
 	withoutBlockeraIdentityIfUnused,
 } from '../get-attributes-with-ids';
 
@@ -546,4 +550,425 @@ describe('withoutBlockeraIdentityIfUnused', () => {
 		expect(next.blockeraFontSize).toEqual({ value: '' });
 		expect(next.blockeraBackgroundClip).toEqual({ value: 'none' });
 	});
+
+	it('resets wrapped empty transform origins to the wrapped registered default', () => {
+		const originSchema = {
+			blockeraTransformSelfOrigin: {
+				type: 'object',
+				default: { value: { top: '', left: '' } },
+			},
+			blockeraTransformChildOrigin: {
+				type: 'object',
+				default: { value: { top: '', left: '' } },
+			},
+			blockeraDisplay: { type: 'object', default: { value: '' } },
+		};
+
+		const next = withoutBlockeraIdentityIfUnused(
+			{
+				blockeraId: '8y64ys',
+				blockeraTransformSelfOrigin: { value: { top: '', left: '' } },
+				blockeraTransformChildOrigin: { value: { top: '', left: '' } },
+				blockeraDisplay: { value: 'flex' },
+				className: 'blockera-block blockera-block-8y64ys',
+			},
+			originSchema
+		);
+
+		expect(next.blockeraId).toBe('8y64ys');
+		expect(next.blockeraTransformSelfOrigin).toEqual({
+			value: { top: '', left: '' },
+		});
+		expect(next.blockeraTransformChildOrigin).toEqual({
+			value: { top: '', left: '' },
+		});
+		expect(next.blockeraDisplay).toEqual({ value: 'flex' });
+		expect(hasBlockeraFeatureAttributes(next, originSchema)).toBe(true);
+	});
+
+	it('resets legacy unwrapped empty transform origins to the wrapped registered default', () => {
+		const originSchema = {
+			blockeraTransformSelfOrigin: {
+				type: 'object',
+				default: { value: { top: '', left: '' } },
+			},
+			blockeraTransformChildOrigin: {
+				type: 'object',
+				default: { value: { top: '', left: '' } },
+			},
+			blockeraDisplay: { type: 'object', default: { value: 'flex' } },
+		};
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraTransformSelfOrigin: { top: '', left: '' },
+				blockeraTransformChildOrigin: { top: '', left: '' },
+				blockeraDisplay: { value: 'flex' },
+			},
+			originSchema
+		);
+
+		expect(next.blockeraTransformSelfOrigin).toEqual({
+			value: { top: '', left: '' },
+		});
+		expect(next.blockeraTransformChildOrigin).toEqual({
+			value: { top: '', left: '' },
+		});
+		expect(next.blockeraDisplay).toEqual({ value: 'flex' });
+	});
+
+	it('treats wrapped empty transform origins as unused even without a schema', () => {
+		const next = withoutBlockeraIdentityIfUnused({
+			blockeraId: 'abc123',
+			blockeraTransformSelfOrigin: { value: { top: '', left: '' } },
+			blockeraTransformChildOrigin: { value: { top: '', left: '' } },
+			blockeraFontColor: { value: '#111111' },
+			className: 'blockera-block blockera-block-abc123',
+		});
+
+		expect(next.blockeraTransformSelfOrigin).toBeUndefined();
+		expect(next.blockeraTransformChildOrigin).toBeUndefined();
+		expect(next.blockeraFontColor).toEqual({ value: '#111111' });
+		expect(next.blockeraId).toBe('abc123');
+	});
+
+	it('keeps a real transform origin value', () => {
+		const originSchema = {
+			blockeraTransformSelfOrigin: {
+				type: 'object',
+				default: { value: { top: '', left: '' } },
+			},
+		};
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraTransformSelfOrigin: {
+					value: { top: '50%', left: '50%' },
+				},
+			},
+			originSchema
+		);
+
+		expect(next.blockeraTransformSelfOrigin).toEqual({
+			value: { top: '50%', left: '50%' },
+		});
+	});
 });
+
+describe('blockeraBlockStates and breakpoint cleanup', () => {
+	const statesSchema = {
+		blockeraBlockStates: { type: 'object', default: { value: [] } },
+		blockeraMinHeight: { type: 'object', default: { value: '' } },
+		blockeraSpacing: {
+			type: 'object',
+			default: { value: {} },
+		},
+		blockeraTransformSelfOrigin: {
+			type: 'object',
+			default: { value: { top: '', left: '' } },
+		},
+	};
+
+	const emptyNormalTabletMobile = {
+		value: {
+			normal: {
+				breakpoints: {
+					tablet: { attributes: [] },
+					mobile: { attributes: [] },
+				},
+				isVisible: true,
+			},
+		},
+	};
+
+	it('treats empty breakpoint attribute arrays as unused states', () => {
+		expect(
+			isEmptyBlockStatesValue(emptyNormalTabletMobile, statesSchema)
+		).toBe(true);
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{ blockeraBlockStates: emptyNormalTabletMobile },
+			statesSchema
+		);
+
+		expect(next.blockeraBlockStates).toEqual({ value: {} });
+		expect(hasBlockeraFeatureAttributes(next, statesSchema)).toBe(false);
+	});
+
+	it('treats empty breakpoint attribute objects as unused states', () => {
+		const value = {
+			value: {
+				normal: {
+					breakpoints: {
+						tablet: { attributes: {} },
+						mobile: { attributes: {} },
+					},
+					isVisible: true,
+				},
+			},
+		};
+
+		expect(isEmptyBlockStatesValue(value, statesSchema)).toBe(true);
+		expect(
+			omitUnusedBlockeraFeatureAttributes(
+				{ blockeraBlockStates: value },
+				statesSchema
+			).blockeraBlockStates
+		).toEqual({ value: {} });
+	});
+
+	it('treats mixed empty array and object breakpoint attributes as unused', () => {
+		const value = {
+			value: {
+				normal: {
+					breakpoints: {
+						tablet: { attributes: [] },
+						mobile: { attributes: {} },
+					},
+					isVisible: true,
+				},
+			},
+		};
+
+		expect(isEmptyBlockStatesValue(value, statesSchema)).toBe(true);
+	});
+
+	it('keeps states when a breakpoint has a real attribute', () => {
+		const value = {
+			value: {
+				normal: {
+					breakpoints: {
+						mobile: {
+							attributes: { blockeraMinHeight: '50vh' },
+						},
+					},
+					isVisible: true,
+				},
+			},
+		};
+
+		expect(isEmptyBlockStatesValue(value, statesSchema)).toBe(false);
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{ blockeraBlockStates: value },
+			statesSchema
+		);
+
+		expect(next.blockeraBlockStates).toEqual(value);
+	});
+
+	it('keeps states when isVisible is false', () => {
+		const value = {
+			value: {
+				hover: {
+					breakpoints: {
+						desktop: { attributes: {} },
+					},
+					isVisible: false,
+				},
+			},
+		};
+
+		expect(isEmptyBlockStatesValue(value, statesSchema)).toBe(false);
+		expect(
+			omitUnusedBlockeraFeatureAttributes(
+				{ blockeraBlockStates: value },
+				statesSchema
+			).blockeraBlockStates
+		).toEqual({
+			value: {
+				hover: {
+					breakpoints: {},
+					isVisible: false,
+				},
+			},
+		});
+	});
+
+	it('keeps states with a css-class or content', () => {
+		const withClass = {
+			value: {
+				'custom-class': {
+					breakpoints: { desktop: { attributes: [] } },
+					isVisible: true,
+					'css-class': '.hero',
+				},
+			},
+		};
+		const withContent = {
+			value: {
+				normal: {
+					breakpoints: {},
+					isVisible: true,
+					content: 'Hello',
+				},
+			},
+		};
+
+		expect(isEmptyBlockStatesValue(withClass, statesSchema)).toBe(false);
+		expect(isEmptyBlockStatesValue(withContent, statesSchema)).toBe(false);
+	});
+
+	it('drops empty breakpoints and unused nested defaults while keeping real ones', () => {
+		const value = {
+			value: {
+				normal: {
+					breakpoints: {
+						tablet: { attributes: [] },
+						mobile: {
+							attributes: {
+								blockeraMinHeight: '50vh',
+								blockeraTransformSelfOrigin: {
+									value: { top: '', left: '' },
+								},
+							},
+						},
+					},
+					isVisible: true,
+				},
+			},
+		};
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraId: '8y64ys',
+				blockeraBlockStates: value,
+			},
+			statesSchema
+		);
+
+		expect(next.blockeraBlockStates).toEqual({
+			value: {
+				normal: {
+					breakpoints: {
+						mobile: {
+							attributes: {
+								blockeraMinHeight: '50vh',
+							},
+						},
+					},
+					isVisible: true,
+				},
+			},
+		});
+		expect(hasBlockeraFeatureAttributes(next, statesSchema)).toBe(true);
+	});
+
+	it('strips identity when empty blockStates was the only feature', () => {
+		const next = withoutBlockeraIdentityIfUnused(
+			{
+				blockeraId: '790o6z',
+				blockeraBlockStates: emptyNormalTabletMobile,
+				className: 'blockera-block blockera-block-790o6z',
+			},
+			statesSchema
+		);
+
+		expect(next.blockeraId).toBeUndefined();
+		expect(next.className).toBeUndefined();
+		expect(next.blockeraBlockStates).toEqual({ value: {} });
+		expect(hasBlockeraFeatureAttributes(next, statesSchema)).toBe(false);
+	});
+
+	it('is idempotent and returns the same reference when already clean', () => {
+		const clean = {
+			value: {
+				normal: {
+					breakpoints: {
+						mobile: {
+							attributes: { blockeraMinHeight: '50vh' },
+						},
+					},
+					isVisible: true,
+				},
+			},
+		};
+
+		expect(normalizeBlockeraBlockStatesValue(clean, statesSchema)).toBe(
+			clean
+		);
+		expect(
+			normalizeBlockeraBlockStatesValue(
+				normalizeBlockeraBlockStatesValue(
+					emptyNormalTabletMobile,
+					statesSchema
+				),
+				statesSchema
+			)
+		).toEqual({ value: {} });
+	});
+});
+
+describe('WordPress style empty-array cleanup', () => {
+	const innerBlocksSchema = {
+		blockeraInnerBlocks: { type: 'object', default: { value: {} } },
+		blockeraFontColor: { type: 'object', default: { value: '' } },
+	};
+
+	it('drops PHP empty-array style.color and nested link color', () => {
+		expect(cleanEmptyObject({ color: [] })).toEqual(undefined);
+		expect(
+			cleanEmptyObject({
+				color: [],
+				elements: { link: { color: [] } },
+			})
+		).toEqual(undefined);
+		expect(
+			cleanEmptyObject({
+				color: { text: '#111111' },
+				elements: { link: { color: [] } },
+			})
+		).toEqual({
+			color: { text: '#111111' },
+		});
+	});
+
+	it('keeps non-empty style arrays such as duotone', () => {
+		const style = { filter: { duotone: ['#000000', '#ffffff'] } };
+
+		expect(cleanEmptyObject(style)).toBe(style);
+	});
+
+	it('unsets style on attributes when only empty arrays remain', () => {
+		const next = withCleanedWpStyle({
+			content: 'Hello',
+			style: { color: [], elements: { link: { color: [] } } },
+		});
+
+		expect(next.style).toBeUndefined();
+		expect(next.content).toBe('Hello');
+	});
+
+	it('strips empty style arrays during identity cleanup while keeping inner-block color', () => {
+		const next = withoutBlockeraIdentityIfUnused(
+			{
+				blockeraId: 'b83u76',
+				blockeraInnerBlocks: {
+					value: {
+						'elements/link': {
+							attributes: { blockeraFontColor: '#1e2731' },
+						},
+					},
+				},
+				className: 'blockera-block blockera-block-b83u76',
+				style: { color: [], elements: { link: { color: [] } } },
+			},
+			innerBlocksSchema
+		);
+
+		expect(next.blockeraId).toBe('b83u76');
+		expect(next.style).toBeUndefined();
+		expect(next.blockeraInnerBlocks).toEqual({
+			value: {
+				'elements/link': {
+					attributes: { blockeraFontColor: '#1e2731' },
+				},
+			},
+		});
+		expect(hasBlockeraFeatureAttributes(next, innerBlocksSchema)).toBe(
+			true
+		);
+	});
+});
+
+
