@@ -383,21 +383,89 @@ function assertTreeUnreleasedEmpty(cwd, options = {}) {
 }
 
 /**
+ * @param {string} content package.json or composer.json text
+ * @return {string} Return value.
+ */
+function parseManifestVersion(content) {
+	if (!content || !String(content).trim()) {
+		return '';
+	}
+	try {
+		const parsed = JSON.parse(content);
+		return parsed && parsed.version ? String(parsed.version).trim() : '';
+	} catch (error) {
+		return '';
+	}
+}
+
+/**
+ * @param {string} key
+ * @return {boolean} Return value.
+ */
+function isNumericPackageVersion(key) {
+	return /^\d+\.\d+\.\d+/.test(String(key || ''));
+}
+
+/**
+ * @param {string} a
+ * @param {string} b
+ * @return {boolean} True when a is less than or equal to b.
+ */
+function packageVersionLte(a, b) {
+	const parse = (value) =>
+		String(value)
+			.split(/[.+-]/)
+			.slice(0, 3)
+			.map((part) => parseInt(part, 10) || 0);
+
+	const left = parse(a);
+	const right = parse(b);
+	for (let index = 0; index < 3; index += 1) {
+		const delta = (left[index] || 0) - (right[index] || 0);
+		if (delta < 0) {
+			return true;
+		}
+		if (delta > 0) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/**
  * Return ### bodies from the previous published heading (exclusive) up to the
  * newest heading. Unreleased bullets still accumulate for consumer inboxes.
  *
  * After GP master fold, package files have no Unreleased; this uses
- * `## [version] - date` (or dated cuts) between the old pin's top heading and
- * the new pin's top heading.
+ * `## [version] - date` (or dated cuts) between the previous package version
+ * (from package.json / composer.json at the last product pin) and the current
+ * package version. Dated cuts that sit between those versions are kept.
  *
  * @param {string} oldContent
  * @param {string} newContent
+ * @param {{ previousVersion?: string, currentVersion?: string }} [options]
  * @return {string} Return value.
  */
-function extractChangedSections(oldContent, newContent) {
+function extractChangedSections(oldContent, newContent, options = {}) {
 	const oldSections = parseVersionSections(oldContent);
 	const newSections = parseVersionSections(newContent);
+	const previousVersion = options.previousVersion
+		? normalizeVersionKey(String(options.previousVersion))
+		: '';
+	const currentVersion = options.currentVersion
+		? normalizeVersionKey(String(options.currentVersion))
+		: '';
+
+	if (
+		previousVersion &&
+		currentVersion &&
+		previousVersion === currentVersion
+	) {
+		return '';
+	}
+
 	const previousKey =
+		previousVersion ||
 		oldSections.find((section) => section.key !== '__unreleased__')?.key ||
 		null;
 	const oldUnreleased =
@@ -415,6 +483,25 @@ function extractChangedSections(oldContent, newContent) {
 		}
 		if (previousKey && section.key === previousKey) {
 			break;
+		}
+		if (
+			previousKey &&
+			isNumericPackageVersion(previousKey) &&
+			isNumericPackageVersion(section.key) &&
+			packageVersionLte(section.key, previousKey)
+		) {
+			break;
+		}
+		if (
+			!previousVersion &&
+			currentVersion &&
+			isNumericPackageVersion(section.key) &&
+			section.key !== currentVersion
+		) {
+			if (packageVersionLte(section.key, currentVersion)) {
+				break;
+			}
+			continue;
 		}
 		const body = section.body.trim();
 		if (body) {
@@ -559,6 +646,9 @@ module.exports = {
 	foldUnreleasedTree,
 	assertUnreleasedEmpty,
 	assertTreeUnreleasedEmpty,
+	parseManifestVersion,
+	isNumericPackageVersion,
+	packageVersionLte,
 	extractChangedSections,
 	ensureSectionHeadings,
 	prependRootChangelog,

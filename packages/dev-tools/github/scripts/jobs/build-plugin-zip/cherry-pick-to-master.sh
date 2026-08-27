@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# Cherry-pick changelog + version bump commits onto master when versions match.
+# Cherry-pick changelog + version bump commits onto the default branch when
+# versions match. RC / prerelease bumps stay on RELEASE_BRANCH only.
 #
 # Required env:
 #   OLD_VERSION
 #   CHANGELOG_COMMIT     short sha from update-changelogs
 #   RELEASE_BRANCH
+#
+# Optional env:
+#   RELEASE_TYPE         rc|stable  (default: stable — skip cherry-pick when rc)
+#   BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH  default: master
 #
 # Writes version_bump_commit when a cherry-pick lands.
 set -euo pipefail
@@ -17,22 +22,29 @@ fi
 OLD_VERSION="${OLD_VERSION:-}"
 CHANGELOG_COMMIT="${CHANGELOG_COMMIT:-}"
 RELEASE_BRANCH="${RELEASE_BRANCH:-}"
+RELEASE_TYPE="${RELEASE_TYPE:-stable}"
+DEFAULT_BRANCH="${BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH:-master}"
 
 if [[ -z "${OLD_VERSION}" || -z "${CHANGELOG_COMMIT}" || -z "${RELEASE_BRANCH}" ]]; then
 	echo "build-zip/cherry-pick: OLD_VERSION, CHANGELOG_COMMIT, RELEASE_BRANCH required" >&2
 	exit 1
 fi
 
-if [[ "${GITHUB_REF:-}" != "refs/heads/master" ]]; then
-	git fetch --depth=1 origin master
+if [[ "${RELEASE_TYPE}" == "rc" ]]; then
+	echo "build-zip/cherry-pick: skip ${DEFAULT_BRANCH} (release_type=rc; keep commits on ${RELEASE_BRANCH})"
+	exit 0
 fi
 
-git checkout master
+if [[ "${GITHUB_REF:-}" != "refs/heads/${DEFAULT_BRANCH}" ]]; then
+	git fetch --depth=1 origin "${DEFAULT_BRANCH}"
+fi
+
+git checkout "${DEFAULT_BRANCH}"
 git pull
 
 MASTER_VERSION="$(jq --raw-output '.version' package.json)"
 if [[ "${OLD_VERSION}" != "${MASTER_VERSION}" ]]; then
-	echo "build-zip/cherry-pick: master version ${MASTER_VERSION} != old ${OLD_VERSION}; skip"
+	echo "build-zip/cherry-pick: ${DEFAULT_BRANCH} version ${MASTER_VERSION} != old ${OLD_VERSION}; skip"
 	exit 0
 fi
 

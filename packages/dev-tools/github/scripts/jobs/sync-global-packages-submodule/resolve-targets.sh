@@ -60,7 +60,11 @@ MODE="${INPUT_MODE:-auto}"
 if [[ "${MODE}" == "auto" ]]; then
 	if [[ "${TARGET_BRANCH}" == "master" || "${TARGET_BRANCH}" == "main" ]]; then
 		MODE="pr"
-	else
+	elif [[ -n "${TARGET_BRANCH}" ]]; then
+		# Developers pin feature branches with `npm run submodule:bump`. Auto-push
+		# here recommits the same gitlink as blockerabot after that local commit.
+		echo "Feature branch '${TARGET_BRANCH}' pin is local (npm run submodule:bump); skipping auto sync."
+		SKIP_SYNC="true"
 		MODE="push"
 	fi
 fi

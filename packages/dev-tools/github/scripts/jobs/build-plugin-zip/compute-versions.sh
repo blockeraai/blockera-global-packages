@@ -50,8 +50,10 @@ fi
 
 echo "new_version=${NEW_VERSION}" >>"${GITHUB_OUTPUT}"
 
-IFS='.' read -r -a NEW_VERSION_ARRAY <<<"${NEW_VERSION}"
-RELEASE_BRANCH="release/${NEW_VERSION_ARRAY[0]}.${NEW_VERSION_ARRAY[1]}.${NEW_VERSION_ARRAY[2]}"
+# Core line only (2.0.0-rc.1 → release/2.0.0). Prefer resolve-release-branch.sh
+# before checkout so a leftover release/x.y.z-rc name is reused.
+CORE_VERSION="${NEW_VERSION%%-*}"
+RELEASE_BRANCH="release/${CORE_VERSION}"
 echo "release_branch=${RELEASE_BRANCH}" >>"${GITHUB_OUTPUT}"
 
 echo "build-zip/versions: ${OLD_VERSION} → ${NEW_VERSION} (${RELEASE_BRANCH})"

@@ -9,6 +9,7 @@
 #   BLOCKERA_BUILD_ZIP_MAIN_FILE      default: blockera.php
 #   BLOCKERA_BUILD_ZIP_PACKAGE_JSON   default: package.json
 #   BLOCKERA_BUILD_ZIP_PACKAGE_LOCK   default: package-lock.json
+#   composer.json                     bumped when it has a "version" field
 set -euo pipefail
 
 OLD_VERSION="${OLD_VERSION:-}"
@@ -33,3 +34,9 @@ jq --tab --arg version "${VERSION}" '.version = $version | .packages[""].version
 mv "${tmp_lock}" "${PACKAGE_LOCK}"
 
 sed -i "s/${OLD_VERSION}/${VERSION}/g" "${MAIN_FILE}"
+
+if [[ -f composer.json ]] && jq --exit-status '.version != null' composer.json >/dev/null 2>&1; then
+	tmp_composer="$(mktemp)"
+	jq --tab --arg version "${VERSION}" '.version = $version' composer.json >"${tmp_composer}"
+	mv "${tmp_composer}" composer.json
+fi

@@ -1,7 +1,10 @@
 ## Unreleased
 
 ### Bug Fixes
+- Sync global-packages submodule: skip auto-push on matching feature branches so `npm run submodule:bump` is not followed by a duplicate blockerabot commit. Master still opens/updates the bump PR; use workflow_dispatch `mode=push` or `mode=pr` for a remote feature-branch pin.
 - Zip changelog accumulation: allow products with no consumer `packages/*/CHANGELOG.md` (global-packages only); fail only when `BLOCKERA_CHANGELOG_CONSUMER_GLOBS` is set and matches nothing.
+- Zip changelog accumulation: include GP notes only for packages whose `package.json` / `composer.json` version changed since the previous product release pin, from that previous version through the new version (do not dump unchanged package history).
+- Zip changelog accumulation: GP-only products (no `packages/*/CHANGELOG.md`) read previous package versions from inlined `packages/<name>` when the last release has no GP gitlink, and keep leftover `## Unreleased` bullets instead of failing.
 
 ## [2.0.0] - 2026-08-26
 

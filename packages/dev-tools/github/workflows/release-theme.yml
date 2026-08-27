@@ -1,5 +1,6 @@
-# Template — plugin is the base. Copy to consumer and set OWNER/REPO / slug inputs.
-name: Release Blockera Plugin
+# Template — copy to consumer as release-theme.yml. Set OWNER/REPO, zip slug, and theme env knobs.
+# Same job graph as workflows/release-plugin.yml; product identity stays in the consumer copy.
+name: Release Theme
 
 on:
     pull_request:
@@ -47,7 +48,7 @@ jobs:
             - id: gate
               uses: ./packages/global-packages/packages/dev-tools/github/actions/pr-workflow-gate
               with:
-                  workflow-file: release-plugin.yml
+                  workflow-file: release-theme.yml
 
     bump-version:
         name: Bump version
@@ -68,7 +69,8 @@ jobs:
             master_commit: ${{ steps.commit_version_bump_to_master.outputs.version_bump_commit }}
         env:
             BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
-            # BLOCKERA_BUILD_ZIP_MAIN_FILE: blockera-pro.php
+            # BLOCKERA_BUILD_ZIP_MAIN_FILE: style.css
+            # BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX: Theme Name
         steps:
             - uses: actions/checkout@v5
               with:
@@ -104,6 +106,8 @@ jobs:
               env:
                   NEW_VERSION: ${{ steps.get_version.outputs.new_version }}
                   OLD_VERSION: ${{ steps.get_version.outputs.old_version }}
+                  # BLOCKERA_CHANGELOG_CONSUMER_GLOBS: |
+                  #     packages/theme/CHANGELOG.md
               run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/build-plugin-zip/update-changelogs.sh
 
             - env:
@@ -153,13 +157,15 @@ jobs:
 
             - uses: ./packages/global-packages/packages/dev-tools/github/actions/build-plugin-zip
               # with:
-              #     artifact-name: blockera-pro
-              #     zip-file: ./blockera-pro.zip
+              #     artifact-name: theme-slug
+              #     zip-file: ./theme-slug.zip
 
             - if: ${{ needs.bump-version.outputs.new_version }}
               env:
                   NEW_VERSION: ${{ needs.bump-version.outputs.new_version }}
                   CHANGELOG: ${{ needs.bump-version.outputs.changelog }}
+                  # BLOCKERA_BUILD_ZIP_MAIN_FILE: style.css
+                  # BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX: Theme Name
               run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/build-plugin-zip/build-release-notes.sh
 
             - if: ${{ needs.bump-version.outputs.new_version }}
@@ -230,7 +236,7 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                  name: blockera
+                  name: theme-slug
 
             - uses: actions/download-artifact@v4
               with:
@@ -253,6 +259,6 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./blockera.zip
-                  asset_name: blockera.zip
+                  asset_path: ./theme-slug.zip
+                  asset_name: theme-slug.zip
                   asset_content_type: application/zip

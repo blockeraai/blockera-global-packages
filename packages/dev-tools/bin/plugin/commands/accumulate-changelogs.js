@@ -13,12 +13,17 @@
  *                                           (optional; GP-only products may match none)
  *   BLOCKERA_CHANGELOG_ROOT_MD              default: root CHANGELOG markdown
  *   BLOCKERA_CHANGELOG_FILE                 default: changelog.txt
- *   BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP    default: 1 (fail if GP Unreleased still has bullets)
+ *   BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP    default: unset (set to 1 to fail if GP Unreleased still has bullets)
  *
- * GP package CHANGELOG.md files use `## [x.y.z] - date` (no Unreleased after
- * the GP master fold). Zip accumulates ### bodies from the previous pin's top
- * version heading (exclusive) through the current pin's newest heading.
- * Consumer packages may still use ## Unreleased until zip fold.
+ * GP package CHANGELOG.md files use `## [x.y.z] - date` after the GP master
+ * fold. Zip only reads packages whose package.json / composer.json version
+ * changed since the previous product release. Previous versions come from the
+ * GP gitlink when present, otherwise from inlined `packages/<name>` at the
+ * last product ref (pre-submodule layout). ### bodies are taken from that
+ * previous package version (exclusive) through the current version, including
+ * remaining ## Unreleased bullets. Products may have no consumer
+ * packages CHANGELOG.md files (GP-only). Consumer packages may still use
+ * ## Unreleased until zip fold.
  */
 
 /**
@@ -39,9 +44,11 @@ const {
 const {
 	normalizeVersionKey,
 	parseVersionSections,
+	parseManifestVersion,
 	extractChangedSections,
 	prependRootChangelog,
 	isPackageChangelogMdPath,
+	collectPackageChangelogPaths,
 	foldUnreleasedTree,
 	assertUnreleasedEmpty,
 	dedupeChangelogMarkdown,
@@ -142,13 +149,140 @@ function gitShowFile(repoCwd, rev, filePath) {
  * @return {string[]} Return value.
  */
 function listGpChangelogFiles(gpCwd, rev) {
+	const fromGit = rev
+		? git(['ls-tree', '-r', '--name-only', rev], { cwd: gpCwd })
+				.split('\n')
+				.map((line) => line.trim())
+				.filter((filePath) => isPackageChangelogMdPath(filePath))
+		: [];
+	const fromWorktree = collectPackageChangelogPaths(gpCwd, {
+		skipGlobalPackages: true,
+	}).map((filePath) =>
+		path.relative(gpCwd, filePath).replace(/\\/g, '/')
+	);
+
+	return [...new Set([...fromGit, ...fromWorktree])].sort();
+}
+
+/**
+ * @param {string} changelogRelPath
+ * @return {string} Return value.
+ */
+function packageDirFromChangelog(changelogRelPath) {
+	return String(changelogRelPath || '')
+		.replace(/\\/g, '/')
+		.replace(/\/CHANGELOG\.md$/i, '');
+}
+
+/**
+ * @param {string} gpCwd
+ * @param {string} rev
+ * @param {string} changelogRelPath
+ * @return {string} Return value.
+ */
+function resolveGpPackageVersion(gpCwd, rev, changelogRelPath) {
+	return readManifestVersionAt(gpCwd, rev, changelogRelPath);
+}
+
+/**
+ * @param {string} repoCwd
+ * @param {string} rev
+ * @param {string} changelogRelPath
+ * @return {string} Return value.
+ */
+function readManifestVersionAt(repoCwd, rev, changelogRelPath) {
 	if (!rev) {
-		return [];
+		return '';
 	}
-	return git(['ls-tree', '-r', '--name-only', rev], { cwd: gpCwd })
-		.split('\n')
-		.map((line) => line.trim())
-		.filter((filePath) => isPackageChangelogMdPath(filePath));
+	const dir = packageDirFromChangelog(changelogRelPath);
+	const fromPackage = parseManifestVersion(
+		gitShowFile(repoCwd, rev, `${dir}/package.json`)
+	);
+	if (fromPackage) {
+		return fromPackage;
+	}
+	return parseManifestVersion(
+		gitShowFile(repoCwd, rev, `${dir}/composer.json`)
+	);
+}
+
+/**
+ * @param {string} gpCwd
+ * @param {string} changelogRelPath
+ * @return {string} Return value.
+ */
+function readWorktreeManifestVersion(gpCwd, changelogRelPath) {
+	const dir = path.join(gpCwd, packageDirFromChangelog(changelogRelPath));
+	for (const name of ['package.json', 'composer.json']) {
+		const filePath = path.join(dir, name);
+		if (!fs.existsSync(filePath)) {
+			continue;
+		}
+		const version = parseManifestVersion(
+			fs.readFileSync(filePath, 'utf8')
+		);
+		if (version) {
+			return version;
+		}
+	}
+	return '';
+}
+
+/**
+ * Previous pin may be a GP gitlink, or inlined product `packages/<name>`
+ * (layout before the global-packages submodule).
+ *
+ * @param {{ cwd: string, fromRef: string, gpAbs: string, gpFrom: string, changelogRelPath: string }} options
+ * @return {string} Return value.
+ */
+function resolvePreviousPackageVersion({
+	cwd,
+	fromRef,
+	gpAbs,
+	gpFrom,
+	changelogRelPath,
+}) {
+	if (gpFrom) {
+		return readManifestVersionAt(gpAbs, gpFrom, changelogRelPath);
+	}
+	if (fromRef) {
+		return readManifestVersionAt(cwd, fromRef, changelogRelPath);
+	}
+	return '';
+}
+
+/**
+ * @param {{ cwd: string, fromRef: string, gpAbs: string, gpFrom: string, changelogRelPath: string }} options
+ * @return {string} Return value.
+ */
+function resolvePreviousChangelog({
+	cwd,
+	fromRef,
+	gpAbs,
+	gpFrom,
+	changelogRelPath,
+}) {
+	if (gpFrom) {
+		return gitShowFile(gpAbs, gpFrom, changelogRelPath);
+	}
+	if (fromRef) {
+		return gitShowFile(cwd, fromRef, changelogRelPath);
+	}
+	return '';
+}
+
+/**
+ * @param {string} gpCwd
+ * @param {string} gpTo
+ * @param {string} changelogRelPath
+ * @return {string} Return value.
+ */
+function resolveCurrentChangelog(gpCwd, gpTo, changelogRelPath) {
+	const abs = path.join(gpCwd, changelogRelPath);
+	if (fs.existsSync(abs)) {
+		return fs.readFileSync(abs, 'utf8');
+	}
+	return gitShowFile(gpCwd, gpTo, changelogRelPath);
 }
 
 /**
@@ -210,7 +344,7 @@ async function accumulateProductChangelogs(options) {
 	const fromRef = resolveLastReleaseRef(cwd);
 	const gpAbs = path.resolve(cwd, gpPath);
 	const requireFoldedGp =
-		process.env.BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP !== '0';
+		process.env.BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP === '1';
 
 	const gpFrom =
 		process.env.BLOCKERA_CHANGELOG_GP_FROM ||
@@ -225,19 +359,69 @@ async function accumulateProductChangelogs(options) {
 	);
 
 	const chunks = [];
+	const canReadPrevious = Boolean(gpFrom || fromRef);
 
-	if (fs.existsSync(gpAbs) && gpTo) {
+	if (fs.existsSync(gpAbs)) {
 		const files = listGpChangelogFiles(gpAbs, gpTo);
+		if (!canReadPrevious) {
+			log(
+				'>> Skipping GP changelog accumulation (no previous product ref or GP pin)'
+			);
+		} else if (!gpFrom && fromRef) {
+			log(
+				`>> No GP gitlink at ${fromRef}; comparing package versions from inlined ${fromRef}:packages/*`
+			);
+		}
 		for (const filePath of files) {
-			const newContent = gitShowFile(gpAbs, gpTo, filePath);
+			const newContent = resolveCurrentChangelog(
+				gpAbs,
+				gpTo,
+				filePath
+			);
 			if (requireFoldedGp) {
 				assertUnreleasedEmpty(newContent, `${gpPath}/${filePath}`);
 			}
-			const oldContent = gpFrom
-				? gitShowFile(gpAbs, gpFrom, filePath)
-				: '';
-			const changed = extractChangedSections(oldContent, newContent);
+			if (!canReadPrevious) {
+				continue;
+			}
+
+			const currentVersion =
+				readWorktreeManifestVersion(gpAbs, filePath) ||
+				readManifestVersionAt(gpAbs, gpTo, filePath);
+			const previousVersion = resolvePreviousPackageVersion({
+				cwd,
+				fromRef,
+				gpAbs,
+				gpFrom,
+				changelogRelPath: filePath,
+			});
+
+			if (!currentVersion) {
+				log(
+					`   - skip ${packageDirFromChangelog(filePath)} (no package/composer version)`
+				);
+				continue;
+			}
+
+			if (previousVersion && previousVersion === currentVersion) {
+				continue;
+			}
+
+			const oldContent = resolvePreviousChangelog({
+				cwd,
+				fromRef,
+				gpAbs,
+				gpFrom,
+				changelogRelPath: filePath,
+			});
+			const changed = extractChangedSections(oldContent, newContent, {
+				previousVersion,
+				currentVersion,
+			});
 			if (changed) {
+				log(
+					`   - ${packageDirFromChangelog(filePath)}: ${previousVersion || '<new>'} → ${currentVersion}`
+				);
 				chunks.push(changed);
 			}
 		}
@@ -331,10 +515,13 @@ async function writeChangelogTxt({ cwd, version, publishDate, mergedBody }) {
 module.exports = {
 	normalizeVersionKey,
 	parseVersionSections,
+	parseManifestVersion,
 	extractChangedSections,
 	isPackageChangelogMdPath,
 	prependRootChangelog,
 	listConsumerChangelogFiles,
+	resolveGpPackageVersion,
+	resolvePreviousPackageVersion,
 	accumulateProductChangelogs,
 	writeChangelogTxt,
 };

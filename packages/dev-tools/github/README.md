@@ -77,7 +77,7 @@ github/
     list-test-categories.js / list-visual-snapshot-batches.js
     lib/                     # walk-files, list-test-categories, retry.sh, package-match
     sync-consumer-bootstrap.sh
-  workflows/             # Blockera-base templates
+  workflows/             # Blockera-base templates (release-plugin.yml, release-theme.yml, …)
 ```
 
 Consumer has **no** `.github/scripts/`. The only consumer-local bootstrap is
@@ -231,15 +231,41 @@ env:
 
 ## Build plugin zip (release)
 
-Multi-job release flow: compute next branch → bump version → build zip artifact →
-revert on failure → draft GitHub release. Job graph / `if:` stay in the consumer
-workflow; bash lives under `scripts/jobs/build-plugin-zip/`.
+Multi-job release flow: bump version → build zip artifact → revert on failure →
+draft GitHub release. Job graph / `if:` stay in the consumer workflow; bash
+lives under `scripts/jobs/build-plugin-zip/`.
+
+Templates: `workflows/release-plugin.yml` (plugin) and `workflows/release-theme.yml`
+(theme). Copy into the consumer `.github/workflows/` and set OWNER/REPO, zip
+slug, and env knobs. Same scripts; product identity stays in the thin workflow.
+
+Dispatch **Release** from `master` (or an existing `release/*` branch). Resolve
+the line with `resolve-release-branch.sh` (`release/x.y.z`, or leftover
+`release/x.y.z-rc`), checkout/create it, then compute old→new from that
+branch’s `package.json` so a second RC becomes `rc.2` instead of rewriting `rc.1`.
+Do not pre-create the branch in GitHub. On a failed build, a newly created
+branch is deleted; an existing one has the bump commit reverted.
+
+**RC** changelog and version commits stay on `release/x.y.z` only
+(`cherry-pick-to-master.sh` skips when `RELEASE_TYPE=rc`). **Stable** cherry-picks
+those commits onto `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` (default `master`).
 
 | Env | Default (Blockera base) |
 | --- | --- |
-| `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` |
+| `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` (theme consumer: `style.css`) |
 | `BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX` | `Blockera` |
+| `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` | `master` (stable cherry-pick target; unused for rc) |
 | `artifact-name` / `zip-file` (action) | `blockera` / `./blockera.zip` |
+
+```yaml
+# Theme-style consumer env (release-theme.yml)
+env:
+    BLOCKERA_BUILD_ZIP_MAIN_FILE: style.css
+    BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX: Blockera One
+    BLOCKERA_CHANGELOG_CONSUMER_GLOBS: |
+        packages/blockera-one/CHANGELOG.md
+        packages/blockera-admin-one/CHANGELOG.md
+```
 
 Release bump runs `jobs/build-plugin-zip/update-changelogs.sh`, which calls the
 consumer `npm run update:changelogs`.
@@ -262,20 +288,25 @@ only packages that changed since the previous merge (`--semver`, `--from`,
 2. If Unreleased has entries and the pin is a branch tip, bump folds them into
    `## [YYYY-MM-DD]` (same-day suffix if needed), commits
    `chore(changelog): fold Unreleased`, and pushes that SHA.
-3. Product zip diffs each GP `CHANGELOG.md` between the previous and new
-   gitlink. It takes ### bodies from the **previous pin’s top version
-   heading (exclusive)** through the **current pin’s newest heading**.
+3. Product zip diffs each GP package **version** between the previous product
+   release and the current pin (`package.json`, then `composer.json`). The
+   previous version is read from the GP gitlink when that path exists at the
+   last release; otherwise it uses inlined `packages/<name>` on that ref
+   (pre-submodule products such as Blockera). Unchanged packages are skipped.
+   For packages that bumped, it takes ### bodies from the **previous package
+   version (exclusive)** through the **current version**, including leftover
+   `## Unreleased` bullets. Dated cuts between those versions are kept.
    Consumer `packages/*/CHANGELOG.md` still contribute Unreleased diffs when
    present. Products with only global-packages may have none; the zip then
    writes GP notes only. The zip **fails** if `BLOCKERA_CHANGELOG_CONSUMER_GLOBS`
-   is set and matches no files, or if a pinned GP file still has Unreleased
-   *bullets* (missing Unreleased is OK).
+   is set and matches no files. Set `BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP=1`
+   to also fail when a GP file still has Unreleased *bullets*.
 4. Zip writes product root `CHANGELOG.md` / `changelog.txt` and folds
    **consumer** Unreleased into `## [product-version] - date`.
 
-Set `BLOCKERA_CHANGELOG_FOLD_ON_BUMP=0` to skip the bump-time fold (zip will
-still refuse a dirty GP Unreleased). `BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP=0`
-disables the zip guard (tests only).
+Set `BLOCKERA_CHANGELOG_FOLD_ON_BUMP=0` to skip the bump-time fold.
+`BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP=1` makes the zip fail on a dirty GP
+Unreleased (off by default so GP-only products can still accumulate).
 
 Each consumer only sees notes inside **its** pin window.
 
@@ -296,7 +327,7 @@ env:
 | `BLOCKERA_CHANGELOG_CONSUMER_GLOBS` | `packages/*/CHANGELOG.md` (optional; required only when set) |
 | `BLOCKERA_CHANGELOG_ROOT_MD` | `CHANGELOG.md` |
 | `BLOCKERA_CHANGELOG_FILE` | `changelog.txt` |
-| `BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP` | `1` |
+| `BLOCKERA_CHANGELOG_REQUIRE_FOLDED_GP` | unset (`1` to fail on GP Unreleased bullets) |
 | `BLOCKERA_CHANGELOG_FOLD_ON_BUMP` | `1` (bump script) |
 
 ## Update WordPress.org assets
@@ -397,7 +428,7 @@ Explicit `workflow_dispatch` `mode=pr` or `mode=push` still updates a remote bra
 
 | Toolkit script | Role |
 | --- | --- |
-| `jobs/sync-global-packages-submodule/resolve-targets.sh` | dispatch/schedule/manual → source/target/mode |
+| `jobs/sync-global-packages-submodule/resolve-targets.sh` | dispatch/schedule/manual → source/target/mode (`auto` skips feature branches; pin those with `npm run submodule:bump`) |
 | `jobs/sync-global-packages-submodule/run-bump.sh` | git user + `bump-global-packages-submodule.sh` (folds GP Unreleased on branch tips) |
 | `jobs/sync-global-packages-submodule/commit-bump.sh` | commit staged gitlink |
 | `jobs/sync-global-packages-submodule/open-or-update-pr.sh` | force-push PR branch + `gh pr` |
