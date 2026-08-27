@@ -235,11 +235,12 @@ Multi-job release flow: bump version → build zip artifact → revert on failur
 draft GitHub release. Job graph / `if:` stay in the consumer workflow; bash
 lives under `scripts/jobs/build-plugin-zip/`.
 
-Dispatch **Release** from `master` (or an existing `release/*` branch). The bump
-job creates `release/x.y.z` from the current HEAD when that branch is not on
-origin (`prepare-release-branch.sh`, output `created`). Do not pre-create the
-branch in GitHub. On a failed build, a newly created branch is deleted; an
-existing one has the bump commit reverted.
+Dispatch **Release** from `master` (or an existing `release/*` branch). Resolve
+the line with `resolve-release-branch.sh` (`release/x.y.z`, or leftover
+`release/x.y.z-rc`), checkout/create it, then compute old→new from that
+branch’s `package.json` so a second RC becomes `rc.2` instead of rewriting `rc.1`.
+Do not pre-create the branch in GitHub. On a failed build, a newly created
+branch is deleted; an existing one has the bump commit reverted.
 
 **RC** changelog and version commits stay on `release/x.y.z` only
 (`cherry-pick-to-master.sh` skips when `RELEASE_TYPE=rc`). **Stable** cherry-picks
