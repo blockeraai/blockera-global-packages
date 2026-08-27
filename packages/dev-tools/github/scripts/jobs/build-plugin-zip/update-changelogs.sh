@@ -6,6 +6,8 @@
 #
 # Optional:
 #   OLD_VERSION                             last product version → BLOCKERA_CHANGELOG_PREVIOUS_VERSION
+#                                           (prerelease OLD_VERSION is ignored by accumulate so RC
+#                                           and stable both start from the last stable tag)
 #   BLOCKERA_BUILD_ZIP_UPDATE_CHANGELOGS_CMD  default: npm run update:changelogs -- --version=…
 #   BLOCKERA_BUILD_ZIP_CHANGELOG_FILE           default: changelog.txt
 #   BLOCKERA_CHANGELOG_PREVIOUS_VERSION         last product version (if OLD_VERSION unset)

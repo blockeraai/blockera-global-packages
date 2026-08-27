@@ -8,7 +8,10 @@
  *   BLOCKERA_CHANGELOG_GP_TO                GP commit SHA (overrides gitlink at HEAD)
  *   BLOCKERA_CHANGELOG_FROM_REF             parent git ref for last product release
  *   BLOCKERA_CHANGELOG_TO_REF               parent git ref (default: HEAD)
- *   BLOCKERA_CHANGELOG_PREVIOUS_VERSION     last product version (tag vX / X); zip job sets from OLD_VERSION
+ *   BLOCKERA_CHANGELOG_PREVIOUS_VERSION     last *stable* product version (tag vX / X).
+ *                                           Prerelease values (2.0.0-rc.1) are ignored so
+ *                                           RC and stable zip jobs accumulate from the same
+ *                                           last stable tag. Zip job still passes OLD_VERSION.
  *   BLOCKERA_CHANGELOG_CONSUMER_GLOBS       default: packages/<pkg>/CHANGELOG.md
  *                                           (optional; GP-only products may match none)
  *   BLOCKERA_CHANGELOG_ROOT_MD              default: root CHANGELOG markdown
@@ -74,6 +77,28 @@ function git(args, options = {}) {
 }
 
 /**
+ * @param {string} version
+ * @return {boolean} Whether the version (or tag) is a prerelease.
+ */
+function isPrereleaseVersion(version) {
+	const value = String(version || '').replace(/^v/i, '');
+	return value.includes('-');
+}
+
+/**
+ * @param {string} cwd
+ * @return {string} Latest stable v* tag, or empty.
+ */
+function latestStableTag(cwd) {
+	return git(['tag', '--list', 'v*', '--sort=v:refname'], { cwd })
+		.split('\n')
+		.map((line) => line.trim())
+		.filter(Boolean)
+		.filter((tag) => !isPrereleaseVersion(tag))
+		.pop() || '';
+}
+
+/**
  * @param {string} cwd
  * @return {string} Return value.
  */
@@ -84,7 +109,7 @@ function resolveLastReleaseRef(cwd) {
 	}
 
 	const previousVersion = process.env.BLOCKERA_CHANGELOG_PREVIOUS_VERSION;
-	if (previousVersion) {
+	if (previousVersion && !isPrereleaseVersion(previousVersion)) {
 		const tag = git(['rev-parse', '--verify', `v${previousVersion}`], {
 			cwd,
 		});
@@ -95,6 +120,11 @@ function resolveLastReleaseRef(cwd) {
 		if (plain) {
 			return previousVersion;
 		}
+	}
+
+	const stableTag = latestStableTag(cwd);
+	if (stableTag) {
+		return stableTag;
 	}
 
 	const releaseBranch = git(
@@ -108,7 +138,8 @@ function resolveLastReleaseRef(cwd) {
 	)
 		.split('\n')
 		.map((line) => line.trim())
-		.filter(Boolean)[0];
+		.filter(Boolean)
+		.filter((ref) => !/-rc(\.|$)/.test(ref.replace(/^.*\//, '')))[0];
 
 	if (releaseBranch) {
 		return releaseBranch;
@@ -524,4 +555,7 @@ module.exports = {
 	resolvePreviousPackageVersion,
 	accumulateProductChangelogs,
 	writeChangelogTxt,
+	isPrereleaseVersion,
+	latestStableTag,
+	resolveLastReleaseRef,
 };

@@ -239,14 +239,21 @@ Templates: `workflows/release-plugin.yml` (plugin) and `workflows/release-theme.
 (theme). Copy into the consumer `.github/workflows/` and set OWNER/REPO, zip
 slug, and env knobs. Same scripts; product identity stays in the thin workflow.
 
-Dispatch **Release** from `master` (or an existing `release/*` branch). Resolve
-the line with `resolve-release-branch.sh` (`release/x.y.z`, or leftover
-`release/x.y.z-rc`), checkout/create it, then compute old→new from that
-branch’s `package.json` so a second RC becomes `rc.2` instead of rewriting `rc.1`.
+Dispatch **Release** from `master` (or an existing `release/*` branch).
+`resolve-release-branch.sh` picks:
+
+- **rc** → `release/x.y.z-rc` (create from HEAD if missing)
+- **stable** → `release/x.y.z` (never land on the `-rc` branch). If that
+  branch is missing and `release/x.y.z-rc` exists, create stable from the RC
+  tip (`SOURCE_BRANCH`).
+
+Then compute old→new from the checked-out branch’s `package.json` so a second
+RC becomes `rc.2`. Changelog accumulation always starts from the last **stable**
+tag (a prerelease `OLD_VERSION` is not used as the previous product ref).
 Do not pre-create the branch in GitHub. On a failed build, a newly created
 branch is deleted; an existing one has the bump commit reverted.
 
-**RC** changelog and version commits stay on `release/x.y.z` only
+**RC** changelog and version commits stay on `release/x.y.z-rc` only
 (`cherry-pick-to-master.sh` skips when `RELEASE_TYPE=rc`). **Stable** cherry-picks
 those commits onto `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` (default `master`).
 

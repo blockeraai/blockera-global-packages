@@ -50,10 +50,13 @@ fi
 
 echo "new_version=${NEW_VERSION}" >>"${GITHUB_OUTPUT}"
 
-# Core line only (2.0.0-rc.1 → release/2.0.0). Prefer resolve-release-branch.sh
-# before checkout so a leftover release/x.y.z-rc name is reused.
+# Branch names match resolve-release-branch.sh (RC keeps the -rc suffix).
 CORE_VERSION="${NEW_VERSION%%-*}"
-RELEASE_BRANCH="release/${CORE_VERSION}"
+if [[ "${RELEASE_TYPE}" == "rc" ]]; then
+	RELEASE_BRANCH="release/${CORE_VERSION}-rc"
+else
+	RELEASE_BRANCH="release/${CORE_VERSION}"
+fi
 echo "release_branch=${RELEASE_BRANCH}" >>"${GITHUB_OUTPUT}"
 
 echo "build-zip/versions: ${OLD_VERSION} → ${NEW_VERSION} (${RELEASE_BRANCH})"
