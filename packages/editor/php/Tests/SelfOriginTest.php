@@ -60,4 +60,39 @@ class SelfOriginTest extends StyleDefinitionTestCase {
 
 		$this->assertSame( $this->cssMap( [ 'transform-origin' => '0 100%' ] ), $result );
 	}
+
+	public function testEmitsTransformOriginFromWrappedValue(): void {
+		$result = $this->invokeCss(
+			$this->definition(),
+			[
+				'type'        => 'self-origin',
+				'self-origin' => [
+					'value' => [
+						'top'  => '0px',
+						'left' => '100%',
+					],
+				],
+			]
+		);
+
+		$this->assertSame( $this->cssMap( [ 'transform-origin' => '0 100%' ] ), $result );
+	}
+
+	public function testSkipsWrappedEmptyOrigin(): void {
+		$this->assertSame(
+			[],
+			$this->invokeCss(
+				$this->definition(),
+				[
+					'type'        => 'self-origin',
+					'self-origin' => [
+						'value' => [
+							'top'  => '',
+							'left' => '',
+						],
+					],
+				]
+			)
+		);
+	}
 }
