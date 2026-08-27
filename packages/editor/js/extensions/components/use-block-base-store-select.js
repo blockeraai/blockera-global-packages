@@ -11,12 +11,19 @@ import { useSelect } from '@wordpress/data';
 import { getBaseBreakpoint } from '../../editor/header-ui/components/breakpoints/helpers';
 import { useGlobalStylesPanelContext } from '../../editor/global-styles/panel/context';
 
+const EMPTY_ATTRIBUTES = {};
+
 /**
  * Blockera/extension store slice for BlockBase.
  *
  * When the block is not selected, skips global extension fields (current inner
  * target, breakpoint, editor events) so inserter hover and other editor-wide
  * UI does not re-render every BlockBase instance.
+ *
+ * Returns data values only (no selector functions). Returning `getDeviceType`
+ * / `getActiveBlockVariation` from useSelect made the result fail shallow
+ * equality whenever the registry rebuilt those function identities, which
+ * re-rendered every mounted BlockBase on unrelated store updates.
  *
  * @param {Object}  options
  * @param {string}  options.clientId
@@ -48,15 +55,12 @@ export function useBlockBaseStoreSelect({
 	return useSelect(
 		(select) => {
 			const {
-				getBlockExtensionBy,
 				getActiveInnerState,
 				getActiveMasterState,
 				getExtensionCurrentBlock,
 				getExtensionCurrentBlockStateBreakpoint,
 			} = select('blockera/extensions');
 
-			const { getActiveBlockVariation: _getActiveBlockVariation } =
-				select('blockera/extensions');
 			const {
 				getBlockType,
 				getActiveBlockVariation,
@@ -76,16 +80,16 @@ export function useBlockBaseStoreSelect({
 				? getEditorSelectedBlockEvent()
 				: undefined;
 
+			const blockType = getBlockType(name) || {};
 			const {
 				supports,
 				selectors,
 				attributes: availableAttributes,
-			} = getBlockType(name);
+			} = blockType;
 
 			return {
-				getDeviceType,
+				deviceType: getDeviceType(),
 				currentBlock,
-				getBlockExtensionBy,
 				currentState: getActiveMasterState(clientId, name),
 				currentBreakpoint,
 				currentInnerBlockState: effectivelySelected
@@ -94,16 +98,16 @@ export function useBlockBaseStoreSelect({
 				supports,
 				selectors,
 				availableAttributes,
-				getActiveBlockVariation,
 				editorSelectedBlockEvent,
 				activeBlockVariation: getActiveBlockVariation(
 					name,
-					getBlockAttributes(clientId) || {}
+					getBlockAttributes(clientId) || EMPTY_ATTRIBUTES
 				),
-				blockVariations: name && getBlockVariations(name, 'transform'),
-				activeVariation: _getActiveBlockVariation(),
+				blockVariations: name
+					? getBlockVariations(name, 'transform')
+					: undefined,
 			};
 		},
-		[clientId, name, effectivelySelected, extensionsUiContext]
+		[clientId, name, isSelected, effectivelySelected, extensionsUiContext]
 	);
 }

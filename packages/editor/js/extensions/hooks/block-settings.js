@@ -433,17 +433,19 @@ function mergeBlockSettings(
 				[]
 			);
 
-			const selectedBlock =
-				select('core/block-editor').getSelectedBlock();
+			// eslint-disable-next-line react-hooks/rules-of-hooks
+			const editorAttributes = useMemo(
+				() => omit(attributes, ignoredAttributes),
+				[attributes, ignoredAttributes]
+			);
 
 			// eslint-disable-next-line react-hooks/rules-of-hooks
 			useEffect(() => {
-				if (!selectedBlock) {
+				if (!props.isSelected) {
 					return;
 				}
-				// On rendering the block settings, we can bootstrap all scripts.
 				bootstrapScripts();
-			}, [selectedBlock]);
+			}, [props.isSelected]);
 
 			if (isFunction(additional?.edit) && isAvailableBlock()) {
 				// Optional canvasEdit replaces core block canvas (e.g. core/icon → CoreIconCanvasEdit).
@@ -456,7 +458,7 @@ function mergeBlockSettings(
 						<Edit
 							{...rest}
 							baseContextValue={baseContextValue}
-							attributes={omit(attributes, ignoredAttributes)}
+							attributes={editorAttributes}
 							settings={settings}
 							additional={stableAdditional}
 							isAvailableBlock={isAvailableBlock}

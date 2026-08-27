@@ -30,10 +30,23 @@ export const Edit: ComponentType<any> = memo(
 		blockeraOverrideBlockAttributes,
 		...props
 	}: Object): MixedElement => {
-		const defaultAttributes = !settings.attributes?.blockeraId &&
-			!settings.attributes?.blockeraPropsId
-			? mergeObject(blockeraOverrideBlockAttributes, settings.attributes)
-			: settings.attributes;
+		const originDefaultAttributes = useMemo(() => {
+			return !settings.attributes?.blockeraId &&
+				!settings.attributes?.blockeraPropsId
+				? mergeObject(
+						blockeraOverrideBlockAttributes,
+						settings.attributes
+					)
+				: settings.attributes;
+		}, [blockeraOverrideBlockAttributes, settings.attributes]);
+
+		const defaultAttributes = useMemo(
+			() =>
+				sanitizeDefaultAttributes(originDefaultAttributes, {
+					defaultWithoutValue: true,
+				}),
+			[originDefaultAttributes]
+		);
 
 		const [isReportingErrorCompleted, setIsReportingErrorCompleted] =
 			// eslint-disable-next-line react-hooks/rules-of-hooks
@@ -87,11 +100,8 @@ export const Edit: ComponentType<any> = memo(
 								attributes: props.attributes,
 								isSelected: props.isSelected,
 								setAttributes: props.setAttributes,
-								originDefaultAttributes: defaultAttributes,
-								defaultAttributes: sanitizeDefaultAttributes(
-									defaultAttributes,
-									{ defaultWithoutValue: true }
-								),
+								originDefaultAttributes,
+								defaultAttributes,
 							}}
 						>
 							{children}

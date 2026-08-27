@@ -6,6 +6,7 @@
 - Added search functionality for block features: You can now quickly find any feature by typing in the search box. Simply type what you're looking for, and the list will automatically filter to show matching features, making it much easier to find the settings you need.
 
 ### Improvements
+- BlockBase: reduced extra re-renders by keeping the WordPress store subscription on data values (not selector function identities), initializing the pending-attributes overlay only for user edits, and memoizing inspector context callbacks.
 - Improved block features organization for better code structure and easier maintenance.
 - Added support for third-party developers to extend and customize the style engine filters.
 - Made the application faster by identifying and fixing slow areas of the code 🚀.
@@ -34,6 +35,7 @@
 - Cursor feature: Fix pointer option icon and improve auto icon.
 
 ### Automated Tests
+- BlockBase: e2e coverage that idle time and sibling-block edits do not re-render every mounted BlockBase instance.
 - Preview mode: e2e coverage that clicking paragraph links, linked images, buttons, and featured-image permalinks does not navigate the preview iframe.
 - Automated test to check `font color` WP data compatibility if variables not found. 
 - Automated test to check `background color` WP data compatibility if variables not found. 
