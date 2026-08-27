@@ -424,7 +424,7 @@ target-branch checkout when the feature branch may not have the latest pin yet).
 
 | Toolkit script | Role |
 | --- | --- |
-| `jobs/sync-global-packages-submodule/resolve-targets.sh` | dispatch/schedule/manual → source/target/mode |
+| `jobs/sync-global-packages-submodule/resolve-targets.sh` | dispatch/schedule/manual → source/target/mode (`auto` skips feature branches; pin those with `npm run submodule:bump`) |
 | `jobs/sync-global-packages-submodule/run-bump.sh` | git user + `bump-global-packages-submodule.sh` (folds GP Unreleased on branch tips) |
 | `jobs/sync-global-packages-submodule/commit-bump.sh` | commit staged gitlink |
 | `jobs/sync-global-packages-submodule/open-or-update-pr.sh` | force-push PR branch + `gh pr` |
