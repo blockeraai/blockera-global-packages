@@ -118,13 +118,22 @@ const registeredBlockTypes = new Map<string, Object>();
  * @param {Object} settings Original block settings.
  * @param {string} name block id or name.
  * @param {extraArguments} args the extra arguments includes unsupportedBlocks, notAllowedUsers, and currentUser properties.
+ * @param {mixed} deprecation Gutenberg 3rd filter arg: `null` for the live block type, deprecation object for each deprecated version.
  * @return {Object} Filtered block settings.
  */
 export default function withBlockSettings(
 	settings: Object,
 	name: Object,
-	args: extraArguments
+	args: extraArguments,
+	deprecation?: mixed
 ): Object {
+	// Gutenberg re-runs this filter for every deprecation. Never return the
+	// cached live block type for those calls — that replaces old save/attributes
+	// and makes parse of large legacy documents extremely slow.
+	if (deprecation != null) {
+		return settings;
+	}
+
 	if (registeredBlockTypes.has(name)) {
 		return registeredBlockTypes.get(name);
 	}
@@ -369,13 +378,14 @@ function mergeBlockSettings(
 		? getSharedBlockAttributes()
 		: blockeraOverrideBlockTypeAttributes;
 
-	let overrideAttributes = !settings.attributes?.blockeraId &&
+	let overrideAttributes =
+		!settings.attributes?.blockeraId &&
 		!settings.attributes?.blockeraPropsId
-		? mergeObject(
-				sanitizeDefaultAttributes(blockeraOverrideBlockAttributes),
-				sanitizeDefaultAttributes(settings.attributes)
-			)
-		: sanitizeDefaultAttributes(settings.attributes);
+			? mergeObject(
+					sanitizeDefaultAttributes(blockeraOverrideBlockAttributes),
+					sanitizeDefaultAttributes(settings.attributes)
+				)
+			: sanitizeDefaultAttributes(settings.attributes);
 
 	if (CORE_ICON_BLOCK_NAME === settings.name) {
 		const typeSpecificAttrs = getBlockTypeAttributes(settings.name);
