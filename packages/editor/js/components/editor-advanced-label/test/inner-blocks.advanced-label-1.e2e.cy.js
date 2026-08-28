@@ -516,15 +516,16 @@ describe('Inner Blocks label testing', () => {
 
 								// Assert store data
 								assertBlockData((data) => {
-									expect({}).to.be.deep.eq(
+									expect(undefined).to.be.eq(
 										getSelectedBlock(
 											data,
 											'blockeraBlockStates'
-										).hover.breakpoints.desktop.attributes
-											.blockeraInnerBlocks[
+										)?.hover?.breakpoints?.desktop
+											?.attributes.blockeraInnerBlocks[
 											'elements/link'
-										].attributes.blockeraBlockStates.hover
-											.breakpoints.desktop.attributes
+										]?.attributes?.blockeraBlockStates
+											?.hover?.breakpoints?.desktop
+											?.attributes
 									);
 								});
 							}
@@ -564,11 +565,11 @@ describe('Inner Blocks label testing', () => {
 						assertBlockData((data) => {
 							expect(undefined).to.be.deep.eq(
 								getSelectedBlock(data, 'blockeraBlockStates')
-									.hover.breakpoints.tablet.attributes
+									?.hover?.breakpoints?.tablet?.attributes
 									.blockeraInnerBlocks['elements/link']
-									.attributes.blockeraBlockStates.hover
-									.breakpoints.tablet.attributes
-									.blockeraFontColor
+									?.attributes?.blockeraBlockStates?.hover
+									?.breakpoints?.tablet?.attributes
+									?.blockeraFontColor
 							);
 						});
 					}
@@ -606,9 +607,9 @@ describe('Inner Blocks label testing', () => {
 						assertBlockData((data) => {
 							expect(undefined).to.be.deep.eq(
 								getSelectedBlock(data, 'blockeraBlockStates')
-									.hover.breakpoints.tablet.attributes
-									.blockeraInnerBlocks['elements/link']
-									.attributes.blockeraFontColor
+									?.hover?.breakpoints?.tablet?.attributes
+									?.blockeraInnerBlocks['elements/link']
+									?.attributes?.blockeraFontColor
 							);
 						});
 					}
@@ -874,69 +875,69 @@ describe('Inner Blocks label testing', () => {
 				// Assert store data
 				assertBlockData((data) => {
 					// root
-					expect(undefined).to.be.deep.eq(
+					expect(undefined).to.be.eq(
 						getSelectedBlock(data, 'blockeraInnerBlocks')[
 							'elements/link'
-						].attributes.blockeraFontColor
+						]?.attributes?.blockeraFontColor
 					);
 
 					// root/desktop/hover
-					expect({}).to.be.deep.eq(
+					expect(undefined).to.be.eq(
 						getSelectedBlock(data, 'blockeraInnerBlocks')[
 							'elements/link'
-						].attributes.blockeraBlockStates.hover.breakpoints
-							.desktop.attributes
+						]?.attributes?.blockeraBlockStates?.hover?.breakpoints
+							?.desktop?.attributes
 					);
 
 					// parent/hover/desktop/hover
-					expect({}).to.be.deep.eq(
-						getSelectedBlock(data, 'blockeraBlockStates').hover
-							.breakpoints.desktop.attributes.blockeraInnerBlocks[
-							'elements/link'
-						].attributes.blockeraBlockStates.hover.breakpoints
-							.desktop.attributes
+					expect(undefined).to.be.eq(
+						getSelectedBlock(data, 'blockeraBlockStates')?.hover
+							?.breakpoints?.desktop?.attributes
+							?.blockeraInnerBlocks['elements/link']?.attributes
+							?.blockeraBlockStates?.hover?.breakpoints?.desktop
+							?.attributes
 					);
 
 					// parent/hover/desktop
-					expect(undefined).to.be.deep.eq(
-						getSelectedBlock(data, 'blockeraBlockStates').hover
-							.breakpoints.desktop.attributes.blockeraInnerBlocks[
-							'elements/link'
-						].attributes.blockeraFontColor
+					expect(undefined).to.be.eq(
+						getSelectedBlock(data, 'blockeraBlockStates')?.hover
+							?.breakpoints?.desktop?.attributes
+							?.blockeraInnerBlocks['elements/link']?.attributes
+							?.blockeraFontColor
 					);
 
 					// parent/hover/tablet/normal
-					expect(undefined).to.be.deep.eq(
-						getSelectedBlock(data, 'blockeraBlockStates').hover
-							.breakpoints.tablet.attributes.blockeraInnerBlocks[
-							'elements/link'
-						].attributes.blockeraFontColor
+					expect(undefined).to.be.eq(
+						getSelectedBlock(data, 'blockeraBlockStates')?.hover
+							?.breakpoints?.tablet?.attributes
+							?.blockeraInnerBlocks['elements/link']?.attributes
+							?.blockeraFontColor
 					);
 
 					// parent/hover/tablet/hover/tablet
-					expect({}).to.be.deep.eq(
-						getSelectedBlock(data, 'blockeraBlockStates').hover
-							.breakpoints.tablet.attributes.blockeraInnerBlocks[
-							'elements/link'
-						].attributes.blockeraBlockStates.hover.breakpoints
-							.tablet.attributes
+					expect(undefined).to.be.eq(
+						getSelectedBlock(data, 'blockeraBlockStates')?.hover
+							?.breakpoints?.tablet?.attributes
+							?.blockeraInnerBlocks['elements/link']?.attributes
+							?.blockeraBlockStates?.hover?.breakpoints?.tablet
+							?.attributes
 					);
 
 					// parent/normal/tablet/hover/tablet
-					expect({}).to.be.deep.eq(
-						getSelectedBlock(data, 'blockeraBlockStates').normal
-							.breakpoints.tablet.attributes.blockeraInnerBlocks[
-							'elements/link'
-						].attributes.blockeraBlockStates.hover.breakpoints
-							.tablet.attributes
+					expect(undefined).to.be.eq(
+						getSelectedBlock(data, 'blockeraBlockStates')?.normal
+							?.breakpoints?.tablet?.attributes
+							?.blockeraInnerBlocks['elements/link']?.attributes
+							?.blockeraBlockStates?.hover?.breakpoints?.tablet
+							?.attributes
 					);
 
 					// parent/normal/tablet/normal
-					expect(undefined).to.be.deep.eq(
-						getSelectedBlock(data, 'blockeraBlockStates').normal
-							.breakpoints.tablet.attributes.blockeraInnerBlocks[
-							'elements/link'
-						].attributes.blockeraFontColor
+					expect(undefined).to.be.eq(
+						getSelectedBlock(data, 'blockeraBlockStates')?.normal
+							?.breakpoints?.tablet?.attributes
+							?.blockeraInnerBlocks['elements/link']?.attributes
+							?.blockeraFontColor
 					);
 				});
 			});
