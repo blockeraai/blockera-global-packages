@@ -5,7 +5,7 @@ export type TransformOriginSides = {
 	left: any,
 };
 
-function isOriginRecord(value: mixed): boolean {
+function isOriginRecord(value: mixed): boolean %checks {
 	return value != null && typeof value === 'object' && !Array.isArray(value);
 }
 

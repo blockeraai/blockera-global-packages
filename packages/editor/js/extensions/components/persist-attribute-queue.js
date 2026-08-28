@@ -27,7 +27,10 @@ export function enqueueBlockAttributePersist(
 	}
 
 	scheduled = true;
-	queueMicrotask(flushBlockAttributePersistQueue);
+	// Flow's queueMicrotask generic expects (...args: Array<mixed>) => mixed.
+	queueMicrotask((..._args: Array<mixed>): mixed => {
+		flushBlockAttributePersistQueue();
+	});
 }
 
 function flushBlockAttributePersistQueue(): void {
