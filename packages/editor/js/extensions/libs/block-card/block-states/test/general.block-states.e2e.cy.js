@@ -204,7 +204,7 @@ describe('Block State E2E Test', () => {
 				expect('100px').to.be.equal(
 					getSelectedBlock(data, 'blockeraWidth')
 				);
-				expect(undefined).to.be.equal(
+				expect({}).to.be.deep.equal(
 					getSelectedBlock(data, 'blockeraBlockStates')
 				);
 			});
