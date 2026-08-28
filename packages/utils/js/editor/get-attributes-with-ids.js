@@ -265,7 +265,14 @@ function isEmptyInnerBlocksTree(
 	for (let i = 0; i < keys.length; i++) {
 		const item = unwrapped[keys[i]];
 
-		if (!item || typeof item !== 'object' || Array.isArray(item)) {
+		// Repeaters (text-shadow, box-shadow, …) are `{ 0: { x, y, … } }`
+		// without an `attributes` key. Those are not inner-block slots.
+		if (
+			!item ||
+			typeof item !== 'object' ||
+			Array.isArray(item) ||
+			!('attributes' in item)
+		) {
 			return false;
 		}
 
@@ -801,11 +808,11 @@ function isUnusedBlockeraFeatureValue(
 		return isEmptyBlockStatesValue(current, defaultAttributes);
 	}
 
-	if (isEmptyBlockeraFeatureValue(current)) {
-		return true;
+	if (key === BLOCKERA_INNER_BLOCKS_KEY) {
+		return isEmptyInnerBlocksTree(current, defaultAttributes);
 	}
 
-	return isEmptyInnerBlocksTree(current, defaultAttributes);
+	return isEmptyBlockeraFeatureValue(current);
 }
 
 /**
