@@ -5,34 +5,6 @@
  */
 import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 
-function getBlockLevelTextAlign(
-	attributes: Object,
-	isParagraph: boolean
-): ?string {
-	if (isParagraph) {
-		return attributes.align;
-	}
-
-	return attributes?.style?.typography?.textAlign ?? attributes.textAlign;
-}
-
-function getBlockLevelTextAlignPatch(
-	isParagraph: boolean,
-	textAlign: ?string
-): Object {
-	if (isParagraph) {
-		return { align: textAlign };
-	}
-
-	return {
-		style: {
-			typography: {
-				textAlign,
-			},
-		},
-	};
-}
-
 export function textAlignFromWPCompatibility({
 	attributes,
 	blockId,
@@ -44,12 +16,8 @@ export function textAlignFromWPCompatibility({
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 	insideBlockInspector?: boolean,
 }): Object {
-	const isParagraph = blockId === 'core/paragraph';
-
-	const textAlign = getWpFromStyleOrGlobal(
-		getBlockLevelTextAlign(attributes, isParagraph),
-		attributes?.typography?.textAlign
-	);
+	const textAlign =
+		attributes?.style?.typography?.textAlign ?? attributes?.textAlign;
 
 	// For detecting the text align changer from block editor controls
 	// we have to validate and make sure the value is correct and should be updated
@@ -80,7 +48,6 @@ export function textAlignToWPCompatibility({
 	insideBlockInspector?: boolean,
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 }): Object {
-	const isParagraph = blockId === 'core/paragraph';
 	const insideInspector = runInsideBlockInspector(
 		insideBlockInspector,
 		editorSelectedBlockEvent
@@ -92,7 +59,14 @@ export function textAlignToWPCompatibility({
 		['left', 'center', 'right'].indexOf(newValue) === -1
 	) {
 		return insideInspector
-			? getBlockLevelTextAlignPatch(isParagraph, undefined)
+			? {
+					align: undefined, // clear legacy align attribute
+					style: {
+						typography: {
+							textAlign: undefined,
+						},
+					},
+				}
 			: {
 					typography: {
 						textAlign: undefined,
@@ -101,7 +75,14 @@ export function textAlignToWPCompatibility({
 	}
 
 	return insideInspector
-		? getBlockLevelTextAlignPatch(isParagraph, newValue)
+		? {
+				align: undefined, // clear legacy align attribute
+				style: {
+					typography: {
+						textAlign: newValue,
+					},
+				},
+			}
 		: {
 				typography: {
 					textAlign: newValue,
