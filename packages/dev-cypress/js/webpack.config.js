@@ -35,8 +35,10 @@ module.exports = {
 	output: {
 		path: path.resolve(__dirname, 'dist'),
 	},
-	// Avoid filesystem cache — it breaks Cypress JIT spec chunks (spec-0 load failures).
-	devtool: false,
+	// Filesystem cache breaks Cypress JIT spec chunks (spec-0 load failures).
+	cache: false,
+	// Inline maps so Cypress failure stacks point at the spec, not the bundle.
+	devtool: 'inline-source-map',
 	stats: 'errors-warnings',
 	optimization: {
 		splitChunks: false,
