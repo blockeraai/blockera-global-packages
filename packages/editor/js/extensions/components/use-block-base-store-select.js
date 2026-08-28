@@ -30,17 +30,20 @@ const EMPTY_ATTRIBUTES = {};
  * @param {string}  options.name
  * @param {boolean} options.isSelected
  * @param {boolean} [options.insideBlockInspector=true]
+ * @param {Object}  [options.attributes]
  */
 export function useBlockBaseStoreSelect({
 	clientId,
 	name,
 	isSelected,
 	insideBlockInspector = true,
+	attributes,
 }: {
 	clientId: string,
 	name: string,
 	isSelected: boolean,
 	insideBlockInspector?: boolean,
+	attributes?: Object,
 }): Object {
 	// Global styles panel mounts a single BlockBase (insideBlockInspector=false) without
 	// isSelected; it must still read extension inner-block target from the store.
@@ -55,59 +58,79 @@ export function useBlockBaseStoreSelect({
 	return useSelect(
 		(select) => {
 			const {
-				getActiveInnerState,
-				getActiveMasterState,
-				getExtensionCurrentBlock,
-				getExtensionCurrentBlockStateBreakpoint,
-			} = select('blockera/extensions');
-
-			const {
 				getBlockType,
 				getActiveBlockVariation,
 				getBlockVariations,
 			} = select('core/blocks');
-			const { getBlockAttributes } = select('core/block-editor');
-			const { getDeviceType, getEditorSelectedBlockEvent } =
-				select('blockera/editor');
-
-			const currentBlock = effectivelySelected
-				? getExtensionCurrentBlock(extensionsUiContext)
-				: 'master';
-			const currentBreakpoint = effectivelySelected
-				? getExtensionCurrentBlockStateBreakpoint()
-				: getBaseBreakpoint();
-			const editorSelectedBlockEvent = effectivelySelected
-				? getEditorSelectedBlockEvent()
-				: undefined;
-
+			const { getDeviceType } = select('blockera/editor');
 			const blockType = getBlockType(name) || {};
 			const {
 				supports,
 				selectors,
 				attributes: availableAttributes,
 			} = blockType;
+			const blockVariations = name
+				? getBlockVariations(name, 'transform')
+				: undefined;
 
-			return {
+			if (!effectivelySelected) {
+				const result = {
+					deviceType: getDeviceType(),
+					currentBlock: 'master',
+					currentState: 'normal',
+					currentBreakpoint: getBaseBreakpoint(),
+					currentInnerBlockState: 'normal',
+					supports,
+					selectors,
+					availableAttributes,
+					editorSelectedBlockEvent: undefined,
+					activeBlockVariation: getActiveBlockVariation(
+						name,
+						attributes || EMPTY_ATTRIBUTES
+					),
+					blockVariations,
+				};
+				return result;
+			}
+
+			const {
+				getActiveInnerState,
+				getActiveMasterState,
+				getExtensionCurrentBlock,
+				getExtensionCurrentBlockStateBreakpoint,
+			} = select('blockera/extensions');
+			const { getBlockAttributes } = select('core/block-editor');
+			const { getEditorSelectedBlockEvent } = select('blockera/editor');
+			const currentBlock = getExtensionCurrentBlock(extensionsUiContext);
+
+			const result = {
 				deviceType: getDeviceType(),
 				currentBlock,
 				currentState: getActiveMasterState(clientId, name),
-				currentBreakpoint,
-				currentInnerBlockState: effectivelySelected
-					? getActiveInnerState(clientId, currentBlock)
-					: 'normal',
+				currentBreakpoint: getExtensionCurrentBlockStateBreakpoint(),
+				currentInnerBlockState: getActiveInnerState(
+					clientId,
+					currentBlock
+				),
 				supports,
 				selectors,
 				availableAttributes,
-				editorSelectedBlockEvent,
+				editorSelectedBlockEvent: getEditorSelectedBlockEvent(),
 				activeBlockVariation: getActiveBlockVariation(
 					name,
 					getBlockAttributes(clientId) || EMPTY_ATTRIBUTES
 				),
-				blockVariations: name
-					? getBlockVariations(name, 'transform')
-					: undefined,
+				blockVariations,
 			};
+			return result;
 		},
-		[clientId, name, isSelected, effectivelySelected, extensionsUiContext]
+		[
+			attributes,
+			clientId,
+			name,
+			isSelected,
+			effectivelySelected,
+			extensionsUiContext,
+		]
 	);
 }

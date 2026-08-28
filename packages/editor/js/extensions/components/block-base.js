@@ -291,6 +291,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		name,
 		isSelected,
 		insideBlockInspector,
+		attributes: blockAttributes,
 	});
 
 	const getActiveBlockVariation = useCallback(
