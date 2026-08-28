@@ -112,6 +112,52 @@ type extraArguments = {
 
 const registeredBlockTypes = new Map<string, Object>();
 
+const BLOCKERA_ATTRIBUTE_PREFIX = 'blockera';
+
+/**
+ * Copy Blockera attribute definitions onto a Gutenberg deprecation.
+ *
+ * Deprecation `attributes` replace the live schema. Core textAlign (and
+ * similar) migrations stay eligible, but parse must still keep `blockera*`.
+ *
+ * @param {Object} settings Merged deprecation settings from Gutenberg.
+ * @param {string|Object} name Block type name.
+ * @return {Object} Settings with Blockera attribute schemas merged in.
+ */
+function withBlockeraAttributesOnDeprecation(
+	settings: Object,
+	name: string | Object
+): Object {
+	const liveAttributes = registeredBlockTypes.get((name: any))?.attributes;
+
+	if (!liveAttributes?.blockeraId && !liveAttributes?.blockeraPropsId) {
+		return settings;
+	}
+
+	if (
+		settings.attributes?.blockeraId ||
+		settings.attributes?.blockeraPropsId
+	) {
+		return settings;
+	}
+
+	const nextAttributes = { ...(settings.attributes || {}) };
+
+	for (const key in liveAttributes) {
+		if (
+			key.startsWith(BLOCKERA_ATTRIBUTE_PREFIX) &&
+			nextAttributes[key] === undefined
+		) {
+			nextAttributes[key] = liveAttributes[key];
+		}
+	}
+
+	return {
+		...settings,
+		attributes: nextAttributes,
+	};
+}
+
 /**
  * Filters registered WordPress block type settings, extending block settings with settings and block name.
  *
@@ -128,10 +174,13 @@ export default function withBlockSettings(
 	deprecation?: mixed
 ): Object {
 	// Gutenberg re-runs this filter for every deprecation. Never return the
-	// cached live block type for those calls — that replaces old save/attributes
+	// cached live block type for those calls — that replaces old save/migrate
 	// and makes parse of large legacy documents extremely slow.
+	// Still copy `blockera*` attribute schemas onto the deprecation: core
+	// entries (e.g. post-author-name textAlign v1) replace `attributes` and
+	// would otherwise drop Blockera data during `isEligible` migrate.
 	if (deprecation != null) {
-		return settings;
+		return withBlockeraAttributesOnDeprecation(settings, name);
 	}
 
 	if (registeredBlockTypes.has(name)) {
@@ -490,9 +539,13 @@ function mergeBlockSettings(
 			? settings?.deprecated
 			: [
 					{
-						attributes: settings.attributes,
+						attributes: overrideAttributes,
 						supports: settings.supports,
 						migrate(attributes: Object): Object {
+							if ('function' !== typeof additional.migrate) {
+								return attributes;
+							}
+
 							return additional.migrate(attributes);
 						},
 						edit(blockProps: Object): MixedElement {
