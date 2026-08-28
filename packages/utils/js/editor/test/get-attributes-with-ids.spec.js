@@ -438,6 +438,126 @@ describe('withoutBlockeraIdentityIfUnused', () => {
 		expect(hasBlockeraFeatureAttributes(next, schemaDefaults)).toBe(true);
 	});
 
+	it('keeps reset inner-block item slots as { attributes: {} } when siblings have values', () => {
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraInnerBlocks: {
+					value: {
+						'elements/container': {
+							attributes: {},
+						},
+						'elements/avatar': {
+							attributes: { blockeraWidth: '40px' },
+						},
+					},
+				},
+			},
+			schemaDefaults
+		);
+
+		expect(next.blockeraInnerBlocks).toEqual({
+			value: {
+				'elements/container': {
+					attributes: {},
+				},
+				'elements/avatar': {
+					attributes: { blockeraWidth: '40px' },
+				},
+			},
+		});
+	});
+
+	it('does not fill schema defaults into a reset inner-block slot', () => {
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraInnerBlocks: {
+					value: {
+						'elements/container': {
+							attributes: {
+								blockeraBackgroundColor: '',
+							},
+						},
+						'elements/avatar': {
+							attributes: { blockeraWidth: '40px' },
+						},
+					},
+				},
+			},
+			{
+				...schemaDefaults,
+				blockeraBackgroundColor: {
+					type: 'object',
+					default: { value: '' },
+				},
+				blockeraWidth: { type: 'object', default: { value: '' } },
+			}
+		);
+
+		expect(
+			next.blockeraInnerBlocks.value['elements/container']
+		).toEqual({ attributes: {} });
+		expect(
+			next.blockeraInnerBlocks.value['elements/container'].attributes
+		).not.toHaveProperty('blockeraBackgroundColor');
+	});
+
+	it('keeps reset inner-block item slots inside block states without dropping the map', () => {
+		const value = {
+			value: {
+				hover: {
+					breakpoints: {
+						desktop: {
+							attributes: {
+								blockeraBackgroundColor: '#fabbbb',
+								blockeraInnerBlocks: {
+									'elements/container': {
+										attributes: {
+											blockeraBackgroundColor: '',
+										},
+									},
+								},
+							},
+						},
+					},
+					isVisible: true,
+				},
+			},
+		};
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraBlockStates: value,
+			},
+			{
+				...schemaDefaults,
+				blockeraBackgroundColor: {
+					type: 'object',
+					default: { value: '' },
+				},
+			}
+		);
+
+		expect(next.blockeraBlockStates).toEqual({
+			value: {
+				hover: {
+					breakpoints: {
+						desktop: {
+							attributes: {
+								blockeraBackgroundColor: '#fabbbb',
+								blockeraInnerBlocks: {
+									'elements/container': {
+										attributes: {},
+									},
+								},
+							},
+						},
+					},
+					isVisible: true,
+				},
+			},
+		});
+	});
+
 	it('maps PHP empty-array defaults to { value: {} } so Gutenberg can omit them', () => {
 		const phpArraySchema = {
 			blockeraBackground: { type: 'object', default: { value: [] } },

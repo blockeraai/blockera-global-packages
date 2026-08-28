@@ -152,24 +152,23 @@ describe('Inner Blocks Functionality Tests ...', () => {
 
 		resetBlockState('Item Container');
 
-		//Check store
 		assertBlockData((data) => {
-			expect(undefined).to.be.eq(
+			expect({}).to.be.deep.equal(
 				getSelectedBlock(data, 'blockeraInnerBlocks')?.[
 					'elements/container'
 				]?.attributes
 			);
 
-			expect(undefined).to.be.eq(
+			expect({}).to.be.deep.equal(
 				getSelectedBlock(data, 'blockeraBlockStates')?.hover
-					?.breakpoints?.desktop?.attributes?.blockeraInnerBlocks[
+					?.breakpoints?.desktop?.attributes?.blockeraInnerBlocks?.[
 					'elements/container'
 				]?.attributes
 			);
 
-			expect(undefined).to.be.eq(
+			expect({}).to.be.deep.equal(
 				getSelectedBlock(data, 'blockeraBlockStates')?.normal
-					?.breakpoints?.mobile?.attributes?.blockeraInnerBlocks[
+					?.breakpoints?.mobile?.attributes?.blockeraInnerBlocks?.[
 					'elements/container'
 				]?.attributes
 			);
