@@ -234,7 +234,9 @@ function getRegisteredDefaultValue(
 /**
  * Inner-block maps from WP↔Blockera hydrate look like
  * `{ 'elements/link': { attributes: {} } }` (optionally `{ value: ... }`).
- * Empty slots must not keep identity or serialize as used features.
+ * Empty slots do not count as used features at the top level (identity omit).
+ * Nested maps keep `{ attributes: {} }` so reset items are readable as `{}`
+ * without serializing leftover feature defaults.
  */
 function isEmptyInnerBlocksTree(
 	value: mixed,
@@ -263,12 +265,7 @@ function isEmptyInnerBlocksTree(
 	for (let i = 0; i < keys.length; i++) {
 		const item = unwrapped[keys[i]];
 
-		if (
-			!item ||
-			typeof item !== 'object' ||
-			Array.isArray(item) ||
-			!('attributes' in item)
-		) {
+		if (!item || typeof item !== 'object' || Array.isArray(item)) {
 			return false;
 		}
 
@@ -286,6 +283,7 @@ function isEmptyInnerBlocksTree(
 }
 
 const BLOCKERA_BLOCK_STATES_KEY = 'blockeraBlockStates';
+const BLOCKERA_INNER_BLOCKS_KEY = 'blockeraInnerBlocks';
 const BLOCK_STATE_KNOWN_KEYS: { [string]: boolean } = {
 	breakpoints: true,
 	isVisible: true,
@@ -326,8 +324,86 @@ function isMeaningfulStateFlag(value: mixed): boolean {
 }
 
 /**
+ * Keep inner-block item keys after reset with `{ attributes: {} }` so readers
+ * get an empty object. Do not fill schema defaults into that object.
+ */
+function normalizeInnerBlocksTree(
+	value: mixed,
+	defaultAttributes: ?Object
+): mixed {
+	if (value == null) {
+		return value;
+	}
+
+	const unwrapped = unwrapBlockeraAttributeValue(value);
+
+	if (isEmptyArrayOrEmptyObject(unwrapped)) {
+		const empty = wrapBlockStatesValue(value, {});
+
+		return isEquals(value, empty) ? value : empty;
+	}
+
+	if (typeof unwrapped !== 'object') {
+		return value;
+	}
+
+	const items: { [string]: mixed } = (unwrapped: any);
+	const nextItems: { [string]: mixed } = {};
+	let changed = false;
+
+	for (const itemId in items) {
+		const item = items[itemId];
+
+		if (item == null || typeof item !== 'object' || Array.isArray(item)) {
+			nextItems[itemId] = item;
+			continue;
+		}
+
+		const record: { [string]: mixed } = (item: any);
+		const prunedAttributes = pruneNestedFeatureAttributes(
+			record.attributes,
+			defaultAttributes
+		);
+
+		if (Object.keys(prunedAttributes).length === 0) {
+			const emptySlot = { attributes: {} };
+			nextItems[itemId] = emptySlot;
+
+			if (!isEquals(record, emptySlot)) {
+				changed = true;
+			}
+
+			continue;
+		}
+
+		if (!isEquals(record.attributes, prunedAttributes)) {
+			changed = true;
+			nextItems[itemId] = {
+				...record,
+				attributes: prunedAttributes,
+			};
+			continue;
+		}
+
+		nextItems[itemId] = record;
+	}
+
+	if (
+		!changed &&
+		Object.keys(nextItems).length === Object.keys(items).length
+	) {
+		return value;
+	}
+
+	const wrapped = wrapBlockStatesValue(value, nextItems);
+
+	return isEquals(value, wrapped) ? value : wrapped;
+}
+
+/**
  * Nested breakpoint/state attribute maps are not Gutenberg-registered keys.
  * Unused Blockera features are dropped (not reset to defaults).
+ * Empty inner-block item slots keep `{ attributes: {} }` (no feature defaults).
  */
 function pruneNestedFeatureAttributes(
 	attributes: mixed,
@@ -349,6 +425,38 @@ function pruneNestedFeatureAttributes(
 			if (!isEmptyBlockeraFeatureValue(record[key])) {
 				next[key] = record[key];
 			}
+			continue;
+		}
+
+		if (key === BLOCKERA_INNER_BLOCKS_KEY) {
+			const normalized = normalizeInnerBlocksTree(
+				record[key],
+				defaultAttributes
+			);
+			const unwrapped = unwrapBlockeraAttributeValue(normalized);
+
+			if (
+				unwrapped &&
+				typeof unwrapped === 'object' &&
+				!Array.isArray(unwrapped) &&
+				Object.keys(unwrapped).length > 0
+			) {
+				next[key] = normalized;
+			}
+
+			continue;
+		}
+
+		if (key === BLOCKERA_BLOCK_STATES_KEY) {
+			const normalized = normalizeBlockeraBlockStatesValue(
+				record[key],
+				defaultAttributes
+			);
+
+			if (!isEmptyBlockStatesValue(normalized, defaultAttributes)) {
+				next[key] = normalized;
+			}
+
 			continue;
 		}
 
@@ -774,7 +882,12 @@ export function omitUnusedBlockeraFeatureAttributes(
 						attributes[key],
 						defaultAttributes
 					)
-				: attributes[key];
+				: key === BLOCKERA_INNER_BLOCKS_KEY
+					? normalizeInnerBlocksTree(
+							attributes[key],
+							defaultAttributes
+						)
+					: attributes[key];
 
 		if (
 			!isUnusedBlockeraFeatureValue(
@@ -784,7 +897,11 @@ export function omitUnusedBlockeraFeatureAttributes(
 				key
 			)
 		) {
-			if (key === BLOCKERA_BLOCK_STATES_KEY && current !== attributes[key]) {
+			if (
+				(key === BLOCKERA_BLOCK_STATES_KEY ||
+					key === BLOCKERA_INNER_BLOCKS_KEY) &&
+				current !== attributes[key]
+			) {
 				if (!next) {
 					next = { ...attributes };
 				}
