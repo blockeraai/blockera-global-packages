@@ -831,6 +831,18 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 		},
 	};
 
+	const emptyNormalBreakpointSlots = {
+		value: {
+			normal: {
+				breakpoints: {
+					tablet: { attributes: {} },
+					mobile: { attributes: {} },
+				},
+				isVisible: true,
+			},
+		},
+	};
+
 	it('treats empty breakpoint attribute arrays as unused states', () => {
 		expect(
 			isEmptyBlockStatesValue(emptyNormalTabletMobile, statesSchema)
@@ -841,7 +853,7 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 			statesSchema
 		);
 
-		expect(next.blockeraBlockStates).toEqual({ value: {} });
+		expect(next.blockeraBlockStates).toEqual(emptyNormalBreakpointSlots);
 		expect(hasBlockeraFeatureAttributes(next, statesSchema)).toBe(false);
 	});
 
@@ -864,7 +876,7 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 				{ blockeraBlockStates: value },
 				statesSchema
 			).blockeraBlockStates
-		).toEqual({ value: {} });
+		).toEqual(emptyNormalBreakpointSlots);
 	});
 
 	it('treats mixed empty array and object breakpoint attributes as unused', () => {
@@ -907,6 +919,84 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 		expect(next.blockeraBlockStates).toEqual(value);
 	});
 
+	it('keeps a reset breakpoint as empty attributes when sibling states still have values', () => {
+		const value = {
+			value: {
+				normal: {
+					breakpoints: {
+						tablet: { attributes: { blockeraWidth: '' } },
+					},
+					isVisible: true,
+				},
+				hover: {
+					breakpoints: {
+						desktop: { attributes: { blockeraWidth: '40px' } },
+						tablet: { attributes: { blockeraWidth: '10px' } },
+					},
+					isVisible: true,
+				},
+			},
+		};
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{ blockeraBlockStates: value },
+			{
+				...statesSchema,
+				blockeraWidth: { type: 'object', default: { value: '' } },
+			}
+		);
+
+		expect(next.blockeraBlockStates.value.normal.breakpoints.tablet).toEqual(
+			{ attributes: {} }
+		);
+		expect(
+			next.blockeraBlockStates.value.hover.breakpoints.desktop.attributes
+				.blockeraWidth
+		).toBe('40px');
+	});
+
+	it('keeps empty breakpoint slots after reset-all across states', () => {
+		const value = {
+			value: {
+				normal: {
+					breakpoints: {
+						tablet: { attributes: { blockeraWidth: '' } },
+					},
+					isVisible: true,
+				},
+				hover: {
+					breakpoints: {
+						desktop: { attributes: { blockeraWidth: '' } },
+						tablet: { attributes: { blockeraWidth: '' } },
+					},
+					isVisible: true,
+				},
+			},
+		};
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraWidth: { value: '' },
+				blockeraBlockStates: value,
+			},
+			{
+				...statesSchema,
+				blockeraWidth: { type: 'object', default: { value: '' } },
+			}
+		);
+
+		expect(
+			next.blockeraBlockStates.value.normal.breakpoints.tablet.attributes
+		).toEqual({});
+		expect(
+			next.blockeraBlockStates.value.hover.breakpoints.desktop.attributes
+		).toEqual({});
+		expect(
+			next.blockeraBlockStates.value.hover.breakpoints.tablet.attributes
+		).toEqual({});
+		expect(hasBlockeraFeatureAttributes(next, statesSchema)).toBe(false);
+	});
+
 	it('keeps states when isVisible is false', () => {
 		const value = {
 			value: {
@@ -928,7 +1018,9 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 		).toEqual({
 			value: {
 				hover: {
-					breakpoints: {},
+					breakpoints: {
+						desktop: { attributes: {} },
+					},
 					isVisible: false,
 				},
 			},
@@ -959,7 +1051,7 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 		expect(isEmptyBlockStatesValue(withContent, statesSchema)).toBe(false);
 	});
 
-	it('drops empty breakpoints and unused nested defaults while keeping real ones', () => {
+	it('keeps empty breakpoint slots as {} while stripping unused nested defaults', () => {
 		const value = {
 			value: {
 				normal: {
@@ -991,6 +1083,7 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 			value: {
 				normal: {
 					breakpoints: {
+						tablet: { attributes: {} },
 						mobile: {
 							attributes: {
 								blockeraMinHeight: '50vh',
@@ -1016,7 +1109,7 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 
 		expect(next.blockeraId).toBeUndefined();
 		expect(next.className).toBeUndefined();
-		expect(next.blockeraBlockStates).toEqual({ value: {} });
+		expect(next.blockeraBlockStates).toEqual(emptyNormalBreakpointSlots);
 		expect(hasBlockeraFeatureAttributes(next, statesSchema)).toBe(false);
 	});
 
@@ -1037,15 +1130,26 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 		expect(normalizeBlockeraBlockStatesValue(clean, statesSchema)).toBe(
 			clean
 		);
+
+		const normalizedEmpty = normalizeBlockeraBlockStatesValue(
+			emptyNormalTabletMobile,
+			statesSchema
+		);
+
+		expect(normalizedEmpty).toEqual({
+			value: {
+				normal: {
+					breakpoints: {
+						tablet: { attributes: {} },
+						mobile: { attributes: {} },
+					},
+					isVisible: true,
+				},
+			},
+		});
 		expect(
-			normalizeBlockeraBlockStatesValue(
-				normalizeBlockeraBlockStatesValue(
-					emptyNormalTabletMobile,
-					statesSchema
-				),
-				statesSchema
-			)
-		).toEqual({ value: {} });
+			normalizeBlockeraBlockStatesValue(normalizedEmpty, statesSchema)
+		).toBe(normalizedEmpty);
 	});
 });
 
