@@ -11,6 +11,25 @@ const REGISTERED_CLASSNAMES = new Map<string, Set<string>>();
 
 // blockera block classname pattern.
 export const BLOCKERA_BLOCK_REGEX: RegExp = /blockera-block-[\w-]+/i;
+const BLOCKERA_BLOCK_REGEX_GLOBAL: RegExp = new RegExp(
+	BLOCKERA_BLOCK_REGEX.source,
+	'gi'
+);
+
+/**
+ * Unique `blockera-block-*` tokens on a class list (legacy `--hash` included).
+ *
+ * @param {mixed} className Block `className` attribute.
+ * @return {Array<string>} Matching tokens.
+ */
+export function getBlockeraClassTokens(className: mixed): Array<string> {
+	if (typeof className !== 'string' || !className) {
+		return [];
+	}
+
+	BLOCKERA_BLOCK_REGEX_GLOBAL.lastIndex = 0;
+	return className.match(BLOCKERA_BLOCK_REGEX_GLOBAL) || [];
+}
 
 /**
  * Register a class name to be used in the block.

@@ -5,7 +5,7 @@
  */
 import { ErrorBoundary } from 'react-error-boundary';
 import type { Element, ComponentType, MixedElement } from 'react';
-import { select, dispatch, useDispatch } from '@wordpress/data';
+import { select, dispatch, useDispatch, useRegistry } from '@wordpress/data';
 import {
 	createContext,
 	useContext,
@@ -76,6 +76,7 @@ import { BlockInspectorTabSync } from './block-inspector-tab-sync';
 import { BlockBaseInspectorBundle } from './block-base-inspector-bundle';
 import { useBlockBaseStoreSelect } from './use-block-base-store-select';
 import { trackBlockBaseRender } from './track-block-base-render';
+import { enqueueBlockAttributePersist } from './persist-attribute-queue';
 import { blockInspectorTabPersistence } from './use-sync-block-inspector-tab';
 import type { UpdateBlockEditorSettings } from '../libs/types';
 import { ErrorBoundaryFallback } from '../hooks/block-settings';
@@ -109,12 +110,16 @@ import {
 	hasRegisteredClassName,
 	removeRegisteredClassName,
 	getBlocksClassNamesFromStore,
+	getBlockeraClassTokens,
 	BLOCKERA_BLOCK_REGEX,
 } from './registered-classnames';
 
 const BLOCKERA_DELAY_EXPECTED_TIME = 1000;
 
-function remintAndRegisterIdentity(clientId: string, attributes: Object): Object {
+function remintAndRegisterIdentity(
+	clientId: string,
+	attributes: Object
+): Object {
 	const reminted = remintBlockeraIdentity(cloneObject(attributes));
 	registerClassName(
 		clientId,
@@ -196,6 +201,8 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		setAttributes: setBlockAttributes,
 		...props
 	} = _props;
+
+	const registry = useRegistry();
 
 	// No-op unless window.__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__ is set
 	// (Cypress BlockBase re-render spec). Counts this render for idle /
@@ -387,12 +394,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		}
 
 		return masterIsNormalState();
-	}, [
-		currentBlock,
-		currentInnerBlockState,
-		deviceType,
-		masterIsNormalState,
-	]);
+	}, [currentBlock, currentInnerBlockState, deviceType, masterIsNormalState]);
 
 	const args = useMemo(
 		() => ({
@@ -437,17 +439,30 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	// Store the unique classname for this block instance.
 	// Generate it once on mount using useMemo (runs during render, memoized by clientId).
 	const uniqueClassName = useMemo(() => {
-		const id = getBlockeraId(blockAttributes);
-		if (
-			!id ||
-			isBlockeraEngineSkippedForClient(clientId, blockAttributes)
-		) {
+		if (isBlockeraEngineSkippedForClient(clientId, blockAttributes)) {
 			return '';
 		}
-		const fromId = `blockera-block-${String(id)}`;
-		registerClassName(clientId, fromId);
-		return fromId;
-	}, [clientId, isTreeSkipped, blockAttributes?.blockeraId, blockAttributes?.blockeraPropsId, blockAttributes?.blockeraCompatId]);
+
+		const tokens = getBlockeraClassTokens(blockAttributes?.className);
+		const id = getBlockeraId(blockAttributes);
+		const fromId = id ? `blockera-block-${String(id)}` : '';
+
+		for (let i = 0; i < tokens.length; i++) {
+			registerClassName(clientId, tokens[i]);
+		}
+		if (fromId && tokens.indexOf(fromId) === -1) {
+			registerClassName(clientId, fromId);
+		}
+
+		return tokens[0] || fromId;
+	}, [
+		clientId,
+		isTreeSkipped,
+		blockAttributes?.blockeraId,
+		blockAttributes?.blockeraPropsId,
+		blockAttributes?.blockeraCompatId,
+		blockAttributes?.className,
+	]);
 
 	// Track if this is the first calculation to ensure unique classname on mount
 	const isFirstCalculationRef = useRef(true);
@@ -468,57 +483,6 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			}
 		};
 	}, [clientId, uniqueClassName]);
-
-	useLayoutEffect(() => {
-		if (!needsLegacyBlockeraIdMigrate(blockAttributes)) {
-			return;
-		}
-
-		const persistSchema = getBlockeraPersistSchema(
-			availableAttributes,
-			originDefaultAttributes
-		);
-
-		const migrated = withoutBlockeraIdentityIfUnused(
-			migrateLegacyBlockeraIds(cloneObject(blockAttributes)),
-			persistSchema
-		);
-		// cloneObject drops `undefined`; Gutenberg merge needs explicit unset.
-		migrated.blockeraPropsId = undefined;
-		migrated.blockeraCompatId = undefined;
-		if (blockAttributes.style && !migrated.style) {
-			migrated.style = undefined;
-		}
-
-		if (isEquals(migrated, blockAttributes)) {
-			return;
-		}
-
-		// Persistent on purpose: the post entity only records persistent
-		// block edits, so cleanup must land in saved markup.
-		setBlockAttributes(migrated);
-	}, [
-		blockAttributes,
-		setBlockAttributes,
-		availableAttributes,
-		originDefaultAttributes,
-	]);
-
-	useLayoutEffect(() => {
-		if (!blockAttributes?.style) {
-			return;
-		}
-
-		const cleaned = withCleanedWpStyle(blockAttributes);
-
-		if (isEquals(cleaned.style, blockAttributes.style)) {
-			return;
-		}
-
-		setBlockAttributes({
-			style: cleaned.style,
-		});
-	}, [blockAttributes, setBlockAttributes]);
 
 	const compatibleAttributes = useMemo(() => {
 		const hasFeatures = hasBlockeraFeatureAttributes(
@@ -645,76 +609,139 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	const { className } = attributes;
 
 	useLayoutEffect(() => {
-		if (!isActive) {
-			return;
+		let next = blockAttributes;
+		let didLegacyId = false;
+		let didWpStyle = false;
+		let didRemint = false;
+		let didLayoutFields = false;
+
+		if (needsLegacyBlockeraIdMigrate(next)) {
+			const persistSchema = getBlockeraPersistSchema(
+				availableAttributes,
+				originDefaultAttributes
+			);
+			const migrated = withoutBlockeraIdentityIfUnused(
+				migrateLegacyBlockeraIds(cloneObject(next)),
+				persistSchema
+			);
+			// cloneObject drops `undefined`; Gutenberg merge needs explicit unset.
+			migrated.blockeraPropsId = undefined;
+			migrated.blockeraCompatId = undefined;
+			if (blockAttributes.style && !migrated.style) {
+				migrated.style = undefined;
+			}
+
+			if (!isEquals(migrated, next)) {
+				next = migrated;
+				didLegacyId = true;
+			}
 		}
 
-		if (isBlockeraEngineSkippedForClient(clientId, blockAttributes)) {
-			return;
+		if (next?.style) {
+			const cleaned = withCleanedWpStyle(next);
+
+			if (!isEquals(cleaned.style, next.style)) {
+				next = {
+					...next,
+					style: cleaned.style,
+				};
+				didWpStyle = true;
+			}
 		}
 
+		const id = getBlockeraId(next);
+		const fromId = id ? `blockera-block-${String(id)}` : '';
+		const classTokens = getBlockeraClassTokens(next?.className);
+		const classIsDuplicate = classTokens.some((token) =>
+			isClassNameDuplicate(clientId, token)
+		);
+		const idIsDuplicate = Boolean(
+			fromId && isClassNameDuplicate(clientId, fromId)
+		);
+
+		// Gutenberg Duplicate clones identity onto a new clientId; remint so
+		// selectors do not collide. Also remint pasted blocks that share a
+		// unique class token even when blockeraId already differs.
 		if (
-			!getBlockeraId(blockAttributes) &&
-			!getBlockeraId(compatibleAttributes)
+			(classIsDuplicate || idIsDuplicate) &&
+			!isBlockeraEngineSkippedForClient(clientId, next)
 		) {
+			next = remintAndRegisterIdentity(clientId, next);
+			didRemint = true;
+		}
+
+		const persistedId = getBlockeraId(next);
+		if (persistedId && (didLegacyId || didRemint)) {
+			registerClassName(
+				clientId,
+				`blockera-block-${String(persistedId)}`
+			);
+		}
+
+		const layoutPatch: { [string]: mixed } = {};
+		if (
+			isActive &&
+			!isBlockeraEngineSkippedForClient(clientId, blockAttributes) &&
+			(getBlockeraId(blockAttributes) ||
+				getBlockeraId(compatibleAttributes))
+		) {
+			if (
+				storedLayoutFieldDiffers(
+					compatibleAttributes?.blockeraDisplay,
+					blockAttributes?.blockeraDisplay
+				)
+			) {
+				layoutPatch.blockeraDisplay =
+					compatibleAttributes.blockeraDisplay;
+			}
+
+			if (
+				storedLayoutFieldDiffers(
+					compatibleAttributes?.blockeraFlexLayout,
+					blockAttributes?.blockeraFlexLayout
+				)
+			) {
+				layoutPatch.blockeraFlexLayout =
+					compatibleAttributes.blockeraFlexLayout;
+			}
+
+			if (Object.keys(layoutPatch).length) {
+				next = {
+					...next,
+					...layoutPatch,
+				};
+				didLayoutFields = true;
+			}
+		}
+
+		if (!didLegacyId && !didWpStyle && !didRemint && !didLayoutFields) {
 			return;
 		}
 
-		const patch: { [string]: mixed } = {};
-
-		if (
-			storedLayoutFieldDiffers(
-				compatibleAttributes?.blockeraDisplay,
-				blockAttributes?.blockeraDisplay
-			)
-		) {
-			patch.blockeraDisplay = compatibleAttributes.blockeraDisplay;
+		if (didLayoutFields || didRemint) {
+			setPendingAttributes(null);
 		}
 
-		if (
-			storedLayoutFieldDiffers(
-				compatibleAttributes?.blockeraFlexLayout,
-				blockAttributes?.blockeraFlexLayout
-			)
-		) {
-			patch.blockeraFlexLayout = compatibleAttributes.blockeraFlexLayout;
-		}
+		const persistPayload =
+			didLayoutFields && !didLegacyId && !didWpStyle && !didRemint
+				? layoutPatch
+				: didWpStyle && !didLegacyId && !didRemint && !didLayoutFields
+					? { style: next.style }
+					: next;
 
-		if (!Object.keys(patch).length) {
-			return;
-		}
-
-		setPendingAttributes(null);
-		// Merge only layout fields. Spreading `blockAttributes` re-applies
-		// unused defaults that legacy-id migrate just cleaned.
-		setBlockAttributes(patch);
+		enqueueBlockAttributePersist(registry, () => {
+			setBlockAttributes(persistPayload);
+		});
 	}, [
 		isActive,
 		clientId,
+		registry,
 		blockAttributes,
 		compatibleAttributes,
 		setBlockAttributes,
+		availableAttributes,
+		originDefaultAttributes,
 	]);
-
-	// Gutenberg Duplicate clones identity onto a new clientId; remint so
-	// selectors do not collide. Drop the overlay so persist uses the new id.
-	useLayoutEffect(() => {
-		const id = getBlockeraId(blockAttributes);
-		if (
-			!id ||
-			isBlockeraEngineSkippedForClient(clientId, blockAttributes)
-		) {
-			return;
-		}
-
-		const fromId = `blockera-block-${String(id)}`;
-		if (!isClassNameDuplicate(clientId, fromId, getBlocksClassNames())) {
-			return;
-		}
-
-		setPendingAttributes(null);
-		setBlockAttributes(remintAndRegisterIdentity(clientId, blockAttributes));
-	}, [clientId, blockAttributes, getBlocksClassNames, setBlockAttributes]);
 
 	/**
 	 * Set the attributes state and the attributes ref.
