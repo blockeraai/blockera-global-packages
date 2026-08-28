@@ -463,7 +463,7 @@ describe('Color Control label testing (BG Color)', () => {
 
 					// Assert store data
 					assertBlockData((data) => {
-						expect(undefined).to.be.eq(
+						expect('').to.be.eq(
 							getSelectedBlock(data, 'blockeraBackgroundColor')
 						);
 					});
