@@ -673,7 +673,16 @@ function pruneBlockStateBreakpoints(
 		);
 
 		if (Object.keys(prunedAttributes).length === 0) {
-			changed = true;
+			const emptySlot = {
+				...record,
+				attributes: {},
+			};
+
+			if (!isEquals(record, emptySlot)) {
+				changed = true;
+			}
+
+			next[breakpointType] = emptySlot;
 			continue;
 		}
 
@@ -700,8 +709,9 @@ function pruneBlockStateBreakpoints(
 }
 
 /**
- * Drop empty breakpoint/state slots. Preserve `{ value }` wrapping.
- * Returns the original reference when nothing changes.
+ * Keep empty `{ attributes: {} }` breakpoint slots after reset. Drop a
+ * state only when it has no breakpoint keys (and no content / css-class).
+ * Empty-only `blockeraBlockStates` still collapse via isEmptyBlockStatesValue.
  */
 export function normalizeBlockeraBlockStatesValue(
 	value: mixed,
@@ -763,8 +773,19 @@ export function normalizeBlockeraBlockStatesValue(
 			: record;
 
 		if (isEmptyBlockStateEntry(nextState, defaultAttributes)) {
-			changed = true;
-			continue;
+			const breakpoints = (nextState: any)?.breakpoints;
+			const hasBreakpointSlots =
+				breakpoints &&
+				typeof breakpoints === 'object' &&
+				!Array.isArray(breakpoints) &&
+				Object.keys(breakpoints).length > 0;
+
+			// Reset slots stay as `{ attributes: {} }` so readers can assert
+			// empty objects. Drop the state only when no breakpoint keys remain.
+			if (!hasBreakpointSlots) {
+				changed = true;
+				continue;
+			}
 		}
 
 		nextStates[stateId] = nextState;
@@ -777,6 +798,41 @@ export function normalizeBlockeraBlockStatesValue(
 	const wrapped = wrapBlockStatesValue(value, nextStates);
 
 	return isEquals(value, wrapped) ? value : wrapped;
+}
+
+/**
+ * True when any state still has breakpoint keys (including `{ attributes: {} }`
+ * reset slots). Used so omitUnused does not wipe those slots to `{ value: {} }`.
+ */
+function blockStatesTreeHasBreakpointSlots(value: mixed): boolean {
+	const unwrapped = unwrapBlockeraAttributeValue(value);
+
+	if (unwrapped == null || typeof unwrapped !== 'object' || Array.isArray(unwrapped)) {
+		return false;
+	}
+
+	const states: { [string]: mixed } = (unwrapped: any);
+
+	for (const stateId in states) {
+		const state = states[stateId];
+
+		if (state == null || typeof state !== 'object' || Array.isArray(state)) {
+			continue;
+		}
+
+		const breakpoints = (state: any).breakpoints;
+
+		if (
+			breakpoints &&
+			typeof breakpoints === 'object' &&
+			!Array.isArray(breakpoints) &&
+			Object.keys(breakpoints).length > 0
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 function isUnusedBlockeraFeatureValue(
@@ -909,6 +965,19 @@ export function omitUnusedBlockeraFeatureAttributes(
 					key === BLOCKERA_INNER_BLOCKS_KEY) &&
 				current !== attributes[key]
 			) {
+				if (!next) {
+					next = { ...attributes };
+				}
+				next[key] = current;
+			}
+			continue;
+		}
+
+		if (
+			key === BLOCKERA_BLOCK_STATES_KEY &&
+			blockStatesTreeHasBreakpointSlots(current)
+		) {
+			if (current !== attributes[key]) {
 				if (!next) {
 					next = { ...attributes };
 				}
