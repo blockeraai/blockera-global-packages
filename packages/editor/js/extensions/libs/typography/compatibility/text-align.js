@@ -16,8 +16,12 @@ export function textAlignFromWPCompatibility({
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 	insideBlockInspector?: boolean,
 }): Object {
-	const textAlign =
-		attributes?.style?.typography?.textAlign ?? attributes?.textAlign;
+	// Block-level: style.typography.textAlign (WP 7+) or the textAlign attribute.
+	// Global styles: sibling typography.textAlign (theme.json).
+	const textAlign = getWpFromStyleOrGlobal(
+		attributes?.style?.typography?.textAlign ?? attributes?.textAlign,
+		attributes?.typography?.textAlign
+	);
 
 	// For detecting the text align changer from block editor controls
 	// we have to validate and make sure the value is correct and should be updated
@@ -25,11 +29,9 @@ export function textAlignFromWPCompatibility({
 		textAlign !== undefined &&
 		attributes?.blockeraTextAlign?.value !== textAlign
 	) {
-		if (textAlign !== undefined) {
-			attributes.blockeraTextAlign = {
-				value: textAlign,
-			};
-		}
+		attributes.blockeraTextAlign = {
+			value: textAlign,
+		};
 	}
 
 	return attributes;
