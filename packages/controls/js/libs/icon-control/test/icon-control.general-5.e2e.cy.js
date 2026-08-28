@@ -107,43 +107,60 @@ describe('icon-control', () => {
 			const customSvg =
 				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/></svg>';
 
+			// Custom SVG paste is companion-gated; unlock so the textarea is usable.
 			cy.window().then((win) => {
-				const clientId = win.wp.data
-					.select('core/block-editor')
-					.getSelectedBlock().clientId;
-
-				win.wp.data
-					.dispatch('core/block-editor')
-					.updateBlockAttributes(clientId, {
-						blockeraIcon: {
-							value: {
-								icon: '',
-								library: '',
-								svgString: customSvg,
-								uploadSVG: '',
-								renderedIcon: '',
-							},
-						},
-					});
+				win.wp.hooks.addFilter(
+					'blockera.controls.iconControl.customIcon.featureType',
+					'cypress/unlock-custom-icon',
+					() => 'none'
+				);
 			});
+
+			cy.getByDataCy('upload-svg-btn').first().click();
+
+			cy.get('.blockera-control-icon-picker-modal').within(() => {
+				cy.get('.blockera-control-icon-picker-custom-icon-tab').should(
+					'be.visible'
+				);
+				cy.get('.blockera-control-icon-picker-custom-icon-textarea')
+					.should('not.be.disabled')
+					.clear()
+					.type(customSvg, {
+						parseSpecialCharSequences: false,
+						delay: 0,
+					});
+				cy.contains(
+					'.blockera-control-icon-picker-custom-icon-footer-status-valid-label',
+					/Valid SVG/i
+				).should('be.visible');
+				cy.contains('button', /^Use icon$/i)
+					.should('not.be.disabled')
+					.click();
+			});
+
+			cy.get('.blockera-control-icon-picker-modal').should('not.exist');
 
 			assertBlockData((data) => {
 				const blockeraIcon = getSelectedBlock(data, 'blockeraIcon');
 				expect(blockeraIcon.svgString).to.contain('<circle');
 			});
 
-			cy.get('.blockera-control-icon-preview').first().click();
+			cy.getByDataCy('upload-svg-btn').first().click({ force: true });
 
 			cy.get('.blockera-control-icon-picker-modal').within(() => {
-				cy.contains('button', 'Clear').click();
+				cy.get('.blockera-control-icon-picker-custom-icon-tab').should(
+					'be.visible'
+				);
+				cy.contains('button', /^Clear$/i).click();
 				cy.get('button[aria-label="Close"]').click();
 			});
 
 			assertBlockData((data) => {
-				const blockeraIcon = getSelectedBlock(data, 'blockeraIcon');
-				expect(blockeraIcon.icon).to.equal('');
-				expect(blockeraIcon.svgString).to.equal('');
-				expect(blockeraIcon.uploadSVG).to.equal('');
+				const blockeraIcon = getSelectedBlock(data, 'blockeraIcon') || {};
+				// Cleared custom fields may be omitted (not in the attribute default).
+				expect(blockeraIcon.icon || '').to.equal('');
+				expect(blockeraIcon.svgString || '').to.equal('');
+				expect(blockeraIcon.uploadSVG || '').to.equal('');
 			});
 		});
 	});
