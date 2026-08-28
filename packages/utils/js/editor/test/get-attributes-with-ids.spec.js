@@ -438,6 +438,36 @@ describe('withoutBlockeraIdentityIfUnused', () => {
 		expect(hasBlockeraFeatureAttributes(next, schemaDefaults)).toBe(true);
 	});
 
+	it('does not treat text-shadow repeater items as empty inner-block slots', () => {
+		const textShadow = {
+			value: {
+				0: {
+					isVisible: true,
+					x: '1px',
+					y: '1px',
+					blur: '1px',
+					color: '#000000ab',
+					order: 0,
+				},
+			},
+		};
+		const schema = {
+			...schemaDefaults,
+			blockeraTextShadow: { type: 'object', default: { value: {} } },
+		};
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraId: 'abc123',
+				blockeraTextShadow: textShadow,
+			},
+			schema
+		);
+
+		expect(next.blockeraTextShadow).toEqual(textShadow);
+		expect(hasBlockeraFeatureAttributes(next, schema)).toBe(true);
+	});
+
 	it('keeps reset inner-block item slots as { attributes: {} } when siblings have values', () => {
 		const next = omitUnusedBlockeraFeatureAttributes(
 			{
