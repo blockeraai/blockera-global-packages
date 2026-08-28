@@ -75,7 +75,10 @@ describe('Blockera text-align toolbar', () => {
 				expect('center').to.equal(
 					getSelectedBlock(data, 'blockeraTextAlign')
 				);
-				expect('center').to.equal(getSelectedBlock(data, 'align'));
+				expect(undefined).to.equal(getSelectedBlock(data, 'align'));
+				expect('center').to.equal(
+					getSelectedBlock(data, 'style')?.typography?.textAlign
+				);
 			});
 
 			clickToolbarTextAlign(2);
@@ -84,7 +87,10 @@ describe('Blockera text-align toolbar', () => {
 				expect('right').to.equal(
 					getSelectedBlock(data, 'blockeraTextAlign')
 				);
-				expect('right').to.equal(getSelectedBlock(data, 'align'));
+				expect(undefined).to.equal(getSelectedBlock(data, 'align'));
+				expect('right').to.equal(
+					getSelectedBlock(data, 'style')?.typography?.textAlign
+				);
 			});
 		});
 
