@@ -820,31 +820,24 @@ export const reSelectBlock = (blockType = 'core/paragraph') => {
  * Close welcome guide if it exists
  */
 export function closeWelcomeGuide() {
-	// Return inner cy chains from `.then` so Cypress runs clicks *before* the overlay
-	// assertion below (nested cy.* without return can enqueue after the sibling).
-	cy.get('body').then(($body) => {
-		const hasClose =
-			$body.find(
-				'.components-modal__screen-overlay button[aria-label="Close"]'
-			).length > 0;
-		const hasFinish =
-			$body.find(
-				'.components-modal__screen-overlay button.components-guide__finish-button'
-			).length > 0;
+	// Use `cy.document()` — not `cy.get('body')`. A failed `.within()` on the
+	// canvas iframe body scopes later `cy.get()` to that iframe, so `body`
+	// never matches and afterEach hooks time out.
+	cy.document().then((doc) => {
+		const $body = Cypress.$(doc.body);
+		const $close = $body.find(
+			'.components-modal__screen-overlay button[aria-label="Close"]'
+		);
+		const $finish = $body.find(
+			'.components-modal__screen-overlay button.components-guide__finish-button'
+		);
 
-		if (hasClose) {
-			return cy
-				.get('.components-modal__screen-overlay [aria-label="Close"]')
-				.last()
-				.click();
+		if ($close.length) {
+			return cy.wrap($close.last()).click();
 		}
 
-		if (hasFinish) {
-			return cy
-				.get(
-					'.components-modal__screen-overlay button.components-guide__finish-button'
-				)
-				.click();
+		if ($finish.length) {
+			return cy.wrap($finish).click();
 		}
 	});
 
@@ -852,7 +845,8 @@ export function closeWelcomeGuide() {
 	// Do not use `invoke('remove', { force: true })` — Cypress passes the second
 	// argument to jQuery `.remove(selector)`, so the overlay may never detach.
 	// Avoid native `el.remove()` here: that can desync React on post-new.
-	cy.get('body', { timeout: 20000 }).should(($b) => {
+	cy.document({ timeout: 20000 }).should((doc) => {
+		const $b = Cypress.$(doc.body);
 		expect($b.find('.components-modal__screen-overlay')).to.have.length(0);
 		// Overlay can unmount before modal chrome; :visible avoids counting hidden shells.
 		expect(
