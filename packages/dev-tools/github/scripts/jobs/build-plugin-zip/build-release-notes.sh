@@ -9,6 +9,8 @@
 #   BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD
 #   BLOCKERA_BUILD_ZIP_CHANGELOG_FILE   default: changelog.txt
 #   BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX default: Blockera
+#   GITHUB_TOKEN / GH_TOKEN / BLOCKERA_GLOBAL_PACKAGES_TOKEN
+#     passed to other:changelog as --token (private repos need this)
 set -euo pipefail
 
 NEW_VERSION="${NEW_VERSION:-}"
@@ -28,6 +30,12 @@ MILESTONE="${MILESTONE_PREFIX} ${MAJOR}.${MINOR}"
 
 printf '%s' "${CHANGELOG}" | sed 's/\\n/\n/g' >release-note.txt
 
+CHANGELOG_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-${BLOCKERA_GLOBAL_PACKAGES_TOKEN:-}}}"
+CHANGELOG_TOKEN_ARGS=()
+if [[ -n "${CHANGELOG_TOKEN}" ]]; then
+	CHANGELOG_TOKEN_ARGS=(--token="${CHANGELOG_TOKEN}")
+fi
+
 # Quote --milestone: "Name 2.0" must stay one argv or Commander keeps only "Name".
 # GitHub lookup matches the same prefix + version series (Name 0.1 → Name 0.1.0).
 if [[ -n "${BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD:-}" ]]; then
@@ -40,6 +48,7 @@ else
 		--unreleased \
 		--file=release-note.txt \
 		--version="${NEW_VERSION}" \
+		"${CHANGELOG_TOKEN_ARGS[@]}" \
 		>release-notes.txt
 fi
 sed -ie '1,6d' release-notes.txt

@@ -98,3 +98,29 @@ describe('pickMilestoneByTitle', () => {
 		).toBe('Acme Theme 0.1.0');
 	});
 });
+
+describe('resolveGithubToken', () => {
+	const { resolveGithubToken } = require('../changelog');
+	const keys = ['GITHUB_TOKEN', 'GH_TOKEN', 'BLOCKERA_GLOBAL_PACKAGES_TOKEN'];
+
+	afterEach(() => {
+		keys.forEach((key) => {
+			delete process.env[key];
+		});
+	});
+
+	it('prefers the CLI token over env', () => {
+		process.env.GITHUB_TOKEN = 'from-github';
+		expect(resolveGithubToken({ token: 'from-cli' })).toBe('from-cli');
+	});
+
+	it('uses GITHUB_TOKEN when --token is omitted', () => {
+		process.env.GITHUB_TOKEN = 'from-github';
+		expect(resolveGithubToken({})).toBe('from-github');
+	});
+
+	it('falls back to BLOCKERA_GLOBAL_PACKAGES_TOKEN', () => {
+		process.env.BLOCKERA_GLOBAL_PACKAGES_TOKEN = 'from-pat';
+		expect(resolveGithubToken({})).toBe('from-pat');
+	});
+});

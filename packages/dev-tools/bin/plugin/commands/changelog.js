@@ -1245,9 +1245,9 @@ async function createChangelog(settings) {
 		)
 	);
 
-	const octokit = new Octokit({
-		auth: settings.token,
-	});
+	const octokit = new Octokit(
+		settings.token ? { auth: settings.token } : {}
+	);
 
 	let releaselog = '';
 
@@ -1323,6 +1323,22 @@ function resolveMilestoneTitle(options, config, manifest) {
 }
 
 /**
+ * GitHub token for milestone/PR lookup. CLI `--token` wins, then Actions env.
+ *
+ * @param {WPChangelogCommandOptions} options
+ * @return {string} Token or empty string.
+ */
+function resolveGithubToken(options) {
+	return (
+		options.token ||
+		process.env.GITHUB_TOKEN ||
+		process.env.GH_TOKEN ||
+		process.env.BLOCKERA_GLOBAL_PACKAGES_TOKEN ||
+		''
+	);
+}
+
+/**
  * Command that generates the release changelog.
  *
  * @param {WPChangelogCommandOptions} options
@@ -1334,7 +1350,7 @@ async function getReleaseChangelog(options) {
 	await createChangelog({
 		owner: config.githubRepositoryOwner,
 		repo: config.githubRepositoryName,
-		token: options.token,
+		token: resolveGithubToken(options),
 		milestone: resolveMilestoneTitle(options, config, manifest),
 		unreleased: options.unreleased,
 		file: options?.file || '',
@@ -1352,6 +1368,7 @@ async function getReleaseChangelog(options) {
 	getNormalizedTitle,
 	getReleaseChangelog,
 	resolveMilestoneTitle,
+	resolveGithubToken,
 	getIssueType,
 	getIssueFeature,
 	sortGroup,

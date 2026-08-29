@@ -201,8 +201,18 @@ async function getMilestoneByTitle(
 	/** @type {OktokitIssuesListMilestonesForRepoResponseItem[]} */
 	const all = [];
 
-	for await (const response of responses) {
-		all.push(...response.data);
+	try {
+		for await (const response of responses) {
+			all.push(...response.data);
+		}
+	} catch (error) {
+		const status = error?.status || error?.response?.status;
+		if (status === 401 || status === 403 || status === 404) {
+			throw new Error(
+				`Cannot list GitHub milestones for ${owner}/${repo} (HTTP ${status}). Pass --token or set GITHUB_TOKEN / BLOCKERA_GLOBAL_PACKAGES_TOKEN with access to that repository.`
+			);
+		}
+		throw error;
 	}
 
 	const picked = pickMilestoneByTitle(title, all, releaseVersion);
