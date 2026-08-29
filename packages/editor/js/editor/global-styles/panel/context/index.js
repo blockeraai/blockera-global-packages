@@ -111,17 +111,22 @@ const cleanupStylesHelper = (styles: Object, defaultStyles: Object): Object => {
 		}
 
 		if (!ignoreBlockeraAttributeKeysRegExp().test(key)) {
+			// cloneObject / JSON omit undefined nested keys, leaving `{}`.
+			// Omitting the key lets mergeObject keep the previous WP value
+			// (e.g. backgroundSize: 'contain' after deleting the image).
+			// Explicit undefined unsets it in SET_BLOCK_STYLES + entity merge.
 			if (styles[key] === undefined) {
+				cleanStyles[key] = undefined;
 				continue;
 			}
 
-			// Exclude the Block original core attributes is object and contains all values are undefined.
 			if (
 				'object' === typeof styles[key] &&
 				!Object.values(styles[key] || {}).some(
 					(value) => value !== undefined
 				)
 			) {
+				cleanStyles[key] = undefined;
 				continue;
 			}
 
