@@ -12,7 +12,7 @@
  * @property {string}                  slug                     Product slug.
  * @property {string}                  name                     Product display name.
  * @property {string}                  [team]                   GitHub team name.
- * @property {string}                  [versionMilestoneFormat] printf template for milestone titles.
+ * @property {string}                  [versionMilestoneFormat] printf template for milestone titles (`name` + major.minor). GitHub lookup also accepts the same prefix with a patch suffix.
  * @property {string}                  githubRepositoryOwner    GitHub org/user.
  * @property {string}                  githubRepositoryName     GitHub repository name.
  * @property {string}                  [pluginEntryPoint]       Main plugin/theme entry file.

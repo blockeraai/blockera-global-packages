@@ -28,7 +28,8 @@ MILESTONE="${MILESTONE_PREFIX} ${MAJOR}.${MINOR}"
 
 printf '%s' "${CHANGELOG}" | sed 's/\\n/\n/g' >release-note.txt
 
-# Quote --milestone: "Blockera 2.0" must stay one argv or Commander keeps only "Blockera".
+# Quote --milestone: "Name 2.0" must stay one argv or Commander keeps only "Name".
+# GitHub lookup matches the same prefix + version series (Name 0.1 → Name 0.1.0).
 if [[ -n "${BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD:-}" ]]; then
 	echo "build-zip/notes: ${BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD}"
 	eval "${BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD}" >release-notes.txt

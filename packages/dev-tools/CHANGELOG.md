@@ -4,7 +4,8 @@
 - Release branches: every rc and stable run forks `release/*` from origin/master HEAD (not from an existing release or RC tip); push uses `--force-with-lease`.
 - Zip version bump: set the WordPress `Version:` header in `BLOCKERA_BUILD_ZIP_MAIN_FILE` (theme `style.css` or plugin bootstrap) to `NEW_VERSION` even when it did not match `OLD_VERSION`.
 - Zip changelog accumulation: ignore a prerelease `OLD_VERSION` / previous tag so RC and stable both accumulate from the last stable product tag.
-- Release notes: quote `--milestone="Blockera 2.0"` so Commander does not look up a milestone titled only `Blockera`; complete a truncated title from the release version; fail the job instead of writing the stack into the GitHub release body.
+- Release notes: match GitHub milestones by display-name prefix + version series (`Name 0.1` finds `Name 0.1.0`; when several exist, prefer the release `x.y.z`). List same-prefix titles when none match.
+- Release notes: quote `--milestone="Name 2.0"` so Commander does not look up a title that is only the product name; complete a truncated title from the release version; fail the job instead of writing the stack into the GitHub release body.
 - Sync global-packages submodule: skip auto-push on matching feature branches so `npm run submodule:bump` is not followed by a duplicate blockerabot commit. Master still opens/updates the bump PR; use workflow_dispatch `mode=push` or `mode=pr` for a remote feature-branch pin.
 - Zip changelog accumulation: allow products with no consumer `packages/*/CHANGELOG.md` (global-packages only); fail only when `BLOCKERA_CHANGELOG_CONSUMER_GLOBS` is set and matches nothing.
 - Zip changelog accumulation: include GP notes only for packages whose `package.json` / `composer.json` version changed since the previous product release pin, from that previous version through the new version (do not dump unchanged package history).

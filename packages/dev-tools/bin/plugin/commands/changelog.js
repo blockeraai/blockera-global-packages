@@ -15,6 +15,7 @@ const { getNextMajorVersion } = require('../lib/version');
 const {
 	getMilestoneByTitle,
 	getIssuesByMilestone,
+	splitMilestonePrefixVersion,
 } = require('../lib/milestone');
 const { log, formats } = require('../lib/logger');
 const { getPluginConfig } = require('../config-store');
@@ -770,20 +771,21 @@ async function fetchAllPullRequests(octokit, settings) {
 		octokit,
 		owner,
 		repo,
-		milestoneTitle
+		milestoneTitle,
+		settings.version
 	);
 
-	if (!milestone) {
-		throw new Error(
-			`Cannot find milestone by title: ${settings.milestone}`
+	if (milestone.title !== milestoneTitle) {
+		log(
+			formats.success(
+				`Matched milestone "${milestone.title}" for requested "${milestoneTitle}".`
+			)
 		);
 	}
 
-	const productName = getPluginConfig().name;
-	const series = milestoneTitle.replace(
-		new RegExp(`^${productName}\\s+`),
-		''
-	);
+	const versionSuffix = splitMilestonePrefixVersion(milestone.title).version;
+	const series = versionSuffix.split(/[-+]/)[0].split('.').slice(0, 2).join('.') ||
+		versionSuffix;
 	const latestReleaseInSeries = unreleased
 		? await getLatestReleaseInSeries(octokit, owner, repo, series)
 		: undefined;
