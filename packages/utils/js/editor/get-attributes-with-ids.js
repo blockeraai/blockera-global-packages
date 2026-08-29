@@ -232,6 +232,31 @@ function getRegisteredDefaultValue(
 }
 
 /**
+ * Host blocks (gallery, buttons, navigation, …) override `blockeraDisplay`
+ * to flex/grid. Inner elements do not inherit that default — a caption
+ * `display:flex` is a real user value even when the parent is already flex.
+ */
+function getRegisteredDefaultValueForScope(
+	defaultAttributes: ?Object,
+	key: string,
+	innerScope: boolean
+): mixed {
+	const registered = getRegisteredDefaultValue(defaultAttributes, key);
+
+	if (!innerScope || key !== 'blockeraDisplay') {
+		return registered;
+	}
+
+	const unwrapped = unwrapBlockeraAttributeValue(registered);
+
+	if (typeof unwrapped === 'string' && unwrapped !== '') {
+		return { value: '' };
+	}
+
+	return registered;
+}
+
+/**
  * Inner-block maps from WP↔Blockera hydrate look like
  * `{ 'elements/link': { attributes: {} } }` (optionally `{ value: ... }`).
  * Empty slots do not count as used features at the top level (identity omit).
@@ -279,7 +304,8 @@ function isEmptyInnerBlocksTree(
 		if (
 			hasBlockeraFeatureAttributes(
 				(item: any).attributes || {},
-				defaultAttributes
+				defaultAttributes,
+				true
 			)
 		) {
 			return false;
@@ -369,7 +395,8 @@ function normalizeInnerBlocksTree(
 		const record: { [string]: mixed } = (item: any);
 		const prunedAttributes = pruneNestedFeatureAttributes(
 			record.attributes,
-			defaultAttributes
+			defaultAttributes,
+			true
 		);
 
 		if (Object.keys(prunedAttributes).length === 0) {
@@ -411,10 +438,13 @@ function normalizeInnerBlocksTree(
  * Nested breakpoint/state attribute maps are not Gutenberg-registered keys.
  * Unused Blockera features are dropped (not reset to defaults).
  * Empty inner-block item slots keep `{ attributes: {} }` (no feature defaults).
+ * Inner-block maps compare display against an empty default so host flex/grid
+ * defaults (gallery, buttons, …) do not strip a real inner `display`.
  */
 function pruneNestedFeatureAttributes(
 	attributes: mixed,
-	defaultAttributes: ?Object
+	defaultAttributes: ?Object,
+	innerScope?: boolean
 ): Object {
 	if (attributes == null || typeof attributes !== 'object') {
 		return {};
@@ -457,10 +487,17 @@ function pruneNestedFeatureAttributes(
 		if (key === BLOCKERA_BLOCK_STATES_KEY) {
 			const normalized = normalizeBlockeraBlockStatesValue(
 				record[key],
-				defaultAttributes
+				defaultAttributes,
+				innerScope
 			);
 
-			if (!isEmptyBlockStatesValue(normalized, defaultAttributes)) {
+			if (
+				!isEmptyBlockStatesValue(
+					normalized,
+					defaultAttributes,
+					innerScope
+				)
+			) {
 				next[key] = normalized;
 			}
 
@@ -470,7 +507,11 @@ function pruneNestedFeatureAttributes(
 		if (
 			isUnusedBlockeraFeatureValue(
 				record[key],
-				getRegisteredDefaultValue(defaultAttributes, key),
+				getRegisteredDefaultValueForScope(
+					defaultAttributes,
+					key,
+					Boolean(innerScope)
+				),
 				defaultAttributes,
 				key
 			)
@@ -486,7 +527,8 @@ function pruneNestedFeatureAttributes(
 
 function isEmptyBreakpointAttributes(
 	attributes: mixed,
-	defaultAttributes: ?Object
+	defaultAttributes: ?Object,
+	innerScope?: boolean
 ): boolean {
 	if (isEmptyArrayOrEmptyObject(attributes)) {
 		return true;
@@ -496,7 +538,11 @@ function isEmptyBreakpointAttributes(
 		return false;
 	}
 
-	const pruned = pruneNestedFeatureAttributes(attributes, defaultAttributes);
+	const pruned = pruneNestedFeatureAttributes(
+		attributes,
+		defaultAttributes,
+		innerScope
+	);
 
 	return Object.keys(pruned).length === 0;
 }
@@ -513,7 +559,8 @@ function stateHasUnknownKeys(state: Object): boolean {
 
 function isEmptyBlockStateEntry(
 	state: mixed,
-	defaultAttributes: ?Object
+	defaultAttributes: ?Object,
+	innerScope?: boolean
 ): boolean {
 	if (state == null) {
 		return true;
@@ -570,7 +617,8 @@ function isEmptyBlockStateEntry(
 		if (
 			!isEmptyBreakpointAttributes(
 				(breakpoint: any).attributes,
-				defaultAttributes
+				defaultAttributes,
+				innerScope
 			)
 		) {
 			return false;
@@ -585,7 +633,8 @@ function isEmptyBlockStateEntry(
  */
 export function isEmptyBlockStatesValue(
 	value: mixed,
-	defaultAttributes: ?Object
+	defaultAttributes: ?Object,
+	innerScope?: boolean
 ): boolean {
 	const unwrapped = unwrapBlockeraAttributeValue(value);
 
@@ -600,7 +649,13 @@ export function isEmptyBlockStatesValue(
 	const states: { [string]: mixed } = (unwrapped: any);
 
 	for (const stateId in states) {
-		if (!isEmptyBlockStateEntry(states[stateId], defaultAttributes)) {
+		if (
+			!isEmptyBlockStateEntry(
+				states[stateId],
+				defaultAttributes,
+				innerScope
+			)
+		) {
 			return false;
 		}
 	}
@@ -623,7 +678,8 @@ function wrapBlockStatesValue(original: mixed, unwrappedNext: Object): Object {
 
 function pruneBlockStateBreakpoints(
 	breakpoints: mixed,
-	defaultAttributes: ?Object
+	defaultAttributes: ?Object,
+	innerScope?: boolean
 ): { next: { [string]: Object }, changed: boolean } {
 	if (breakpoints == null) {
 		return { next: {}, changed: false };
@@ -669,7 +725,8 @@ function pruneBlockStateBreakpoints(
 		const record: { [string]: mixed } = (breakpoint: any);
 		const prunedAttributes = pruneNestedFeatureAttributes(
 			record.attributes,
-			defaultAttributes
+			defaultAttributes,
+			innerScope
 		);
 
 		if (Object.keys(prunedAttributes).length === 0) {
@@ -725,7 +782,8 @@ function pruneBlockStateBreakpoints(
  */
 export function normalizeBlockeraBlockStatesValue(
 	value: mixed,
-	defaultAttributes: ?Object
+	defaultAttributes: ?Object,
+	innerScope?: boolean
 ): mixed {
 	if (value == null) {
 		return value;
@@ -768,7 +826,8 @@ export function normalizeBlockeraBlockStatesValue(
 		const record: { [string]: mixed } = (state: any);
 		const prunedBreakpoints = pruneBlockStateBreakpoints(
 			record.breakpoints,
-			defaultAttributes
+			defaultAttributes,
+			innerScope
 		);
 
 		if (prunedBreakpoints.changed) {
@@ -782,7 +841,7 @@ export function normalizeBlockeraBlockStatesValue(
 				}
 			: record;
 
-		if (isEmptyBlockStateEntry(nextState, defaultAttributes)) {
+		if (isEmptyBlockStateEntry(nextState, defaultAttributes, innerScope)) {
 			const breakpoints = (nextState: any)?.breakpoints;
 			const hasBreakpointSlots =
 				breakpoints &&
@@ -895,7 +954,8 @@ function isUnusedBlockeraFeatureValue(
  */
 export function hasBlockeraFeatureAttributes(
 	attributes: ?Object,
-	defaultAttributes: ?Object
+	defaultAttributes: ?Object,
+	innerScope?: boolean
 ): boolean {
 	if (!attributes || typeof attributes !== 'object') {
 		return false;
@@ -909,7 +969,11 @@ export function hasBlockeraFeatureAttributes(
 		if (
 			!isUnusedBlockeraFeatureValue(
 				attributes[key],
-				getRegisteredDefaultValue(defaultAttributes, key),
+				getRegisteredDefaultValueForScope(
+					defaultAttributes,
+					key,
+					Boolean(innerScope)
+				),
 				defaultAttributes,
 				key
 			)
