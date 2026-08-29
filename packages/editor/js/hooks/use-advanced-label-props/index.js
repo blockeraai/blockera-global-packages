@@ -9,13 +9,7 @@ import { useState, useEffect, useMemo } from '@wordpress/element';
  * Blockera dependencies
  */
 import { prepare } from '@blockera/data-editor';
-import {
-	omit,
-	isEquals,
-	isObject,
-	isEmpty,
-	isUndefined,
-} from '@blockera/utils';
+import { omit, isEquals, isObject, isEmpty, isUndefined } from '@blockera/utils';
 
 /**
  * Internal dependencies
@@ -30,7 +24,12 @@ import type {
 	CalculatedAdvancedLabelProps,
 	AdvancedLabelHookProps,
 } from './types';
-import { blockHasStates } from './helpers';
+import {
+	blockHasStates,
+	mergeRootWithInnerOverlay,
+	overlayHasFeatureValue,
+	overlayInnerAttributes,
+} from './helpers';
 import type {
 	TStates,
 	BreakpointTypes,
@@ -98,7 +97,10 @@ export const useAdvancedLabelProps = (
 						const breakpointItem =
 							stateItem?.breakpoints[breakpointType];
 
-						if (Object.keys(breakpointItem?.attributes).length) {
+						if (
+							Object.keys(breakpointItem?.attributes || {})
+								.length
+						) {
 							validStates[stateType] = stateItem;
 						}
 					}
@@ -118,22 +120,30 @@ export const useAdvancedLabelProps = (
 				) {
 					return {
 						...rootInnerBlock,
-						...(prepare(
-							`blockeraBlockStates[${currentState}].breakpoints[${getBaseBreakpoint()}].attributes.blockeraInnerBlocks[${currentBlock}].attributes`,
-							calculatedAttributes
-						) || {}),
-						...(prepare(
-							`blockeraBlockStates[${currentState}].breakpoints[${currentBreakpoint}].attributes.blockeraInnerBlocks[${currentBlock}].attributes`,
-							calculatedAttributes
-						) || {}),
+						...overlayInnerAttributes(
+							prepare(
+								`blockeraBlockStates[${currentState}].breakpoints[${getBaseBreakpoint()}].attributes.blockeraInnerBlocks[${currentBlock}].attributes`,
+								calculatedAttributes
+							)
+						),
+						...overlayInnerAttributes(
+							prepare(
+								`blockeraBlockStates[${currentState}].breakpoints[${currentBreakpoint}].attributes.blockeraInnerBlocks[${currentBlock}].attributes`,
+								calculatedAttributes
+							)
+						),
 					};
 				}
 
-				return (
+				// Reset keeps `{ attributes: {} }` (truthy). Replacing root with
+				// that overlay hid inner-normal values. Merge leftover nested
+				// states onto root instead.
+				return mergeRootWithInnerOverlay(
+					rootInnerBlock,
 					prepare(
 						`blockeraBlockStates[${currentState}].breakpoints[${currentBreakpoint}].attributes.blockeraInnerBlocks[${currentBlock}].attributes`,
 						calculatedAttributes
-					) || rootInnerBlock
+					)
 				);
 			}
 
@@ -409,16 +419,17 @@ export const useAdvancedLabelProps = (
 			const otherStates = Object.fromEntries(
 				// $FlowFixMe
 				Object.entries(
-					currentBlockAttributes?.blockeraBlockStates
-				)?.filter(
+					currentBlockAttributes?.blockeraBlockStates || {}
+				).filter(
 					([stateType, state]: [
 						TStates | string,
 						Object,
 					]): boolean => {
-						const breakpointTypes = Object.keys(state.breakpoints);
+						const breakpointMap = state?.breakpoints || {};
+						const breakpointTypes = Object.keys(breakpointMap);
 
 						return (
-							Object.values(state.breakpoints).filter(
+							Object.values(breakpointMap).filter(
 								(
 									breakpoint: Object,
 									breakpointIndex: number
@@ -481,17 +492,39 @@ export const useAdvancedLabelProps = (
 				);
 			};
 
-			const isChangedOnCurrentState =
-				isChangedOnCurrentBreakpointAndState(
-					otherStates[
-						isInnerBlock(currentBlock)
-							? currentInnerBlockState
-							: currentState
-					]?.breakpoints[currentBreakpoint],
+			let isChangedOnCurrentState = isChangedOnCurrentBreakpointAndState(
+				otherStates[
 					isInnerBlock(currentBlock)
 						? currentInnerBlockState
 						: currentState
+				]?.breakpoints?.[currentBreakpoint],
+				isInnerBlock(currentBlock)
+					? currentInnerBlockState
+					: currentState
+			);
+
+			// Master not-normal + inner-normal: inherit is not "changed on this
+			// overlay". Empty reset slots used to make that fallback true and
+			// the label used changed-in-secondary-state.
+			if (
+				isInnerBlock(currentBlock) &&
+				!isNormalStateOnBaseBreakpoint(
+					currentState,
+					currentBreakpoint
+				) &&
+				isNormalStateOnBaseBreakpoint(
+					currentInnerBlockState,
+					currentBreakpoint
+				)
+			) {
+				isChangedOnCurrentState = overlayHasFeatureValue(
+					prepare(
+						`blockeraBlockStates[${currentState}].breakpoints[${currentBreakpoint}].attributes.blockeraInnerBlocks[${currentBlock}].attributes`,
+						blockAttributes
+					),
+					attribute
 				);
+			}
 
 			const isChangedOnCurrentBreakpointNormal =
 				isChangedOnSpecificStateAndBreakpoint(

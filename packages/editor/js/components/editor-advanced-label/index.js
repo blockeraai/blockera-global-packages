@@ -151,8 +151,6 @@ export const EditorAdvancedLabelControl = ({
 								isChanged &&
 								isChangedOnCurrentState) ||
 							(isInnerBlock &&
-								(!isNormalState() ||
-									'normal' !== currentInnerBlockState) &&
 								isChangedNormalStateOnBaseBreakpoint &&
 								!isChangedOnCurrentState),
 						'changed-in-other-state':
