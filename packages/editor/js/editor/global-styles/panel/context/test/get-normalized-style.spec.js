@@ -87,6 +87,30 @@ describe('getNormalizedStyle', () => {
 		});
 	});
 
+	it('unsets empty Blockera background so mergeObject does not keep leftover layers', () => {
+		const defaultStyles = {
+			blockeraBackground: {
+				type: 'object',
+				default: {},
+			},
+		};
+
+		expect(
+			getNormalizedStyle(
+				{ blockeraBackground: { value: {} } },
+				defaultStyles
+			)
+		).toEqual({
+			blockeraBackground: undefined,
+		});
+
+		expect(
+			getNormalizedStyle({ blockeraBackground: {} }, defaultStyles)
+		).toEqual({
+			blockeraBackground: undefined,
+		});
+	});
+
 	it('keeps WP backgroundPosition when the image layer is still set', () => {
 		expect(
 			getNormalizedStyle(
