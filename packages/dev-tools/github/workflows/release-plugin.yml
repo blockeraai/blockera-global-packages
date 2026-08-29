@@ -24,10 +24,14 @@ on:
                     - 'minor'
                     - 'patch'
             source_branch:
-                description: 'Fork from this branch (empty = master). For a hotfix, use the previous release/* so later master PRs are excluded. Run the workflow from master.'
-                required: false
-                type: string
-                default: ''
+                description: 'Fork source. master is the current line. Pick a release/* for a hotfix (excludes later master PRs). Run this workflow from master.'
+                required: true
+                type: choice
+                default: master
+                options:
+                    # BEGIN SOURCE_BRANCH_OPTIONS
+                    - master
+                    # END SOURCE_BRANCH_OPTIONS
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
