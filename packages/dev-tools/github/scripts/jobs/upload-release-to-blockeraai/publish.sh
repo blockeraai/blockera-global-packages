@@ -14,6 +14,9 @@
 # Optional (Pro defaults):
 #   BLOCKERA_UPLOAD_BLOCKERAAI_ZIP              default: blockera-pro.zip
 #   BLOCKERA_UPLOAD_BLOCKERAAI_FILENAME_FIELD   default: ./my-downloads/<zip>
+#   BLOCKERA_UPLOAD_BLOCKERAAI_FILES_MODE       append | replace
+#                                               default: append when product_version
+#                                               contains "-" (RC), else replace
 set -euo pipefail
 
 : "${PLUGIN_URL:?upload-blockeraai/publish: PLUGIN_URL is required}"
@@ -28,6 +31,14 @@ set -euo pipefail
 ZIP_NAME="${BLOCKERA_UPLOAD_BLOCKERAAI_ZIP:-blockera-pro.zip}"
 FILENAME_FIELD="${BLOCKERA_UPLOAD_BLOCKERAAI_FILENAME_FIELD:-./my-downloads/${ZIP_NAME}}"
 CLEAN_VERSION="${PLUGIN_VERSION#v}"
+FILES_MODE="${BLOCKERA_UPLOAD_BLOCKERAAI_FILES_MODE:-}"
+if [[ "${FILES_MODE}" != "append" && "${FILES_MODE}" != "replace" ]]; then
+	if [[ "${CLEAN_VERSION}" == *-* ]]; then
+		FILES_MODE="append"
+	else
+		FILES_MODE="replace"
+	fi
+fi
 
 cleanup() {
 	rm -f "${ZIP_NAME}"
@@ -46,7 +57,7 @@ if [[ ! -s "${ZIP_NAME}" ]]; then
 	exit 1
 fi
 
-echo "upload-blockeraai/publish: POST ${RELEASE_ENDPOINT} (product=${BLOCKERAAI_PRODUCT_ID} version=${CLEAN_VERSION})"
+echo "upload-blockeraai/publish: POST ${RELEASE_ENDPOINT} (product=${BLOCKERAAI_PRODUCT_ID} version=${CLEAN_VERSION} files_mode=${FILES_MODE})"
 curl -fsS -X POST "${RELEASE_ENDPOINT}" \
 	-H "Content-Type: multipart/form-data" \
 	-F "product_id=${BLOCKERAAI_PRODUCT_ID}" \
@@ -55,6 +66,7 @@ curl -fsS -X POST "${RELEASE_ENDPOINT}" \
 	-F "filename=${FILENAME_FIELD}" \
 	-F "action=${RELEASE_ACTION}" \
 	-F "api_key=${BLOCKERABOT_API_KEY}" \
+	-F "files_mode=${FILES_MODE}" \
 	-F "file=@${ZIP_NAME}"
 
 echo "upload-blockeraai/publish: done ${CLEAN_VERSION}"
