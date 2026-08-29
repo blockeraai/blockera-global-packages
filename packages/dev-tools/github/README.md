@@ -240,14 +240,17 @@ Templates: `workflows/release-plugin.yml` (plugin) and `workflows/release-theme.
 slug, and env knobs. Same scripts; product identity stays in the thin workflow.
 
 Dispatch **Release**. Each run (rc or stable) **forks the destination `release/*`
-from origin/`source_branch`**. Leave `source_branch` empty to fork from
-`origin/<default-branch>` HEAD (`BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH`, default
-`master`) — it does not continue an existing destination `release/*` or RC tip.
-For a **hotfix**, run the workflow **from master** (so this YAML is used) and
-set `source_branch` to the previous `release/x.y.z` (after the fix is on that
-line). Version comes from that source `package.json`; only `version_type=patch`
-is allowed. Later master PRs are not included. Stable does **not** cherry-pick
-onto master for hotfix runs — land the same fix on master with a PR.
+from origin/`source_branch`**. `source_branch` is a **choice** dropdown: `master`
+(default current line) plus origin `release/*` heads. GitHub cannot fill choice
+options at click time; `sync-release-source-branch-options.yml` rewrites the
+list when those branches are created or deleted. Feature branches are omitted
+on purpose. A run from **master** with `source_branch=master` does not continue
+an existing destination `release/*` or RC tip.
+For a **hotfix**, run the workflow **from master** and pick the previous
+`release/x.y.z` (after the fix is on that line). Version comes from that source
+`package.json`; only `version_type=patch` is allowed. Later master PRs are not
+included. Stable does **not** cherry-pick onto master for hotfix runs — land
+the same fix on master with a PR.
 `resolve-release-branch.sh` names:
 
 - **rc** → `release/x.y.z-rc`
@@ -270,7 +273,7 @@ Hotfix stables (source is a `release/*`) skip that cherry-pick.
 | --- | --- |
 | `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` (theme consumer: `style.css`). Zip bump sets the WordPress `Version:` header in that file to `NEW_VERSION`. |
 | `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` | `master` (default fork source; stable cherry-pick target) |
-| `source_branch` (dispatch) | empty = default branch; `release/x.y.z` = hotfix from that line (run workflow from master) |
+| `source_branch` (dispatch) | choice: `master` (default) or an origin `release/*`; list synced by `sync-release-source-branch-options.yml` |
 | `BLOCKERA_BUILD_ZIP_CHANGELOG_FILE` | `changelog.txt` (stable notes may append matching sections; unused for GitHub milestones) |
 | `artifact-name` / `zip-file` (action) | `blockera` / `./blockera.zip` |
 

@@ -1,7 +1,8 @@
 ## Unreleased
 
 ### Bug Fixes
-- Release: optional `source_branch` dispatch input forks from a previous `release/*` for patch hotfixes (excludes later master PRs); hotfix stables skip cherry-pick onto master. Empty input still forks from origin/master HEAD.
+- Release: `source_branch` is a choice dropdown (`master` plus origin `release/*`); `sync-release-source-branch-options.yml` rewrites the list when those branches are created or deleted. Empty string is no longer used.
+- Release: optional `source_branch` dispatch input forks from a previous `release/*` for patch hotfixes (excludes later master PRs); hotfix stables skip cherry-pick onto master. `master` still forks from origin/master HEAD.
 - Release notes: never call `other:changelog` or GitHub milestones; the draft body is the accumulated product changelog (stable may append `changelog.txt`). Removed the `release-plugin-changelog` / `changelog` CLI command, `other:changelog` npm script, and GitHub milestone lookup helpers.
 - Release branches: rc and stable from master fork `release/*` from origin/master HEAD (not from an existing release or RC tip); push uses `--force-with-lease`.
 - Zip version bump: set the WordPress `Version:` header in `BLOCKERA_BUILD_ZIP_MAIN_FILE` (theme `style.css` or plugin bootstrap) to `NEW_VERSION` even when it did not match `OLD_VERSION`.
