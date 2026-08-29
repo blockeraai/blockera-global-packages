@@ -125,10 +125,6 @@ describe('Border & Border Radius Together → WP Compatibility (Global Styles)',
 						width: '20px',
 						style: 'solid',
 						radius: '20px',
-						top: undefined,
-						right: undefined,
-						bottom: undefined,
-						left: undefined,
 					}).to.deep.equal(root?.border);
 				});
 
@@ -318,9 +314,6 @@ describe('Border & Border Radius Together → WP Compatibility (Global Styles)',
 							bottomLeft: '70px',
 							bottomRight: '80px',
 						},
-						color: undefined,
-						width: undefined,
-						style: undefined,
 					}).to.deep.equal(root?.border);
 				});
 
