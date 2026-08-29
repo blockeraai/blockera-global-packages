@@ -103,6 +103,35 @@ export function getSelectedBlock(data, field = '') {
 }
 
 /**
+ * Alias the selected block's unique `.blockera-block-{id}` selector.
+ *
+ * Theme/template markup can include extra `.blockera-block` nodes. Call this
+ * in the editor before `savePage()` / `redirectToFrontPage()`, then query with
+ * `getFrontEndBlock()`.
+ *
+ * @param {string} [alias='frontEndBlock'] Cypress alias for the selector string.
+ * @return {Cypress.Chainable} Chainable that stores the unique selector alias.
+ */
+export function aliasFrontEndBlockSelector(alias = 'frontEndBlock') {
+	return getWPDataObject().then((data) => {
+		const blockeraId = getSelectedBlock(data, 'blockeraId');
+
+		expect(blockeraId).to.match(/^[0-9a-z]{6}$/);
+		cy.wrap(`.blockera-block-${blockeraId}`).as(alias);
+	});
+}
+
+/**
+ * Get the frontend element previously aliased by `aliasFrontEndBlockSelector()`.
+ *
+ * @param {string} [alias='frontEndBlock'] Cypress alias for the selector string.
+ * @return {Cypress.Chainable} The unique `.blockera-block-{id}` element.
+ */
+export function getFrontEndBlock(alias = 'frontEndBlock') {
+	return cy.get(`@${alias}`).then((selector) => cy.get(selector));
+}
+
+/**
  * Get the style of the selected block.
  *
  * @param {Object} data the WordPress data.
