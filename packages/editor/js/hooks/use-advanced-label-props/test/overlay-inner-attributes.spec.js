@@ -162,4 +162,10 @@ describe('overlayHasFeatureValue', () => {
 			)
 		).toBe(true);
 	});
+
+	it('is false when the attribute name is missing', () => {
+		expect(overlayHasFeatureValue({ blockeraFontColor: '#555555' })).toBe(
+			false
+		);
+	});
 });
