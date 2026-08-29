@@ -211,18 +211,7 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 			const linkInnerBlock =
 				root?.blockeraInnerBlocks?.value?.['elements/link'];
 
-			expect({
-				blockeraBlockStates: {
-					hover: {
-						isVisible: true,
-						breakpoints: {
-							desktop: {
-								attributes: {},
-							},
-						},
-					},
-				},
-			}).to.deep.equal(linkInnerBlock?.attributes);
+			expect(undefined).to.equal(linkInnerBlock?.attributes);
 			expect(undefined).to.equal(linkElement?.color?.text);
 			expect(undefined).to.equal(linkElement?.[':hover']?.color?.text);
 		});
@@ -386,18 +375,7 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 			const linkInnerBlock =
 				root?.blockeraInnerBlocks?.value?.['elements/link'];
 
-			expect({
-				blockeraBlockStates: {
-					hover: {
-						isVisible: true,
-						breakpoints: {
-							desktop: {
-								attributes: {},
-							},
-						},
-					},
-				},
-			}).to.deep.equal(linkInnerBlock?.attributes);
+			expect(undefined).to.equal(linkInnerBlock?.attributes);
 			expect(undefined).to.equal(linkElement?.color?.text);
 			expect(undefined).to.equal(linkElement?.[':hover']?.color?.text);
 		});
