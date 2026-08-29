@@ -673,6 +673,16 @@ function pruneBlockStateBreakpoints(
 		);
 
 		if (Object.keys(prunedAttributes).length === 0) {
+			// PHP leftover empty arrays must not serialize. User reset leaves
+			// `{ attributes: {} }` and those slots stay readable in the store.
+			if (
+				Array.isArray(record.attributes) ||
+				record.attributes == null
+			) {
+				changed = true;
+				continue;
+			}
+
 			const emptySlot = {
 				...record,
 				attributes: {},
