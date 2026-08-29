@@ -57,12 +57,42 @@ describe('getNormalizedStyle', () => {
 		});
 	});
 
-	it('keeps WP backgroundSize when the image layer is still set', () => {
+	it('unsets WP background when only an empty nested image object remains', () => {
 		expect(
 			getNormalizedStyle(
 				{
 					background: {
-						backgroundSize: 'contain',
+						backgroundImage: {},
+					},
+				},
+				{}
+			)
+		).toEqual({
+			background: undefined,
+		});
+	});
+
+	it('unsets WP background when clone leftover image has id but no url', () => {
+		expect(
+			getNormalizedStyle(
+				{
+					background: {
+						backgroundImage: { id: 0 },
+					},
+				},
+				{}
+			)
+		).toEqual({
+			background: undefined,
+		});
+	});
+
+	it('keeps WP backgroundPosition when the image layer is still set', () => {
+		expect(
+			getNormalizedStyle(
+				{
+					background: {
+						backgroundPosition: '40% 60%',
 						backgroundImage: { url: 'https://placehold.co/600x400' },
 					},
 				},
@@ -70,7 +100,7 @@ describe('getNormalizedStyle', () => {
 			)
 		).toEqual({
 			background: {
-				backgroundSize: 'contain',
+				backgroundPosition: '40% 60%',
 				backgroundImage: { url: 'https://placehold.co/600x400' },
 			},
 		});
