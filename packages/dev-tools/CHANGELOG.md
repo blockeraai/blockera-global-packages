@@ -1,5 +1,8 @@
 ## Unreleased
 
+### Features
+- Upload to Blockera AI: publish RC and stable GitHub releases; send `files_mode` (`append` for RC, `replace` for stable) so Downloadable files can keep prior RC rows.
+
 ### Bug Fixes
 - Release: fork source is GitHub's live "Use workflow from" branch (`master` or `release/*`); removed the hardcoded `source_branch` choice list and `sync-release-source-branch-options.yml`.
 - Release: optional `source_branch` dispatch input forks from a previous `release/*` for patch hotfixes (excludes later master PRs); hotfix stables skip cherry-pick onto master. `master` still forks from origin/master HEAD.
