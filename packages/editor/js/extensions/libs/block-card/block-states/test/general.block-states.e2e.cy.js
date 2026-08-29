@@ -1072,7 +1072,7 @@ describe('Block State E2E Test', () => {
 				getSelectedBlock(data, 'blockeraBlockStates')?.before
 					?.breakpoints?.mobile?.attributes
 			);
-			expect({}).to.be.deep.equal(
+			expect('').to.be.equal(
 				getSelectedBlock(data, 'blockeraBlockStates')?.before?.content
 			);
 		});
@@ -1098,7 +1098,7 @@ describe('Block State E2E Test', () => {
 			expect({}).to.be.deep.equal(
 				blockStates?.before?.breakpoints?.mobile?.attributes
 			);
-			expect({}).to.be.deep.equal(blockStates?.before?.content);
+			expect('').to.be.equal(blockStates?.before?.content);
 
 			expect('#fabbbb').to.be.equal(
 				blockStates.hover.breakpoints.desktop.attributes
