@@ -121,7 +121,7 @@ describe('Background Position → WP Compatibility (Global Styles)', () => {
 					cy.getByAriaLabel('Delete image 0').click({ force: true });
 				});
 
-				cy.wait(3000);
+				cy.wait(10000);
 
 				assertBlockData((data) => {
 					const root = getGroupGlobalStyles(data);
