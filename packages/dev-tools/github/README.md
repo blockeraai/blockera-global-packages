@@ -423,15 +423,18 @@ env:
 
 ## Upload release to Blockera AI (Pro)
 
-Triggered on `release: published` (non-prerelease with assets). Reuses
+Triggered on `release: published` (stable or RC, with assets). Reuses
 `upload-release-to-plugin-repo/compute-release-branch.sh`, then
 `upload-release-to-blockeraai/publish.sh` downloads the zip and POSTs multipart
-to the Blockera AI endpoint. See template `workflows/upload-release-to-blockeraai.yml`.
+to the Blockera AI endpoint. The endpoint stores the zip on the product’s
+Downloadable files field: RC **appends** a versioned row; stable **replaces**
+all rows with the new version.
 
 | Env | Default (Pro) |
 | --- | --- |
 | `BLOCKERA_UPLOAD_BLOCKERAAI_ZIP` | `blockera-pro.zip` |
 | `BLOCKERA_UPLOAD_BLOCKERAAI_FILENAME_FIELD` | `./my-downloads/<zip>` |
+| `BLOCKERA_UPLOAD_BLOCKERAAI_FILES_MODE` | `append` when the version contains `-` (RC), else `replace` |
 | `PLUGIN_URL` / `PLUGIN_VERSION` / `GH_TOKEN` | from the GitHub release event |
 | `RELEASE_ENDPOINT` / `BLOCKERAAI_PRODUCT_ID` / `RELEASE_*` / `BLOCKERABOT_API_KEY` | required secrets |
 
