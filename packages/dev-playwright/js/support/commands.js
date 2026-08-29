@@ -1438,11 +1438,24 @@ async function setEditorViewportForScreenshot(
 		document.head.appendChild(style);
 	});
 
-	// Close settings panel
-	const settingsButton = await page.locator(
-		'.editor-header__settings button[aria-label="Settings"]'
-	);
-	await settingsButton.click();
+	// Close settings panel when it is open. Do not wait on a stuck canvas
+	// navigation (WP e2e action timeout is 0).
+	const settingsButton = page
+		.locator(
+			'.editor-header__settings button[aria-label="Settings"], button[aria-label="Settings"]'
+		)
+		.first();
+	try {
+		await settingsButton.waitFor({ state: 'visible', timeout: 5000 });
+		const isPressed = await settingsButton.getAttribute('aria-pressed', {
+			timeout: 2000,
+		});
+		if (isPressed === 'true') {
+			await settingsButton.click({ noWaitAfter: true, timeout: 5000 });
+		}
+	} catch {
+		// Header control missing — continue; sidebar is not required for snapshots.
+	}
 
 	// Close Secondary sidebar (if open)
 	// Check for buttons that would close the secondary sidebar

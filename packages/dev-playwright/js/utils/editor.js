@@ -31,25 +31,25 @@ async function stopPendingFrameLoads(page) {
 		return;
 	}
 
-	const frames = page.frames().filter((frame) => {
-		try {
-			const url = frame.url();
-			return (
-				frame.name() === 'editor-canvas' || url.startsWith('blob:')
-			);
-		} catch {
-			return false;
-		}
-	});
-
-	await Promise.all(
-		frames.map((frame) =>
-			Promise.race([
-				frame.evaluate(() => window.stop()).catch(() => undefined),
-				new Promise((resolve) => setTimeout(resolve, 1500)),
-			])
-		)
-	);
+	// Call stop() from the parent document. `frame.evaluate()` waits for the
+	// child frame's `load` first, so canvas `window.stop()` never runs when
+	// that load is stuck (blob: images). Playwright then waits on the next
+	// locator until the test timeout (WP e2e sets action timeout to 0).
+	await Promise.race([
+		page
+			.evaluate(() => {
+				window.stop();
+				for (const iframe of document.querySelectorAll('iframe')) {
+					try {
+						iframe.contentWindow?.stop();
+					} catch {
+						// Cross-origin canvas.
+					}
+				}
+			})
+			.catch(() => undefined),
+		new Promise((resolve) => setTimeout(resolve, 2000)),
+	]);
 }
 
 /**
@@ -611,8 +611,6 @@ async function appendBlocks(page, blocksCode) {
 		.waitFor({ state: 'visible', timeout: 30000 });
 
 	await stopPendingFrameLoads(page);
-
-	await openDocumentSettingsSidebar(page, 'Block');
 }
 
 /**
@@ -988,17 +986,22 @@ async function closeWelcomeGuide(page) {
  * @return {Promise<void>}
  */
 async function openDocumentSettingsSidebar(page, tab = 'Block') {
-	const settingsButton = page.locator(
-		'.editor-header__settings button[aria-label="Settings"]'
-	);
+	const settingsButton = page
+		.locator(
+			'.editor-header__settings button[aria-label="Settings"], button[aria-label="Settings"]'
+		)
+		.first();
 	const tabButton = page.getByRole('tab', { name: tab, exact: true });
 
-	const isPressed = await settingsButton.getAttribute('aria-pressed');
+	await settingsButton.waitFor({ state: 'visible', timeout: 10000 });
+	const isPressed = await settingsButton.getAttribute('aria-pressed', {
+		timeout: 5000,
+	});
 	if (isPressed !== 'true') {
-		await settingsButton.click();
+		await settingsButton.click({ noWaitAfter: true, timeout: 5000 });
 	}
 
-	await tabButton.click();
+	await tabButton.click({ noWaitAfter: true, timeout: 5000 });
 }
 
 /**
