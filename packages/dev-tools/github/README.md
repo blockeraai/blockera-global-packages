@@ -262,16 +262,18 @@ those commits onto `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` (default `master`).
 | Env | Default (Blockera base) |
 | --- | --- |
 | `BLOCKERA_BUILD_ZIP_MAIN_FILE` | `blockera.php` (theme consumer: `style.css`). Zip bump sets the WordPress `Version:` header in that file to `NEW_VERSION`. |
-| `BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX` | `Blockera` (title is `"${prefix} ${major}.${minor}"`, quoted so RC notes look up `Blockera 2.0` not `Blockera`). Lookup also matches the same prefix + version series on GitHub (`Name 0.1` → `Name 0.1.0`, preferring the release `x.y.z` when several exist). |
 | `BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH` | `master` (fork source for every rc/stable release branch; stable cherry-pick target) |
-| `GITHUB_TOKEN` / `GH_TOKEN` / `BLOCKERA_GLOBAL_PACKAGES_TOKEN` | used as `--token` for `other:changelog` milestone/PR lookup (required for private repositories) |
+| `BLOCKERA_BUILD_ZIP_CHANGELOG_FILE` | `changelog.txt` (stable notes may append matching sections; unused for GitHub milestones) |
 | `artifact-name` / `zip-file` (action) | `blockera` / `./blockera.zip` |
+
+Release notes are the bump-job accumulated changelog only. The zip job does **not**
+run `other:changelog` or look up GitHub milestones. The plugin CLI no longer
+registers `changelog` / `release-plugin-changelog`.
 
 ```yaml
 # Theme-style consumer env (release-theme.yml)
 env:
     BLOCKERA_BUILD_ZIP_MAIN_FILE: style.css
-    BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX: Blockera One
     BLOCKERA_CHANGELOG_CONSUMER_GLOBS: |
         packages/blockera-one/CHANGELOG.md
         packages/blockera-admin-one/CHANGELOG.md

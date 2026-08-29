@@ -1,10 +1,10 @@
 ## Unreleased
 
 ### Bug Fixes
+- Release notes: never call `other:changelog` or GitHub milestones; the draft body is the accumulated product changelog (stable may append `changelog.txt`). Removed the `release-plugin-changelog` / `changelog` CLI command, `other:changelog` npm script, and GitHub milestone lookup helpers.
 - Release branches: every rc and stable run forks `release/*` from origin/master HEAD (not from an existing release or RC tip); push uses `--force-with-lease`.
 - Zip version bump: set the WordPress `Version:` header in `BLOCKERA_BUILD_ZIP_MAIN_FILE` (theme `style.css` or plugin bootstrap) to `NEW_VERSION` even when it did not match `OLD_VERSION`.
 - Zip changelog accumulation: ignore a prerelease `OLD_VERSION` / previous tag so RC and stable both accumulate from the last stable product tag.
-- Release notes: pass `GITHUB_TOKEN` / `BLOCKERA_GLOBAL_PACKAGES_TOKEN` into `other:changelog` so private-repo milestone listing is authenticated (GitHub returns HTTP 404 when unauthenticated).
 - Release notes: quote `--milestone="Name 2.0"` so Commander does not look up a title that is only the product name; complete a truncated title from the release version; fail the job instead of writing the stack into the GitHub release body.
 - Sync global-packages submodule: skip auto-push on matching feature branches so `npm run submodule:bump` is not followed by a duplicate blockerabot commit. Master still opens/updates the bump PR; use workflow_dispatch `mode=push` or `mode=pr` for a remote feature-branch pin.
 - Zip changelog accumulation: allow products with no consumer `packages/*/CHANGELOG.md` (global-packages only); fail only when `BLOCKERA_CHANGELOG_CONSUMER_GLOBS` is set and matches nothing.

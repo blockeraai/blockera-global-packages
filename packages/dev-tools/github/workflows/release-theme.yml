@@ -70,7 +70,6 @@ jobs:
         env:
             BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
             # BLOCKERA_BUILD_ZIP_MAIN_FILE: style.css
-            # BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX: Theme Name
         steps:
             - uses: actions/checkout@v5
               with:
@@ -168,7 +167,6 @@ jobs:
                   NEW_VERSION: ${{ needs.bump-version.outputs.new_version }}
                   CHANGELOG: ${{ needs.bump-version.outputs.changelog }}
                   # BLOCKERA_BUILD_ZIP_MAIN_FILE: style.css
-                  # BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX: Theme Name
               run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/build-plugin-zip/build-release-notes.sh
 
             - if: ${{ needs.bump-version.outputs.new_version }}

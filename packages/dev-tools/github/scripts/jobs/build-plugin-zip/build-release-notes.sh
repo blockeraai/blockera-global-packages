@@ -1,62 +1,31 @@
 #!/usr/bin/env bash
-# Build release-notes.txt from changelog + other:changelog npm script.
+# Build release-notes.txt from the bump-job CHANGELOG payload.
+# Does not call other:changelog or look up GitHub milestones.
 #
 # Required env:
 #   NEW_VERSION
 #   CHANGELOG          escaped newlines (\\n) from bump job output
 #
 # Optional:
-#   BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD
 #   BLOCKERA_BUILD_ZIP_CHANGELOG_FILE   default: changelog.txt
-#   BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX default: Blockera
-#   GITHUB_TOKEN / GH_TOKEN / BLOCKERA_GLOBAL_PACKAGES_TOKEN
-#     passed to other:changelog as --token (private repos need this)
+#     on stable, matching sections from this WordPress.org-style file are appended
 set -euo pipefail
 
 NEW_VERSION="${NEW_VERSION:-}"
 CHANGELOG="${CHANGELOG:-}"
 CHANGELOG_FILE="${BLOCKERA_BUILD_ZIP_CHANGELOG_FILE:-changelog.txt}"
-MILESTONE_PREFIX="${BLOCKERA_BUILD_ZIP_MILESTONE_PREFIX:-Blockera}"
 
 if [[ -z "${NEW_VERSION}" ]]; then
 	echo "build-zip/notes: NEW_VERSION is required" >&2
 	exit 1
 fi
 
-# 2.0.0-rc.1 → 2.0 (do not split on the rc counter).
-BASE_VERSION="${NEW_VERSION%%-*}"
-IFS='.' read -r MAJOR MINOR _ <<<"${BASE_VERSION}"
-MILESTONE="${MILESTONE_PREFIX} ${MAJOR}.${MINOR}"
+printf '%s' "${CHANGELOG}" | sed 's/\\n/\n/g' >release-notes.txt
 
-printf '%s' "${CHANGELOG}" | sed 's/\\n/\n/g' >release-note.txt
-
-CHANGELOG_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-${BLOCKERA_GLOBAL_PACKAGES_TOKEN:-}}}"
-CHANGELOG_TOKEN_ARGS=()
-if [[ -n "${CHANGELOG_TOKEN}" ]]; then
-	CHANGELOG_TOKEN_ARGS=(--token="${CHANGELOG_TOKEN}")
-fi
-
-# Quote --milestone: "Name 2.0" must stay one argv or Commander keeps only "Name".
-# GitHub lookup matches the same prefix + version series (Name 0.1 → Name 0.1.0).
-if [[ -n "${BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD:-}" ]]; then
-	echo "build-zip/notes: ${BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD}"
-	eval "${BLOCKERA_BUILD_ZIP_OTHER_CHANGELOG_CMD}" >release-notes.txt
-else
-	echo "build-zip/notes: npm run other:changelog -- --milestone=${MILESTONE} --unreleased --file=release-note.txt --version=${NEW_VERSION}"
-	npm run other:changelog -- \
-		--milestone="${MILESTONE}" \
-		--unreleased \
-		--file=release-note.txt \
-		--version="${NEW_VERSION}" \
-		"${CHANGELOG_TOKEN_ARGS[@]}" \
-		>release-notes.txt
-fi
-sed -ie '1,6d' release-notes.txt
-
-if [[ "${NEW_VERSION}" != *"rc"* ]]; then
+if [[ "${NEW_VERSION}" != *"rc"* && -f "${CHANGELOG_FILE}" ]]; then
 	CHANGELOG_REGEX="=\s[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?\s="
 	RC_REGEX="=\s${NEW_VERSION}(-rc\.[0-9]+)?\s="
 	awk "/${RC_REGEX}/ {found=1;print;next} /${CHANGELOG_REGEX}/ {found=0} found" "${CHANGELOG_FILE}" >>release-notes.txt
 fi
 
-echo "build-zip/notes: wrote release-notes.txt (milestone=${MILESTONE})"
+echo "build-zip/notes: wrote release-notes.txt from accumulated changelog"
