@@ -8,7 +8,7 @@ const { test, expect } = require('@wordpress/e2e-test-utils-playwright');
 /**
  * Internal dependencies
  */
-const { getIframeBody } = require('../utils/editor');
+const { getIframeBody, stopPendingFrameLoads } = require('../utils/editor');
 const { loginToSite, goTo } = require('../utils/site-navigation');
 
 test.beforeEach(async ({ page }) => {
@@ -20,6 +20,12 @@ test.beforeEach(async ({ page }) => {
 	if (!process.env.isLogin) {
 		await loginToSite(page);
 	}
+
+	await page.route(/gravatar\.com/, (route) => route.abort());
+});
+
+test.afterEach(async ({ page }) => {
+	await stopPendingFrameLoads(page);
 });
 
 /**
@@ -1365,6 +1371,8 @@ async function setEditorViewportForScreenshot(
 	const iframeBody = getIframeBody(page);
 	const editorContainer = iframeBody.locator('.is-root-container');
 
+	await stopPendingFrameLoads(page);
+
 	// Get the element's scrollHeight to determine viewport height
 	containerHeight = await editorContainer.evaluate((el) => {
 		// Get the maximum height needed to show the full element
@@ -1565,4 +1573,5 @@ module.exports = {
 	applyDomSearchReplace,
 	setEditorViewportForScreenshot,
 	setFrontendViewportForScreenshot,
+	stopPendingFrameLoads,
 };

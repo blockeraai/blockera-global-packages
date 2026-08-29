@@ -27,6 +27,7 @@ async function loginToSite(page, user = '', pass = '') {
 	await page.locator('#user_login').fill(username);
 	await page.locator('#user_pass').fill(password);
 	await page.locator('#wp-submit').click();
+	await page.waitForURL(/\/wp-admin/, { timeout: 30000 });
 }
 
 /**
