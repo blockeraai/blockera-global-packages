@@ -853,7 +853,7 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 			statesSchema
 		);
 
-		expect(next.blockeraBlockStates).toEqual(emptyNormalBreakpointSlots);
+		expect(next.blockeraBlockStates).toEqual({ value: {} });
 		expect(hasBlockeraFeatureAttributes(next, statesSchema)).toBe(false);
 	});
 
@@ -1051,7 +1051,7 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 		expect(isEmptyBlockStatesValue(withContent, statesSchema)).toBe(false);
 	});
 
-	it('keeps empty breakpoint slots as {} while stripping unused nested defaults', () => {
+	it('drops PHP leftover empty-array breakpoints from markup while keeping reset {} slots', () => {
 		const value = {
 			value: {
 				normal: {
@@ -1083,7 +1083,6 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 			value: {
 				normal: {
 					breakpoints: {
-						tablet: { attributes: {} },
 						mobile: {
 							attributes: {
 								blockeraMinHeight: '50vh',
@@ -1109,7 +1108,7 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 
 		expect(next.blockeraId).toBeUndefined();
 		expect(next.className).toBeUndefined();
-		expect(next.blockeraBlockStates).toEqual(emptyNormalBreakpointSlots);
+		expect(next.blockeraBlockStates).toEqual({ value: {} });
 		expect(hasBlockeraFeatureAttributes(next, statesSchema)).toBe(false);
 	});
 
@@ -1136,20 +1135,10 @@ describe('blockeraBlockStates and breakpoint cleanup', () => {
 			statesSchema
 		);
 
-		expect(normalizedEmpty).toEqual({
-			value: {
-				normal: {
-					breakpoints: {
-						tablet: { attributes: {} },
-						mobile: { attributes: {} },
-					},
-					isVisible: true,
-				},
-			},
-		});
+		expect(normalizedEmpty).toEqual({ value: {} });
 		expect(
 			normalizeBlockeraBlockStatesValue(normalizedEmpty, statesSchema)
-		).toBe(normalizedEmpty);
+		).toEqual({ value: {} });
 	});
 });
 
