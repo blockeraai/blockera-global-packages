@@ -106,6 +106,8 @@ describe('Background Size → WP Compatibility (Global Styles)', () => {
 					cy.getByAriaLabel('Delete image 0').click({ force: true });
 				});
 
+				cy.wait(1000);
+
 				assertBlockData((data) => {
 					const root = getGroupGlobalStyles(data);
 					const backgroundSize = root?.background?.backgroundSize;
