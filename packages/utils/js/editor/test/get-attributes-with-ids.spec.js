@@ -531,6 +531,105 @@ describe('withoutBlockeraIdentityIfUnused', () => {
 		).not.toHaveProperty('blockeraBackgroundColor');
 	});
 
+	it('keeps inner-block display:flex when the host block defaults to flex (gallery caption)', () => {
+		const gallerySchema = {
+			...schemaDefaults,
+			blockeraDisplay: { type: 'object', default: { value: 'flex' } },
+			blockeraFlexLayout: {
+				type: 'object',
+				default: {
+					value: {
+						direction: 'row',
+						alignItems: '',
+						justifyContent: '',
+					},
+				},
+			},
+			blockeraGap: {
+				type: 'object',
+				default: {
+					value: { lock: true, gap: '', columns: '', rows: '' },
+				},
+			},
+		};
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraInnerBlocks: {
+					value: {
+						'elements/gallery-caption': {
+							attributes: {
+								blockeraDisplay: 'flex',
+								blockeraFlexLayout: {
+									direction: 'row',
+									alignItems: 'center',
+									justifyContent: 'center',
+								},
+								blockeraGap: {
+									lock: true,
+									gap: '30px',
+									columns: '',
+									rows: '',
+								},
+							},
+						},
+					},
+				},
+			},
+			gallerySchema
+		);
+
+		expect(
+			next.blockeraInnerBlocks.value['elements/gallery-caption']
+				.attributes.blockeraDisplay
+		).toBe('flex');
+		expect(
+			next.blockeraInnerBlocks.value['elements/gallery-caption']
+				.attributes.blockeraGap
+		).toEqual({
+			lock: true,
+			gap: '30px',
+			columns: '',
+			rows: '',
+		});
+	});
+
+	it('still omits host-level display:flex when it matches the gallery default', () => {
+		const gallerySchema = {
+			...schemaDefaults,
+			blockeraDisplay: { type: 'object', default: { value: 'flex' } },
+			blockeraBackgroundColor: {
+				type: 'object',
+				default: { value: '' },
+			},
+		};
+
+		const next = omitUnusedBlockeraFeatureAttributes(
+			{
+				blockeraDisplay: { value: 'flex' },
+				blockeraBackgroundColor: { value: '#bdf7ff' },
+			},
+			gallerySchema
+		);
+
+		expect(next.blockeraDisplay).toEqual({ value: 'flex' });
+		expect(next.blockeraBackgroundColor).toEqual({ value: '#bdf7ff' });
+		expect(hasBlockeraFeatureAttributes(next, gallerySchema)).toBe(true);
+		expect(
+			hasBlockeraFeatureAttributes(
+				{ blockeraDisplay: { value: 'flex' } },
+				gallerySchema
+			)
+		).toBe(false);
+		expect(
+			hasBlockeraFeatureAttributes(
+				{ blockeraDisplay: 'flex' },
+				gallerySchema,
+				true
+			)
+		).toBe(true);
+	});
+
 	it('keeps reset inner-block item slots inside block states without dropping the map', () => {
 		const value = {
 			value: {
