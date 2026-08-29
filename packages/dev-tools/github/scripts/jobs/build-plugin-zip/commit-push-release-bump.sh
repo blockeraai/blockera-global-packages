@@ -8,7 +8,7 @@
 # Optional:
 #   BLOCKERA_BUILD_ZIP_MAIN_FILE  default: blockera.php
 #
-# Pushes with --force-with-lease because the branch was recreated from master.
+# Pushes with --force-with-lease because the branch was recreated from source.
 set -euo pipefail
 
 if [[ -z "${GITHUB_OUTPUT:-}" ]]; then
