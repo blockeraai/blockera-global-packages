@@ -280,7 +280,12 @@ export class IntersectionObserverRenderer {
 		}
 
 		const canvas = document.querySelector(EDITOR_CANVAS_IFRAME_SELECTOR);
-		const body = canvas?.contentDocument?.body;
+
+		if (!(canvas instanceof HTMLIFrameElement)) {
+			return false;
+		}
+
+		const body = canvas.contentDocument?.body;
 
 		return Boolean(body && body.contains(this.cachedContainer));
 	}

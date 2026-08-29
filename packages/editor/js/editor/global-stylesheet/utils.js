@@ -187,11 +187,11 @@ export function getBlockeraBlockStatesValue(
 		current &&
 		typeof current === 'object' &&
 		!Array.isArray(current) &&
-		Object.prototype.hasOwnProperty.call(current, 'value') &&
+		current.hasOwnProperty('value') &&
 		current.value &&
 		typeof current.value === 'object' &&
 		!Array.isArray(current.value) &&
-		!Object.prototype.hasOwnProperty.call(current, 'breakpoints')
+		!current.hasOwnProperty('breakpoints')
 	) {
 		current = current.value;
 	}
