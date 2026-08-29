@@ -551,13 +551,27 @@ async function appendBlocks(page, blocksCode) {
 	const optionsButton = page.locator('[aria-label="Options"]').first();
 	await optionsButton.waitFor({ state: 'visible', timeout: 10000 });
 	await optionsButton.click();
-	await page.locator('span:has-text("Code editor")').click();
+	await page.locator('span:has-text("Code editor")').click({
+		noWaitAfter: true,
+	});
 
 	const textEditor = page.locator('.editor-post-text-editor');
 	await textEditor.fill(blocksCode);
 	await textEditor.press('Space');
 
-	await page.locator('button:has-text("Exit code editor")').click();
+	// Switching back to the visual editor replaces the canvas iframe (blob:).
+	// That old frame often never fires `load` (pending blob / images), and
+	// Playwright then waits forever on the next locator (timeout 0 from
+	// @wordpress/e2e-test-utils-playwright) — CI never reaches screenshots.
+	const exitCodeEditor = page.locator(
+		'button:has-text("Exit code editor")'
+	);
+	await exitCodeEditor.click({ noWaitAfter: true });
+	await exitCodeEditor.waitFor({ state: 'hidden', timeout: 30000 });
+
+	await page
+		.locator('iframe[name="editor-canvas"]')
+		.waitFor({ state: 'visible', timeout: 30000 });
 
 	await openDocumentSettingsSidebar(page, 'Block');
 }
@@ -938,31 +952,13 @@ async function openDocumentSettingsSidebar(page, tab = 'Block') {
 	const settingsButton = page.locator(
 		'.editor-header__settings button[aria-label="Settings"]'
 	);
-
-	// Use getByRole for more specific tab selection
 	const tabButton = page.getByRole('tab', { name: tab, exact: true });
 
 	const isPressed = await settingsButton.getAttribute('aria-pressed');
-	if (isPressed === 'true') {
-		// Check if the current tab element exists before trying to read it
-		const currentTab = page.locator(
-			`.editor-header__settings [role="tab"][aria-selected="true"]`
-		);
-		const tabCount = await currentTab.count();
-
-		if (tabCount > 0) {
-			const currentTabText = await currentTab.textContent();
-			if (currentTabText?.trim() !== tab) {
-				await tabButton.click();
-			}
-			// If no tab is selected, just click the desired tab
-			await tabButton.click();
-			return;
-		}
-		return;
+	if (isPressed !== 'true') {
+		await settingsButton.click();
 	}
 
-	await settingsButton.click();
 	await tabButton.click();
 }
 
