@@ -111,17 +111,20 @@ describe('Style Engine → Global Styles', () => {
 			);
 		});
 
-		//Check editor — global styles output real :hover rules in the iframe wrapper
-		cy.getIframeBody().within(() => {
-			cy.get('#blockera-global-styles-wrapper')
-				.invoke('text')
-				.should('include', 'font-size: 20px')
-				.should(
-					(text) =>
-						text.includes(':where(p):hover') ||
+		// Check editor — global styles output real :hover rules in the iframe wrapper.
+		// Avoid `.within()` on the canvas body (a failed query leaves Cypress scoped
+		// inside the iframe). Retry until hover CSS is portaled in.
+		cy.getIframeBody()
+			.find('#blockera-global-styles-wrapper', { timeout: 20000 })
+			.invoke('text')
+			.should((css) => {
+				const text = String(css);
+				expect(text).to.include('font-size: 20px');
+				expect(
+					text.includes(':where(p):hover') ||
 						text.includes(':where(p:hover)')
-				);
-		});
+				).to.eq(true);
+			});
 
 		//Check frontend
 		saveSiteEditorDirtyEntities();
