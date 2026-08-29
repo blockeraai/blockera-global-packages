@@ -199,6 +199,16 @@ export function backgroundToWPCompatibility({
 	insideBlockInspector?: boolean,
 }): Object {
 	if ('reset' === ref?.current?.action || isEmpty(newValue)) {
+		// Nested WP background fields only. Do not list `gradient`: Gutenberg
+		// unsets the root attribute when the key is `undefined`. Deleting it
+		// leaves the previous preset slug on the block.
+		const deletedProps = [
+			'backgroundImage',
+			'backgroundSize',
+			'backgroundPosition',
+			'backgroundRepeat',
+		];
+
 		if (
 			runInsideBlockInspector(
 				insideBlockInspector,
@@ -218,6 +228,7 @@ export function backgroundToWPCompatibility({
 					},
 				},
 				gradient: undefined,
+				deletedProps,
 			};
 		}
 
@@ -231,6 +242,7 @@ export function backgroundToWPCompatibility({
 			color: {
 				gradient: undefined,
 			},
+			deletedProps,
 		};
 	}
 
