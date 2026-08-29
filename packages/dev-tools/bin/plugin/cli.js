@@ -110,25 +110,6 @@ function createPluginCli(configInput, options = {}) {
 			})
 		);
 
-	program
-		.command('release-plugin-changelog')
-		.alias('changelog')
-		.option('-f, --file <file>', 'File')
-		.option('-v, --version <version>', 'Version')
-		.option('-m, --milestone <milestone>', 'Milestone')
-		.option('-t, --token <token>', 'GitHub token')
-		.option(
-			'-u, --unreleased',
-			"Only include PRs that haven't been included in a release yet"
-		)
-		.description('Generates a changelog from merged Pull Requests')
-		.action(
-			catchException(async (...args) => {
-				const { getReleaseChangelog } = require('./commands/changelog');
-				return getReleaseChangelog(...args);
-			})
-		);
-
 	if (typeof extraCommands === 'function') {
 		extraCommands(program, catchException);
 	}

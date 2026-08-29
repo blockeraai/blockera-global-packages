@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Recreate RELEASE_BRANCH from origin/SOURCE_BRANCH (default: master HEAD).
-# Never continues an existing release/* history. Dispatch does not require
-# creating the branch in GitHub first.
+# Recreate RELEASE_BRANCH from origin/SOURCE_BRANCH.
+# Default source is master HEAD. Hotfix sets SOURCE_BRANCH to a previous
+# release/* so later default-branch PRs are excluded.
+# Never continues the destination release/* history. Dispatch does not require
+# creating the destination branch in GitHub first.
 #
 # Required env:
 #   RELEASE_BRANCH
