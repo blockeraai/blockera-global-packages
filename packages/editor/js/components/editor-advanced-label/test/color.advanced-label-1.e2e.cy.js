@@ -390,7 +390,7 @@ describe('Color Control label testing (BG Color)', () => {
 
 					// Assert store data
 					assertBlockData((data) => {
-						expect(undefined).to.be.eq(
+						expect({}).to.be.deep.eq(
 							getSelectedBlock(data, 'blockeraBlockStates')
 								?.normal?.breakpoints?.tablet?.attributes
 						);
@@ -426,7 +426,7 @@ describe('Color Control label testing (BG Color)', () => {
 
 					// Assert store data
 					assertBlockData((data) => {
-						expect(undefined).to.be.eq(
+						expect({}).to.be.deep.eq(
 							getSelectedBlock(data, 'blockeraBlockStates')?.hover
 								?.breakpoints?.tablet?.attributes
 						);
@@ -497,7 +497,7 @@ describe('Color Control label testing (BG Color)', () => {
 
 					// Assert store data
 					assertBlockData((data) => {
-						expect(undefined).to.be.eq(
+						expect({}).to.be.deep.eq(
 							getSelectedBlock(data, 'blockeraBlockStates')?.hover
 								?.breakpoints?.desktop?.attributes
 						);
@@ -580,17 +580,17 @@ describe('Color Control label testing (BG Color)', () => {
 					getSelectedBlock(data, 'blockeraBackgroundColor')
 				);
 
-				expect(undefined).to.be.eq(
+				expect({}).to.be.deep.eq(
 					getSelectedBlock(data, 'blockeraBlockStates')?.normal
 						?.breakpoints?.tablet?.attributes
 				);
 
-				expect(undefined).to.be.eq(
+				expect({}).to.be.deep.eq(
 					getSelectedBlock(data, 'blockeraBlockStates')?.hover
 						?.breakpoints?.desktop?.attributes
 				);
 
-				expect(undefined).to.be.eq(
+				expect({}).to.be.deep.eq(
 					getSelectedBlock(data, 'blockeraBlockStates')?.hover
 						?.breakpoints?.tablet?.attributes
 				);
@@ -673,7 +673,7 @@ describe('Color Control label testing (BG Color)', () => {
 					getSelectedBlock(data, 'blockeraBackgroundColor')
 				);
 
-				expect(undefined).to.be.eq(
+				expect({}).to.be.deep.eq(
 					getSelectedBlock(data, 'blockeraBlockStates')?.normal
 						?.breakpoints?.tablet?.attributes
 				);
@@ -685,7 +685,7 @@ describe('Color Control label testing (BG Color)', () => {
 						.breakpoints.desktop.attributes
 				);
 
-				expect(undefined).to.be.eq(
+				expect({}).to.be.deep.eq(
 					getSelectedBlock(data, 'blockeraBlockStates')?.hover
 						?.breakpoints?.tablet?.attributes
 				);
@@ -785,17 +785,17 @@ describe('Color Control label testing (BG Color)', () => {
 							getSelectedBlock(data, 'blockeraBackgroundColor')
 						);
 
-						expect(undefined).to.be.eq(
+						expect({}).to.be.deep.eq(
 							getSelectedBlock(data, 'blockeraBlockStates')
 								?.normal?.breakpoints?.tablet?.attributes
 						);
 
-						expect(undefined).to.be.eq(
+						expect({}).to.be.deep.eq(
 							getSelectedBlock(data, 'blockeraBlockStates')?.hover
 								?.breakpoints?.desktop?.attributes
 						);
 
-						expect(undefined).to.be.eq(
+						expect({}).to.be.deep.eq(
 							getSelectedBlock(data, 'blockeraBlockStates')?.hover
 								?.breakpoints?.tablet?.attributes
 						);
@@ -880,17 +880,17 @@ describe('Color Control label testing (BG Color)', () => {
 					getSelectedBlock(data, 'blockeraBackgroundColor')
 				);
 
-				expect(undefined).to.be.eq(
+				expect({}).to.be.deep.eq(
 					getSelectedBlock(data, 'blockeraBlockStates')?.normal
 						?.breakpoints?.tablet?.attributes
 				);
 
-				expect(undefined).to.be.eq(
+				expect({}).to.be.deep.eq(
 					getSelectedBlock(data, 'blockeraBlockStates')?.hover
 						?.breakpoints?.desktop?.attributes
 				);
 
-				expect(undefined).to.be.eq(
+				expect({}).to.be.deep.eq(
 					getSelectedBlock(data, 'blockeraBlockStates')?.hover
 						?.breakpoints?.tablet?.attributes
 				);
@@ -975,7 +975,7 @@ describe('Color Control label testing (BG Color)', () => {
 					getSelectedBlock(data, 'blockeraBackgroundColor')
 				);
 
-				expect(undefined).to.be.eq(
+				expect({}).to.be.deep.eq(
 					getSelectedBlock(data, 'blockeraBlockStates')?.normal
 						?.breakpoints?.tablet?.attributes
 				);
@@ -987,7 +987,7 @@ describe('Color Control label testing (BG Color)', () => {
 						?.breakpoints?.desktop?.attributes
 				);
 
-				expect(undefined).to.be.eq(
+				expect({}).to.be.deep.eq(
 					getSelectedBlock(data, 'blockeraBlockStates')?.hover
 						?.breakpoints?.tablet?.attributes
 				);
