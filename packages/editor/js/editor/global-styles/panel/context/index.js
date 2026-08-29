@@ -27,6 +27,7 @@ import {
 	cloneObject,
 	mergeObject,
 	setImmutably,
+	cleanEmptyObject,
 } from '@blockera/utils';
 
 /**
@@ -94,6 +95,31 @@ const registerDefaultBlockExtensionsSupports = (
 	return select(EXTENSIONS_STORE_NAME).getExtensions(blockName);
 };
 
+/**
+ * WP `background` may still have `{ backgroundImage: { id: 0 } }` after JSON
+ * clone drops undefined urls. That is not a real layer; leaving it in the
+ * payload omits backgroundPosition and mergeObject keeps the previous value.
+ */
+const isEmptyWpBackgroundTree = (key: string, cleaned: mixed): boolean => {
+	if (key !== 'background' || !cleaned || typeof cleaned !== 'object') {
+		return false;
+	}
+
+	const background: { [string]: mixed } = (cleaned: any);
+	const image = background.backgroundImage;
+	const hasImageUrl =
+		typeof image === 'string'
+			? image !== ''
+			: Boolean(image && typeof image === 'object' && image.url);
+
+	return (
+		!hasImageUrl &&
+		background.backgroundSize == null &&
+		background.backgroundPosition == null &&
+		background.backgroundRepeat == null
+	);
+};
+
 const cleanupStylesHelper = (styles: Object, defaultStyles: Object): Object => {
 	const cleanStyles: { [key: string]: Object } = {};
 
@@ -111,22 +137,27 @@ const cleanupStylesHelper = (styles: Object, defaultStyles: Object): Object => {
 		}
 
 		if (!ignoreBlockeraAttributeKeysRegExp().test(key)) {
-			// cloneObject / JSON omit undefined nested keys, leaving `{}`.
-			// Omitting the key lets mergeObject keep the previous WP value
-			// (e.g. backgroundSize: 'contain' after deleting the image).
-			// Explicit undefined unsets it in SET_BLOCK_STYLES + entity merge.
+			// cloneObject / JSON omit undefined nested keys, leaving `{}` or
+			// `{ backgroundImage: {} }`. A shallow "all values undefined" check
+			// treats those empty nested objects as real data, so the payload
+			// omits backgroundPosition and mergeObject keeps '40% 60%'.
 			if (styles[key] === undefined) {
 				cleanStyles[key] = undefined;
 				continue;
 			}
 
-			if (
-				'object' === typeof styles[key] &&
-				!Object.values(styles[key] || {}).some(
-					(value) => value !== undefined
-				)
-			) {
-				cleanStyles[key] = undefined;
+			if (styles[key] !== null && 'object' === typeof styles[key]) {
+				const cleaned = cleanEmptyObject(styles[key]);
+
+				if (
+					cleaned === undefined ||
+					isEmptyWpBackgroundTree(key, cleaned)
+				) {
+					cleanStyles[key] = undefined;
+					continue;
+				}
+
+				cleanStyles[key] = cleaned;
 				continue;
 			}
 

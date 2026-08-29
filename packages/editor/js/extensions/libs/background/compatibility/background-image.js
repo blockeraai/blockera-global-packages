@@ -187,6 +187,52 @@ export function backgroundFromWPCompatibility({
 	return attributes;
 }
 
+function isClearedBackgroundValue(newValue: mixed): boolean {
+	if (isEmpty(newValue)) {
+		return true;
+	}
+
+	if (!newValue || typeof newValue !== 'object') {
+		return false;
+	}
+
+	if (Array.isArray(newValue)) {
+		return newValue.length === 0;
+	}
+
+	const record: { [string]: mixed } = (newValue: any);
+
+	if ('value' in record && Object.keys(record).length === 1) {
+		return isClearedBackgroundValue(record.value);
+	}
+
+	const keys = Object.keys(record);
+
+	if (keys.length === 0) {
+		return true;
+	}
+
+	for (let i = 0; i < keys.length; i++) {
+		const item = record[keys[i]];
+
+		if (item == null || item === '') {
+			continue;
+		}
+
+		if (
+			typeof item === 'object' &&
+			!Array.isArray(item) &&
+			isEmpty(item)
+		) {
+			continue;
+		}
+
+		return false;
+	}
+
+	return true;
+}
+
 export function backgroundToWPCompatibility({
 	newValue,
 	ref,
@@ -198,7 +244,7 @@ export function backgroundToWPCompatibility({
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 	insideBlockInspector?: boolean,
 }): Object {
-	if ('reset' === ref?.current?.action || isEmpty(newValue)) {
+	if ('reset' === ref?.current?.action || isClearedBackgroundValue(newValue)) {
 		// Nested WP background fields only. Do not list `gradient`: Gutenberg
 		// unsets the root attribute when the key is `undefined`. Deleting it
 		// leaves the previous preset slug on the block.
