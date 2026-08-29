@@ -164,6 +164,42 @@ export const isVariationDisabled = (
 };
 
 /**
+ * Unwrap `blockeraBlockStates` for CSS generation.
+ *
+ * Global styles store the map as `{ value: { hover, normal, ... } }`. After
+ * WP compatibility / sanitize, the same map can already be unwrapped — or
+ * double-wrapped `{ value: { value: { hover } } }`. Reading only `.value`
+ * once drops hover (and other pseudo) rules from `#blockera-global-styles-wrapper`.
+ *
+ * @param {mixed} blockeraBlockStates Stored states (wrapped or not).
+ * @return {Object} State map keyed by state name (`normal`, `hover`, …).
+ */
+export function getBlockeraBlockStatesValue(
+	blockeraBlockStates: mixed
+): Object {
+	if (!blockeraBlockStates || typeof blockeraBlockStates !== 'object') {
+		return {};
+	}
+
+	let current: any = blockeraBlockStates;
+
+	while (
+		current &&
+		typeof current === 'object' &&
+		!Array.isArray(current) &&
+		Object.prototype.hasOwnProperty.call(current, 'value') &&
+		current.value &&
+		typeof current.value === 'object' &&
+		!Array.isArray(current.value) &&
+		!Object.prototype.hasOwnProperty.call(current, 'breakpoints')
+	) {
+		current = current.value;
+	}
+
+	return current && typeof current === 'object' ? current : {};
+}
+
+/**
  * Checks if the styles settings are default.
  * Validates:
  * - Only one state is defined

@@ -407,12 +407,16 @@ const GlobalStylesIframeBundle: ComponentType<{}> = memo((): MixedElement => {
 
 export default function GlobalStylesheet(): MixedElement {
 	useEffect(() => {
-		new IntersectionObserverRenderer('iframe', GlobalStylesIframeBundle, {
-			isRootComponent: true,
-			targetElementIsRoot: true,
-			componentSelector: '#blockera-global-styles-wrapper',
-			observeRootSelector: '.interface-interface-skeleton',
-		});
+		new IntersectionObserverRenderer(
+			'iframe[name="editor-canvas"]',
+			GlobalStylesIframeBundle,
+			{
+				isRootComponent: true,
+				targetElementIsRoot: true,
+				componentSelector: '#blockera-global-styles-wrapper',
+				observeRootSelector: '.interface-interface-skeleton',
+			}
+		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 

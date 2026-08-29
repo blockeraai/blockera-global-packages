@@ -6,6 +6,13 @@
 import type { ComponentType } from 'react';
 import { createRoot } from '@wordpress/element';
 
+const EDITOR_CANVAS_IFRAME_SELECTOR = 'iframe[name="editor-canvas"]';
+
+function isEditorCanvasIframeSelector(selector: string): boolean {
+	const trimmed = selector.trim();
+	return trimmed === 'iframe' || trimmed === EDITOR_CANVAS_IFRAME_SELECTOR;
+}
+
 export class IntersectionObserverRenderer {
 	observer: MutationObserver;
 	targetSelector: string;
@@ -152,7 +159,9 @@ export class IntersectionObserverRenderer {
 			return false;
 		}
 
-		const isIframeCanvasTarget = this.targetSelector.trim() === 'iframe';
+		const isIframeCanvasTarget = isEditorCanvasIframeSelector(
+			this.targetSelector
+		);
 
 		if (!isIframeCanvasTarget) {
 			this.skipMutationHandling = true;
@@ -190,7 +199,7 @@ export class IntersectionObserverRenderer {
 			return true;
 		}
 
-		if (this.targetSelector.trim() === 'iframe') {
+		if (isEditorCanvasIframeSelector(this.targetSelector)) {
 			return (
 				node.tagName === 'IFRAME' ||
 				node.getElementsByTagName('iframe').length > 0
@@ -258,9 +267,46 @@ export class IntersectionObserverRenderer {
 		}
 	}
 
+	isCanvasBundleStillMounted(): boolean {
+		if (
+			!this.targetElementIsRoot ||
+			!isEditorCanvasIframeSelector(this.targetSelector)
+		) {
+			return true;
+		}
+
+		if (!this.cachedContainer) {
+			return false;
+		}
+
+		const canvas = document.querySelector(EDITOR_CANVAS_IFRAME_SELECTOR);
+		const body = canvas?.contentDocument?.body;
+
+		return Boolean(body && body.contains(this.cachedContainer));
+	}
+
+	unmountCachedRoot(): void {
+		if (!this.cachedRoot) {
+			return;
+		}
+
+		try {
+			this.cachedRoot.unmount();
+		} catch (_e) {
+			//
+		}
+	}
+
 	renderComponent() {
 		if (this.isRendered) {
-			return;
+			if (this.isCanvasBundleStillMounted()) {
+				return;
+			}
+
+			this.unmountCachedRoot();
+			this.isRendered = false;
+			this.cachedRoot = null;
+			this.cachedContainer = null;
 		}
 
 		const targetElement = document.querySelector(this.targetSelector);
@@ -352,7 +398,7 @@ export class IntersectionObserverRenderer {
 		}
 
 		if (this.cachedRoot) {
-			this.cachedRoot.unmount();
+			this.unmountCachedRoot();
 		}
 
 		this.isRendered = false;

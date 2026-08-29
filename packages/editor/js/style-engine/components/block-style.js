@@ -40,17 +40,24 @@ export function shouldPrintBlockeraBlockStyles({
 	clientId,
 	defaultAttributes,
 	hasPresetPreviewPatch = false,
+	isGlobalStylesWrapper = false,
 }: {
 	attributes: ?Object,
 	clientId: string,
 	defaultAttributes?: Object,
 	hasPresetPreviewPatch?: boolean,
+	isGlobalStylesWrapper?: boolean,
 }): boolean {
 	if (!attributes && !hasPresetPreviewPatch) {
 		return false;
 	}
 
-	if (isBlockeraEngineSkippedForClient(clientId, attributes || {})) {
+	// Global styles uses synthetic client ids (`core-paragraph`). Walking
+	// `getBlockParents` for those ids is meaningless and can skip CSS.
+	if (
+		!isGlobalStylesWrapper &&
+		isBlockeraEngineSkippedForClient(clientId, attributes || {})
+	) {
 		return false;
 	}
 
@@ -88,6 +95,7 @@ export const BlockStyle = ({
 		clientId: props.clientId,
 		defaultAttributes: props.defaultAttributes,
 		hasPresetPreviewPatch,
+		isGlobalStylesWrapper,
 	});
 
 	// Skip unless Blockera styles apply or inspector preview CSS is active.

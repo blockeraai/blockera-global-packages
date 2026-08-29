@@ -17,6 +17,7 @@ import { omitWithPattern, mergeObject, isEquals } from '@blockera/utils';
 import {
 	isDefaultStylesSettings,
 	generateStableBlockeraPropsId,
+	getBlockeraBlockStatesValue,
 	isVariationDisabled,
 } from './utils';
 import { staticKeys, defaultBlockStates } from './constants';
@@ -63,7 +64,9 @@ export const StyleDefaultRenderer: ComponentType<Object> = memo(
 		const sanitizedBlockGlobalStyles = useMemo(() => {
 			const mergedBlockStates = mergeObject(
 				defaultBlockStates,
-				validBlockGlobalStyles?.blockeraBlockStates?.value || {}
+				getBlockeraBlockStatesValue(
+					validBlockGlobalStyles?.blockeraBlockStates
+				)
 			);
 
 			return sanitizeBlockAttributes({
