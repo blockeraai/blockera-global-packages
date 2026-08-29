@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
 # Resolve the release/* branch for this dispatch.
 #
-# Default: fork from origin/<default-branch> HEAD (not from an existing
-# release/* or RC tip). Version core is read from that branch's package.json.
-#
-# Hotfix: BLOCKERA_BUILD_ZIP_SOURCE_BRANCH (or GITHUB_REF on release/*) selects
-# a previous release/* line so later default-branch PRs are excluded. Version
-# is read from that source. Only version_type=patch is allowed off the default
-# branch. Stable cherry-pick to master is skipped for those runs.
+# Fork from origin/<the branch this workflow was run from> (GitHub's live
+# "Use workflow from" list). master = current line. release/* = hotfix
+# (later default-branch PRs are excluded). Feature branches are rejected.
 #
 # Required env:
 #   RELEASE_TYPE   rc|stable
@@ -16,8 +12,7 @@
 # Optional:
 #   BLOCKERA_BUILD_ZIP_PACKAGE_JSON     default: package.json
 #   BLOCKERA_BUILD_ZIP_DEFAULT_BRANCH   default: master
-#   BLOCKERA_BUILD_ZIP_SOURCE_BRANCH    empty = default branch (or GITHUB_REF if it is release/*)
-#   GITHUB_REF                          used when SOURCE_BRANCH input is empty
+#   GITHUB_REF                          dispatch branch (refs/heads/…)
 #
 # Outputs (GITHUB_OUTPUT):
 #   release_branch
@@ -52,17 +47,13 @@ is_allowed_source() {
 	[[ "${b}" == "${DEFAULT_BRANCH}" || "${b}" == release/* ]] && [[ "${b}" != "release/" ]]
 }
 
-REQUESTED="$(trim_branch "${BLOCKERA_BUILD_ZIP_SOURCE_BRANCH:-}")"
-SOURCE_BRANCH="${DEFAULT_BRANCH}"
-
-if [[ -n "${REQUESTED}" ]]; then
-	SOURCE_BRANCH="${REQUESTED}"
-elif [[ "${GITHUB_REF:-}" == refs/heads/release/* ]]; then
-	SOURCE_BRANCH="$(trim_branch "${GITHUB_REF}")"
+SOURCE_BRANCH="$(trim_branch "${GITHUB_REF:-}")"
+if [[ -z "${SOURCE_BRANCH}" ]]; then
+	SOURCE_BRANCH="${DEFAULT_BRANCH}"
 fi
 
 if ! is_allowed_source "${SOURCE_BRANCH}"; then
-	echo "build-zip/resolve-branch: source '${SOURCE_BRANCH}' must be ${DEFAULT_BRANCH} or release/*" >&2
+	echo "build-zip/resolve-branch: source '${SOURCE_BRANCH}' must be ${DEFAULT_BRANCH} or release/* (pick it in Use workflow from)" >&2
 	exit 1
 fi
 
