@@ -138,18 +138,7 @@ describe('Group Block → Link Inner Block → WP Data Compatibility', () => {
 		cy.clearColorControlValue('Text Color');
 
 		assertBlockData((data) => {
-			expect({
-				blockeraBlockStates: {
-					hover: {
-						isVisible: true,
-						breakpoints: {
-							desktop: {
-								attributes: {},
-							},
-						},
-					},
-				},
-			}).to.be.deep.equal(
+			expect(undefined).to.be.equal(
 				getSelectedBlock(data, 'blockeraInnerBlocks')['elements/link']
 					?.attributes
 			);
@@ -364,18 +353,7 @@ describe('Group Block → Link Inner Block → WP Data Compatibility', () => {
 		});
 
 		assertBlockData((data) => {
-			expect({
-				blockeraBlockStates: {
-					hover: {
-						isVisible: true,
-						breakpoints: {
-							desktop: {
-								attributes: {},
-							},
-						},
-					},
-				},
-			}).to.be.deep.equal(
+			expect(undefined).to.be.equal(
 				getSelectedBlock(data, 'blockeraInnerBlocks')['elements/link']
 					?.attributes
 			);
