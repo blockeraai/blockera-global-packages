@@ -219,6 +219,11 @@ const cleanupStylesHelper = (styles: Object, defaultStyles: Object): Object => {
 			!isEquals(defaultStyles[key]?.default?.value, styles[key]?.value)
 		) {
 			cleanStyles[key] = styles[key];
+		} else {
+			// Equals default (including empty repeater `{}`). Omitting the key
+			// leaves leftover `{ value: { image-0: … } }` in mergeObject;
+			// `undefined` deletes it, same as empty WP `background`.
+			cleanStyles[key] = undefined;
 		}
 	}
 
