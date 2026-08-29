@@ -81,7 +81,7 @@ export function mergeRootWithInnerOverlay(
  */
 export function overlayHasFeatureValue(
 	nested: mixed,
-	attribute: string
+	attribute?: string
 ): boolean {
 	if (
 		!nested ||
