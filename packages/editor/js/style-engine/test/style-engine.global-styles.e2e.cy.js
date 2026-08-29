@@ -111,6 +111,8 @@ describe('Style Engine → Global Styles', () => {
 			);
 		});
 
+		cy.wait(5000);
+
 		// Check editor — global styles output real :hover rules in the iframe wrapper.
 		// Avoid `.within()` on the canvas body (a failed query leaves Cypress scoped
 		// inside the iframe). Retry until hover CSS is portaled in.
