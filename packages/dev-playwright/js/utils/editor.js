@@ -17,6 +17,40 @@ function escapeCSS(str) {
 }
 
 /**
+ * Abort in-flight subresources in editor frames so `load` can finish.
+ *
+ * Gutenberg’s canvas is a blob: HTML document. Playwright (and the WP e2e
+ * `page` fixture teardown `localStorage.clear()`) wait for every frame’s
+ * `load`. Comment avatars/fonts can leave that event pending until timeout.
+ *
+ * @param {import('@playwright/test').Page} page - Playwright page object.
+ * @return {Promise<void>}
+ */
+async function stopPendingFrameLoads(page) {
+	if (!page || page.isClosed()) {
+		return;
+	}
+
+	const frames = page.frames().filter((frame) => {
+		try {
+			const url = frame.url();
+			return frame.name() === 'editor-canvas' || url.startsWith('blob:');
+		} catch {
+			return false;
+		}
+	});
+
+	await Promise.all(
+		frames.map((frame) =>
+			Promise.race([
+				frame.evaluate(() => window.stop()).catch(() => undefined),
+				new Promise((resolve) => setTimeout(resolve, 1500)),
+			])
+		)
+	);
+}
+
+/**
  * Get iframe body element from editor canvas.
  *
  * @param {import('@playwright/test').Page} page - Playwright page object.
@@ -563,9 +597,7 @@ async function appendBlocks(page, blocksCode) {
 	// That old frame often never fires `load` (pending blob / images), and
 	// Playwright then waits forever on the next locator (timeout 0 from
 	// @wordpress/e2e-test-utils-playwright) — CI never reaches screenshots.
-	const exitCodeEditor = page.locator(
-		'button:has-text("Exit code editor")'
-	);
+	const exitCodeEditor = page.locator('button:has-text("Exit code editor")');
 	await exitCodeEditor.click({ noWaitAfter: true });
 	await exitCodeEditor.waitFor({ state: 'hidden', timeout: 30000 });
 
@@ -961,10 +993,10 @@ async function openDocumentSettingsSidebar(page, tab = 'Block') {
 		timeout: 5000,
 	});
 	if (isPressed !== 'true') {
-		await settingsButton.click({ noWaitAfter: true, timeout: 5000 });
+		await settingsButton.click({ noWaitAfter: true, timeout: 10000 });
 	}
 
-	await tabButton.click({ noWaitAfter: true, timeout: 5000 });
+	await tabButton.click({ noWaitAfter: true, timeout: 10000 });
 }
 
 /**
@@ -1195,6 +1227,7 @@ async function deleteRepeaterItem(page, { container, itemId, label }) {
 module.exports = {
 	deleteRepeaterItem,
 	getIframeBody,
+	stopPendingFrameLoads,
 	getWindowProperty,
 	getWPDataObject,
 	getBlockType,
