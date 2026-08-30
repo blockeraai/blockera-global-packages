@@ -44,6 +44,10 @@ import {
  * Existing feature values skip the merge so schema `{ value: '' }` does not
  * wipe pasted value-addons.
  *
+ * Global styles still hydrates empty fields when the user entity already has
+ * other Blockera features (font size, transitions, etc.). Each fromWP helper
+ * no-ops when its own field is already set.
+ *
  * @param {Object} params
  * @return {boolean} Whether WP→Blockera should run.
  */
@@ -51,12 +55,22 @@ export function shouldRunWpToBlockeraHydrate({
 	isActive,
 	pendingReturn = false,
 	hasFeatures,
+	insideBlockInspector = true,
 }: {
 	isActive: boolean,
 	pendingReturn?: boolean,
 	hasFeatures: boolean,
+	insideBlockInspector?: boolean,
 }): boolean {
-	return Boolean(isActive && (pendingReturn || !hasFeatures));
+	if (!isActive) {
+		return false;
+	}
+
+	if (pendingReturn || false === insideBlockInspector) {
+		return true;
+	}
+
+	return !hasFeatures;
 }
 
 export function unwrapBlockeraStoredValue(value: mixed): mixed {

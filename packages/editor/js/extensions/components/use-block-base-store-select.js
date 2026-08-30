@@ -131,6 +131,7 @@ export function useBlockBaseStoreSelect({
 			isSelected,
 			effectivelySelected,
 			extensionsUiContext,
+			insideBlockInspector,
 		]
 	);
 }

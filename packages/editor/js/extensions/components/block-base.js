@@ -77,6 +77,7 @@ import { BlockBaseInspectorBundle } from './block-base-inspector-bundle';
 import { useBlockBaseStoreSelect } from './use-block-base-store-select';
 import { trackBlockBaseRender } from './track-block-base-render';
 import { enqueueBlockAttributePersist } from './persist-attribute-queue';
+import { shouldFlushGlobalStylesEntityNow } from './should-flush-global-styles-entity';
 import { blockInspectorTabPersistence } from './use-sync-block-inspector-tab';
 import type { UpdateBlockEditorSettings } from '../libs/types';
 import { ErrorBoundaryFallback } from '../hooks/block-settings';
@@ -486,14 +487,17 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	}, [clientId, uniqueClassName]);
 
 	const compatibleAttributes = useMemo(() => {
+		const sourceAttributes = cloneObject(blockAttributes);
+
 		const hasFeatures = hasBlockeraFeatureAttributes(
-			blockAttributes,
+			sourceAttributes,
 			originDefaultAttributes
 		);
 		const shouldRunWpToBlockera = shouldRunWpToBlockeraHydrate({
 			isActive,
 			pendingReturn: pendingReturnCompatRef.current,
 			hasFeatures,
+			insideBlockInspector,
 		});
 
 		if (pendingReturnCompatRef.current && isActive) {
@@ -506,10 +510,10 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			availableAttributes,
 			runWpToBlockera: shouldRunWpToBlockera,
 			stampIdentity:
-				Boolean(getBlockeraId(blockAttributes)) ||
+				Boolean(getBlockeraId(sourceAttributes)) ||
 				persistReturnCompatRef.current ||
 				hasFeatures,
-			attributes: cloneObject(blockAttributes),
+			attributes: sourceAttributes,
 			defaultAttributes: originDefaultAttributes,
 		});
 
@@ -598,6 +602,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		uniqueClassName,
 		availableAttributes,
 		originDefaultAttributes,
+		insideBlockInspector,
 	]);
 
 	// Single source of truth: compatibleAttributes (derived from blockAttributes).
@@ -839,7 +844,9 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			if (
 				!['save-customizations', 'detach-style'].includes(
 					ref?.current?.action
-				)
+				) &&
+				select('blockera/editor').getEditorSelectedBlockEvent() !==
+					undefined
 			) {
 				// Reset the editor selected block event to undefined.
 				dispatch('blockera/editor').setEditorSelectedBlockEvent(
@@ -850,9 +857,56 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			// Sync with the new value for attributes state.
 			compatibleAttributesRef.current = valueToStore;
 
-			setPendingAttributes(valueToStore);
+			setPendingAttributes((prev) =>
+				isEquals(prev, valueToStore) ? prev : valueToStore
+			);
+
+			// Global styles: write userStyles in this tick. Headed Cypress can
+			// clear `pendingAttributes` before the attributes effect runs, so
+			// delete never reaches SET_BLOCK_STYLES and merged reads keep the
+			// previous WP backgroundPosition.
+			if (
+				false === insideBlockInspector &&
+				typeof handleOnChangeStyleInLocalState === 'function'
+			) {
+				const persistableAttributes = withoutBlockeraIdentityIfUnused(
+					valueToStore,
+					getBlockeraPersistSchema(
+						availableAttributes,
+						originDefaultAttributes
+					)
+				);
+				const currentUserBlock = select(
+					'blockera/editor'
+				).getGlobalStyles?.()?.userStyles?.styles?.blocks?.[name];
+				if (!isEquals(currentUserBlock, persistableAttributes)) {
+					handleOnChangeStyleInLocalState(
+						cloneObject(persistableAttributes)
+					);
+				}
+
+				const shouldPersistEntityNow =
+					shouldFlushGlobalStylesEntityNow(
+						persistableAttributes,
+						currentUserBlock
+					);
+
+				if (shouldPersistEntityNow) {
+					setBlockAttributes(cloneObject(persistableAttributes));
+				}
+			}
 		},
-		[clientId, uniqueClassName, getBlocksClassNames]
+		[
+			clientId,
+			name,
+			uniqueClassName,
+			getBlocksClassNames,
+			insideBlockInspector,
+			handleOnChangeStyleInLocalState,
+			availableAttributes,
+			originDefaultAttributes,
+			setBlockAttributes,
+		]
 	);
 
 	// Debounce updates to parent state to avoid unnecessary re-renders.

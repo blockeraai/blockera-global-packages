@@ -1,5 +1,10 @@
 // @flow
 /**
+ * External dependencies
+ */
+import { select } from '@wordpress/data';
+
+/**
  * Blockera dependencies
  */
 import { isValid, type ValueAddon } from '@blockera/controls';
@@ -11,6 +16,10 @@ import { isEmpty, isString, isEmptyObject, mergeObject } from '@blockera/utils';
  */
 import { runInsideBlockInspector, getWpFromStyleOrGlobal } from '../../utils';
 import {
+	getGsUserBackgroundOwnership,
+	mergeOwnedGsUserBackground,
+} from './gs-user-background';
+import {
 	createNoneBackgroundLayer,
 	normalizeWpGradientSentinel,
 	resolveWpGradientRawString,
@@ -18,6 +27,7 @@ import {
 
 export function backgroundFromWPCompatibility({
 	attributes,
+	blockId,
 	editorSelectedBlockEvent,
 	insideBlockInspector,
 }: {
@@ -28,6 +38,32 @@ export function backgroundFromWPCompatibility({
 }): Object {
 	if (!isEmptyObject(attributes?.blockeraBackground?.value)) {
 		return attributes;
+	}
+
+	if (false === insideBlockInspector && blockId) {
+		const userBlock = select('blockera/editor')?.getGlobalStyles?.()
+			?.userStyles?.styles?.blocks?.[blockId];
+		const ownership = getGsUserBackgroundOwnership(userBlock);
+		const skipThemeHydrate =
+			ownership.hasLayers || ownership.userResetGradient;
+
+		// Layers or an explicit gradient reset fully own background — skip
+		// theme hydrate. A `null` image reset only owns the WP image tree;
+		// theme/user `color.gradient` must still map to Blockera layers.
+		if (skipThemeHydrate || ownership.userResetWpImage) {
+			const mergedOwned = mergeOwnedGsUserBackground(
+				attributes,
+				userBlock
+			);
+
+			if (mergedOwned) {
+				if (skipThemeHydrate) {
+					return mergedOwned;
+				}
+
+				attributes = mergedOwned;
+			}
+		}
 	}
 
 	const bgImageSource = getWpFromStyleOrGlobal(
@@ -121,15 +157,15 @@ export function backgroundFromWPCompatibility({
 
 	// gradient attribute in root always is variable
 	// it should be changed to a Value Addon (variable)
-	if (attributes?.gradient !== undefined) {
+	if (attributes?.gradient != null) {
 		gradient = (getGradientVAFromVarString(
 			`var:preset|gradient|${attributes?.gradient}`
 		): any);
 		gradientType = getGradientType(gradient);
-	} else if (attributes?.style?.color?.gradient !== undefined) {
+	} else if (attributes?.style?.color?.gradient != null) {
 		gradient = attributes?.style?.color?.gradient;
 		gradientType = getGradientType(attributes?.style?.color?.gradient);
-	} else if (attributes?.color?.gradient !== undefined) {
+	} else if (attributes?.color?.gradient != null) {
 		gradient = (getGradientVAFromVarString(
 			attributes?.color?.gradient
 		): any);
@@ -244,7 +280,9 @@ export function backgroundToWPCompatibility({
 	editorSelectedBlockEvent?: 'save-customizations' | 'detach-style',
 	insideBlockInspector?: boolean,
 }): Object {
-	if ('reset' === ref?.current?.action || isClearedBackgroundValue(newValue)) {
+	const cleared =
+		'reset' === ref?.current?.action || isClearedBackgroundValue(newValue);
+	if (cleared) {
 		// Nested WP background fields only. Do not list `gradient`: Gutenberg
 		// unsets the root attribute when the key is `undefined`. Deleting it
 		// leaves the previous preset slug on the block.
@@ -286,7 +324,7 @@ export function backgroundToWPCompatibility({
 				backgroundRepeat: undefined,
 			},
 			color: {
-				gradient: undefined,
+				gradient: null,
 			},
 			deletedProps,
 		};

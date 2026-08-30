@@ -99,7 +99,23 @@ const registerDefaultBlockExtensionsSupports = (
  * WP `background` may still have `{ backgroundImage: { id: 0 } }` after JSON
  * clone drops undefined urls. That is not a real layer; leaving it in the
  * payload omits backgroundPosition and mergeObject keeps the previous value.
+ *
+ * User-origin GS must persist `null` (not omit). `undefined` is stripped by
+ * JSON/`cleanEmptyObject`, so merged styles fall back to theme.json and
+ * WP→Blockera hydrate puts the image back in the control.
  */
+const WP_BACKGROUND_USER_RESET: {
+	backgroundImage: null,
+	backgroundSize: null,
+	backgroundPosition: null,
+	backgroundRepeat: null,
+} = {
+	backgroundImage: null,
+	backgroundSize: null,
+	backgroundPosition: null,
+	backgroundRepeat: null,
+};
+
 const isEmptyWpBackgroundTree = (key: string, cleaned: mixed): boolean => {
 	if (key !== 'background' || !cleaned || typeof cleaned !== 'object') {
 		return false;
@@ -142,18 +158,41 @@ const cleanupStylesHelper = (styles: Object, defaultStyles: Object): Object => {
 			// treats those empty nested objects as real data, so the payload
 			// omits backgroundPosition and mergeObject keeps '40% 60%'.
 			if (styles[key] === undefined) {
-				cleanStyles[key] = undefined;
+				cleanStyles[key] =
+					key === 'background'
+						? WP_BACKGROUND_USER_RESET
+						: undefined;
 				continue;
 			}
 
 			if (styles[key] !== null && 'object' === typeof styles[key]) {
+				if (key === 'color') {
+					const colorIn: { [string]: mixed } = (styles[key]: any);
+					const cleanedColor = cleanEmptyObject(styles[key]);
+					const gradientCleared = colorIn.gradient === null;
+
+					if (gradientCleared) {
+						cleanStyles[key] = {
+							...(cleanedColor &&
+							typeof cleanedColor === 'object'
+								? cleanedColor
+								: {}),
+							gradient: null,
+						};
+						continue;
+					}
+				}
+
 				const cleaned = cleanEmptyObject(styles[key]);
 
 				if (
 					cleaned === undefined ||
 					isEmptyWpBackgroundTree(key, cleaned)
 				) {
-					cleanStyles[key] = undefined;
+					cleanStyles[key] =
+						key === 'background'
+							? WP_BACKGROUND_USER_RESET
+							: undefined;
 					continue;
 				}
 
@@ -629,6 +668,14 @@ export const GlobalStylesPanelContextProvider = ({
 					setBlockStyles(blockName, variationArg, payload);
 				}
 
+				return;
+			}
+
+			const currentUserBlock = select(
+				EDITOR_STORE_NAME
+			).getGlobalStyles?.()?.userStyles?.styles?.blocks?.[name];
+
+			if (isEquals(payload, currentUserBlock)) {
 				return;
 			}
 
