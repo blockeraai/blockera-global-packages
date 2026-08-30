@@ -71,6 +71,7 @@ test.describe('Blockera Dashboard → Visual Test', () => {
 
 		// Soft assertion keeps the failure on this test (avoid try/catch + afterAll,
 		// which can be misreported as flaky on CI retries).
+		// Baseline: screenshots/dashboard-actual.png (shared Playwright pathTemplate).
 		await expect.soft(body).toHaveScreenshot(`dashboard.png`, {
 			threshold: 0.02,
 		});
