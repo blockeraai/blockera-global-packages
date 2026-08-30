@@ -33,9 +33,11 @@ export default class CssGenerator {
 	getPropValue(attributeName: string): string {
 		const { attributes } = this.blockProps;
 
-		return attributeName
-			? attributes[attributeName] || attributes
-			: attributes;
+		if (!attributeName) {
+			return attributes;
+		}
+
+		return attributes[attributeName];
 	}
 
 	rules(): string {

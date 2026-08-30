@@ -15,7 +15,10 @@ import { createCssDeclarations } from '../../../../style-engine';
 export function backgroundGenerator(id, props, options) {
 	const { attributes } = props;
 
-	if (!Object.values(attributes?.blockeraBackground)?.length) {
+	if (
+		!attributes?.blockeraBackground ||
+		!Object.values(attributes.blockeraBackground)?.length
+	) {
 		return '';
 	}
 
