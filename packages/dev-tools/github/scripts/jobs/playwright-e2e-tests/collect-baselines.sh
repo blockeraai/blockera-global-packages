@@ -2,11 +2,11 @@
 # Copy untracked visual baseline PNGs into artifacts/new-baselines for upload.
 #
 # Override via env:
-#   BLOCKERA_PLAYWRIGHT_BASELINES_GLOB   default: tests/__snapshots__/*.png
+#   BLOCKERA_PLAYWRIGHT_BASELINES_GLOB   default: tests/screenshots/*.png
 #   BLOCKERA_PLAYWRIGHT_BASELINES_DIR    default: artifacts/new-baselines
 set -euo pipefail
 
-BASELINES_GLOB="${BLOCKERA_PLAYWRIGHT_BASELINES_GLOB:-tests/__snapshots__/*.png}"
+BASELINES_GLOB="${BLOCKERA_PLAYWRIGHT_BASELINES_GLOB:-tests/screenshots/*.png}"
 OUT_DIR="${BLOCKERA_PLAYWRIGHT_BASELINES_DIR:-artifacts/new-baselines}"
 
 mkdir -p "${OUT_DIR}"
