@@ -9,10 +9,6 @@ const { test, expect } = require('@wordpress/e2e-test-utils-playwright');
  * Internal dependencies
  */
 const { evaluateInEditorCanvas } = require('../utils/editor');
-const {
-	setViewportSizeViaCdp,
-	clearDeviceMetricsOverrideViaCdp,
-} = require('../utils/evaluate-via-cdp');
 const { loginToSite, goTo } = require('../utils/site-navigation');
 
 test.beforeEach(async ({ page }) => {
@@ -1341,6 +1337,30 @@ async function applyDomSearchReplace(locator, operations) {
 }
 
 /**
+ * Resize with Playwright’s own session so element screenshots clip the canvas,
+ * not the device-preview chrome. A second CDP `setDeviceMetricsOverride` /
+ * `setWindowBounds` desyncs screenshot coordinates (wrong size, header in shot).
+ *
+ * WordPress e2e often uses action timeout 0 (wait forever). Bound the iframe
+ * `load` wait so a blob canvas cannot hang; the size is applied before that wait.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {{ width: number, height: number }} viewport
+ * @return {Promise<void>}
+ */
+async function setViewportSizeForScreenshot(page, viewport) {
+	page.setDefaultTimeout(8000);
+
+	try {
+		await page.setViewportSize(viewport);
+	} catch {
+		// Size is applied; canvas `load` may still be pending.
+	} finally {
+		page.setDefaultTimeout(0);
+	}
+}
+
+/**
  * Set editor viewport for screenshot.
  * Calculates the viewport height based on the editor container height.
  * Sets the viewport size to the calculated height.
@@ -1389,7 +1409,7 @@ async function setEditorViewportForScreenshot(
 	const finalWidth = config?.width || width;
 	const finalHeight = config?.height || height;
 
-	await setViewportSizeViaCdp(page, {
+	await setViewportSizeForScreenshot(page, {
 		width: 1600,
 		height: finalHeight,
 	});
@@ -1488,8 +1508,7 @@ async function setFrontendViewportForScreenshot(
 	const finalWidth = config?.width || width;
 	const finalHeight = config?.height || height;
 
-	await clearDeviceMetricsOverrideViaCdp(page);
-	await page.setViewportSize({
+	await setViewportSizeForScreenshot(page, {
 		width: finalWidth,
 		height: finalHeight,
 	});
