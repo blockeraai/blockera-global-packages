@@ -2,7 +2,7 @@
 
 Playwright helpers and WordPress global-setup utilities for Blockera E2E tests.
 
-Intended as the Playwright counterpart to `@blockera/dev-cypress`. Canonical source in `blockera-global-packages`; synced via `blockera-folder-sync.json`.
+Intended as the Playwright counterpart to `@blockera/dev-cypress`.
 
 ---
 

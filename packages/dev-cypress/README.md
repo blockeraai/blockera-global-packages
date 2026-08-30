@@ -2,7 +2,7 @@
 
 Shared Cypress configuration helpers, custom commands, plugins, and WordPress/Blockera E2E utilities.
 
-Canonical source in `blockera-global-packages`; synced to consumers via `blockera-folder-sync.json`.
+Canonical source in `blockera-global-packages`; synced to consumers via `submodule:bump` script.
 
 ---
 

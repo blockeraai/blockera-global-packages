@@ -220,10 +220,6 @@ This package is the **only** allowed native browser-storage access (`eslintrc.js
 
 Cypress helpers for scoped keys live in `@blockera/dev-cypress` (`js/helpers/storage.js`: `getScopedStorageKey`, `removeScopedStorageKeys`).
 
-### Folder sync
-
-`blockera-folder-sync.json` lists dependent repos that may mirror this package (`blockera`, `blockera-pro`, `blockera-site-toolkit`). Keep API changes compatible or sync dependents.
-
 ---
 
 ## Real consumers (reference)

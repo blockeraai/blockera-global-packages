@@ -2,8 +2,6 @@
 
 Canonical monorepo of shared Blockera packages under `packages/`.
 
-Consumers (Blockera plugin, Blockera Pro, themes, site toolkit, …) sync copies via each package’s `blockera-folder-sync.json`. **Edit here first**, then sync — do not maintain long-lived forks in consumers.
-
 Prefer each package’s own `README.md` for API details, usage, and AI-agent notes.
 
 ---
