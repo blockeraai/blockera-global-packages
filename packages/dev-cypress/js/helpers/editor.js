@@ -71,6 +71,25 @@ export function assertBlockData(callback, { timeout = 15000 } = {}) {
 }
 
 /**
+ * After a Global Styles clear/delete, merged theme.json can hydrate the
+ * value back (~5s). Assert the cleared payload, wait past that window,
+ * then assert again.
+ *
+ * @param {(data: Object) => void} callback Same as `assertBlockData`.
+ * @param {{ settleMs?: number, revertWindowMs?: number }} [options]
+ */
+export function assertClearedGlobalStylesStayCleared(
+	callback,
+	{ settleMs = 1000, revertWindowMs = 10000 } = {}
+) {
+	cy.wait(settleMs);
+	assertBlockData(callback);
+	cy.wait(revertWindowMs);
+
+	return assertBlockData(callback);
+}
+
+/**
  * Get block type registered object.
  *
  * @param {Object} data the WordPress data.

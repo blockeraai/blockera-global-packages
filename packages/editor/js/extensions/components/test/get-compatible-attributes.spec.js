@@ -187,6 +187,16 @@ describe('shouldRunWpToBlockeraHydrate', () => {
 		).toBe(true);
 	});
 
+	it('runs in global styles even when other feature attrs exist', () => {
+		expect(
+			shouldRunWpToBlockeraHydrate({
+				isActive: true,
+				hasFeatures: true,
+				insideBlockInspector: false,
+			})
+		).toBe(true);
+	});
+
 	it('does not run when the engine is inactive', () => {
 		expect(
 			shouldRunWpToBlockeraHydrate({

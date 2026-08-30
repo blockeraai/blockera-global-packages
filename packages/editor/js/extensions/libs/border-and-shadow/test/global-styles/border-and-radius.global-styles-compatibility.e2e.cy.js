@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const FIXTURE_ROOT =
@@ -51,6 +53,7 @@ describe('Border & Border Radius Together → WP Compatibility (Global Styles)',
 		}
 
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		openButtonGlobalStyles();
 	});
 
@@ -145,7 +148,7 @@ describe('Border & Border Radius Together → WP Compatibility (Global Styles)',
 					cy.get('input').clear({ force: true });
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getButtonGlobalStyles(data);
 
 					expect(undefined).to.equal(root?.blockeraBorder?.value);
@@ -347,7 +350,7 @@ describe('Border & Border Radius Together → WP Compatibility (Global Styles)',
 					cy.get('input').eq(3).clear({ force: true, delay: 0 });
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getButtonGlobalStyles(data);
 
 					expect({

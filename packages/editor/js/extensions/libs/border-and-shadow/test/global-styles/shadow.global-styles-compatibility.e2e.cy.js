@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const FIXTURE_ROOT =
@@ -51,6 +53,7 @@ describe('Shadow → WP Compatibility (Global Styles)', () => {
 		}
 
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		openButtonGlobalStyles();
 	});
 
@@ -133,11 +136,14 @@ describe('Shadow → WP Compatibility (Global Styles)', () => {
 					cy.getByAriaLabel('Delete outer 0').click({ force: true });
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const blockeraBoxShadow =
 						getButtonGlobalStyles(data)?.blockeraBoxShadow;
 
 					expect(undefined).to.equal(blockeraBoxShadow);
+					expect(undefined).to.equal(
+						getButtonGlobalStyles(data)?.shadow
+					);
 				});
 			});
 
@@ -185,6 +191,19 @@ describe('Shadow → WP Compatibility (Global Styles)', () => {
 					const shadow = getButtonGlobalStyles(data)?.shadow;
 
 					expect(undefined).to.equal(shadow);
+				});
+
+				cy.get('@shadowContainer').within(() => {
+					cy.getByAriaLabel('Delete outer 0').click({ force: true });
+				});
+
+				assertClearedGlobalStylesStayCleared((data) => {
+					expect(undefined).to.equal(
+						getButtonGlobalStyles(data)?.blockeraBoxShadow
+					);
+					expect(undefined).to.equal(
+						getButtonGlobalStyles(data)?.shadow
+					);
 				});
 			});
 		});

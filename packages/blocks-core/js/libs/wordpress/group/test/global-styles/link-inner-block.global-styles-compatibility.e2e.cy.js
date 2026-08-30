@@ -6,6 +6,7 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
 	resetGlobalStylesEntityRecord,
@@ -205,7 +206,7 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 		setInnerBlockStateInGlobalStyles('hover');
 		cy.clearColorControlValue('Text Color');
 
-		assertBlockData((data) => {
+		assertClearedGlobalStylesStayCleared((data) => {
 			const root = getGroupGlobalStyles(data);
 			const linkElement = root?.elements?.link;
 			const linkInnerBlock =
@@ -290,12 +291,22 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 			cy.clickValueAddonButton();
 		});
 		cy.selectValueAddonItem('contrast');
+		cy.getParentContainer('Text Color')
+			.last()
+			.within(() => {
+				cy.getByDataCy('value-addon-btn').should('contain', 'Contrast');
+			});
 
 		setInnerBlockStateInGlobalStyles('hover');
 		cy.getParentContainer('Text Color').last().within(() => {
 			cy.clickValueAddonButton();
 		});
 		cy.selectValueAddonItem('accent-1');
+		cy.getParentContainer('Text Color')
+			.last()
+			.within(() => {
+				cy.getByDataCy('value-addon-btn').should('contain', 'Accent 1');
+			});
 
 		assertBlockData((data) => {
 			const root = getGroupGlobalStyles(data);
@@ -369,7 +380,7 @@ describe('Group Block → Link Inner Block → WP Data Compatibility (Global Sty
 			cy.removeValueAddon();
 		});
 
-		assertBlockData((data) => {
+		assertClearedGlobalStylesStayCleared((data) => {
 			const root = getGroupGlobalStyles(data);
 			const linkElement = root?.elements?.link;
 			const linkInnerBlock =

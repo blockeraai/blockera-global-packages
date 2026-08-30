@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const FIXTURE_ROOT =
@@ -56,6 +58,7 @@ describe('Min Height → WP Compatibility (Global Styles)', () => {
 		}
 
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 
 		if (muPlugin?.block === 'group') {
 			openBlockGlobalStyles('group');
@@ -108,16 +111,13 @@ describe('Min Height → WP Compatibility (Global Styles)', () => {
 					cy.get('input').clear({ force: true });
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getCoverGlobalStyles(data);
 					const dimensionsMinHeight = root?.dimensions?.minHeight;
 					const blockeraMinHeight = root?.blockeraMinHeight?.value;
 
-					expect('400px').to.not.equal(dimensionsMinHeight);
-					expect(['300px', undefined]).to.include(
-						dimensionsMinHeight
-					);
-					expect(['300px', undefined]).to.include(blockeraMinHeight);
+					expect(undefined).to.equal(dimensionsMinHeight);
+					expect(undefined).to.equal(blockeraMinHeight);
 				});
 			});
 		});
@@ -141,7 +141,10 @@ describe('Min Height → WP Compatibility (Global Styles)', () => {
 				// Re-activate min height
 				cy.activateMoreSettingsItem('More Size Settings', 'Min Height');
 
-				cy.getParentContainer('Min Height').within(() => {
+				cy.getParentContainer('Min Height').as('minHeightContainer');
+
+				cy.get('@minHeightContainer').within(() => {
+					cy.get('input').clear({ force: true });
 					cy.get('input').type('400px', { force: true });
 				});
 
@@ -155,16 +158,13 @@ describe('Min Height → WP Compatibility (Global Styles)', () => {
 					cy.get('input').clear({ force: true });
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getGroupGlobalStyles(data);
 					const dimensionsMinHeight = root?.dimensions?.minHeight;
 					const blockeraMinHeight = root?.blockeraMinHeight?.value;
 
-					expect('400px').to.not.equal(dimensionsMinHeight);
-					expect(['300px', undefined]).to.include(
-						dimensionsMinHeight
-					);
-					expect(['300px', undefined]).to.include(blockeraMinHeight);
+					expect(undefined).to.equal(dimensionsMinHeight);
+					expect(undefined).to.equal(blockeraMinHeight);
 				});
 			});
 		});

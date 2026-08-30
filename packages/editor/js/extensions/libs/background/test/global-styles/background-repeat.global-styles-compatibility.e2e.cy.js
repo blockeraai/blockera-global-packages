@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const MU_PLUGIN_PATH =
@@ -33,6 +35,7 @@ describe('Background Repeat → WP Compatibility (Global Styles)', () => {
 			pluginName: MU_PLUGIN_TARGET,
 		});
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		openGroupGlobalStyles();
 	});
 
@@ -107,13 +110,17 @@ describe('Background Repeat → WP Compatibility (Global Styles)', () => {
 					cy.getByAriaLabel('Delete image 0').click({ force: true });
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getGroupGlobalStyles(data);
-					const backgroundRepeat = root?.background?.backgroundRepeat;
-					const blockeraBackground = root?.blockeraBackground;
+					const background = root?.background;
 
-					expect(undefined).to.equal(backgroundRepeat);
-					expect(undefined).to.equal(blockeraBackground);
+					expect(background?.backgroundImage).to.equal(null);
+					expect(background?.backgroundRepeat).to.equal(null);
+					expect(root?.blockeraBackground).to.equal(undefined);
+				});
+
+				cy.get('@bgContainer').within(() => {
+					cy.get('[data-id="image-0"]').should('not.exist');
 				});
 			});
 		});

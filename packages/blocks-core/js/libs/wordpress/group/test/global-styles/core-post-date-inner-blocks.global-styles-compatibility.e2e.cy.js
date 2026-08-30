@@ -6,7 +6,9 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	setInnerBlock,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const getGroupSectionGlobalStyles = (data) =>
@@ -16,6 +18,7 @@ const getGroupSectionGlobalStyles = (data) =>
 describe('Group Block → Post Date Inner Block → WP Data Compatibility (Global Styles)', () => {
 	beforeEach(() => {
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 
 		cy.openGlobalStylesPanel();
 		closeWelcomeGuide();
@@ -55,7 +58,7 @@ describe('Group Block → Post Date Inner Block → WP Data Compatibility (Globa
 
 		cy.clearColorControlValue('Text Color');
 
-		assertBlockData((data) => {
+		assertClearedGlobalStylesStayCleared((data) => {
 			const root = getGroupSectionGlobalStyles(data);
 			const blockeraPostDateInnerBlock =
 				root?.blockeraInnerBlocks?.value?.['core/post-date']
