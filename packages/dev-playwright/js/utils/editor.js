@@ -3,6 +3,8 @@
  */
 
 const { expect } = require('@playwright/test');
+const { waitForContentReady } = require('./wait-for-content-ready');
+const { evaluateViaCdp } = require('./evaluate-via-cdp');
 
 /**
  * Escape CSS identifier (class name, id, etc.)
@@ -17,11 +19,14 @@ function escapeCSS(str) {
 }
 
 /**
- * Abort in-flight subresources in editor frames so `load` can finish.
+ * Previously called `window.stop()` on the Gutenberg blob canvas so Playwright
+ * would see iframe `load`. That abort tears down the canvas execution context
+ * and Playwright reports the page as closed (`Target page, context or browser
+ * has been closed`).
  *
- * Gutenberg’s canvas is a blob: HTML document. Playwright (and the WP e2e
- * `page` fixture teardown `localStorage.clear()`) wait for every frame’s
- * `load`. Comment avatars/fonts can leave that event pending until timeout.
+ * Viewport/screenshot helpers must use the parent `contentDocument` path
+ * (`evaluateInEditorCanvas`) instead of Frame.evaluate / FrameLocator, which
+ * wait on `load`. This helper is a no-op kept for existing callers.
  *
  * @param {import('@playwright/test').Page} page - Playwright page object.
  * @return {Promise<void>}
@@ -30,23 +35,48 @@ async function stopPendingFrameLoads(page) {
 	if (!page || page.isClosed()) {
 		return;
 	}
+}
 
-	const frames = page.frames().filter((frame) => {
-		try {
-			const url = frame.url();
-			return frame.name() === 'editor-canvas' || url.startsWith('blob:');
-		} catch {
-			return false;
-		}
-	});
+/**
+ * Run a callback against the editor canvas document from the parent page.
+ *
+ * Do not use Frame.evaluate / FrameLocator here: they wait for iframe `load`.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {(doc: Document, win: Window, arg: any) => any} fn
+ * @param {any} [arg]
+ * @return {Promise<any>}
+ */
+async function evaluateInEditorCanvas(page, fn, arg) {
+	if (!page) {
+		throw new Error('evaluateInEditorCanvas: page is required');
+	}
 
-	await Promise.all(
-		frames.map((frame) =>
-			Promise.race([
-				frame.evaluate(() => window.stop()).catch(() => undefined),
-				new Promise((resolve) => setTimeout(resolve, 1500)),
-			])
-		)
+	return evaluateViaCdp(
+		page,
+		({ fnSource, innerArg }) => {
+			const iframe = document.querySelector(
+				'iframe[name="editor-canvas"]'
+			);
+
+			if (!iframe) {
+				throw new Error('editor-canvas iframe not found');
+			}
+
+			const canvasDocument = iframe.contentDocument;
+			const canvasWindow = iframe.contentWindow;
+
+			if (!canvasDocument || !canvasWindow) {
+				throw new Error(
+					'editor-canvas contentDocument is not reachable'
+				);
+			}
+
+			const impl = new Function('return (' + fnSource + ')')();
+
+			return impl(canvasDocument, canvasWindow, innerArg);
+		},
+		{ fnSource: fn.toString(), innerArg: arg === undefined ? null : arg }
 	);
 }
 
@@ -993,10 +1023,16 @@ async function openDocumentSettingsSidebar(page, tab = 'Block') {
 		timeout: 5000,
 	});
 	if (isPressed !== 'true') {
-		await settingsButton.click({ noWaitAfter: true, timeout: 10000 });
+		await settingsButton.dispatchEvent('click');
 	}
 
-	await tabButton.click({ noWaitAfter: true, timeout: 10000 });
+	await tabButton.waitFor({ state: 'attached', timeout: 10000 });
+
+	const selected = await tabButton.getAttribute('aria-selected');
+	if (selected !== 'true') {
+		// locator.click() waits for blob canvas `load` even with noWaitAfter.
+		await tabButton.dispatchEvent('click');
+	}
 }
 
 /**
@@ -1228,6 +1264,7 @@ module.exports = {
 	deleteRepeaterItem,
 	getIframeBody,
 	stopPendingFrameLoads,
+	evaluateInEditorCanvas,
 	getWindowProperty,
 	getWPDataObject,
 	getBlockType,
@@ -1268,4 +1305,5 @@ module.exports = {
 	deactivateMuPlugin,
 	verifyMuPluginInstalled,
 	waitForAssertValue,
+	waitForContentReady,
 };

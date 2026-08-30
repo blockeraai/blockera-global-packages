@@ -8,7 +8,8 @@ const { test, expect } = require('@wordpress/e2e-test-utils-playwright');
 /**
  * Internal dependencies
  */
-const { getIframeBody } = require('../utils/editor');
+const { evaluateInEditorCanvas } = require('../utils/editor');
+const { setViewportSizeViaCdp } = require('../utils/evaluate-via-cdp');
 const { loginToSite, goTo } = require('../utils/site-navigation');
 
 test.beforeEach(async ({ page }) => {
@@ -1362,52 +1363,46 @@ async function setEditorViewportForScreenshot(
 		width = 450;
 	}
 
-	const iframeBody = getIframeBody(page);
-	const editorContainer = iframeBody.locator('.is-root-container');
-
-	// Get the element's scrollHeight to determine viewport height
-	containerHeight = await editorContainer.evaluate((el) => {
-		// Get the maximum height needed to show the full element
-		const elementHeight = Math.max(
-			el.scrollHeight,
-			el.offsetHeight,
-			el.getBoundingClientRect().height
-		);
-		// Also consider document height in case element extends beyond viewport
+	containerHeight = await evaluateInEditorCanvas(page, (doc) => {
+		const el = doc.querySelector('.is-root-container');
+		const elementHeight = el
+			? Math.max(
+					el.scrollHeight,
+					el.offsetHeight,
+					el.getBoundingClientRect().height
+				)
+			: 0;
 		const docHeight = Math.max(
-			document.documentElement.scrollHeight,
-			document.body.scrollHeight,
-			document.documentElement.offsetHeight,
-			document.body.offsetHeight
+			doc.documentElement.scrollHeight,
+			doc.body ? doc.body.scrollHeight : 0,
+			doc.documentElement.offsetHeight,
+			doc.body ? doc.body.offsetHeight : 0
 		);
 		return Math.max(elementHeight, docHeight);
 	});
 
-	// Set viewport height based on container height + 500px
 	height = containerHeight + 500;
 
 	const finalWidth = config?.width || width;
 	const finalHeight = config?.height || height;
 
-	await page.setViewportSize({
+	await setViewportSizeViaCdp(page, {
 		width: 1600,
 		height: finalHeight,
 	});
 
-	// Set iframe width to the final width
-	await iframeBody.evaluate((el, width) => {
-		el.style.width = width + 'px';
-	}, finalWidth);
+	await evaluateInEditorCanvas(page, (doc, win, canvasWidth) => {
+		if (doc.body) {
+			doc.body.style.width = canvasWidth + 'px';
+		}
 
-	// Set editor container padding to 20px 0
-	await editorContainer.evaluate((el, width) => {
-		el.style.boxSizing = 'border-box';
-	}, finalWidth);
+		const el = doc.querySelector('.is-root-container');
+		if (el) {
+			el.style.boxSizing = 'border-box';
+		}
 
-	// Add style to iframe to ensure design is sync and spaces are static
-	await iframeBody.evaluate(() => {
-		const style = document.createElement('style');
-		style.innerHTML = `
+		const style = doc.createElement('style');
+		style.textContent = `
 			.is-root-container.has-global-padding {
 				font-size: 18px !important;
 				line-height: 0;
@@ -1421,14 +1416,14 @@ async function setEditorViewportForScreenshot(
 			.is-root-container.has-global-padding > * {
 				line-height: normal !important;
 			}
-			
+
 			:root :where(.is-layout-constrained) > * {
 				margin-block-start: 20px;
 				margin-block-end: 0;
 			}
 		`;
-		document.head.appendChild(style);
-	});
+		doc.head.appendChild(style);
+	}, finalWidth);
 
 	// Close settings panel when it is open. Do not wait on a stuck canvas
 	// navigation (WP e2e action timeout is 0).
@@ -1490,7 +1485,7 @@ async function setFrontendViewportForScreenshot(
 	const finalWidth = config?.width || width;
 	const finalHeight = config?.height || height;
 
-	await page.setViewportSize({
+	await setViewportSizeViaCdp(page, {
 		width: finalWidth,
 		height: finalHeight,
 	});
