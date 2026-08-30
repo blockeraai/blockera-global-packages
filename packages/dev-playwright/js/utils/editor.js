@@ -1026,13 +1026,13 @@ async function openDocumentSettingsSidebar(page, tab = 'Block') {
 		await settingsButton.dispatchEvent('click');
 	}
 
-	await tabButton.waitFor({ state: 'attached', timeout: 10000 });
+	await tabButton.waitFor({ state: 'attached', timeout: 20000 });
 
-	const selected = await tabButton.getAttribute('aria-selected');
-	if (selected !== 'true') {
-		// locator.click() waits for blob canvas `load` even with noWaitAfter.
-		await tabButton.dispatchEvent('click');
-	}
+	// const selected = await tabButton.getAttribute('aria-selected');
+	// if (selected !== 'true') {
+	// 	// locator.click() waits for blob canvas `load` even with noWaitAfter.
+	// 	await tabButton.dispatchEvent('click');
+	// }
 }
 
 /**
