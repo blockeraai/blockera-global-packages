@@ -49,8 +49,7 @@ packages/autoloader-coordinator/
 │   ├── CoordinatorComposerInstallTest.php
 │   ├── Unit/CoordinatorTest.php
 │   ├── Integration/CoordinatorIntegrationTest.php
-│   └── fixtures/                           # wp-env version-resolution scenarios
-└── blockera-folder-sync.json
+│   └── fixtures/                           # wp-env version-resolution 
 ```
 
 Composer autoload:
