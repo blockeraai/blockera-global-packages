@@ -17,42 +17,6 @@ function escapeCSS(str) {
 }
 
 /**
- * Abort in-flight subresources in editor frames so `load` can finish.
- *
- * Gutenberg’s canvas is a blob: HTML document. Playwright (and the WP e2e
- * `page` fixture teardown `localStorage.clear()`) wait for every frame’s
- * `load`. Comment avatars/fonts can leave that event pending until timeout.
- *
- * @param {import('@playwright/test').Page} page - Playwright page object.
- * @return {Promise<void>}
- */
-async function stopPendingFrameLoads(page) {
-	if (!page || page.isClosed()) {
-		return;
-	}
-
-	// Call stop() from the parent document. `frame.evaluate()` waits for the
-	// child frame's `load` first, so canvas `window.stop()` never runs when
-	// that load is stuck (blob: images). Playwright then waits on the next
-	// locator until the test timeout (WP e2e sets action timeout to 0).
-	await Promise.race([
-		page
-			.evaluate(() => {
-				window.stop();
-				for (const iframe of document.querySelectorAll('iframe')) {
-					try {
-						iframe.contentWindow?.stop();
-					} catch {
-						// Cross-origin canvas.
-					}
-				}
-			})
-			.catch(() => undefined),
-		new Promise((resolve) => setTimeout(resolve, 2000)),
-	]);
-}
-
-/**
  * Get iframe body element from editor canvas.
  *
  * @param {import('@playwright/test').Page} page - Playwright page object.
@@ -592,7 +556,6 @@ async function appendBlocks(page, blocksCode) {
 	});
 
 	const textEditor = page.locator('.editor-post-text-editor');
-	await textEditor.waitFor({ state: 'visible', timeout: 30000 });
 	await textEditor.fill(blocksCode);
 	await textEditor.press('Space');
 
@@ -610,7 +573,7 @@ async function appendBlocks(page, blocksCode) {
 		.locator('iframe[name="editor-canvas"]')
 		.waitFor({ state: 'visible', timeout: 30000 });
 
-	await stopPendingFrameLoads(page);
+	await openDocumentSettingsSidebar(page, 'Block');
 }
 
 /**
@@ -1232,7 +1195,6 @@ async function deleteRepeaterItem(page, { container, itemId, label }) {
 module.exports = {
 	deleteRepeaterItem,
 	getIframeBody,
-	stopPendingFrameLoads,
 	getWindowProperty,
 	getWPDataObject,
 	getBlockType,
