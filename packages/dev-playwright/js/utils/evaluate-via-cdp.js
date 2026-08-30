@@ -53,11 +53,45 @@ async function evaluateViaCdp(page, pageFunction, arg, timeout = 5000) {
 	}
 }
 
+const DEVICE_METRICS_SESSION = '_blockeraDeviceMetricsCdp';
+
+/**
+ * Device-metrics overrides are bound to the CDP session that set them.
+ * Detaching that session restores Playwright’s default viewport (1280×900)
+ * and editor screenshots miss the goldens by a few percent of pixels.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @return {Promise<import('playwright-core').CDPSession>}
+ */
+async function getDeviceMetricsCdpSession(page) {
+	if (page[DEVICE_METRICS_SESSION]) {
+		return page[DEVICE_METRICS_SESSION];
+	}
+
+	const client = await page.context().newCDPSession(page);
+	page[DEVICE_METRICS_SESSION] = client;
+	return client;
+}
+
+async function sendDeviceMetricsOverride(client, viewport) {
+	await client.send('Emulation.setDeviceMetricsOverride', {
+		width: viewport.width,
+		height: viewport.height,
+		screenWidth: viewport.width,
+		screenHeight: viewport.height,
+		deviceScaleFactor: 1,
+		mobile: false,
+	});
+}
+
 /**
  * Resize the window without Playwright `page.setViewportSize()`.
  *
  * `setViewportSize` waits for every frame’s `load`. Gutenberg remounts the
  * blob canvas on resize, and comment avatars can leave `load` pending forever.
+ *
+ * Keep the CDP session attached so the override survives until the frontend
+ * helper clears it.
  *
  * @param {import('@playwright/test').Page} page
  * @param {{ width: number, height: number }} viewport
@@ -69,16 +103,9 @@ async function setViewportSizeViaCdp(page, viewport, timeout = 3000) {
 		throw new Error('setViewportSizeViaCdp: page is closed');
 	}
 
-	const client = await page.context().newCDPSession(page);
-
-	try {
+	const apply = async (client) => {
 		await Promise.race([
-			client.send('Emulation.setDeviceMetricsOverride', {
-				width: viewport.width,
-				height: viewport.height,
-				deviceScaleFactor: 1,
-				mobile: false,
-			}),
+			sendDeviceMetricsOverride(client, viewport),
 			new Promise((_, reject) => {
 				setTimeout(() => {
 					reject(
@@ -89,8 +116,17 @@ async function setViewportSizeViaCdp(page, viewport, timeout = 3000) {
 				}, timeout);
 			}),
 		]);
-	} finally {
+	};
+
+	let client = await getDeviceMetricsCdpSession(page);
+
+	try {
+		await apply(client);
+	} catch {
 		await client.detach().catch(() => undefined);
+		page[DEVICE_METRICS_SESSION] = undefined;
+		client = await getDeviceMetricsCdpSession(page);
+		await apply(client);
 	}
 
 	// Screenshot helpers read this; do not call page.setViewportSize (hangs).
@@ -108,16 +144,17 @@ async function setViewportSizeViaCdp(page, viewport, timeout = 3000) {
  * @return {Promise<void>}
  */
 async function clearDeviceMetricsOverrideViaCdp(page) {
-	if (!page || page.isClosed()) {
+	const client = page[DEVICE_METRICS_SESSION];
+	page[DEVICE_METRICS_SESSION] = undefined;
+
+	if (!client) {
 		return;
 	}
-
-	const client = await page.context().newCDPSession(page);
 
 	try {
 		await client.send('Emulation.clearDeviceMetricsOverride');
 	} catch {
-		// Override was not set.
+		// Override was not set, or the page already navigated.
 	} finally {
 		await client.detach().catch(() => undefined);
 	}
