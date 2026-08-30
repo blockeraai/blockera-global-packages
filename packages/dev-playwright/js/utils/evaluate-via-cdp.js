@@ -100,4 +100,31 @@ async function setViewportSizeViaCdp(page, viewport, timeout = 3000) {
 	};
 }
 
-module.exports = { evaluateViaCdp, setViewportSizeViaCdp };
+/**
+ * Drop a CDP device-metrics override so Playwright `page.setViewportSize`
+ * owns the viewport again (frontend screenshots).
+ *
+ * @param {import('@playwright/test').Page} page
+ * @return {Promise<void>}
+ */
+async function clearDeviceMetricsOverrideViaCdp(page) {
+	if (!page || page.isClosed()) {
+		return;
+	}
+
+	const client = await page.context().newCDPSession(page);
+
+	try {
+		await client.send('Emulation.clearDeviceMetricsOverride');
+	} catch {
+		// Override was not set.
+	} finally {
+		await client.detach().catch(() => undefined);
+	}
+}
+
+module.exports = {
+	evaluateViaCdp,
+	setViewportSizeViaCdp,
+	clearDeviceMetricsOverrideViaCdp,
+};

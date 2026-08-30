@@ -4,9 +4,11 @@
  * WordPress `networkidle` is unreliable here: heartbeat, post-lock, and
  * autosave keep at least one request open. This helper tracks images, media,
  * fonts, stylesheets, XHR, and fetch, and ignores that background traffic.
+ *
+ * Do not await `document.fonts.ready` or `img.decode()` via Playwright
+ * `page.evaluate`: on the editor blob canvas that never settles, and the
+ * WordPress e2e timeout of 0 leaves that call pending forever.
  */
-
-const { evaluateViaCdp } = require('./evaluate-via-cdp');
 
 const TRACKED_RESOURCE_TYPES = new Set([
 	'image',
@@ -122,46 +124,7 @@ function remainingMs(startedAt, timeout) {
 }
 
 /**
- * Kick lazy images so they start loading. Do not await decode/fonts here:
- * `page.evaluate` uses the WP e2e timeout of 0, and `document.fonts.ready`
- * / `img.decode()` can leave that call pending forever on blob canvases.
- *
- * @param {import('@playwright/test').Page} page
- * @return {Promise<void>}
- */
-async function waitForDomMedia(page) {
-	await evaluateViaCdp(
-		page,
-		() => {
-			const docs = [document];
-			const canvas = document.querySelector(
-				'iframe[name="editor-canvas"]'
-			);
-
-			if (canvas && canvas.contentDocument) {
-				docs.push(canvas.contentDocument);
-			}
-
-			for (const doc of docs) {
-				const images = Array.from(doc.querySelectorAll('img'));
-
-				for (const img of images) {
-					if (img.getAttribute('loading') === 'lazy') {
-						img.loading = 'eager';
-					}
-				}
-			}
-		},
-		null,
-		2000
-	).catch(() => undefined);
-}
-
-/**
  * Wait until images/media/fonts and AJAX/fetch relevant to screenshots are done.
- *
- * Listeners are attached first so in-flight work that starts during the DOM
- * media wait is still counted toward network idle.
  *
  * @param {import('@playwright/test').Page} page
  * @param {{ timeout?: number, idleTime?: number }} [options]
@@ -188,12 +151,6 @@ async function waitForContentReady(page, options = {}) {
 	page.on('requestfailed', onSettled);
 
 	try {
-		const mediaBudget = remainingMs(startedAt, timeout);
-
-		if (mediaBudget > 0) {
-			await waitForDomMedia(page);
-		}
-
 		const idleBudget = remainingMs(startedAt, timeout);
 
 		if (idleBudget <= 0) {

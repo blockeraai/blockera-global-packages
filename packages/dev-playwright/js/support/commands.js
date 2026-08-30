@@ -9,7 +9,10 @@ const { test, expect } = require('@wordpress/e2e-test-utils-playwright');
  * Internal dependencies
  */
 const { evaluateInEditorCanvas } = require('../utils/editor');
-const { setViewportSizeViaCdp } = require('../utils/evaluate-via-cdp');
+const {
+	setViewportSizeViaCdp,
+	clearDeviceMetricsOverrideViaCdp,
+} = require('../utils/evaluate-via-cdp');
 const { loginToSite, goTo } = require('../utils/site-navigation');
 
 test.beforeEach(async ({ page }) => {
@@ -1485,7 +1488,8 @@ async function setFrontendViewportForScreenshot(
 	const finalWidth = config?.width || width;
 	const finalHeight = config?.height || height;
 
-	await setViewportSizeViaCdp(page, {
+	await clearDeviceMetricsOverrideViaCdp(page);
+	await page.setViewportSize({
 		width: finalWidth,
 		height: finalHeight,
 	});
