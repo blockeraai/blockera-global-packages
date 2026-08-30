@@ -73,14 +73,42 @@ async function getDeviceMetricsCdpSession(page) {
 	return client;
 }
 
+/**
+ * Match Playwright `page.setViewportSize()` layout (see crPage `_updateViewport`):
+ * resize the embedder window, then set device metrics including orientation.
+ * Skipping `Browser.setWindowBounds` leaves the canvas on integer bounds so
+ * element screenshots come out 1px shorter than goldens (560 vs 559).
+ *
+ * @param {import('playwright-core').CDPSession} client
+ * @param {{ width: number, height: number }} viewport
+ * @return {Promise<void>}
+ */
 async function sendDeviceMetricsOverride(client, viewport) {
+	try {
+		const { windowId } = await client.send('Browser.getWindowForTarget');
+
+		if (windowId !== undefined && windowId !== null) {
+			await client.send('Browser.setWindowBounds', {
+				windowId,
+				bounds: {
+					width: viewport.width,
+					height: viewport.height,
+				},
+			});
+		}
+	} catch {
+		// Browser domain unavailable; metrics override below still applies.
+	}
+
 	await client.send('Emulation.setDeviceMetricsOverride', {
+		mobile: false,
 		width: viewport.width,
 		height: viewport.height,
 		screenWidth: viewport.width,
 		screenHeight: viewport.height,
 		deviceScaleFactor: 1,
-		mobile: false,
+		screenOrientation: { angle: 0, type: 'landscapePrimary' },
+		dontSetVisibleSize: false,
 	});
 }
 
