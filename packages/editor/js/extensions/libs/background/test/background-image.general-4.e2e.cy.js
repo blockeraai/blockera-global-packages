@@ -8,6 +8,8 @@ import {
 	activateMuPlugin,
 	deactivateMuPlugin,
 	waitForThemeBaseDefaultGradientPreset,
+	aliasFrontEndBlockSelector,
+	getFrontEndBlock,
 } from '@blockera/dev-cypress/js/helpers';
 
 const DEFAULT_GRADIENTS_MU =
@@ -83,9 +85,10 @@ describe('Background Image → Functionality', () => {
 				.and('match', /bg-extension-test/);
 
 			//assert frontend
+			aliasFrontEndBlockSelector();
 			savePage();
 			redirectToFrontPage();
-			cy.get('.blockera-block')
+			getFrontEndBlock()
 				.should('have.css', 'background-image')
 				.and('match', /bg-extension-test/);
 		});
@@ -114,9 +117,10 @@ describe('Background Image → Functionality', () => {
 			);
 
 			//assert frontend
+			aliasFrontEndBlockSelector();
 			savePage();
 			redirectToFrontPage();
-			cy.get('.blockera-block').should(
+			getFrontEndBlock().should(
 				'have.css',
 				'background-size',
 				'contain'
@@ -156,9 +160,10 @@ describe('Background Image → Functionality', () => {
 			);
 
 			//assert frontend
+			aliasFrontEndBlockSelector();
 			savePage();
 			redirectToFrontPage();
-			cy.get('.blockera-block').should(
+			getFrontEndBlock().should(
 				'have.css',
 				'background-size',
 				'auto'
@@ -226,9 +231,10 @@ describe('Background Image → Functionality', () => {
 				.and('have.css', 'background-attachment', 'fixed');
 
 			// assert frontend
+			aliasFrontEndBlockSelector();
 			savePage();
 			redirectToFrontPage();
-			cy.get('.blockera-block')
+			getFrontEndBlock()
 				.should('have.css', 'background-position', '20% 20%')
 				.and('have.css', 'background-repeat', 'no-repeat')
 				.and('have.css', 'background-attachment', 'fixed');
@@ -341,9 +347,10 @@ describe('Background Image → Functionality', () => {
 			});
 
 			// assert frontend
+			aliasFrontEndBlockSelector();
 			savePage();
 			redirectToFrontPage();
-			cy.get('.blockera-block').should(($block) => {
+			getFrontEndBlock().should(($block) => {
 				// angle + also gradient
 				expect($block.css('background-image')).to.match(/7deg,/i);
 
@@ -402,9 +409,10 @@ describe('Background Image → Functionality', () => {
 			});
 
 			// assert frontend
+			aliasFrontEndBlockSelector();
 			savePage();
 			redirectToFrontPage();
-			cy.get('.blockera-block').should(($block) => {
+			getFrontEndBlock().should(($block) => {
 				expect($block.css('background-image')).to.be.equal(
 					'linear-gradient(135deg, rgb(6, 147, 227) 0%, rgb(155, 81, 224) 100%)'
 				);
@@ -544,9 +552,10 @@ describe('Background Image → Functionality', () => {
 			});
 
 			// assert frontend
+			aliasFrontEndBlockSelector();
 			savePage();
 			redirectToFrontPage();
-			cy.get('.blockera-block').should(($block) => {
+			getFrontEndBlock().should(($block) => {
 				// position + also gradient
 				expect($block.css('background-image')).to.match(/at 20% 20%,/i);
 
@@ -671,9 +680,10 @@ describe('Background Image → Functionality', () => {
 			});
 
 			// assert frontend
+			aliasFrontEndBlockSelector();
 			savePage();
 			redirectToFrontPage();
-			cy.get('.blockera-block').then(($block) => {
+			getFrontEndBlock().then(($block) => {
 				// colors + gradient
 				colorsInUi.forEach((colorInUi) => {
 					const rgbColorInUi = hexToRGB(colorInUi.color);
@@ -782,9 +792,10 @@ describe('Background Image → Functionality', () => {
 				assertNoneLayeredBackgroundCss
 			);
 
+			aliasFrontEndBlockSelector();
 			savePage();
 			redirectToFrontPage();
-			cy.get('.blockera-block').should(assertNoneLayeredBackgroundCss);
+			getFrontEndBlock().should(assertNoneLayeredBackgroundCss);
 		});
 
 		it('should clear layered background when switching from image to none', () => {
@@ -837,9 +848,10 @@ describe('Background Image → Functionality', () => {
 				);
 			});
 
+			aliasFrontEndBlockSelector();
 			savePage();
 			redirectToFrontPage();
-			cy.get('.blockera-block').should(($block) => {
+			getFrontEndBlock().should(($block) => {
 				expect($block.css('background-image')).to.be.equal('none');
 				expect($block.css('background-image')).to.not.match(
 					/bg-extension-test/

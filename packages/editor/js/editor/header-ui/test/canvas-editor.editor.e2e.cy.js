@@ -263,9 +263,9 @@ describe('Canvas editor testing', () => {
 		createPost();
 
 		appendBlocks(
-			'<!-- wp:paragraph -->\n' +
-				'<p>test</p>\n' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph -->
+<p>test</p>
+<!-- /wp:paragraph -->`
 		);
 
 		cy.getBlock('core/paragraph').click();

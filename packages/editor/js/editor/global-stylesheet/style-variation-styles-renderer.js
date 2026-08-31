@@ -12,6 +12,7 @@ import { useMemo, memo } from '@wordpress/element';
 import {
 	isDefaultStylesSettings,
 	generateStableBlockeraPropsId,
+	getBlockeraBlockStatesValue,
 	isVariationDisabled,
 } from './utils';
 import { omitWithPattern, mergeObject, isEquals } from '@blockera/utils';
@@ -71,7 +72,9 @@ export const StyleVariationStylesRenderer: ComponentType<Object> = memo(
 		const sanitizedBlockGlobalStyles = useMemo(() => {
 			const mergedBlockStates = mergeObject(
 				defaultBlockStates,
-				validBlockGlobalStyles?.blockeraBlockStates?.value || {}
+				getBlockeraBlockStatesValue(
+					validBlockGlobalStyles?.blockeraBlockStates
+				)
 			);
 
 			return sanitizeBlockAttributes({

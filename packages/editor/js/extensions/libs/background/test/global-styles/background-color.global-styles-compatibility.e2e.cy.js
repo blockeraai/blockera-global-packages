@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const FIXTURE_ROOT =
@@ -55,6 +57,7 @@ describe('Background Color → WP Compatibility (Global Styles)', () => {
 		}
 
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		openParagraphGlobalStyles();
 	});
 
@@ -103,7 +106,7 @@ describe('Background Color → WP Compatibility (Global Styles)', () => {
 
 			cy.clearColorControlValue('BG Color');
 
-			assertBlockData((data) => {
+			assertClearedGlobalStylesStayCleared((data) => {
 				const root = getParagraphGlobalStyles(data);
 				const styleColorBackground = root?.color?.background;
 				const blockeraBackgroundColor =
@@ -173,7 +176,7 @@ describe('Background Color → WP Compatibility (Global Styles)', () => {
 				cy.removeValueAddon();
 			});
 
-			assertBlockData((data) => {
+			assertClearedGlobalStylesStayCleared((data) => {
 				const root = getParagraphGlobalStyles(data);
 				const backgroundColor = root?.color?.background;
 				const blockeraBackgroundColor =
@@ -230,7 +233,7 @@ describe('Background Color → WP Compatibility (Global Styles)', () => {
 				cy.removeValueAddon();
 			});
 
-			assertBlockData((data) => {
+			assertClearedGlobalStylesStayCleared((data) => {
 				const root = getParagraphGlobalStyles(data);
 				const backgroundColor = root?.color?.background;
 				const blockeraBackgroundColor =

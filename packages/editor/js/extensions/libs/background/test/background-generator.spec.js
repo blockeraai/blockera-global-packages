@@ -118,6 +118,33 @@ describe('backgroundFromWPCompatibility', () => {
 		});
 		expect(result.blockeraBackground.value['none-0']).toBeUndefined();
 	});
+
+	test('null WP backgroundImage still hydrates color.gradient', () => {
+		const gradient =
+			'linear-gradient(135deg,rgb(135,254,56) 1%,rgb(255,147,147) 97%)';
+		const result = backgroundFromWPCompatibility({
+			attributes: {
+				blockeraBackground: { value: {} },
+				color: { gradient },
+				background: {
+					backgroundImage: null,
+					backgroundSize: null,
+					backgroundPosition: null,
+					backgroundRepeat: null,
+				},
+			},
+			insideBlockInspector: true,
+		});
+
+		expect(
+			result.blockeraBackground.value['linear-gradient-0']
+		).toMatchObject({
+			type: 'linear-gradient',
+			'linear-gradient': gradient,
+			'linear-gradient-angel': '135',
+		});
+		expect(result.background.backgroundImage).toBe(null);
+	});
 });
 
 describe('elementNormalBackgroundFromWPCompatibility', () => {

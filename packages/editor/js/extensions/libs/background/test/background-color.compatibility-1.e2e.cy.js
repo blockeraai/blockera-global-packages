@@ -16,9 +16,9 @@ describe('Background Color → WP Compatibility', () => {
 	describe('Paragraph Block', () => {
 		it('Simple Value', () => {
 			appendBlocks(
-				'<!-- wp:paragraph {"style":{"color":{"background":"#ffdfdf"}}} -->\n' +
-					'<p class="has-background" style="background-color:#ffdfdf">Test Paragraph</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"style":{"color":{"background":"#ffdfdf"}}} -->
+<p class="has-background" style="background-color:#ffdfdf">Test Paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			// Select target block
@@ -77,9 +77,9 @@ describe('Background Color → WP Compatibility', () => {
 
 		it('Variable Value', () => {
 			appendBlocks(
-				'<!-- wp:paragraph {"backgroundColor":"accent-3"} -->\n' +
-					'<p class="has-accent-3-background-color has-background">Test paragraph</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"backgroundColor":"accent-3"} -->
+<p class="has-accent-3-background-color has-background">Test paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			// Select target block

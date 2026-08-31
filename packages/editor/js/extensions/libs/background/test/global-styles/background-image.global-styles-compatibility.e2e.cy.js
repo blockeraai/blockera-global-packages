@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const FIXTURE_ROOT =
@@ -75,6 +77,7 @@ describe('Background Image & Gradient → WP Compatibility (Global Styles)', () 
 		}
 
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		openGlobalStylesBase();
 	});
 
@@ -148,11 +151,14 @@ describe('Background Image & Gradient → WP Compatibility (Global Styles)', () 
 					});
 				});
 
-				assertBlockData((data) => {
-					const gradient =
-						getParagraphGlobalStyles(data)?.color?.gradient;
+				assertClearedGlobalStylesStayCleared((data) => {
+					expect(
+						getParagraphGlobalStyles(data)?.color?.gradient
+					).to.equal(null);
+				});
 
-					expect(undefined).to.equal(gradient);
+				cy.get('@bgContainer').within(() => {
+					cy.get('[data-id="linear-gradient-0"]').should('not.exist');
 				});
 			});
 
@@ -225,11 +231,14 @@ describe('Background Image & Gradient → WP Compatibility (Global Styles)', () 
 					});
 				});
 
-				assertBlockData((data) => {
-					const gradient =
-						getParagraphGlobalStyles(data)?.color?.gradient;
+				assertClearedGlobalStylesStayCleared((data) => {
+					expect(
+						getParagraphGlobalStyles(data)?.color?.gradient
+					).to.equal(null);
+				});
 
-					expect(undefined).to.equal(gradient);
+				cy.get('@bgContainer').within(() => {
+					cy.get('[data-id="linear-gradient-0"]').should('not.exist');
 				});
 			});
 
@@ -279,6 +288,24 @@ describe('Background Image & Gradient → WP Compatibility (Global Styles)', () 
 					'.components-popover.blockera-control-background-popover'
 				).within(() => {
 					cy.get('[data-test="value-addon-deleted"]').should('exist');
+				});
+
+				cy.get('body').type('{esc}', { force: true });
+
+				cy.get('@bgContainer').within(() => {
+					cy.getByAriaLabel('Delete linear gradient 0').click({
+						force: true,
+					});
+				});
+
+				assertClearedGlobalStylesStayCleared((data) => {
+					expect(
+						getParagraphGlobalStyles(data)?.color?.gradient
+					).to.equal(null);
+				});
+
+				cy.get('@bgContainer').within(() => {
+					cy.get('[data-id="linear-gradient-0"]').should('not.exist');
 				});
 			});
 		});
@@ -337,11 +364,14 @@ describe('Background Image & Gradient → WP Compatibility (Global Styles)', () 
 					});
 				});
 
-				assertBlockData((data) => {
-					const gradient =
-						getParagraphGlobalStyles(data)?.color?.gradient;
+				assertClearedGlobalStylesStayCleared((data) => {
+					expect(
+						getParagraphGlobalStyles(data)?.color?.gradient
+					).to.equal(null);
+				});
 
-					expect(undefined).to.equal(gradient);
+				cy.get('@bgContainer').within(() => {
+					cy.get('[data-id="radial-gradient-0"]').should('not.exist');
 				});
 			});
 		});
@@ -404,13 +434,19 @@ describe('Background Image & Gradient → WP Compatibility (Global Styles)', () 
 					cy.getByAriaLabel('Delete image 0').click({ force: true });
 				});
 
-				assertBlockData((data) => {
+				const assertClearedImage = (data) => {
 					const root = getGroupGlobalStyles(data);
 					const backgroundImage = root?.background?.backgroundImage;
 					const blockeraBackground = root?.blockeraBackground;
 
-					expect(undefined).to.equal(backgroundImage);
-					expect(undefined).to.equal(blockeraBackground);
+					expect(backgroundImage).to.equal(null);
+					expect(blockeraBackground).to.equal(undefined);
+				};
+
+				assertClearedGlobalStylesStayCleared(assertClearedImage);
+
+				cy.get('@bgContainer').within(() => {
+					cy.get('[data-id="image-0"]').should('not.exist');
 				});
 			});
 		});

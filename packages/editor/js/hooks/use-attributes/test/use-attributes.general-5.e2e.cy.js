@@ -319,9 +319,10 @@ describe('useAttributes Hook Testing ...', () => {
 					getSelectedBlock(data, 'blockeraBackgroundColor')
 				);
 
-				expect('').to.be.equal(
-					getSelectedBlock(data, 'blockeraBlockStates').normal
-						.breakpoints.tablet.attributes.blockeraBackgroundColor
+				expect(undefined).to.be.equal(
+					getSelectedBlock(data, 'blockeraBlockStates')?.normal
+						?.breakpoints?.tablet?.attributes
+						?.blockeraBackgroundColor
 				);
 			});
 		});

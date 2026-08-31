@@ -64,3 +64,27 @@ iframe[name="editor-canvas"].is-zoomed-out {
 	transform-origin: top center !important;
 	border: 1px solid #c3c3c3 !important;
 }
+
+/*
+ * WP 7.1 / Gutenberg sets overflow:hidden on `.editor-visual-editor`
+ * (source-codes/block-editor/packages/editor/src/components/visual-editor/style.scss)
+ * so the scaled iframe is clipped. Restore a scrollport only while Blockera
+ * zoom is applied. `:has()` is more specific than core's single-class rule.
+ *
+ * Core also uses overflow:auto on `.interface-interface-skeleton__content`
+ * and `flex: 1 0 auto` on `.editor-visual-editor` (editor-interface/style.scss).
+ * Without min-height:0 / flex-shrink, the tall iframe expands that parent and
+ * both layers grow scrollbars. Contain the parent; only the visual editor scrolls.
+ */
+.editor-visual-editor:has(iframe[name="editor-canvas"].is-zoomed-out),
+.edit-post-visual-editor:has(iframe[name="editor-canvas"].is-zoomed-out) {
+	overflow: auto;
+	min-height: 0;
+	flex-shrink: 1;
+}
+
+.interface-interface-skeleton__content:has(
+	iframe[name="editor-canvas"].is-zoomed-out
+) {
+	overflow: hidden;
+}

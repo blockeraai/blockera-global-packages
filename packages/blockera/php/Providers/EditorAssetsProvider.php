@@ -37,7 +37,7 @@ class EditorAssetsProvider extends \Blockera\Bootstrap\AssetsProvider {
 
 		$version = blockera_core_config( 'app.version' );
 		$handle  = 'blockera-editor-canvas';
-		$src     = blockera_core_config( 'app.root_url' ) . 'packages/editor/js/editor/editor-canvas-style.css';
+		$src     = blockera_core_config( 'app.vendor_url' ) . 'blockera/editor/js/editor/editor-canvas-style.css';
 
 		wp_register_style( $handle, $src, [], $version );
 		wp_enqueue_style( $handle );

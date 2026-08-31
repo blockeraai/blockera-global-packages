@@ -71,6 +71,25 @@ export function assertBlockData(callback, { timeout = 15000 } = {}) {
 }
 
 /**
+ * After a Global Styles clear/delete, merged theme.json can hydrate the
+ * value back (~5s). Assert the cleared payload, wait past that window,
+ * then assert again.
+ *
+ * @param {(data: Object) => void} callback Same as `assertBlockData`.
+ * @param {{ settleMs?: number, revertWindowMs?: number }} [options]
+ */
+export function assertClearedGlobalStylesStayCleared(
+	callback,
+	{ settleMs = 1000, revertWindowMs = 10000 } = {}
+) {
+	cy.wait(settleMs);
+	assertBlockData(callback);
+	cy.wait(revertWindowMs);
+
+	return assertBlockData(callback);
+}
+
+/**
  * Get block type registered object.
  *
  * @param {Object} data the WordPress data.
@@ -100,6 +119,35 @@ export function getSelectedBlock(data, field = '') {
 	}
 
 	return selectedBlock.attributes[field];
+}
+
+/**
+ * Alias the selected block's unique `.blockera-block-{id}` selector.
+ *
+ * Theme/template markup can include extra `.blockera-block` nodes. Call this
+ * in the editor before `savePage()` / `redirectToFrontPage()`, then query with
+ * `getFrontEndBlock()`.
+ *
+ * @param {string} [alias='frontEndBlock'] Cypress alias for the selector string.
+ * @return {Cypress.Chainable} Chainable that stores the unique selector alias.
+ */
+export function aliasFrontEndBlockSelector(alias = 'frontEndBlock') {
+	return getWPDataObject().then((data) => {
+		const blockeraId = getSelectedBlock(data, 'blockeraId');
+
+		expect(blockeraId).to.match(/^[0-9a-z]{6}$/);
+		cy.wrap(`.blockera-block-${blockeraId}`).as(alias);
+	});
+}
+
+/**
+ * Get the frontend element previously aliased by `aliasFrontEndBlockSelector()`.
+ *
+ * @param {string} [alias='frontEndBlock'] Cypress alias for the selector string.
+ * @return {Cypress.Chainable} The unique `.blockera-block-{id}` element.
+ */
+export function getFrontEndBlock(alias = 'frontEndBlock') {
+	return cy.get(`@${alias}`).then((selector) => cy.get(selector));
 }
 
 /**
@@ -820,31 +868,24 @@ export const reSelectBlock = (blockType = 'core/paragraph') => {
  * Close welcome guide if it exists
  */
 export function closeWelcomeGuide() {
-	// Return inner cy chains from `.then` so Cypress runs clicks *before* the overlay
-	// assertion below (nested cy.* without return can enqueue after the sibling).
-	cy.get('body').then(($body) => {
-		const hasClose =
-			$body.find(
-				'.components-modal__screen-overlay button[aria-label="Close"]'
-			).length > 0;
-		const hasFinish =
-			$body.find(
-				'.components-modal__screen-overlay button.components-guide__finish-button'
-			).length > 0;
+	// Use `cy.document()` — not `cy.get('body')`. A failed `.within()` on the
+	// canvas iframe body scopes later `cy.get()` to that iframe, so `body`
+	// never matches and afterEach hooks time out.
+	cy.document().then((doc) => {
+		const $body = Cypress.$(doc.body);
+		const $close = $body.find(
+			'.components-modal__screen-overlay button[aria-label="Close"]'
+		);
+		const $finish = $body.find(
+			'.components-modal__screen-overlay button.components-guide__finish-button'
+		);
 
-		if (hasClose) {
-			return cy
-				.get('.components-modal__screen-overlay [aria-label="Close"]')
-				.last()
-				.click();
+		if ($close.length) {
+			return cy.wrap($close.last()).click();
 		}
 
-		if (hasFinish) {
-			return cy
-				.get(
-					'.components-modal__screen-overlay button.components-guide__finish-button'
-				)
-				.click();
+		if ($finish.length) {
+			return cy.wrap($finish).click();
 		}
 	});
 
@@ -852,7 +893,8 @@ export function closeWelcomeGuide() {
 	// Do not use `invoke('remove', { force: true })` — Cypress passes the second
 	// argument to jQuery `.remove(selector)`, so the overlay may never detach.
 	// Avoid native `el.remove()` here: that can desync React on post-new.
-	cy.get('body', { timeout: 20000 }).should(($b) => {
+	cy.document({ timeout: 20000 }).should((doc) => {
+		const $b = Cypress.$(doc.body);
 		expect($b.find('.components-modal__screen-overlay')).to.have.length(0);
 		// Overlay can unmount before modal chrome; :visible avoids counting hidden shells.
 		expect(

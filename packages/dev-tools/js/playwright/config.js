@@ -39,6 +39,20 @@ function createPlaywrightConfig(options = {}) {
 		...baseConfig,
 		// Flaky = failed a run then passed on retry; must not fail CI unless opted in.
 		failOnFlakyTests: false,
+		// Baselines live next to the spec as `screenshots/{arg}-actual.png`
+		// (not `__snapshots__/{arg}-{projectName}`). That matches Playwright
+		// failure artifacts (`*-actual.png`) so CI downloads can be copied
+		// into `screenshots/` without renaming `-actual` → `-chromium`.
+		snapshotPathTemplate:
+			'{testDir}/{testFileDir}/screenshots/{arg}-actual{ext}',
+		expect: {
+			...baseConfig.expect,
+			toHaveScreenshot: {
+				...(baseConfig.expect?.toHaveScreenshot || {}),
+				pathTemplate:
+					'{testDir}/{testFileDir}/screenshots/{arg}-actual{ext}',
+			},
+		},
 		// Snapshot update mode:
 		// - `all` / UPDATE_SNAPSHOTS=1: rewrite baselines (intentional refresh only).
 		// - `missing` (CI + local default): compare against committed baselines; on mismatch

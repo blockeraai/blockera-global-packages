@@ -17,9 +17,9 @@ describe('Aspect Ratio → WP Compatibility', () => {
 	describe('core/image Block', () => {
 		it('Simple Value', () => {
 			appendBlocks(
-				'<!-- wp:image {"id":60,"aspectRatio":"4/3","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->\n' +
-					'<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="aspect-ratio:4/3;object-fit:cover"/></figure>\n' +
-					'<!-- /wp:image -->'
+				`<!-- wp:image {"id":60,"aspectRatio":"4/3","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="aspect-ratio:4/3;object-fit:cover"/></figure>
+<!-- /wp:image -->`
 			);
 
 			// Select target block
@@ -99,9 +99,9 @@ describe('Aspect Ratio → WP Compatibility', () => {
 
 		it('Use custom aspect ratio - WP6.6 compatibility', () => {
 			appendBlocks(
-				'<!-- wp:image {"id":60,"aspectRatio":"4/3","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->\n' +
-					'<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="aspect-ratio:4/3;object-fit:cover"/></figure>\n' +
-					'<!-- /wp:image -->'
+				`<!-- wp:image {"id":60,"aspectRatio":"4/3","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60" style="aspect-ratio:4/3;object-fit:cover"/></figure>
+<!-- /wp:image -->`
 			);
 
 			// Select target block

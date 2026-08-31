@@ -6,10 +6,12 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
 	setBoxSpacingSide,
 	clearBoxSpacingSide,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const MU_PLUGIN_PATH =
@@ -35,6 +37,7 @@ describe('Spacing → WP Compatibility (Global Styles)', () => {
 			pluginName: MU_PLUGIN_TARGET,
 		});
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		openParagraphGlobalStyles();
 	});
 
@@ -91,7 +94,7 @@ describe('Spacing → WP Compatibility (Global Styles)', () => {
 
 				clearBoxSpacingSide('padding-top');
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getParagraphGlobalStyles(data);
 					const spacingPaddingTop = root?.spacing?.padding?.top;
 					const blockeraSpacing = root?.blockeraSpacing?.value;

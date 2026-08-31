@@ -142,12 +142,20 @@ const _sanitizeBlockAttributes = (attributes: Object): Object => {
 	for (const name in attributes) {
 		const attributeValue = attributes[name];
 
+		if (attributeValue === undefined) {
+			continue;
+		}
+
 		// Exception for attribute value is object with includes "value" property.
 		if (
 			'object' === typeof attributeValue &&
 			null !== attributeValue &&
 			attributeValue.hasOwnProperty('value')
 		) {
+			if (attributeValue.value === undefined) {
+				continue;
+			}
+
 			newAttributes[name] = attributeValue.value;
 
 			continue;

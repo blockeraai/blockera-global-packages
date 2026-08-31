@@ -3,6 +3,7 @@
  * External dependencies
  */
 import type { MixedElement } from 'react';
+import { useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -21,6 +22,7 @@ import {
  */
 import { generateExtensionId } from '../../utils';
 import type { TBlockProps, THandleOnChangeAttributes } from '../../types';
+import { normalizeTransformOriginForControl } from '../transform-origin-value';
 
 export function ChildPerspective({
 	block,
@@ -54,6 +56,18 @@ export function ChildPerspective({
 		mode: 'advanced',
 		path: attribute,
 	};
+
+	const originValue = useMemo(
+		() => normalizeTransformOriginForControl(transformChildOrigin),
+		[transformChildOrigin]
+	);
+	const originDefault = useMemo(
+		() =>
+			normalizeTransformOriginForControl(
+				transformChildOriginDefaultValue
+			),
+		[transformChildOriginDefaultValue]
+	);
 
 	return (
 		<>
@@ -106,7 +120,7 @@ export function ChildPerspective({
 				<ControlContextProvider
 					value={{
 						name: generateExtensionId(block, 'child-origin'),
-						value: transformChildOrigin,
+						value: originValue,
 						attribute: 'blockeraTransformChildOrigin',
 						blockName: block.blockName,
 					}}
@@ -123,7 +137,7 @@ export function ChildPerspective({
 						)}
 						alignmentMatrixLabel={__('Child Origin', 'blockera')}
 						size="small"
-						defaultValue={transformChildOriginDefaultValue}
+						defaultValue={originDefault}
 						onChange={({ top, left }, ref) => {
 							handleOnChangeAttributes(
 								'blockeraTransformChildOrigin',

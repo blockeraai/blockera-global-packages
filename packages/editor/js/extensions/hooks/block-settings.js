@@ -112,19 +112,77 @@ type extraArguments = {
 
 const registeredBlockTypes = new Map<string, Object>();
 
+const BLOCKERA_ATTRIBUTE_PREFIX = 'blockera';
+
+/**
+ * Copy Blockera attribute definitions onto a Gutenberg deprecation.
+ *
+ * Deprecation `attributes` replace the live schema. Core textAlign (and
+ * similar) migrations stay eligible, but parse must still keep `blockera*`.
+ *
+ * @param {Object} settings Merged deprecation settings from Gutenberg.
+ * @param {string|Object} name Block type name.
+ * @return {Object} Settings with Blockera attribute schemas merged in.
+ */
+function withBlockeraAttributesOnDeprecation(
+	settings: Object,
+	name: string | Object
+): Object {
+	const liveAttributes = registeredBlockTypes.get((name: any))?.attributes;
+
+	if (!liveAttributes?.blockeraId && !liveAttributes?.blockeraPropsId) {
+		return settings;
+	}
+
+	if (
+		settings.attributes?.blockeraId ||
+		settings.attributes?.blockeraPropsId
+	) {
+		return settings;
+	}
+
+	const nextAttributes = { ...(settings.attributes || {}) };
+
+	for (const key in liveAttributes) {
+		if (
+			key.startsWith(BLOCKERA_ATTRIBUTE_PREFIX) &&
+			nextAttributes[key] === undefined
+		) {
+			nextAttributes[key] = liveAttributes[key];
+		}
+	}
+
+	return {
+		...settings,
+		attributes: nextAttributes,
+	};
+}
+
 /**
  * Filters registered WordPress block type settings, extending block settings with settings and block name.
  *
  * @param {Object} settings Original block settings.
  * @param {string} name block id or name.
  * @param {extraArguments} args the extra arguments includes unsupportedBlocks, notAllowedUsers, and currentUser properties.
+ * @param {mixed} deprecation Gutenberg 3rd filter arg: `null` for the live block type, deprecation object for each deprecated version.
  * @return {Object} Filtered block settings.
  */
 export default function withBlockSettings(
 	settings: Object,
 	name: Object,
-	args: extraArguments
+	args: extraArguments,
+	deprecation?: mixed
 ): Object {
+	// Gutenberg re-runs this filter for every deprecation. Never return the
+	// cached live block type for those calls — that replaces old save/migrate
+	// and makes parse of large legacy documents extremely slow.
+	// Still copy `blockera*` attribute schemas onto the deprecation: core
+	// entries (e.g. post-author-name textAlign v1) replace `attributes` and
+	// would otherwise drop Blockera data during `isEligible` migrate.
+	if (deprecation != null) {
+		return withBlockeraAttributesOnDeprecation(settings, name);
+	}
+
 	if (registeredBlockTypes.has(name)) {
 		return registeredBlockTypes.get(name);
 	}
@@ -369,13 +427,14 @@ function mergeBlockSettings(
 		? getSharedBlockAttributes()
 		: blockeraOverrideBlockTypeAttributes;
 
-	let overrideAttributes = !settings.attributes?.blockeraId &&
+	let overrideAttributes =
+		!settings.attributes?.blockeraId &&
 		!settings.attributes?.blockeraPropsId
-		? mergeObject(
-				sanitizeDefaultAttributes(blockeraOverrideBlockAttributes),
-				sanitizeDefaultAttributes(settings.attributes)
-			)
-		: sanitizeDefaultAttributes(settings.attributes);
+			? mergeObject(
+					sanitizeDefaultAttributes(blockeraOverrideBlockAttributes),
+					sanitizeDefaultAttributes(settings.attributes)
+				)
+			: sanitizeDefaultAttributes(settings.attributes);
 
 	if (CORE_ICON_BLOCK_NAME === settings.name) {
 		const typeSpecificAttrs = getBlockTypeAttributes(settings.name);
@@ -433,17 +492,19 @@ function mergeBlockSettings(
 				[]
 			);
 
-			const selectedBlock =
-				select('core/block-editor').getSelectedBlock();
+			// eslint-disable-next-line react-hooks/rules-of-hooks
+			const editorAttributes = useMemo(
+				() => omit(attributes, ignoredAttributes),
+				[attributes, ignoredAttributes]
+			);
 
 			// eslint-disable-next-line react-hooks/rules-of-hooks
 			useEffect(() => {
-				if (!selectedBlock) {
+				if (!props.isSelected) {
 					return;
 				}
-				// On rendering the block settings, we can bootstrap all scripts.
 				bootstrapScripts();
-			}, [selectedBlock]);
+			}, [props.isSelected]);
 
 			if (isFunction(additional?.edit) && isAvailableBlock()) {
 				// Optional canvasEdit replaces core block canvas (e.g. core/icon → CoreIconCanvasEdit).
@@ -456,7 +517,7 @@ function mergeBlockSettings(
 						<Edit
 							{...rest}
 							baseContextValue={baseContextValue}
-							attributes={omit(attributes, ignoredAttributes)}
+							attributes={editorAttributes}
 							settings={settings}
 							additional={stableAdditional}
 							isAvailableBlock={isAvailableBlock}
@@ -478,9 +539,13 @@ function mergeBlockSettings(
 			? settings?.deprecated
 			: [
 					{
-						attributes: settings.attributes,
+						attributes: overrideAttributes,
 						supports: settings.supports,
 						migrate(attributes: Object): Object {
+							if ('function' !== typeof additional.migrate) {
+								return attributes;
+							}
+
 							return additional.migrate(attributes);
 						},
 						edit(blockProps: Object): MixedElement {

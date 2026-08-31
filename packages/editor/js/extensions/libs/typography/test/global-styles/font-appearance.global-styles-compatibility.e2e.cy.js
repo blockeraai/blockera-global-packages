@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const FIXTURE_ROOT =
@@ -46,6 +48,7 @@ describe('Font Appearance → WP Compatibility (Global Styles)', () => {
 		}
 
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		cy.openGlobalStylesPanel();
 		closeWelcomeGuide();
 		cy.getByDataTest('block-style-variations').eq(0).click();
@@ -95,7 +98,7 @@ describe('Font Appearance → WP Compatibility (Global Styles)', () => {
 					cy.get('select').select('', { force: true });
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getParagraphGlobalStyles(data);
 					expect(undefined).to.equal(root?.typography?.fontWeight);
 					expect(undefined).to.equal(root?.typography?.fontStyle);
@@ -129,6 +132,18 @@ describe('Font Appearance → WP Compatibility (Global Styles)', () => {
 					expect('400').to.equal(root?.typography?.fontWeight);
 					expect('normal').to.equal(root?.typography?.fontStyle);
 				});
+
+				cy.get('@container').within(() => {
+					cy.get('select').select('', { force: true });
+				});
+
+				assertClearedGlobalStylesStayCleared((data) => {
+					const root = getParagraphGlobalStyles(data);
+					expect(undefined).to.equal(root?.typography?.fontWeight);
+					expect(undefined).to.equal(
+						root?.blockeraFontAppearance?.value
+					);
+				});
 			});
 		});
 
@@ -154,6 +169,18 @@ describe('Font Appearance → WP Compatibility (Global Styles)', () => {
 					const root = getParagraphGlobalStyles(data);
 					expect('300').to.equal(root?.typography?.fontWeight);
 					expect('normal').to.equal(root?.typography?.fontStyle);
+				});
+
+				cy.get('@container').within(() => {
+					cy.get('select').select('', { force: true });
+				});
+
+				assertClearedGlobalStylesStayCleared((data) => {
+					const root = getParagraphGlobalStyles(data);
+					expect(undefined).to.equal(root?.typography?.fontStyle);
+					expect(undefined).to.equal(
+						root?.blockeraFontAppearance?.value
+					);
 				});
 			});
 		});

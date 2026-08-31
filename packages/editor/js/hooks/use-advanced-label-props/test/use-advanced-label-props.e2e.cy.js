@@ -37,9 +37,9 @@ describe('useAdvancedLabelProps Hook Testing ...', () => {
 
 	it('should display changed value on Paragraph -> Normal -> Laptop', () => {
 		appendBlocks(
-			'<!-- wp:paragraph -->\n' +
-				'<p>Test</p>\n' +
-				'<!-- /wp:paragraph -->'
+			`<!-- wp:paragraph -->
+<p>Test</p>
+<!-- /wp:paragraph -->`
 		);
 
 		// Select target block

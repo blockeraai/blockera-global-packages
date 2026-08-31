@@ -17,6 +17,7 @@ import { prepare } from '@blockera/data-editor';
 import { useEditorStore } from '../use-editor-store';
 import { getBaseBreakpoint } from '../../editor/header-ui';
 import { isInnerBlock } from '../../extensions/components';
+import { overlayInnerNormalFeatures } from '../use-advanced-label-props/helpers';
 import type {
 	InnerBlocks,
 	InnerBlockType,
@@ -139,20 +140,22 @@ export const useInnerBlocksInfo = ({
 						};
 					}
 
-					inheritOfCoreBlock =
+					inheritOfCoreBlock = overlayInnerNormalFeatures(
 						prepare(
 							`blockeraBlockStates[${currentState}].breakpoints[${currentBreakpoint}].attributes.blockeraInnerBlocks[${getSanitizedBlockName()}].attributes`,
 							attributes
-						) || {};
+						)
+					);
 
 					return {
-						// Specific the inheritance attributes values from main object of core block.
 						...inheritOfCoreBlock,
 						...blockRootAttributes,
-						...(prepare(
-							`blockeraBlockStates[${currentState}].breakpoints[${currentBreakpoint}].attributes.blockeraInnerBlocks[${currentBlock}].attributes`,
-							attributes
-						) || {}),
+						...overlayInnerNormalFeatures(
+							prepare(
+								`blockeraBlockStates[${currentState}].breakpoints[${currentBreakpoint}].attributes.blockeraInnerBlocks[${currentBlock}].attributes`,
+								attributes
+							)
+						),
 					};
 				}
 

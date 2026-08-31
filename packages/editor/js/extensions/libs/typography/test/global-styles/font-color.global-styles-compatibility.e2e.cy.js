@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const FIXTURE_ROOT =
@@ -42,6 +44,7 @@ describe('Font Color → WP Compatibility (Global Styles)', () => {
 		}
 
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		cy.openGlobalStylesPanel();
 		closeWelcomeGuide();
 		cy.getByDataTest('block-style-variations').eq(0).click();
@@ -81,7 +84,7 @@ describe('Font Color → WP Compatibility (Global Styles)', () => {
 
 				cy.clearColorControlValue('Text Color');
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getParagraphGlobalStyles(data);
 					expect(undefined).to.equal(root?.color?.text);
 					expect(undefined).to.equal(root?.blockeraFontColor?.value);
@@ -133,7 +136,7 @@ describe('Font Color → WP Compatibility (Global Styles)', () => {
 					cy.removeValueAddon();
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getParagraphGlobalStyles(data);
 					expect(undefined).to.equal(root?.color?.text);
 					expect(undefined).to.equal(root?.blockeraFontColor?.value);

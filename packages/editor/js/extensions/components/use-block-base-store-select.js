@@ -11,6 +11,8 @@ import { useSelect } from '@wordpress/data';
 import { getBaseBreakpoint } from '../../editor/header-ui/components/breakpoints/helpers';
 import { useGlobalStylesPanelContext } from '../../editor/global-styles/panel/context';
 
+const EMPTY_ATTRIBUTES = {};
+
 /**
  * Blockera/extension store slice for BlockBase.
  *
@@ -18,22 +20,30 @@ import { useGlobalStylesPanelContext } from '../../editor/global-styles/panel/co
  * target, breakpoint, editor events) so inserter hover and other editor-wide
  * UI does not re-render every BlockBase instance.
  *
+ * Returns data values only (no selector functions). Returning `getDeviceType`
+ * / `getActiveBlockVariation` from useSelect made the result fail shallow
+ * equality whenever the registry rebuilt those function identities, which
+ * re-rendered every mounted BlockBase on unrelated store updates.
+ *
  * @param {Object}  options
  * @param {string}  options.clientId
  * @param {string}  options.name
  * @param {boolean} options.isSelected
  * @param {boolean} [options.insideBlockInspector=true]
+ * @param {Object}  [options.attributes]
  */
 export function useBlockBaseStoreSelect({
 	clientId,
 	name,
 	isSelected,
 	insideBlockInspector = true,
+	attributes,
 }: {
 	clientId: string,
 	name: string,
 	isSelected: boolean,
 	insideBlockInspector?: boolean,
+	attributes?: Object,
 }): Object {
 	// Global styles panel mounts a single BlockBase (insideBlockInspector=false) without
 	// isSelected; it must still read extension inner-block target from the store.
@@ -48,62 +58,80 @@ export function useBlockBaseStoreSelect({
 	return useSelect(
 		(select) => {
 			const {
-				getBlockExtensionBy,
+				getBlockType,
+				getActiveBlockVariation,
+				getBlockVariations,
+			} = select('core/blocks');
+			const { getDeviceType } = select('blockera/editor');
+			const blockType = getBlockType(name) || {};
+			const {
+				supports,
+				selectors,
+				attributes: availableAttributes,
+			} = blockType;
+			const blockVariations = name
+				? getBlockVariations(name, 'transform')
+				: undefined;
+
+			if (!effectivelySelected) {
+				const result = {
+					deviceType: getDeviceType(),
+					currentBlock: 'master',
+					currentState: 'normal',
+					currentBreakpoint: getBaseBreakpoint(),
+					currentInnerBlockState: 'normal',
+					supports,
+					selectors,
+					availableAttributes,
+					editorSelectedBlockEvent: undefined,
+					activeBlockVariation: getActiveBlockVariation(
+						name,
+						attributes || EMPTY_ATTRIBUTES
+					),
+					blockVariations,
+				};
+				return result;
+			}
+
+			const {
 				getActiveInnerState,
 				getActiveMasterState,
 				getExtensionCurrentBlock,
 				getExtensionCurrentBlockStateBreakpoint,
 			} = select('blockera/extensions');
-
-			const { getActiveBlockVariation: _getActiveBlockVariation } =
-				select('blockera/extensions');
-			const {
-				getBlockType,
-				getActiveBlockVariation,
-				getBlockVariations,
-			} = select('core/blocks');
 			const { getBlockAttributes } = select('core/block-editor');
-			const { getDeviceType, getEditorSelectedBlockEvent } =
-				select('blockera/editor');
+			const { getEditorSelectedBlockEvent } = select('blockera/editor');
+			const currentBlock = getExtensionCurrentBlock(extensionsUiContext);
 
-			const currentBlock = effectivelySelected
-				? getExtensionCurrentBlock(extensionsUiContext)
-				: 'master';
-			const currentBreakpoint = effectivelySelected
-				? getExtensionCurrentBlockStateBreakpoint()
-				: getBaseBreakpoint();
-			const editorSelectedBlockEvent = effectivelySelected
-				? getEditorSelectedBlockEvent()
-				: undefined;
-
-			const {
-				supports,
-				selectors,
-				attributes: availableAttributes,
-			} = getBlockType(name);
-
-			return {
-				getDeviceType,
+			const result = {
+				deviceType: getDeviceType(),
 				currentBlock,
-				getBlockExtensionBy,
 				currentState: getActiveMasterState(clientId, name),
-				currentBreakpoint,
-				currentInnerBlockState: effectivelySelected
-					? getActiveInnerState(clientId, currentBlock)
-					: 'normal',
+				currentBreakpoint: getExtensionCurrentBlockStateBreakpoint(),
+				currentInnerBlockState: getActiveInnerState(
+					clientId,
+					currentBlock
+				),
 				supports,
 				selectors,
 				availableAttributes,
-				getActiveBlockVariation,
-				editorSelectedBlockEvent,
+				editorSelectedBlockEvent: getEditorSelectedBlockEvent(),
 				activeBlockVariation: getActiveBlockVariation(
 					name,
-					getBlockAttributes(clientId) || {}
+					getBlockAttributes(clientId) || EMPTY_ATTRIBUTES
 				),
-				blockVariations: name && getBlockVariations(name, 'transform'),
-				activeVariation: _getActiveBlockVariation(),
+				blockVariations,
 			};
+			return result;
 		},
-		[clientId, name, effectivelySelected, extensionsUiContext]
+		[
+			attributes,
+			clientId,
+			name,
+			isSelected,
+			effectivelySelected,
+			extensionsUiContext,
+			insideBlockInspector,
+		]
 	);
 }

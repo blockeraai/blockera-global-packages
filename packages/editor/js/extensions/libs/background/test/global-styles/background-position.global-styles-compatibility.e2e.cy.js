@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const MU_PLUGIN_PATH =
@@ -33,6 +35,7 @@ describe('Background Position → WP Compatibility (Global Styles)', () => {
 			pluginName: MU_PLUGIN_TARGET,
 		});
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		openGroupGlobalStyles();
 	});
 
@@ -117,18 +120,30 @@ describe('Background Position → WP Compatibility (Global Styles)', () => {
 				// Test 3: Clear Blockera value and check WP data
 				//
 
+				cy.get('body').type('{esc}', { force: true });
+				cy.get('body').type('{esc}', { force: true });
+
 				cy.get('@bgContainer').within(() => {
 					cy.getByAriaLabel('Delete image 0').click({ force: true });
 				});
 
-				assertBlockData((data) => {
+				const assertClearedBackground = (data) => {
 					const root = getGroupGlobalStyles(data);
-					const backgroundPosition =
-						root?.background?.backgroundPosition;
-					const blockeraBackground = root?.blockeraBackground;
+					const background = root?.background;
 
-					expect(undefined).to.equal(backgroundPosition);
-					expect(undefined).to.equal(blockeraBackground);
+					// User-origin reset must be `null` (not omitted). Omitting
+					// lets merged GS fall back to theme.json and hydrate the
+					// image back into the Blockera control after ~5s.
+					expect(background?.backgroundImage).to.equal(null);
+					expect(background?.backgroundPosition).to.equal(null);
+					expect(root?.blockeraBackground).to.equal(undefined);
+				};
+
+				assertClearedGlobalStylesStayCleared(assertClearedBackground);
+
+				cy.get('@bgContainer').within(() => {
+					cy.get('[data-id="image-0"]').should('not.exist');
+					cy.get('[data-id^="image-"]').should('not.exist');
 				});
 			});
 		});

@@ -8,7 +8,12 @@ import { select } from '@wordpress/data';
 /**
  * Blockera dependencies
  */
-import { hasSameProps, mergeObject } from '@blockera/utils';
+import {
+	hasSameProps,
+	mergeObject,
+	cleanEmptyObject,
+	withCleanedWpStyle,
+} from '@blockera/utils';
 import type { ControlContextRefCurrent } from '@blockera/controls';
 
 /**
@@ -269,6 +274,8 @@ export function omitUnregisteredInnerBlockData(
 	};
 }
 
+export { cleanEmptyObject, withCleanedWpStyle };
+
 /**
  * Merge WordPress compatibility output while omitting unregistered inner-block data.
  *
@@ -305,10 +312,12 @@ export function mergeWPCompatibility(
 		...Object,
 	} = sanitized;
 
-	return mergeObject(nextState, attributePatch, {
-		forceUpdated: forceUpdated ?? [],
-		deletedProps: deletedProps ?? [],
-	});
+	return withCleanedWpStyle(
+		mergeObject(nextState, attributePatch, {
+			forceUpdated: forceUpdated ?? [],
+			deletedProps: deletedProps ?? [],
+		})
+	);
 }
 
 /**
@@ -321,11 +330,11 @@ export function mergeWPCompatibility(
  *
  * @param {Object} attributes Block attributes.
  * @param {BlockDetail} blockDetail Current block detail.
- * @return {Object} Attributes unchanged.
+ * @return {Object} Attributes with empty WordPress `style` trees removed.
  */
 export function sanitizeWPCompatibilityAttributes(
 	attributes: Object,
 	_blockDetail: BlockDetail // eslint-disable-line no-unused-vars
 ): Object {
-	return attributes;
+	return withCleanedWpStyle(attributes);
 }

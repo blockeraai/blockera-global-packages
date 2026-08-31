@@ -33,6 +33,7 @@ import { EditorFeatureWrapper } from '../../..';
 import type { TEffectsProps } from './types/effects-props';
 import { generateExtensionId } from '../utils';
 import { TransformSettings } from './components/transform-setting';
+import { isUnusedTransformOrigin } from './transform-origin-value';
 import { Opacity } from './components/opacity';
 import { Transition } from './components/transition';
 import { Filter } from './components/filter';
@@ -72,13 +73,11 @@ export const EffectsExtension: ComponentType<TEffectsProps> = ({
 		}
 
 		// Check blockeraTransformSelfOrigin (object comparison)
-		const selfOrigin = values?.blockeraTransformSelfOrigin;
-		const selfOriginDefault =
-			attributes.blockeraTransformSelfOrigin?.default || {};
 		if (
-			selfOrigin &&
-			(selfOrigin.top !== selfOriginDefault.top ||
-				selfOrigin.left !== selfOriginDefault.left)
+			!isUnusedTransformOrigin(
+				values?.blockeraTransformSelfOrigin,
+				attributes.blockeraTransformSelfOrigin?.default
+			)
 		) {
 			return true;
 		}
@@ -100,13 +99,11 @@ export const EffectsExtension: ComponentType<TEffectsProps> = ({
 		}
 
 		// Check blockeraTransformChildOrigin (object comparison)
-		const childOrigin = values?.blockeraTransformChildOrigin;
-		const childOriginDefault =
-			attributes.blockeraTransformChildOrigin?.default || {};
 		if (
-			childOrigin &&
-			(childOrigin.top !== childOriginDefault.top ||
-				childOrigin.left !== childOriginDefault.left)
+			!isUnusedTransformOrigin(
+				values?.blockeraTransformChildOrigin,
+				attributes.blockeraTransformChildOrigin?.default
+			)
 		) {
 			return true;
 		}

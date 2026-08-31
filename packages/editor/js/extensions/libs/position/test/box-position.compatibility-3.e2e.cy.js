@@ -18,11 +18,11 @@ describe('Box Position → WP Compatibility', () => {
 	describe('Group Block', () => {
 		it('Simple value', () => {
 			appendBlocks(
-				'<!-- wp:group {"style":{"position":{"type":"sticky","top":"0px"}},"layout":{"type":"constrained"}} -->\n' +
-					'<div class="wp-block-group"><!-- wp:paragraph -->\n' +
-					'<p>paragraph inside group</p>\n' +
-					'<!-- /wp:paragraph --></div>\n' +
-					'<!-- /wp:group -->'
+				`<!-- wp:group {"style":{"position":{"type":"sticky","top":"0px"}},"layout":{"type":"constrained"}} -->
+<div class="wp-block-group"><!-- wp:paragraph -->
+<p>paragraph inside group</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->`
 			);
 
 			// Select target block

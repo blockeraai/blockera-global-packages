@@ -131,15 +131,25 @@ describe('Background Color Inside Style Variations → Functionality', () => {
 			);
 		});
 
-		// Check block style
-		cy.getIframeBody().within(() => {
-			cy.get('#blockera-global-styles-wrapper')
-				.invoke('text')
-				.should(
-					'include',
-					'background-color: var(--wp--preset--color--accent-4, #686868) !important;'
-				);
-		});
+		// Editor canvas: Accent 4 resolves to #686868. Avoid `.within()` on the
+		// iframe body — a failed query there leaves Cypress scoped inside the
+		// canvas, so afterEach `cy.get('body')` times out.
+		cy.getBlock('core/paragraph').should(
+			'have.css',
+			'backgroundColor',
+			'rgb(104, 104, 104)'
+		);
+
+		cy.getIframeBody()
+			.find('#blockera-global-styles-wrapper', { timeout: 20000 })
+			.invoke('text')
+			.should((css) => {
+				const text = String(css);
+				expect(
+					text.includes('var(--wp--preset--color--accent-4') ||
+						text.includes('#686868')
+				).to.eq(true);
+			});
 
 		//assert frontend
 		saveSiteEditorDirtyEntities();

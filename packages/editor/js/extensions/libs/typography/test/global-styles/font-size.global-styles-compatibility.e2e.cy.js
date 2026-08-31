@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const FIXTURE_ROOT =
@@ -46,6 +48,7 @@ describe('Font Size → WP Compatibility (Global Styles)', () => {
 		}
 
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		cy.openGlobalStylesPanel();
 		closeWelcomeGuide();
 		cy.getByDataTest('block-style-variations').eq(0).click();
@@ -92,7 +95,7 @@ describe('Font Size → WP Compatibility (Global Styles)', () => {
 					cy.get('input').first().clear({ force: true });
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getParagraphGlobalStyles(data);
 					expect(undefined).to.equal(root?.typography?.fontSize);
 					expect(undefined).to.equal(root?.blockeraFontSize?.value);
@@ -157,7 +160,7 @@ describe('Font Size → WP Compatibility (Global Styles)', () => {
 					cy.removeValueAddon();
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getParagraphGlobalStyles(data);
 					expect(undefined).to.equal(root?.typography?.fontSize);
 					expect(undefined).to.equal(root?.blockeraFontSize?.value);
@@ -196,7 +199,7 @@ describe('Font Size → WP Compatibility (Global Styles)', () => {
 					cy.removeValueAddon();
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getParagraphGlobalStyles(data);
 					expect(undefined).to.equal(root?.typography?.fontSize);
 					expect(undefined).to.equal(root?.blockeraFontSize?.value);

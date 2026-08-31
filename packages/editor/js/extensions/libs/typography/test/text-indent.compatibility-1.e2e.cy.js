@@ -17,9 +17,9 @@ describe('Text Indent → WP Compatibility', () => {
 	describe('Paragraph Block', () => {
 		it('Simple value', () => {
 			appendBlocks(
-				'<!-- wp:paragraph {"style":{"typography":{"textIndent":"2px"}}} -->\n' +
-					'<p style="text-indent:2px">Test paragraph</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"style":{"typography":{"textIndent":"2px"}}} -->
+<p style="text-indent:2px">Test paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			// Select target block

@@ -22,16 +22,17 @@ const BlockEditContext: Object = createContext({});
 
 const BlockEditContextProvider = ({
 	children,
-	...props
+	value,
 }: Object): MixedElement => {
 	const {
-		setBlockClientInnerState,
-		setBlockClientMasterState,
-		changeExtensionCurrentBlockState: setCurrentState,
-		changeExtensionInnerBlockState: setCurrentInnerBlockState,
-	} = dispatch('blockera/extensions') || {};
-	const { updatePickedDeviceType, updateDeviceIndicator } =
-		select('blockera/editor') || {};
+		currentTab,
+		setCurrentTab,
+		currentBlock,
+		currentState,
+		currentBreakpoint,
+		currentInnerBlockState,
+		block,
+	} = value || {};
 
 	const memoizedValue: {
 		currentTab: string,
@@ -48,34 +49,18 @@ const BlockEditContextProvider = ({
 		handleOnChangeAttributes: THandleOnChangeAttributes,
 	} = useMemo(() => {
 		const {
-			currentTab,
-			getBlockType,
-			blockStateId,
-			breakpointId,
-			getAttributes,
-			setCurrentTab,
-			isNormalState,
-			currentBlock,
-			currentState,
-			defaultAttributes,
-			currentBreakpoint,
-			currentInnerBlockState,
-			masterIsNormalState,
-			blockeraInnerBlocks,
-			handleOnChangeAttributes,
-		} = props;
+			updatePickedDeviceType,
+			updateDeviceIndicator,
+		} = select('blockera/editor') || {};
+		const {
+			setBlockClientInnerState,
+			setBlockClientMasterState,
+			changeExtensionCurrentBlockState: setCurrentState,
+			changeExtensionInnerBlockState: setCurrentInnerBlockState,
+		} = dispatch('blockera/extensions') || {};
 
 		return {
-			currentTab,
-			getBlockType,
-			blockStateId,
-			breakpointId,
-			getAttributes,
-			isNormalState,
-			defaultAttributes,
-			masterIsNormalState,
-			blockeraInnerBlocks,
-			handleOnChangeAttributes,
+			...value,
 			switchBlockState: (
 				state: TStates,
 				breakpoint: TBreakpoint
@@ -87,15 +72,15 @@ const BlockEditContextProvider = ({
 					setBlockClientInnerState({
 						currentState: state,
 						innerBlockType: currentBlock,
-						clientId: props?.block?.clientId,
+						clientId: block?.clientId,
 					});
 					return setCurrentInnerBlockState(state);
 				}
 
 				setBlockClientMasterState({
 					currentState: state,
-					name: props?.block?.blockName,
-					clientId: props?.block?.clientId,
+					name: block?.blockName,
+					clientId: block?.clientId,
 				});
 
 				setCurrentState(state);
@@ -117,10 +102,17 @@ const BlockEditContextProvider = ({
 
 				return currentState;
 			},
-			...props,
 		};
-		// eslint-disable-next-line
-	}, [props]);
+	}, [
+		value,
+		block,
+		currentTab,
+		currentBlock,
+		currentState,
+		setCurrentTab,
+		currentBreakpoint,
+		currentInnerBlockState,
+	]);
 
 	return (
 		<BlockEditContext.Provider value={memoizedValue}>

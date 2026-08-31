@@ -8,7 +8,7 @@ const { test, expect } = require('@wordpress/e2e-test-utils-playwright');
 /**
  * Internal dependencies
  */
-const { getIframeBody } = require('../utils/editor');
+const { evaluateInEditorCanvas } = require('../utils/editor');
 const { loginToSite, goTo } = require('../utils/site-navigation');
 
 test.beforeEach(async ({ page }) => {
@@ -835,6 +835,60 @@ function normalizeCSSContent(cssContent) {
 }
 
 /**
+ * Consumer plugin root (not global-packages). Tests start from the product
+ * repo; __dirname would resolve into the monorepo checkout on CI.
+ *
+ * @return {string} Absolute plugin root path.
+ */
+function getPluginRoot() {
+	return process.env.BLOCKERA_CONSUMER_ROOT &&
+		fs.existsSync(process.env.BLOCKERA_CONSUMER_ROOT)
+		? path.resolve(process.env.BLOCKERA_CONSUMER_ROOT)
+		: process.cwd();
+}
+
+/**
+ * Map a host path inside the plugin to the path inside the wp-env CLI container.
+ *
+ * @param {string} hostPath - Absolute path on the host.
+ * @return {string} Path relative to the WordPress root inside the container.
+ */
+function getWpEnvPluginContainerPath(hostPath) {
+	const pluginRoot = getPluginRoot();
+	const pluginSlug = path.basename(pluginRoot);
+	const relative = path
+		.relative(pluginRoot, hostPath)
+		.split(path.sep)
+		.join('/');
+
+	return `wp-content/plugins/${pluginSlug}/${relative}`;
+}
+
+/**
+ * Parse a post ID from WP-CLI `wp eval` stdout (ignore wp-env banner lines).
+ *
+ * @param {string} stdout - Combined command output.
+ * @return {number} Post ID, or 0 when none is found.
+ */
+function parseWpEvalPostId(stdout) {
+	const lines = String(stdout || '')
+		.trim()
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
+
+	for (let i = lines.length - 1; i >= 0; i--) {
+		const id = parseInt(lines[i], 10);
+
+		if (Number.isFinite(id) && id > 0 && String(id) === lines[i]) {
+			return id;
+		}
+	}
+
+	return 0;
+}
+
+/**
  * Execute WP CLI command.
  *
  * @param {import('@playwright/test').Page} page - Playwright page object (not used, but kept for API consistency).
@@ -859,11 +913,7 @@ async function wpCli(
 
 	// Consumer plugin root (not global-packages). Tests start from the product
 	// repo; __dirname would resolve into the monorepo checkout on CI.
-	const pluginRoot =
-		process.env.BLOCKERA_CONSUMER_ROOT &&
-		fs.existsSync(process.env.BLOCKERA_CONSUMER_ROOT)
-			? path.resolve(process.env.BLOCKERA_CONSUMER_ROOT)
-			: process.cwd();
+	const pluginRoot = getPluginRoot();
 
 	try {
 		const result = await execAsync(
@@ -881,6 +931,86 @@ async function wpCli(
 		}
 		throw error;
 	}
+}
+
+/**
+ * Create a published post from an HTML file via PHP (`wp_insert_post`).
+ *
+ * Reads markup from a plugin file already mounted in wp-env so large block
+ * HTML is not passed on the command line. Does not open the block editor.
+ *
+ * @param {import('@playwright/test').Page} page - Playwright page object.
+ * @param {Object} options - Post fields.
+ * @param {string} options.contentFileHostPath - Absolute host path to post HTML.
+ * @param {string} options.postTitle - Post title.
+ * @param {string} [options.postStatus='publish'] - Post status.
+ * @param {string} [options.postType='post'] - Post type.
+ * @param {string} [options.postDate] - `Y-m-d H:i:s` post date.
+ * @param {string} [options.commentStatus] - Comment status (`open` / `closed`).
+ * @param {string} [options.pingStatus] - Ping status (`open` / `closed`).
+ * @return {Promise<number>} Created post ID.
+ */
+async function createPostViaPhp(page, options) {
+	const {
+		contentFileHostPath,
+		postTitle,
+		postStatus = 'publish',
+		postType = 'post',
+		postDate,
+		commentStatus,
+		pingStatus,
+	} = options;
+
+	if (!contentFileHostPath || !fs.existsSync(contentFileHostPath)) {
+		throw new Error(
+			`createPostViaPhp requires an existing content file: ${contentFileHostPath}`
+		);
+	}
+
+	const containerPath = getWpEnvPluginContainerPath(contentFileHostPath);
+	const escapePhp = (value) => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+	const extraArgs = [];
+
+	if (postDate) {
+		extraArgs.push(`'post_date' => '${escapePhp(postDate)}'`);
+	}
+
+	if (commentStatus) {
+		extraArgs.push(`'comment_status' => '${escapePhp(commentStatus)}'`);
+	}
+
+	if (pingStatus) {
+		extraArgs.push(`'ping_status' => '${escapePhp(pingStatus)}'`);
+	}
+
+	const extraPhp = extraArgs.length ? ', ' + extraArgs.join(', ') : '';
+
+	const phpCode =
+		`$path = '${escapePhp(containerPath)}'; ` +
+		`$content = file_get_contents($path); ` +
+		`if ($content === false) { echo 'ERROR: failed to read ' . $path; return; } ` +
+		`$post_id = wp_insert_post(array(` +
+		`'post_title' => '${escapePhp(postTitle)}', ` +
+		`'post_content' => $content, ` +
+		`'post_status' => '${escapePhp(postStatus)}', ` +
+		`'post_type' => '${escapePhp(postType)}', ` +
+		`'post_author' => 1` +
+		`${extraPhp}` +
+		`)); ` +
+		`echo is_wp_error($post_id) ? $post_id->get_error_message() : $post_id;`;
+
+	const escapedPhpCode = phpCode.replace(/'/g, "'\\''");
+	const result = await wpCli(page, `wp eval '${escapedPhpCode}'`, false, true);
+	const postId = parseWpEvalPostId(result.stdout);
+
+	if (!postId) {
+		throw new Error(
+			`Failed to create post via PHP. stdout: ${result.stdout} stderr: ${result.stderr}`
+		);
+	}
+
+	return postId;
 }
 
 /**
@@ -1337,6 +1467,30 @@ async function applyDomSearchReplace(locator, operations) {
 }
 
 /**
+ * Resize with Playwright’s own session so element screenshots clip the canvas,
+ * not the device-preview chrome. A second CDP `setDeviceMetricsOverride` /
+ * `setWindowBounds` desyncs screenshot coordinates (wrong size, header in shot).
+ *
+ * WordPress e2e often uses action timeout 0 (wait forever). Bound the iframe
+ * `load` wait so a blob canvas cannot hang; the size is applied before that wait.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {{ width: number, height: number }} viewport
+ * @return {Promise<void>}
+ */
+async function setViewportSizeForScreenshot(page, viewport) {
+	page.setDefaultTimeout(8000);
+
+	try {
+		await page.setViewportSize(viewport);
+	} catch {
+		// Size is applied; canvas `load` may still be pending.
+	} finally {
+		page.setDefaultTimeout(0);
+	}
+}
+
+/**
  * Set editor viewport for screenshot.
  * Calculates the viewport height based on the editor container height.
  * Sets the viewport size to the calculated height.
@@ -1362,52 +1516,46 @@ async function setEditorViewportForScreenshot(
 		width = 450;
 	}
 
-	const iframeBody = getIframeBody(page);
-	const editorContainer = iframeBody.locator('.is-root-container');
-
-	// Get the element's scrollHeight to determine viewport height
-	containerHeight = await editorContainer.evaluate((el) => {
-		// Get the maximum height needed to show the full element
-		const elementHeight = Math.max(
-			el.scrollHeight,
-			el.offsetHeight,
-			el.getBoundingClientRect().height
-		);
-		// Also consider document height in case element extends beyond viewport
+	containerHeight = await evaluateInEditorCanvas(page, (doc) => {
+		const el = doc.querySelector('.is-root-container');
+		const elementHeight = el
+			? Math.max(
+					el.scrollHeight,
+					el.offsetHeight,
+					el.getBoundingClientRect().height
+				)
+			: 0;
 		const docHeight = Math.max(
-			document.documentElement.scrollHeight,
-			document.body.scrollHeight,
-			document.documentElement.offsetHeight,
-			document.body.offsetHeight
+			doc.documentElement.scrollHeight,
+			doc.body ? doc.body.scrollHeight : 0,
+			doc.documentElement.offsetHeight,
+			doc.body ? doc.body.offsetHeight : 0
 		);
 		return Math.max(elementHeight, docHeight);
 	});
 
-	// Set viewport height based on container height + 500px
 	height = containerHeight + 500;
 
 	const finalWidth = config?.width || width;
 	const finalHeight = config?.height || height;
 
-	await page.setViewportSize({
+	await setViewportSizeForScreenshot(page, {
 		width: 1600,
 		height: finalHeight,
 	});
 
-	// Set iframe width to the final width
-	await iframeBody.evaluate((el, width) => {
-		el.style.width = width + 'px';
-	}, finalWidth);
+	await evaluateInEditorCanvas(page, (doc, win, canvasWidth) => {
+		if (doc.body) {
+			doc.body.style.width = canvasWidth + 'px';
+		}
 
-	// Set editor container padding to 20px 0
-	await editorContainer.evaluate((el, width) => {
-		el.style.boxSizing = 'border-box';
-	}, finalWidth);
+		const el = doc.querySelector('.is-root-container');
+		if (el) {
+			el.style.boxSizing = 'border-box';
+		}
 
-	// Add style to iframe to ensure design is sync and spaces are static
-	await iframeBody.evaluate(() => {
-		const style = document.createElement('style');
-		style.innerHTML = `
+		const style = doc.createElement('style');
+		style.textContent = `
 			.is-root-container.has-global-padding {
 				font-size: 18px !important;
 				line-height: 0;
@@ -1421,20 +1569,33 @@ async function setEditorViewportForScreenshot(
 			.is-root-container.has-global-padding > * {
 				line-height: normal !important;
 			}
-			
+
 			:root :where(.is-layout-constrained) > * {
 				margin-block-start: 20px;
 				margin-block-end: 0;
 			}
 		`;
-		document.head.appendChild(style);
-	});
+		doc.head.appendChild(style);
+	}, finalWidth);
 
-	// Close settings panel
-	const settingsButton = await page.locator(
-		'.editor-header__settings button[aria-label="Settings"]'
-	);
-	await settingsButton.click();
+	// Close settings panel when it is open. Do not wait on a stuck canvas
+	// navigation (WP e2e action timeout is 0).
+	const settingsButton = page
+		.locator(
+			'.editor-header__settings button[aria-label="Settings"], button[aria-label="Settings"]'
+		)
+		.first();
+	try {
+		await settingsButton.waitFor({ state: 'visible', timeout: 5000 });
+		const isPressed = await settingsButton.getAttribute('aria-pressed', {
+			timeout: 2000,
+		});
+		if (isPressed === 'true') {
+			await settingsButton.click({ noWaitAfter: true, timeout: 5000 });
+		}
+	} catch {
+		// Header control missing — continue; sidebar is not required for snapshots.
+	}
 
 	// Close Secondary sidebar (if open)
 	// Check for buttons that would close the secondary sidebar
@@ -1477,7 +1638,7 @@ async function setFrontendViewportForScreenshot(
 	const finalWidth = config?.width || width;
 	const finalHeight = config?.height || height;
 
-	await page.setViewportSize({
+	await setViewportSizeForScreenshot(page, {
 		width: finalWidth,
 		height: finalHeight,
 	});
@@ -1554,6 +1715,7 @@ module.exports = {
 	closeSpotlightPopover,
 	normalizeCSSContent,
 	wpCli,
+	createPostViaPhp,
 	checkBlockCardItems,
 	checkBlockStatesPickerItems,
 	checkBlockSections,

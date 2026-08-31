@@ -81,7 +81,10 @@ describe('Buttons Block → Display → WP Data Compatibility', () => {
 		assertBlockData((data) => {
 			expect('flex').to.be.equal(getSelectedBlock(data, 'layout')?.type);
 
-			expect('').to.be.equal(getSelectedBlock(data, 'blockeraDisplay'));
+			// Default value is "flex" for buttons block
+			expect('flex').to.be.equal(
+				getSelectedBlock(data, 'blockeraDisplay')
+			);
 		});
 	});
 
@@ -151,7 +154,10 @@ describe('Buttons Block → Display → WP Data Compatibility', () => {
 		assertBlockData((data) => {
 			expect('flex').to.be.equal(getSelectedBlock(data, 'layout')?.type);
 
-			expect('').to.be.equal(getSelectedBlock(data, 'blockeraDisplay'));
+			// Default value is "flex" for buttons block
+			expect('flex').to.be.equal(
+				getSelectedBlock(data, 'blockeraDisplay')
+			);
 		});
 	});
 
@@ -221,7 +227,10 @@ describe('Buttons Block → Display → WP Data Compatibility', () => {
 		assertBlockData((data) => {
 			expect('flex').to.be.equal(getSelectedBlock(data, 'layout')?.type);
 
-			expect('').to.be.equal(getSelectedBlock(data, 'blockeraDisplay'));
+			// Default value is "flex" for buttons block
+			expect('flex').to.be.equal(
+				getSelectedBlock(data, 'blockeraDisplay')
+			);
 		});
 	});
 });

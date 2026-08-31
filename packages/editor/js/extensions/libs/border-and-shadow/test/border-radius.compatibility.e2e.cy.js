@@ -15,11 +15,11 @@ describe('Border Radius → WP Compatibility', () => {
 	describe('Button Block', () => {
 		it('Compacted corners border radius', () => {
 			appendBlocks(
-				'<!-- wp:buttons -->\n' +
-					'<div class="wp-block-buttons"><!-- wp:button {"style":{"border":{"radius":"5px"}}} -->\n' +
-					'<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" style="border-radius:5px">button</a></div>\n' +
-					'<!-- /wp:button --></div>\n' +
-					'<!-- /wp:buttons -->'
+				`<!-- wp:buttons -->
+					<div class="wp-block-buttons"><!-- wp:button {"style":{"border":{"radius":"5px"}}} -->
+					<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" style="border-radius:5px">button</a></div>
+					<!-- /wp:button --></div>
+					<!-- /wp:buttons -->`
 			);
 
 			// Select target block
@@ -82,7 +82,10 @@ describe('Border Radius → WP Compatibility', () => {
 
 			// WP data should be removed too
 			assertBlockData((data) => {
-				expect('').to.be.equal(
+				expect({
+					type: 'all',
+					all: '',
+				}).to.be.deep.equal(
 					getSelectedBlock(data, 'blockeraBorderRadius')
 				);
 
@@ -94,11 +97,11 @@ describe('Border Radius → WP Compatibility', () => {
 
 		it('custom corners border radius', () => {
 			appendBlocks(
-				'<!-- wp:buttons -->\n' +
-					'<div class="wp-block-buttons"><!-- wp:button {"style":{"border":{"radius":{"topLeft":"5px","topRight":"10em","bottomLeft":"15%","bottomRight":"20rem"}}}} -->\n' +
-					'<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" style="border-top-left-radius:5px;border-top-right-radius:10em;border-bottom-left-radius:15%;border-bottom-right-radius:20rem">button</a></div>\n' +
-					'<!-- /wp:button --></div>\n' +
-					'<!-- /wp:buttons --> '
+				`<!-- wp:buttons -->
+					<div class="wp-block-buttons"><!-- wp:button {"style":{"border":{"radius":{"topLeft":"5px","topRight":"10em","bottomLeft":"15%","bottomRight":"20rem"}}}} -->
+					<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" style="border-top-left-radius:5px;border-top-right-radius:10em;border-bottom-left-radius:15%;border-bottom-right-radius:20rem">button</a></div>
+					<!-- /wp:button --></div>
+					<!-- /wp:buttons -->`
 			);
 
 			// Select target block
@@ -221,11 +224,11 @@ describe('Border Radius → WP Compatibility', () => {
 
 		it('custom corners border radius (only 2 corner)', () => {
 			appendBlocks(
-				'<!-- wp:buttons -->\n' +
-					'<div class="wp-block-buttons"><!-- wp:button {"style":{"border":{"radius":{"topLeft":"50%","topRight":"50%"}}}} -->\n' +
-					'<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" style="border-top-left-radius:50%;border-top-right-radius:50%">button</a></div>\n' +
-					'<!-- /wp:button --></div>\n' +
-					'<!-- /wp:buttons -->'
+				`<!-- wp:buttons -->
+					<div class="wp-block-buttons"><!-- wp:button {"style":{"border":{"radius":{"topLeft":"50%","topRight":"50%"}}}} -->
+					<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" style="border-top-left-radius:50%;border-top-right-radius:50%">button</a></div>
+					<!-- /wp:button --></div>
+					<!-- /wp:buttons -->`
 			);
 
 			// Select target block
@@ -294,9 +297,7 @@ describe('Border Radius → WP Compatibility', () => {
 
 				expect({
 					topLeft: '10%',
-					topRight: undefined,
 					bottomLeft: '30px',
-					bottomRight: undefined,
 				}).to.be.deep.equal(
 					getSelectedBlock(data, 'style')?.border?.radius
 				);

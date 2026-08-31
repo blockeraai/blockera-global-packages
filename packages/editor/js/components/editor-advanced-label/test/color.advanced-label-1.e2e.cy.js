@@ -391,8 +391,8 @@ describe('Color Control label testing (BG Color)', () => {
 					// Assert store data
 					assertBlockData((data) => {
 						expect({}).to.be.deep.eq(
-							getSelectedBlock(data, 'blockeraBlockStates').normal
-								.breakpoints.tablet.attributes
+							getSelectedBlock(data, 'blockeraBlockStates')
+								?.normal?.breakpoints?.tablet?.attributes
 						);
 					});
 				}
@@ -427,8 +427,8 @@ describe('Color Control label testing (BG Color)', () => {
 					// Assert store data
 					assertBlockData((data) => {
 						expect({}).to.be.deep.eq(
-							getSelectedBlock(data, 'blockeraBlockStates').hover
-								.breakpoints.tablet.attributes
+							getSelectedBlock(data, 'blockeraBlockStates')?.hover
+								?.breakpoints?.tablet?.attributes
 						);
 					});
 				}
@@ -463,7 +463,7 @@ describe('Color Control label testing (BG Color)', () => {
 
 					// Assert store data
 					assertBlockData((data) => {
-						expect('').to.be.deep.eq(
+						expect('').to.be.eq(
 							getSelectedBlock(data, 'blockeraBackgroundColor')
 						);
 					});
@@ -498,8 +498,8 @@ describe('Color Control label testing (BG Color)', () => {
 					// Assert store data
 					assertBlockData((data) => {
 						expect({}).to.be.deep.eq(
-							getSelectedBlock(data, 'blockeraBlockStates').hover
-								.breakpoints.desktop.attributes
+							getSelectedBlock(data, 'blockeraBlockStates')?.hover
+								?.breakpoints?.desktop?.attributes
 						);
 					});
 				}
@@ -581,18 +581,18 @@ describe('Color Control label testing (BG Color)', () => {
 				);
 
 				expect({}).to.be.deep.eq(
-					getSelectedBlock(data, 'blockeraBlockStates').normal
-						.breakpoints.tablet.attributes
+					getSelectedBlock(data, 'blockeraBlockStates')?.normal
+						?.breakpoints?.tablet?.attributes
 				);
 
 				expect({}).to.be.deep.eq(
-					getSelectedBlock(data, 'blockeraBlockStates').hover
-						.breakpoints.desktop.attributes
+					getSelectedBlock(data, 'blockeraBlockStates')?.hover
+						?.breakpoints?.desktop?.attributes
 				);
 
 				expect({}).to.be.deep.eq(
-					getSelectedBlock(data, 'blockeraBlockStates').hover
-						.breakpoints.tablet.attributes
+					getSelectedBlock(data, 'blockeraBlockStates')?.hover
+						?.breakpoints?.tablet?.attributes
 				);
 			});
 		});
@@ -674,8 +674,8 @@ describe('Color Control label testing (BG Color)', () => {
 				);
 
 				expect({}).to.be.deep.eq(
-					getSelectedBlock(data, 'blockeraBlockStates').normal
-						.breakpoints.tablet.attributes
+					getSelectedBlock(data, 'blockeraBlockStates')?.normal
+						?.breakpoints?.tablet?.attributes
 				);
 
 				expect({
@@ -686,8 +686,8 @@ describe('Color Control label testing (BG Color)', () => {
 				);
 
 				expect({}).to.be.deep.eq(
-					getSelectedBlock(data, 'blockeraBlockStates').hover
-						.breakpoints.tablet.attributes
+					getSelectedBlock(data, 'blockeraBlockStates')?.hover
+						?.breakpoints?.tablet?.attributes
 				);
 			});
 		});
@@ -786,18 +786,18 @@ describe('Color Control label testing (BG Color)', () => {
 						);
 
 						expect({}).to.be.deep.eq(
-							getSelectedBlock(data, 'blockeraBlockStates').normal
-								.breakpoints.tablet.attributes
+							getSelectedBlock(data, 'blockeraBlockStates')
+								?.normal?.breakpoints?.tablet?.attributes
 						);
 
 						expect({}).to.be.deep.eq(
-							getSelectedBlock(data, 'blockeraBlockStates').hover
-								.breakpoints.desktop.attributes
+							getSelectedBlock(data, 'blockeraBlockStates')?.hover
+								?.breakpoints?.desktop?.attributes
 						);
 
 						expect({}).to.be.deep.eq(
-							getSelectedBlock(data, 'blockeraBlockStates').hover
-								.breakpoints.tablet.attributes
+							getSelectedBlock(data, 'blockeraBlockStates')?.hover
+								?.breakpoints?.tablet?.attributes
 						);
 					});
 				}
@@ -881,18 +881,18 @@ describe('Color Control label testing (BG Color)', () => {
 				);
 
 				expect({}).to.be.deep.eq(
-					getSelectedBlock(data, 'blockeraBlockStates').normal
-						.breakpoints.tablet.attributes
+					getSelectedBlock(data, 'blockeraBlockStates')?.normal
+						?.breakpoints?.tablet?.attributes
 				);
 
 				expect({}).to.be.deep.eq(
-					getSelectedBlock(data, 'blockeraBlockStates').hover
-						.breakpoints.desktop.attributes
+					getSelectedBlock(data, 'blockeraBlockStates')?.hover
+						?.breakpoints?.desktop?.attributes
 				);
 
 				expect({}).to.be.deep.eq(
-					getSelectedBlock(data, 'blockeraBlockStates').hover
-						.breakpoints.tablet.attributes
+					getSelectedBlock(data, 'blockeraBlockStates')?.hover
+						?.breakpoints?.tablet?.attributes
 				);
 			});
 		});
@@ -976,20 +976,20 @@ describe('Color Control label testing (BG Color)', () => {
 				);
 
 				expect({}).to.be.deep.eq(
-					getSelectedBlock(data, 'blockeraBlockStates').normal
-						.breakpoints.tablet.attributes
+					getSelectedBlock(data, 'blockeraBlockStates')?.normal
+						?.breakpoints?.tablet?.attributes
 				);
 
 				expect({
 					blockeraBackgroundColor: '#c4c4c4',
 				}).to.be.deep.eq(
-					getSelectedBlock(data, 'blockeraBlockStates').hover
-						.breakpoints.desktop.attributes
+					getSelectedBlock(data, 'blockeraBlockStates')?.hover
+						?.breakpoints?.desktop?.attributes
 				);
 
 				expect({}).to.be.deep.eq(
-					getSelectedBlock(data, 'blockeraBlockStates').hover
-						.breakpoints.tablet.attributes
+					getSelectedBlock(data, 'blockeraBlockStates')?.hover
+						?.breakpoints?.tablet?.attributes
 				);
 			});
 		});

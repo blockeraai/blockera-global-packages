@@ -359,10 +359,12 @@ export const getComputedCssProps = ({
 		};
 
 		const generateCssStyleForInnerBlocks = (
-			[blockType, { attributes }]: [InnerBlockType | string, Object],
+			[blockType, innerBlock]: [InnerBlockType | string, Object],
 			device: TBreakpoint | string,
 			masterState: TStates | string
 		): void => {
+			const attributes = innerBlock?.attributes || {};
+
 			// Assume attributes hasn't any values.
 			if (!Object.keys(attributes).length) {
 				return;

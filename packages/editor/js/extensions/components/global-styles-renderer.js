@@ -96,13 +96,18 @@ export const GlobalStylesRenderer: ComponentType<any> = memo(
 		);
 
 		// Memoize current attributes to prevent unnecessary re-renders
-		const currentAttributes = useMemo(
-			() => ({
-				...preparedDefaultValues,
-				...sanitizedBlockGlobalStyles,
-			}),
-			[preparedDefaultValues, sanitizedBlockGlobalStyles]
-		);
+		const currentAttributes = useMemo(() => {
+			const merged = { ...preparedDefaultValues };
+			const sanitized = sanitizedBlockGlobalStyles || {};
+
+			for (const key in sanitized) {
+				if (sanitized[key] !== undefined) {
+					merged[key] = sanitized[key];
+				}
+			}
+
+			return merged;
+		}, [preparedDefaultValues, sanitizedBlockGlobalStyles]);
 
 		// Memoize block style props to prevent unnecessary re-renders
 		const blockStyleProps = useMemo(

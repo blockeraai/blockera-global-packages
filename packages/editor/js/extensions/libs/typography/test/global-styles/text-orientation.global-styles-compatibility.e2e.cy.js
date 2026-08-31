@@ -6,9 +6,11 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
 	openMoreFeaturesControl,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const FIXTURE_ROOT =
@@ -43,6 +45,7 @@ describe('Text Orientation → WP Compatibility (Global Styles)', () => {
 		}
 
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		cy.openGlobalStylesPanel();
 		closeWelcomeGuide();
 		cy.getByDataTest('block-style-variations').eq(0).click();
@@ -102,7 +105,7 @@ describe('Text Orientation → WP Compatibility (Global Styles)', () => {
 					});
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getParagraphGlobalStyles(data);
 					expect(undefined).to.equal(root?.typography?.writingMode);
 					expect(undefined).to.equal(
@@ -143,6 +146,30 @@ describe('Text Orientation → WP Compatibility (Global Styles)', () => {
 						root?.typography?.writingMode
 					);
 					expect('style-1').to.equal(
+						root?.blockeraTextOrientation?.value
+					);
+				});
+
+				cy.get('@container').within(() => {
+					cy.get('button[data-value="initial"]').click();
+				});
+
+				assertBlockData((data) => {
+					expect('horizontal-tb').to.equal(
+						getParagraphGlobalStyles(data)?.typography?.writingMode
+					);
+				});
+
+				cy.get('@container').within(() => {
+					cy.get('button[data-value="initial"]').first().click({
+						force: true,
+					});
+				});
+
+				assertClearedGlobalStylesStayCleared((data) => {
+					const root = getParagraphGlobalStyles(data);
+					expect(undefined).to.equal(root?.typography?.writingMode);
+					expect(undefined).to.equal(
 						root?.blockeraTextOrientation?.value
 					);
 				});

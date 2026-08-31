@@ -18,27 +18,33 @@ export default function applyHooks(beforeApplyHooks: () => void) {
 	addFilter(
 		'blocks.registerBlockType',
 		'blockera.editor.extensions.withAdvancedControlsAttributes',
-		(settings: Object, name: Object): Object =>
-			withBlockSettings(settings, name, {
-				currentUser: applyFilters(
-					'blockera.editor.extensions.currentUser',
-					{
-						roles: ['administrator'],
-					}
-				),
-				allowedUsers: applyFilters(
-					'blockera.editor.extensions.hooks.withBlockSettings.allowedUsers',
-					[]
-				),
-				unsupportedBlocks: applyFilters(
-					'blockera.editor.extensions.hooks.withBlockSettings.disabledBlocks',
-					[]
-				),
-				allowedPostTypes: applyFilters(
-					'blockera.editor.extensions.hooks.withBlockSettings.allowedPostTypes',
-					[]
-				),
-			}),
+		(settings: Object, name: Object, deprecation: mixed): Object => {
+			return withBlockSettings(
+				settings,
+				name,
+				{
+					currentUser: applyFilters(
+						'blockera.editor.extensions.currentUser',
+						{
+							roles: ['administrator'],
+						}
+					),
+					allowedUsers: applyFilters(
+						'blockera.editor.extensions.hooks.withBlockSettings.allowedUsers',
+						[]
+					),
+					unsupportedBlocks: applyFilters(
+						'blockera.editor.extensions.hooks.withBlockSettings.disabledBlocks',
+						[]
+					),
+					allowedPostTypes: applyFilters(
+						'blockera.editor.extensions.hooks.withBlockSettings.allowedPostTypes',
+						[]
+					),
+				},
+				deprecation
+			);
+		},
 		9e2
 	);
 

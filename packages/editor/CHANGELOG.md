@@ -6,6 +6,7 @@
 - Added search functionality for block features: You can now quickly find any feature by typing in the search box. Simply type what you're looking for, and the list will automatically filter to show matching features, making it much easier to find the settings you need.
 
 ### Improvements
+- BlockBase: reduced extra re-renders by keeping the WordPress store subscription on data values (not selector function identities), initializing the pending-attributes overlay only for user edits, and memoizing inspector context callbacks.
 - Improved block features organization for better code structure and easier maintenance.
 - Added support for third-party developers to extend and customize the style engine filters.
 - Made the application faster by identifying and fixing slow areas of the code 🚀.
@@ -27,12 +28,19 @@
 - Text Orientation Feature: improve label for options.
 
 ### Bug Fixes
+- After resetting a control, unused Blockera repeater attributes are no longer saved as `{ "value": [] }` in block markup.
+- WordPress `style` written during feature compatibility is deep-cleaned so empty objects (for example `"style":{"typography":{}}`) are not saved in block markup.
+- Preview mode: Clicks on links, linked images, buttons, and featured-image permalinks inside the preview iframe no longer navigate or reload the preview.
 - Global styles: When you edit which blocks use a style variation (the “used in multiple blocks” dialog) and save, the block icons shown on that style row now refresh right away instead of staying on the old list until something else updates the screen.
 - Letter-spacing, line-height, and position inset values (top, right, bottom, left) from WordPress now pass through CSS length normalization when syncing into Blockera, so bare zeros, shorthand decimals, and similar core formats match what the controls expect. Line height keeps unitless values from core without adding a `px` suffix.
 - Border radius from WordPress core: bare zero values (for example `0`) are now normalized to explicit lengths like `0px` when syncing into Blockera, so corner radius controls and generated CSS stay consistent with how border widths are handled.
 - Cursor feature: Fix pointer option icon and improve auto icon.
 
 ### Automated Tests
+- WordPress `style` cleanup: unit tests for empty-object pruning after compatibility merges, and e2e coverage that leftover `"style":{"typography":{}}` is not saved after font-size or text-color reset.
+- Block cleanup: e2e asserts unused repeater attributes are not saved as `{ "value": [] }` after a text-color reset.
+- BlockBase: e2e coverage that idle time and sibling-block edits do not re-render every mounted BlockBase instance.
+- Preview mode: e2e coverage that clicking paragraph links, linked images, buttons, and featured-image permalinks does not navigate the preview iframe.
 - Automated test to check `font color` WP data compatibility if variables not found. 
 - Automated test to check `background color` WP data compatibility if variables not found. 
 - Automated test to check `background image` WP data compatibility if variables not found. 

@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const MU_PLUGIN_PATH =
@@ -33,6 +35,7 @@ describe('Aspect Ratio → WP Compatibility (Global Styles)', () => {
 			pluginName: MU_PLUGIN_TARGET,
 		});
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		openCoverGlobalStyles();
 	});
 
@@ -74,7 +77,7 @@ describe('Aspect Ratio → WP Compatibility (Global Styles)', () => {
 					cy.get('select').select('', { force: true });
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getCoverGlobalStyles(data);
 
 					expect(undefined).to.equal(root?.dimensions?.aspectRatio);

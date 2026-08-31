@@ -33,6 +33,10 @@ import {
 	BeforeDividerGenerator,
 } from './css-generators/divider-generator';
 import { getBlockSupportCategory, getBlockSupportFallback } from '../../utils';
+import {
+	isUnusedTransformOrigin,
+	normalizeTransformOriginForControl,
+} from './transform-origin-value';
 
 const supports = getBlockSupportCategory('effects');
 
@@ -41,6 +45,25 @@ function unwrappedRepeaterEquals(a: mixed, b: mixed): boolean {
 		(unwrapRepeaterAttr(a): any),
 		(unwrapRepeaterAttr(b): any)
 	);
+}
+
+function cssForTransformOrigin(
+	current: mixed,
+	registeredDefault: mixed
+): string {
+	if (isUnusedTransformOrigin(current, registeredDefault)) {
+		return '';
+	}
+
+	const origin = normalizeTransformOriginForControl(current);
+	const top = getValueAddonRealValue(origin.top);
+	const left = getValueAddonRealValue(origin.left);
+
+	if (top === '' || left === '') {
+		return '';
+	}
+
+	return `${top} ${left}`;
 }
 
 function wrapCompoundCssVarIfVariable(
@@ -191,17 +214,13 @@ export const EffectsStyles = ({
 			}
 		}
 
-		if (
-			!arrayEquals(
-				attributes.blockeraTransformSelfOrigin.default,
-				blockProps.attributes.blockeraTransformSelfOrigin
-			)
-		) {
-			transformProperties['transform-origin'] = `${getValueAddonRealValue(
-				blockProps.attributes.blockeraTransformSelfOrigin?.top
-			)} ${getValueAddonRealValue(
-				blockProps.attributes.blockeraTransformSelfOrigin?.left
-			)}`;
+		const transformOrigin = cssForTransformOrigin(
+			blockProps.attributes.blockeraTransformSelfOrigin,
+			attributes.blockeraTransformSelfOrigin.default
+		);
+
+		if (transformOrigin) {
+			transformProperties['transform-origin'] = transformOrigin;
 		}
 
 		if (
@@ -223,18 +242,13 @@ export const EffectsStyles = ({
 					: 'none';
 		}
 
-		if (
-			!arrayEquals(
-				attributes.blockeraTransformChildOrigin.default,
-				blockProps.attributes.blockeraTransformChildOrigin
-			)
-		) {
-			transformProperties['perspective-origin'] =
-				`${getValueAddonRealValue(
-					blockProps.attributes.blockeraTransformChildOrigin?.top
-				)} ${getValueAddonRealValue(
-					blockProps.attributes.blockeraTransformChildOrigin?.left
-				)}`;
+		const perspectiveOrigin = cssForTransformOrigin(
+			blockProps.attributes.blockeraTransformChildOrigin,
+			attributes.blockeraTransformChildOrigin.default
+		);
+
+		if (perspectiveOrigin) {
+			transformProperties['perspective-origin'] = perspectiveOrigin;
 		}
 
 		if (!isEmptyObject(transformProperties)) {

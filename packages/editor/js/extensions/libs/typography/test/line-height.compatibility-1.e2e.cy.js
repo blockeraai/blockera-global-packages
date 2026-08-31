@@ -16,9 +16,9 @@ describe('Line Height → WP Compatibility', () => {
 	describe('Paragraph Block', () => {
 		it('Simple value', () => {
 			appendBlocks(
-				'<!-- wp:paragraph {"style":{"typography":{"lineHeight":"1.2"}}} -->\n' +
-					'<p style="line-height:1.2">Test paragraph</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"style":{"typography":{"lineHeight":"1.2"}}} -->
+<p style="line-height:1.2">Test paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			// Select target block

@@ -3,30 +3,21 @@
  * External dependencies
  */
 import { useBlockEditContext } from '@wordpress/block-editor';
-import { useSelect } from '@wordpress/data';
 
-export function useDisplayBlockControls(): Object {
-	const { isSelected, clientId, name } = useBlockEditContext();
-	return useSelect(
-		(select) => {
-			if (isSelected) {
-				return true;
-			}
-
-			const {
-				getBlockName,
-				isFirstMultiSelectedBlock,
-				getMultiSelectedBlockClientIds,
-			} = select('core/block-editor');
-
-			if (isFirstMultiSelectedBlock(clientId)) {
-				return getMultiSelectedBlockClientIds().every(
-					(id) => getBlockName(id) === name
-				);
-			}
-
-			return false;
-		},
-		[clientId, isSelected, name]
-	);
+/**
+ * Whether this block instance should mount Blockera inspector chrome.
+ *
+ * Gutenberg's InspectorControls Fill uses a store-backed helper so the first
+ * block in a homogeneous multi-selection also gets a sidebar. That helper
+ * `select`s `core/block-editor` on every canvas BlockBase. With thousands of
+ * instances, a selection change re-runs that mapper for every subscriber.
+ *
+ * Canvas BlockBase only needs inspector UI on the selected block. Core still
+ * handles multi-select InspectorControls. Do not subscribe here.
+ *
+ * @see source-codes/block-editor/packages/block-editor/src/components/inspector-controls
+ */
+export function useDisplayBlockControls(): boolean {
+	const { isSelected } = useBlockEditContext();
+	return Boolean(isSelected);
 }

@@ -5,7 +5,7 @@
  */
 import { ErrorBoundary } from 'react-error-boundary';
 import type { Element, ComponentType, MixedElement } from 'react';
-import { select, dispatch } from '@wordpress/data';
+import { select, dispatch, useDispatch, useRegistry } from '@wordpress/data';
 import {
 	createContext,
 	useContext,
@@ -43,6 +43,8 @@ import {
 	stripBlockeraBlockClasses,
 	stripBlockeraIdentity,
 	withBlockeraBlockClassFromId,
+	withoutBlockeraIdentityIfUnused,
+	withCleanedWpStyle,
 } from '@blockera/utils';
 import { classNames } from '@blockera/classnames';
 import { generalBlockFeatures } from '@blockera/blocks-core/js/libs/general-block-features';
@@ -73,6 +75,9 @@ import { BlockInspectorEditContent } from './block-inspector-edit-content';
 import { BlockInspectorTabSync } from './block-inspector-tab-sync';
 import { BlockBaseInspectorBundle } from './block-base-inspector-bundle';
 import { useBlockBaseStoreSelect } from './use-block-base-store-select';
+import { trackBlockBaseRender } from './track-block-base-render';
+import { enqueueBlockAttributePersist } from './persist-attribute-queue';
+import { shouldFlushGlobalStylesEntityNow } from './should-flush-global-styles-entity';
 import { blockInspectorTabPersistence } from './use-sync-block-inspector-tab';
 import type { UpdateBlockEditorSettings } from '../libs/types';
 import { ErrorBoundaryFallback } from '../hooks/block-settings';
@@ -106,18 +111,36 @@ import {
 	hasRegisteredClassName,
 	removeRegisteredClassName,
 	getBlocksClassNamesFromStore,
+	getBlockeraClassTokens,
 	BLOCKERA_BLOCK_REGEX,
 } from './registered-classnames';
 
 const BLOCKERA_DELAY_EXPECTED_TIME = 1000;
 
-function remintAndRegisterIdentity(clientId: string, attributes: Object): Object {
+function remintAndRegisterIdentity(
+	clientId: string,
+	attributes: Object
+): Object {
 	const reminted = remintBlockeraIdentity(cloneObject(attributes));
 	registerClassName(
 		clientId,
 		`blockera-block-${String(reminted.blockeraId)}`
 	);
 	return reminted;
+}
+
+function getBlockeraPersistSchema(
+	availableAttributes: ?Object,
+	originDefaultAttributes: ?Object
+): ?Object {
+	if (
+		availableAttributes?.blockeraId ||
+		availableAttributes?.blockeraPropsId
+	) {
+		return availableAttributes;
+	}
+
+	return originDefaultAttributes;
 }
 
 function storedLayoutFieldDiffers(left: mixed, right: mixed): boolean {
@@ -180,6 +203,18 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		...props
 	} = _props;
 
+	const registry = useRegistry();
+
+	// No-op unless window.__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__ is set
+	// (Cypress BlockBase re-render spec). Counts this render for idle /
+	// sibling-edit budgets; iframe instances report to the parent window.
+	trackBlockBaseRender({
+		clientId,
+		name,
+		isSelected,
+		insideBlockInspector,
+	});
+
 	const [notice, setNotice] = useState(null);
 	const [extraPreviewCss, setExtraPreviewCss] = useState('');
 	const [presetPreviewAttributePatch, setPresetPreviewAttributePatch] =
@@ -241,25 +276,33 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	}, []);
 
 	const {
+		deviceType,
 		currentBlock,
 		currentState,
 		currentBreakpoint,
-		getBlockExtensionBy,
 		currentInnerBlockState,
-		getDeviceType,
 		editorSelectedBlockEvent,
 		supports,
 		selectors,
 		blockVariations,
 		availableAttributes,
 		activeBlockVariation,
-		getActiveBlockVariation,
 	} = useBlockBaseStoreSelect({
 		clientId,
 		name,
 		isSelected,
 		insideBlockInspector,
+		attributes: blockAttributes,
 	});
+
+	const getActiveBlockVariation = useCallback(
+		(blockName: string, blockAttrs: Object) =>
+			select('core/blocks').getActiveBlockVariation(
+				blockName,
+				blockAttrs
+			),
+		[]
+	);
 
 	inspectorTabPersistenceRef.current = {
 		blockName: name,
@@ -277,6 +320,8 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		);
 	}, []);
 
+	const blockAttributesRef = useRef(blockAttributes);
+	blockAttributesRef.current = blockAttributes;
 	const pendingReturnCompatRef = useRef(false);
 	const persistReturnCompatRef = useRef(false);
 	const resetPendingAttributesRef = useRef(() => {});
@@ -287,7 +332,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	const isActive = !isTreeSkipped;
 	const setActive = useCallback(
 		(nextActive: boolean) => {
-			const next = cloneObject(blockAttributes);
+			const next = cloneObject(blockAttributesRef.current);
 			if (nextActive) {
 				if (isBlockeraBlockModeBasic(next)) {
 					pendingReturnCompatRef.current = true;
@@ -312,14 +357,14 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			resetPendingAttributesRef.current();
 			setBlockAttributes(next);
 		},
-		[blockAttributes, setBlockAttributes]
+		[setBlockAttributes]
 	);
 
 	const {
 		changeExtensionCurrentBlock: changeExtensionCurrentBlockDispatch,
 		changeExtensionCurrentBlockState: setCurrentState,
 		changeExtensionInnerBlockState: setInnerBlockState,
-	} = dispatch('blockera/extensions') || {};
+	} = useDispatch('blockera/extensions') || {};
 
 	const setCurrentBlock = useCallback(
 		(value) => {
@@ -338,25 +383,20 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 
 	const masterIsNormalState = useCallback(
 		(): boolean =>
-			'normal' === currentState && isBaseBreakpoint(getDeviceType()),
-		[currentState, getDeviceType]
+			'normal' === currentState && isBaseBreakpoint(deviceType),
+		[currentState, deviceType]
 	);
 
 	const isNormalState = useCallback((): boolean => {
 		if (isInnerBlock(currentBlock)) {
 			return (
 				'normal' === currentInnerBlockState &&
-				isBaseBreakpoint(getDeviceType())
+				isBaseBreakpoint(deviceType)
 			);
 		}
 
 		return masterIsNormalState();
-	}, [
-		currentBlock,
-		currentInnerBlockState,
-		getDeviceType,
-		masterIsNormalState,
-	]);
+	}, [currentBlock, currentInnerBlockState, deviceType, masterIsNormalState]);
 
 	const args = useMemo(
 		() => ({
@@ -401,17 +441,30 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	// Store the unique classname for this block instance.
 	// Generate it once on mount using useMemo (runs during render, memoized by clientId).
 	const uniqueClassName = useMemo(() => {
-		const id = getBlockeraId(blockAttributes);
-		if (
-			!id ||
-			isBlockeraEngineSkippedForClient(clientId, blockAttributes)
-		) {
+		if (isBlockeraEngineSkippedForClient(clientId, blockAttributes)) {
 			return '';
 		}
-		const fromId = `blockera-block-${String(id)}`;
-		registerClassName(clientId, fromId);
-		return fromId;
-	}, [clientId, blockAttributes]);
+
+		const tokens = getBlockeraClassTokens(blockAttributes?.className);
+		const id = getBlockeraId(blockAttributes);
+		const fromId = id ? `blockera-block-${String(id)}` : '';
+
+		for (let i = 0; i < tokens.length; i++) {
+			registerClassName(clientId, tokens[i]);
+		}
+		if (fromId && tokens.indexOf(fromId) === -1) {
+			registerClassName(clientId, fromId);
+		}
+
+		return tokens[0] || fromId;
+	}, [
+		clientId,
+		isTreeSkipped,
+		blockAttributes?.blockeraId,
+		blockAttributes?.blockeraPropsId,
+		blockAttributes?.blockeraCompatId,
+		blockAttributes?.className,
+	]);
 
 	// Track if this is the first calculation to ensure unique classname on mount
 	const isFirstCalculationRef = useRef(true);
@@ -433,29 +486,18 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		};
 	}, [clientId, uniqueClassName]);
 
-	useLayoutEffect(() => {
-		if (!needsLegacyBlockeraIdMigrate(blockAttributes)) {
-			return;
-		}
-
-		const migrated = migrateLegacyBlockeraIds(
-			cloneObject(blockAttributes)
-		);
-		// cloneObject drops `undefined`; Gutenberg merge needs explicit unset.
-		migrated.blockeraPropsId = undefined;
-		migrated.blockeraCompatId = undefined;
-		setBlockAttributes(migrated);
-	}, [blockAttributes, setBlockAttributes]);
-
 	const compatibleAttributes = useMemo(() => {
+		const sourceAttributes = cloneObject(blockAttributes);
+
 		const hasFeatures = hasBlockeraFeatureAttributes(
-			blockAttributes,
+			sourceAttributes,
 			originDefaultAttributes
 		);
 		const shouldRunWpToBlockera = shouldRunWpToBlockeraHydrate({
 			isActive,
 			pendingReturn: pendingReturnCompatRef.current,
 			hasFeatures,
+			insideBlockInspector,
 		});
 
 		if (pendingReturnCompatRef.current && isActive) {
@@ -468,10 +510,10 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			availableAttributes,
 			runWpToBlockera: shouldRunWpToBlockera,
 			stampIdentity:
-				Boolean(getBlockeraId(blockAttributes)) ||
+				Boolean(getBlockeraId(sourceAttributes)) ||
 				persistReturnCompatRef.current ||
 				hasFeatures,
-			attributes: cloneObject(blockAttributes),
+			attributes: sourceAttributes,
 			defaultAttributes: originDefaultAttributes,
 		});
 
@@ -560,88 +602,152 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		uniqueClassName,
 		availableAttributes,
 		originDefaultAttributes,
+		insideBlockInspector,
 	]);
 
 	// Single source of truth: compatibleAttributes (derived from blockAttributes).
 	// pendingAttributes is only set during user edits; cleared when derived value updates.
-	const [pendingAttributes, setPendingAttributes] =
-		useState(compatibleAttributes);
+	const [pendingAttributes, setPendingAttributes] = useState(null);
 	resetPendingAttributesRef.current = () => setPendingAttributes(null);
 	const attributes = pendingAttributes ?? compatibleAttributes;
+	const attributesRef = useRef(attributes);
+	attributesRef.current = attributes;
 	const { className } = attributes;
 
 	useLayoutEffect(() => {
-		if (!isActive) {
-			return;
+		let next = blockAttributes;
+		let didLegacyId = false;
+		let didWpStyle = false;
+		let didRemint = false;
+		let didLayoutFields = false;
+
+		if (needsLegacyBlockeraIdMigrate(next)) {
+			const persistSchema = getBlockeraPersistSchema(
+				availableAttributes,
+				originDefaultAttributes
+			);
+			const migrated = withoutBlockeraIdentityIfUnused(
+				migrateLegacyBlockeraIds(cloneObject(next)),
+				persistSchema
+			);
+			// cloneObject drops `undefined`; Gutenberg merge needs explicit unset.
+			migrated.blockeraPropsId = undefined;
+			migrated.blockeraCompatId = undefined;
+			if (blockAttributes.style && !migrated.style) {
+				migrated.style = undefined;
+			}
+
+			if (!isEquals(migrated, next)) {
+				next = migrated;
+				didLegacyId = true;
+			}
 		}
 
-		if (isBlockeraEngineSkippedForClient(clientId, blockAttributes)) {
-			return;
+		if (next?.style) {
+			const cleaned = withCleanedWpStyle(next);
+
+			if (!isEquals(cleaned.style, next.style)) {
+				next = {
+					...next,
+					style: cleaned.style,
+				};
+				didWpStyle = true;
+			}
 		}
 
+		const id = getBlockeraId(next);
+		const fromId = id ? `blockera-block-${String(id)}` : '';
+		const classTokens = getBlockeraClassTokens(next?.className);
+		const classIsDuplicate = classTokens.some((token) =>
+			isClassNameDuplicate(clientId, token)
+		);
+		const idIsDuplicate = Boolean(
+			fromId && isClassNameDuplicate(clientId, fromId)
+		);
+
+		// Gutenberg Duplicate clones identity onto a new clientId; remint so
+		// selectors do not collide. Also remint pasted blocks that share a
+		// unique class token even when blockeraId already differs.
 		if (
-			!getBlockeraId(blockAttributes) &&
-			!getBlockeraId(compatibleAttributes)
+			(classIsDuplicate || idIsDuplicate) &&
+			!isBlockeraEngineSkippedForClient(clientId, next)
 		) {
+			next = remintAndRegisterIdentity(clientId, next);
+			didRemint = true;
+		}
+
+		const persistedId = getBlockeraId(next);
+		if (persistedId && (didLegacyId || didRemint)) {
+			registerClassName(
+				clientId,
+				`blockera-block-${String(persistedId)}`
+			);
+		}
+
+		const layoutPatch: { [string]: mixed } = {};
+		if (
+			isActive &&
+			!isBlockeraEngineSkippedForClient(clientId, blockAttributes) &&
+			(getBlockeraId(blockAttributes) ||
+				getBlockeraId(compatibleAttributes))
+		) {
+			if (
+				storedLayoutFieldDiffers(
+					compatibleAttributes?.blockeraDisplay,
+					blockAttributes?.blockeraDisplay
+				)
+			) {
+				layoutPatch.blockeraDisplay =
+					compatibleAttributes.blockeraDisplay;
+			}
+
+			if (
+				storedLayoutFieldDiffers(
+					compatibleAttributes?.blockeraFlexLayout,
+					blockAttributes?.blockeraFlexLayout
+				)
+			) {
+				layoutPatch.blockeraFlexLayout =
+					compatibleAttributes.blockeraFlexLayout;
+			}
+
+			if (Object.keys(layoutPatch).length) {
+				next = {
+					...next,
+					...layoutPatch,
+				};
+				didLayoutFields = true;
+			}
+		}
+
+		if (!didLegacyId && !didWpStyle && !didRemint && !didLayoutFields) {
 			return;
 		}
 
-		const patch: { [string]: mixed } = {};
-
-		if (
-			storedLayoutFieldDiffers(
-				compatibleAttributes?.blockeraDisplay,
-				blockAttributes?.blockeraDisplay
-			)
-		) {
-			patch.blockeraDisplay = compatibleAttributes.blockeraDisplay;
+		if (didLayoutFields || didRemint) {
+			setPendingAttributes(null);
 		}
 
-		if (
-			storedLayoutFieldDiffers(
-				compatibleAttributes?.blockeraFlexLayout,
-				blockAttributes?.blockeraFlexLayout
-			)
-		) {
-			patch.blockeraFlexLayout = compatibleAttributes.blockeraFlexLayout;
-		}
+		const persistPayload =
+			didLayoutFields && !didLegacyId && !didWpStyle && !didRemint
+				? layoutPatch
+				: didWpStyle && !didLegacyId && !didRemint && !didLayoutFields
+					? { style: next.style }
+					: next;
 
-		if (!Object.keys(patch).length) {
-			return;
-		}
-
-		setPendingAttributes(null);
-		setBlockAttributes({
-			...blockAttributes,
-			...patch,
+		enqueueBlockAttributePersist(registry, () => {
+			setBlockAttributes(persistPayload);
 		});
 	}, [
 		isActive,
 		clientId,
+		registry,
 		blockAttributes,
 		compatibleAttributes,
 		setBlockAttributes,
+		availableAttributes,
+		originDefaultAttributes,
 	]);
-
-	// Gutenberg Duplicate clones identity onto a new clientId; remint so
-	// selectors do not collide. Drop the overlay so persist uses the new id.
-	useLayoutEffect(() => {
-		const id = getBlockeraId(blockAttributes);
-		if (
-			!id ||
-			isBlockeraEngineSkippedForClient(clientId, blockAttributes)
-		) {
-			return;
-		}
-
-		const fromId = `blockera-block-${String(id)}`;
-		if (!isClassNameDuplicate(clientId, fromId, getBlocksClassNames())) {
-			return;
-		}
-
-		setPendingAttributes(null);
-		setBlockAttributes(remintAndRegisterIdentity(clientId, blockAttributes));
-	}, [clientId, blockAttributes, getBlocksClassNames, setBlockAttributes]);
 
 	/**
 	 * Set the attributes state and the attributes ref.
@@ -651,100 +757,157 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 	 *
 	 * @return {void}
 	 */
-	const setAttributes = (
-		value: any,
-		{
-			ref,
-			shouldUpdateClassName = true,
-		}: {
-			ref?: Object,
-			shouldUpdateClassName?: boolean,
-		} = {
-			shouldUpdateClassName: true,
-		}
-	) => {
-		const classNameStr = value?.className ?? '';
-		const match = BLOCKERA_BLOCK_REGEX.exec(classNameStr);
-		const keepBlockeraIdentity = Boolean(getBlockeraId(value));
-		const needsClassNameRewrite =
-			(shouldUpdateClassName &&
+	const setAttributes = useCallback(
+		(
+			value: any,
+			{
+				ref,
+				shouldUpdateClassName = true,
+			}: {
+				ref?: Object,
+				shouldUpdateClassName?: boolean,
+			} = {
+				shouldUpdateClassName: true,
+			}
+		) => {
+			const classNameStr = value?.className ?? '';
+			const match = BLOCKERA_BLOCK_REGEX.exec(classNameStr);
+			const keepBlockeraIdentity = Boolean(getBlockeraId(value));
+			const needsClassNameRewrite =
+				(shouldUpdateClassName &&
+					keepBlockeraIdentity &&
+					/^is-(?:style|size)-/.test(classNameStr) &&
+					!/\s/g.test(classNameStr)) ||
+				(match &&
+					isClassNameDuplicate(
+						clientId,
+						match[0],
+						getBlocksClassNames()
+					));
+
+			let valueToStore = value;
+
+			if (needsClassNameRewrite) {
+				valueToStore = cloneObject(value);
+			}
+
+			const storedClassName = valueToStore.className ?? '';
+			const storedMatch = BLOCKERA_BLOCK_REGEX.exec(storedClassName);
+
+			// We should update classname with unique generate classname while customizing style variation.
+			if (
+				shouldUpdateClassName &&
 				keepBlockeraIdentity &&
-				/^is-(?:style|size)-/.test(classNameStr) &&
-				!/\s/g.test(classNameStr)) ||
-			(match &&
+				uniqueClassName &&
+				/^is-(?:style|size)-/.test(storedClassName) &&
+				!/\s/g.test(storedClassName)
+			) {
+				valueToStore.className = classNames(storedClassName, {
+					'blockera-block': true,
+					[uniqueClassName]: true,
+				});
+				registerClassName(clientId, uniqueClassName);
+			} else if (
+				shouldUpdateClassName &&
+				keepBlockeraIdentity &&
+				storedMatch &&
 				isClassNameDuplicate(
 					clientId,
-					match[0],
+					storedMatch[0],
 					getBlocksClassNames()
-				));
+				)
+			) {
+				valueToStore = remintAndRegisterIdentity(
+					clientId,
+					valueToStore
+				);
+			} else if (
+				shouldUpdateClassName &&
+				keepBlockeraIdentity &&
+				uniqueClassName &&
+				storedMatch &&
+				storedMatch[0] !== uniqueClassName
+			) {
+				const prevClassName = storedClassName
+					.replace(BLOCKERA_BLOCK_REGEX, '')
+					.replace(/\bblockera-block\b/gi, '');
+				valueToStore.className = classNames(prevClassName.trim(), {
+					'blockera-block': true,
+					[uniqueClassName]: true,
+				});
 
-		let valueToStore = value;
+				registerClassName(clientId, uniqueClassName);
+			} else if (storedMatch && shouldUpdateClassName) {
+				registerClassName(clientId, storedMatch[0]);
+			}
 
-		if (needsClassNameRewrite) {
-			valueToStore = cloneObject(value);
-		}
+			if (
+				!['save-customizations', 'detach-style'].includes(
+					ref?.current?.action
+				) &&
+				select('blockera/editor').getEditorSelectedBlockEvent() !==
+					undefined
+			) {
+				// Reset the editor selected block event to undefined.
+				dispatch('blockera/editor').setEditorSelectedBlockEvent(
+					undefined
+				);
+			}
 
-		const storedClassName = valueToStore.className ?? '';
-		const storedMatch = BLOCKERA_BLOCK_REGEX.exec(storedClassName);
+			// Sync with the new value for attributes state.
+			compatibleAttributesRef.current = valueToStore;
 
-		// We should update classname with unique generate classname while customizing style variation.
-		if (
-			shouldUpdateClassName &&
-			keepBlockeraIdentity &&
-			uniqueClassName &&
-			/^is-(?:style|size)-/.test(storedClassName) &&
-			!/\s/g.test(storedClassName)
-		) {
-			valueToStore.className = classNames(storedClassName, {
-				'blockera-block': true,
-				[uniqueClassName]: true,
-			});
-			registerClassName(clientId, uniqueClassName);
-		} else if (
-			shouldUpdateClassName &&
-			keepBlockeraIdentity &&
-			storedMatch &&
-			isClassNameDuplicate(
-				clientId,
-				storedMatch[0],
-				getBlocksClassNames()
-			)
-		) {
-			valueToStore = remintAndRegisterIdentity(clientId, valueToStore);
-		} else if (
-			shouldUpdateClassName &&
-			keepBlockeraIdentity &&
-			uniqueClassName &&
-			storedMatch &&
-			storedMatch[0] !== uniqueClassName
-		) {
-			const prevClassName = storedClassName
-				.replace(BLOCKERA_BLOCK_REGEX, '')
-				.replace(/\bblockera-block\b/gi, '');
-			valueToStore.className = classNames(prevClassName.trim(), {
-				'blockera-block': true,
-				[uniqueClassName]: true,
-			});
+			setPendingAttributes((prev) =>
+				isEquals(prev, valueToStore) ? prev : valueToStore
+			);
 
-			registerClassName(clientId, uniqueClassName);
-		} else if (storedMatch && shouldUpdateClassName) {
-			registerClassName(clientId, storedMatch[0]);
-		}
+			// Global styles: write userStyles in this tick. Headed Cypress can
+			// clear `pendingAttributes` before the attributes effect runs, so
+			// delete never reaches SET_BLOCK_STYLES and merged reads keep the
+			// previous WP backgroundPosition.
+			if (
+				false === insideBlockInspector &&
+				typeof handleOnChangeStyleInLocalState === 'function'
+			) {
+				const persistableAttributes = withoutBlockeraIdentityIfUnused(
+					valueToStore,
+					getBlockeraPersistSchema(
+						availableAttributes,
+						originDefaultAttributes
+					)
+				);
+				const currentUserBlock = select(
+					'blockera/editor'
+				).getGlobalStyles?.()?.userStyles?.styles?.blocks?.[name];
+				if (!isEquals(currentUserBlock, persistableAttributes)) {
+					handleOnChangeStyleInLocalState(
+						cloneObject(persistableAttributes)
+					);
+				}
 
-		if (
-			!['save-customizations', 'detach-style'].includes(
-				ref?.current?.action
-			)
-		) {
-			// Reset the editor selected block event to undefined.
-			dispatch('blockera/editor').setEditorSelectedBlockEvent(undefined);
-		}
+				const shouldPersistEntityNow =
+					shouldFlushGlobalStylesEntityNow(
+						persistableAttributes,
+						currentUserBlock
+					);
 
-		// Sync with the new value for attributes state.
-		compatibleAttributesRef.current = valueToStore;
-
-		setPendingAttributes(valueToStore);
-	};
+				if (shouldPersistEntityNow) {
+					setBlockAttributes(cloneObject(persistableAttributes));
+				}
+			}
+		},
+		[
+			clientId,
+			name,
+			uniqueClassName,
+			getBlocksClassNames,
+			insideBlockInspector,
+			handleOnChangeStyleInLocalState,
+			availableAttributes,
+			originDefaultAttributes,
+			setBlockAttributes,
+		]
+	);
 
 	// Debounce updates to parent state to avoid unnecessary re-renders.
 	useEffect(() => {
@@ -786,6 +949,14 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			clonedAttributes.className = stripped.className;
 		}
 
+		const persistableAttributes = withoutBlockeraIdentityIfUnused(
+			clonedAttributes,
+			getBlockeraPersistSchema(
+				availableAttributes,
+				originDefaultAttributes
+			)
+		);
+
 		if (
 			'function' === typeof handleOnChangeStyleInLocalState &&
 			!isEquals(compatibleAttributes, attributes) &&
@@ -795,7 +966,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 			)
 		) {
 			// It just will be called if outside of the block inspector. (See: canvas-editor/components/block-global-styles-panel-screen/context.js)
-			handleOnChangeStyleInLocalState(clonedAttributes);
+			handleOnChangeStyleInLocalState(persistableAttributes);
 		}
 
 		// If inside the block inspector, update the parent state immediately.
@@ -809,7 +980,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 
 		if (insideBlockInspector) {
 			if (shouldPersistUserEdit || shouldPersistReturn) {
-				setBlockAttributes(clonedAttributes);
+				setBlockAttributes(persistableAttributes);
 				persistReturnCompatRef.current = false;
 			}
 
@@ -818,7 +989,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 
 		const timeoutId = setTimeout(() => {
 			if (shouldPersistUserEdit || shouldPersistReturn) {
-				setBlockAttributes(clonedAttributes);
+				setBlockAttributes(persistableAttributes);
 				persistReturnCompatRef.current = false;
 			}
 		}, BLOCKERA_DELAY_EXPECTED_TIME);
@@ -882,13 +1053,16 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 
 	const { edit: BlockEditComponent } = additional;
 
-	const getAttributes = (key: string = ''): any => {
-		if (key && sanitizedAttributes[key]) {
-			return sanitizedAttributes[key];
-		}
+	const getAttributes = useCallback(
+		(key: string = ''): any => {
+			if (key && sanitizedAttributes[key]) {
+				return sanitizedAttributes[key];
+			}
 
-		return sanitizedAttributes;
-	};
+			return sanitizedAttributes;
+		},
+		[sanitizedAttributes]
+	);
 
 	const { hasStyleVariations, hasSizeVariations } = useMemo(
 		() => getBlockVariationSupport(additional),
@@ -916,6 +1090,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		currentState,
 		blockVariations,
 		defaultAttributes,
+		originDefaultAttributes,
 		currentBreakpoint,
 		availableAttributes,
 		masterIsNormalState,
@@ -928,7 +1103,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		// to determine which ones might alter the original `attributes` object reference directly.
 		// This helps ensure that updates to `attributes` remain predictable, and mutation side-effects
 		// are properly managed or avoided (consider use of cloneObject as needed).
-		getAttributes: () => cloneObject(attributes),
+		getAttributes: () => cloneObject(attributesRef.current),
 		innerBlocks: additional?.blockeraInnerBlocks,
 		setChangesets: (flag: boolean) => {
 			if (insideBlockInspector && !displayBlockControls) {
@@ -1011,7 +1186,10 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		if (isInnerBlock(currentBlock)) {
 			if (!isVirtualBlock(currentBlock)) {
 				const { availableBlockStates } =
-					getBlockExtensionBy('targetBlock', currentBlock) || {};
+					select('blockera/extensions').getBlockExtensionBy(
+						'targetBlock',
+						currentBlock
+					) || {};
 
 				if (Object.keys(availableBlockStates || {}).length) {
 					blockStates = availableBlockStates;
@@ -1031,7 +1209,7 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		}
 	}, [currentBlock, availableStates, availableInnerStates]);
 
-	const activeDeviceType = getDeviceType();
+	const activeDeviceType = deviceType;
 
 	const primePresetHover = useCallback(() => {
 		if (false === insideBlockInspector) {
@@ -1174,46 +1352,89 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		activeDeviceType,
 	]);
 
+	const blockContextBlock = useMemo(
+		() => ({
+			blockName: name,
+			clientId,
+			handleOnChangeAttributes,
+			attributes: currentAttributes,
+			storeName: 'blockera/controls',
+		}),
+		[name, clientId, handleOnChangeAttributes, currentAttributes]
+	);
+
+	const BlockComponent = useCallback(() => children, [children]);
+	const getBlockType = useCallback(
+		() => select('core/blocks').getBlockType(name),
+		[name]
+	);
+	const contextSetCurrentTab = insideBlockInspector
+		? setInspectorTab
+		: setCurrentTab;
+
+	const blockEditContextValue = useMemo(
+		() => ({
+			args,
+			isActive,
+			block: blockContextBlock,
+			currentTab,
+			additional,
+			currentBlock,
+			currentState,
+			setCurrentTab: contextSetCurrentTab,
+			isNormalState,
+			setAttributes,
+			getAttributes,
+			blockVariations,
+			currentBreakpoint,
+			defaultAttributes,
+			currentInnerBlock,
+			availableAttributes,
+			masterIsNormalState,
+			blockeraInnerBlocks,
+			activeBlockVariation,
+			currentInnerBlockState,
+			getActiveBlockVariation,
+			handleOnChangeAttributes,
+			updateBlockEditorSettings,
+			BlockComponent,
+			attributes: sanitizedAttributes,
+			activeDeviceType,
+			getBlockType,
+		}),
+		[
+			args,
+			isActive,
+			blockContextBlock,
+			currentTab,
+			additional,
+			currentBlock,
+			currentState,
+			contextSetCurrentTab,
+			isNormalState,
+			setAttributes,
+			getAttributes,
+			blockVariations,
+			currentBreakpoint,
+			defaultAttributes,
+			currentInnerBlock,
+			availableAttributes,
+			masterIsNormalState,
+			blockeraInnerBlocks,
+			activeBlockVariation,
+			currentInnerBlockState,
+			getActiveBlockVariation,
+			handleOnChangeAttributes,
+			updateBlockEditorSettings,
+			BlockComponent,
+			sanitizedAttributes,
+			activeDeviceType,
+			getBlockType,
+		]
+	);
+
 	return (
-		<BlockEditContextProvider
-			{...{
-				args,
-				isActive,
-				block: {
-					blockName: name,
-					clientId,
-					handleOnChangeAttributes,
-					attributes: currentAttributes,
-					storeName: 'blockera/controls',
-				},
-				currentTab,
-				additional,
-				currentBlock,
-				currentState,
-				setCurrentTab: insideBlockInspector
-					? setInspectorTab
-					: setCurrentTab,
-				isNormalState,
-				setAttributes,
-				getAttributes,
-				blockVariations,
-				currentBreakpoint,
-				defaultAttributes,
-				currentInnerBlock,
-				availableAttributes,
-				masterIsNormalState,
-				blockeraInnerBlocks,
-				activeBlockVariation,
-				currentInnerBlockState,
-				getActiveBlockVariation,
-				handleOnChangeAttributes,
-				updateBlockEditorSettings,
-				BlockComponent: () => children,
-				attributes: sanitizedAttributes,
-				activeDeviceType: getDeviceType(),
-				getBlockType: () => select('core/blocks').getBlockType(name),
-			}}
-		>
+		<BlockEditContextProvider value={blockEditContextValue}>
 			<BlockInjectedSlotContext.Provider value={clientId}>
 				<PresetCanvasPreviewContext.Provider
 					value={presetCanvasPreviewValue}

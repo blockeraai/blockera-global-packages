@@ -116,8 +116,12 @@
 			z-index: 4;
 		}
 
+		&.empty-color-error:focus:not(:disabled, .no-border, .is-busy),
+		&.empty-color-error.is-focus:not(:disabled, .no-border, .is-busy),
+		&.empty-color-error:hover,
 		&.empty-color-error {
-			box-shadow: inset 0 0 0 1px #ff3f3e;
+			--blockera-controls-border-color: #ff3f3e;
+			background: #fff0f0 !important;
 		}
 
 		.color-label {

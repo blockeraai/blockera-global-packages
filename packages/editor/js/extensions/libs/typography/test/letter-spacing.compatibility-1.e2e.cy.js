@@ -16,9 +16,9 @@ describe('Letter Spacing → WP Compatibility', () => {
 	describe('Paragraph Block', () => {
 		it('Simple value', () => {
 			appendBlocks(
-				'<!-- wp:paragraph {"style":{"typography":{"letterSpacing":"2px"}}} -->\n' +
-					'<p style="letter-spacing:2px">Test paragraph</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"style":{"typography":{"letterSpacing":"2px"}}} -->
+<p style="letter-spacing:2px">Test paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			// Select target block

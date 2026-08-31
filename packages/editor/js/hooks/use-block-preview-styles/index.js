@@ -44,6 +44,11 @@ const extractStylesFromContainer = (container: HTMLElement): string => {
 		if (styleEl.textContent) {
 			styles.push(styleEl.textContent);
 		}
+		// Parent-document <style> still applies globally even in a
+		// visibility:hidden host. Disable after copy so only BlockPreview
+		// additionalStyles (iframe) consume the CSS.
+		styleEl.disabled = true;
+		styleEl.setAttribute('media', 'not all');
 	}
 
 	return styles.join('\n');

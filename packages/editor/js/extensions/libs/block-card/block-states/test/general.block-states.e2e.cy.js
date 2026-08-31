@@ -1065,15 +1065,15 @@ describe('Block State E2E Test', () => {
 		//Check store
 		assertBlockData((data) => {
 			expect({}).to.be.deep.equal(
-				getSelectedBlock(data, 'blockeraBlockStates').before.breakpoints
-					.desktop.attributes
+				getSelectedBlock(data, 'blockeraBlockStates')?.before
+					?.breakpoints?.desktop?.attributes
 			);
 			expect({}).to.be.deep.equal(
-				getSelectedBlock(data, 'blockeraBlockStates').before.breakpoints
-					.mobile.attributes
+				getSelectedBlock(data, 'blockeraBlockStates')?.before
+					?.breakpoints?.mobile?.attributes
 			);
-			expect('').to.be.deep.equal(
-				getSelectedBlock(data, 'blockeraBlockStates').before.content
+			expect('').to.be.equal(
+				getSelectedBlock(data, 'blockeraBlockStates')?.before?.content
 			);
 		});
 	});
@@ -1093,12 +1093,12 @@ describe('Block State E2E Test', () => {
 			const blockStates = getSelectedBlock(data, 'blockeraBlockStates');
 
 			expect({}).to.be.deep.equal(
-				blockStates.before.breakpoints.desktop.attributes
+				blockStates?.before?.breakpoints?.desktop?.attributes
 			);
 			expect({}).to.be.deep.equal(
-				blockStates.before.breakpoints.mobile.attributes
+				blockStates?.before?.breakpoints?.mobile?.attributes
 			);
-			expect('').to.be.deep.equal(blockStates.before.content);
+			expect('').to.be.equal(blockStates?.before?.content);
 
 			expect('#fabbbb').to.be.equal(
 				blockStates.hover.breakpoints.desktop.attributes

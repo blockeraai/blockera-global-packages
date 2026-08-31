@@ -14,7 +14,7 @@ describe('Text Align → WP Compatibility', () => {
 	});
 
 	describe('Paragraph Block', () => {
-		it('in paragraph the attribute is align', () => {
+		it('in paragraph the attribute is not align (legacy was align)', () => {
 			appendBlocks(
 				`<!-- wp:paragraph {"align":"center"} -->
 <p class="has-text-align-center">Test paragraph...</p>
@@ -38,7 +38,10 @@ describe('Text Align → WP Compatibility', () => {
 					getSelectedBlock(data, 'blockeraTextAlign')
 				);
 
-				expect('center').to.be.equal(getSelectedBlock(data, 'align'));
+				expect(undefined).to.be.equal(getSelectedBlock(data, 'align'));
+				expect('center').to.be.equal(
+					getSelectedBlock(data, 'style')?.typography?.textAlign
+				);
 			});
 
 			//
@@ -55,7 +58,10 @@ describe('Text Align → WP Compatibility', () => {
 					getSelectedBlock(data, 'blockeraTextAlign')
 				);
 
-				expect('right').to.be.equal(getSelectedBlock(data, 'align'));
+				expect(undefined).to.be.equal(getSelectedBlock(data, 'align'));
+				expect('right').to.be.equal(
+					getSelectedBlock(data, 'style')?.typography?.textAlign
+				);
 			});
 
 			// justify is not valid for wp
@@ -70,6 +76,9 @@ describe('Text Align → WP Compatibility', () => {
 				);
 
 				expect(undefined).to.be.equal(getSelectedBlock(data, 'align'));
+				expect(undefined).to.be.equal(
+					getSelectedBlock(data, 'style')?.typography?.textAlign
+				);
 			});
 
 			//
@@ -87,6 +96,9 @@ describe('Text Align → WP Compatibility', () => {
 				);
 
 				expect(undefined).to.be.equal(getSelectedBlock(data, 'align'));
+				expect(undefined).to.be.equal(
+					getSelectedBlock(data, 'style')?.typography?.textAlign
+				);
 			});
 		});
 
@@ -118,7 +130,10 @@ describe('Text Align → WP Compatibility', () => {
 					getSelectedBlock(data, 'blockeraTextAlign')
 				);
 
-				expect('left').to.be.equal(getSelectedBlock(data, 'align'));
+				expect(undefined).to.be.equal(getSelectedBlock(data, 'align'));
+				expect('left').to.be.equal(
+					getSelectedBlock(data, 'style')?.typography?.textAlign
+				);
 			});
 
 			//
@@ -139,7 +154,10 @@ describe('Text Align → WP Compatibility', () => {
 					getSelectedBlock(data, 'blockeraTextAlign')
 				);
 
-				expect('center').to.be.equal(getSelectedBlock(data, 'align'));
+				expect(undefined).to.be.equal(getSelectedBlock(data, 'align'));
+				expect('center').to.be.equal(
+					getSelectedBlock(data, 'style')?.typography?.textAlign
+				);
 			});
 
 			//
@@ -160,7 +178,10 @@ describe('Text Align → WP Compatibility', () => {
 					getSelectedBlock(data, 'blockeraTextAlign')
 				);
 
-				expect('right').to.be.equal(getSelectedBlock(data, 'align'));
+				expect(undefined).to.be.equal(getSelectedBlock(data, 'align'));
+				expect('right').to.be.equal(
+					getSelectedBlock(data, 'style')?.typography?.textAlign
+				);
 			});
 		});
 	});

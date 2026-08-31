@@ -87,15 +87,27 @@ export const StateStyle = (
 		];
 	}, [props?.additional, blockStates]);
 
-	// Move "normal" state to last position to ensure other states like "hover" or "active"
-	// can properly override the base styles when those states are activated.
-	if (states.length > 1) {
-		states.push(states.splice(0, 1)[0]);
-	}
+	// Move "normal" last so hover/active can override base. Copy — never rotate
+	// the memoized array in place (that changes the fingerprint every render).
+	const orderedStates = useMemo(() => {
+		if (states.length <= 1) {
+			return states;
+		}
+
+		const next = states.slice();
+		const normalIndex = next.indexOf('normal');
+
+		if (normalIndex === -1) {
+			return next;
+		}
+
+		next.push(next.splice(normalIndex, 1)[0]);
+		return next;
+	}, [states]);
 
 	const styleFingerprint = getStateStyleFingerprint(
 		props,
-		states,
+		orderedStates,
 		breakpoints
 	);
 	const renderedStylesRef = useRef<{
@@ -124,7 +136,7 @@ export const StateStyle = (
 			const combinedDeclarations = combineDeclarations(
 				getComputedCssProps({
 					...props,
-					states,
+					states: orderedStates,
 					currentBreakpoint: type,
 				}),
 				props.inlineStyles

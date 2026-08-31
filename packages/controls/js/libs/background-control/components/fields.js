@@ -11,6 +11,7 @@ import { memo, useEffect, useContext } from '@wordpress/element';
 /**
  * Blockera dependencies
  */
+import { mergeObject } from '@blockera/utils';
 import {
 	controlClassNames,
 	controlInnerClassNames,
@@ -76,11 +77,37 @@ const Fields: FieldItem = memo<FieldItem>(
 			name = getSelectedBlockStyle();
 		}
 
-		const { getExtension } = select('blockera/extensions/config') || {};
-		const blockeraBackground =
-			'function' === typeof getExtension
-				? getExtension('backgroundConfig', name)?.blockeraBackground
-				: backgroundComponentConfig?.blockeraBackground;
+		const { getExtension, getDefinition } =
+			select('blockera/extensions/config') || {};
+		const { getExtensionCurrentBlock } =
+			select('blockera/extensions') || {};
+
+		const currentBlock =
+			'function' === typeof getExtensionCurrentBlock
+				? getExtensionCurrentBlock()
+				: 'master';
+
+		let storedBackground;
+		if (
+			currentBlock &&
+			'master' !== currentBlock &&
+			'function' === typeof getDefinition
+		) {
+			storedBackground = getDefinition(currentBlock, name)
+				?.backgroundConfig?.blockeraBackground;
+		}
+
+		if (!storedBackground && 'function' === typeof getExtension) {
+			storedBackground = getExtension('backgroundConfig', name)
+				?.blockeraBackground;
+		}
+
+		// Control bootstrap owns type options (JSX icons). Extension store
+		// overlays Pro/native flags and must not drop those types.
+		const blockeraBackground = mergeObject(
+			backgroundComponentConfig?.blockeraBackground || {},
+			storedBackground || {}
+		);
 
 		const {
 			onChange,

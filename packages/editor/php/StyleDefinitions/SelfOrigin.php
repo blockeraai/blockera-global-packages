@@ -11,7 +11,11 @@ class SelfOrigin extends BaseStyleDefinition {
 
 		$originData = $setting['self-origin'];
 
-		if ( ! isset( $originData['top'], $originData['left'] ) ) {
+		if ( is_array( $originData ) && isset( $originData['value'] ) && is_array( $originData['value'] ) ) {
+			$originData = $originData['value'];
+		}
+
+		if ( ! is_array( $originData ) || ! isset( $originData['top'], $originData['left'] ) ) {
 			$this->setCss( $this->declarations );
 
 			return $this->css;

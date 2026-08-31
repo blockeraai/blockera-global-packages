@@ -6,8 +6,10 @@ import {
 	closeWelcomeGuide,
 	getEditedGlobalStylesRecord,
 	assertBlockData,
+	assertClearedGlobalStylesStayCleared,
 	activateMuPlugin,
 	deactivateMuPlugin,
+	resetGlobalStylesEntityRecord,
 } from '@blockera/dev-cypress/js/helpers';
 
 const MU_PLUGIN_PATH =
@@ -33,6 +35,7 @@ describe('Gap → WP Compatibility (Global Styles)', () => {
 			pluginName: MU_PLUGIN_TARGET,
 		});
 		openSiteEditor();
+		resetGlobalStylesEntityRecord();
 		openGroupGlobalStyles();
 	});
 
@@ -95,7 +98,7 @@ describe('Gap → WP Compatibility (Global Styles)', () => {
 					cy.get('input').clear({ force: true });
 				});
 
-				assertBlockData((data) => {
+				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getGroupGlobalStyles(data);
 					const spacingBlockGap = root?.spacing?.blockGap;
 					const blockeraGap = root?.blockeraGap?.value;

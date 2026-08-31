@@ -17,9 +17,9 @@ describe('Text Orientation → WP Compatibility', () => {
 	describe('Paragraph Block', () => {
 		it('Horizontal value + all Blockera values', () => {
 			appendBlocks(
-				'<!-- wp:paragraph {"style":{"typography":{"writingMode":"horizontal-tb"}}} -->\n' +
-					'<p style="writing-mode:horizontal-tb">Test paragraph</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"style":{"typography":{"writingMode":"horizontal-tb"}}} -->
+<p style="writing-mode:horizontal-tb">Test paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			// Select target block
@@ -163,9 +163,9 @@ describe('Text Orientation → WP Compatibility', () => {
 
 		it('Vertical value', () => {
 			appendBlocks(
-				'<!-- wp:paragraph {"style":{"typography":{"writingMode":"vertical-rl"}}} -->\n' +
-					'<p style="writing-mode:vertical-rl">Test paragraph</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"style":{"typography":{"writingMode":"vertical-rl"}}} -->
+<p style="writing-mode:vertical-rl">Test paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			// Select target block

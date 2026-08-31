@@ -17,15 +17,15 @@ describe('Group Block → Link Inner Block → WP Data Compatibility', () => {
 
 	it('Simple color for inner block (normal + hover)', () => {
 		appendBlocks(
-			'<!-- wp:group {"style":{"elements":{"link":{"color":{"text":"#ffbaba"},":hover":{"color":{"text":"#ff1d1d"}}}}},"layout":{"type":"constrained"}} -->\n' +
-				'<div class="wp-block-group has-link-color"><!-- wp:paragraph -->\n' +
-				'<p>Paragraph 1</p>\n' +
-				'<!-- /wp:paragraph -->\n' +
-				'\n' +
-				'<!-- wp:paragraph -->\n' +
-				'<p>Paragraph 2 with <a href="#a">link</a></p>\n' +
-				'<!-- /wp:paragraph --></div>\n' +
-				'<!-- /wp:group -->'
+			`<!-- wp:group {"style":{"elements":{"link":{"color":{"text":"#ffbaba"},":hover":{"color":{"text":"#ff1d1d"}}}}},"layout":{"type":"constrained"}} -->
+<div class="wp-block-group has-link-color"><!-- wp:paragraph -->
+<p>Paragraph 1</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Paragraph 2 with <a href="#a">link</a></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->`
 		);
 
 		// Select target block
@@ -138,18 +138,7 @@ describe('Group Block → Link Inner Block → WP Data Compatibility', () => {
 		cy.clearColorControlValue('Text Color');
 
 		assertBlockData((data) => {
-			expect({
-				blockeraBlockStates: {
-					hover: {
-						isVisible: true,
-						breakpoints: {
-							desktop: {
-								attributes: {},
-							},
-						},
-					},
-				},
-			}).to.be.deep.equal(
+			expect(undefined).to.be.equal(
 				getSelectedBlock(data, 'blockeraInnerBlocks')['elements/link']
 					?.attributes
 			);
@@ -171,15 +160,15 @@ describe('Group Block → Link Inner Block → WP Data Compatibility', () => {
 
 	it('Variable color value for inner block (normal + hover)', () => {
 		appendBlocks(
-			'<!-- wp:group {"style":{"elements":{"link":{"color":{"text":"var:preset|color|accent-3"},":hover":{"color":{"text":"var:preset|color|accent-4"}}}}},"layout":{"type":"constrained"}} -->\n' +
-				'<div class="wp-block-group has-link-color"><!-- wp:paragraph -->\n' +
-				'<p>Paragraph 1</p>\n' +
-				'<!-- /wp:paragraph -->\n' +
-				'\n' +
-				'<!-- wp:paragraph -->\n' +
-				'<p>Paragraph 2 with <a href="#a">link</a></p>\n' +
-				'<!-- /wp:paragraph --></div>\n' +
-				'<!-- /wp:group -->'
+			`<!-- wp:group {"style":{"elements":{"link":{"color":{"text":"var:preset|color|accent-3"},":hover":{"color":{"text":"var:preset|color|accent-4"}}}}},"layout":{"type":"constrained"}} -->
+<div class="wp-block-group has-link-color"><!-- wp:paragraph -->
+<p>Paragraph 1</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Paragraph 2 with <a href="#a">link</a></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->`
 		);
 
 		// Select target block
@@ -364,18 +353,7 @@ describe('Group Block → Link Inner Block → WP Data Compatibility', () => {
 		});
 
 		assertBlockData((data) => {
-			expect({
-				blockeraBlockStates: {
-					hover: {
-						isVisible: true,
-						breakpoints: {
-							desktop: {
-								attributes: {},
-							},
-						},
-					},
-				},
-			}).to.be.deep.equal(
+			expect(undefined).to.be.equal(
 				getSelectedBlock(data, 'blockeraInnerBlocks')['elements/link']
 					?.attributes
 			);

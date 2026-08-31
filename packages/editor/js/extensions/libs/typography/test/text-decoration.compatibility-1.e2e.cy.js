@@ -17,9 +17,9 @@ describe('Text Decoration → WP Compatibility', () => {
 	describe('Paragraph Block', () => {
 		it('Simple value', () => {
 			appendBlocks(
-				'<!-- wp:paragraph {"style":{"typography":{"textDecoration":"underline"}}} -->\n' +
-					'<p style="text-decoration:underline">Test paragraph</p>\n' +
-					'<!-- /wp:paragraph -->'
+				`<!-- wp:paragraph {"style":{"typography":{"textDecoration":"underline"}}} -->
+<p style="text-decoration:underline">Test paragraph</p>
+<!-- /wp:paragraph -->`
 			);
 
 			// Select target block

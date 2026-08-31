@@ -4,7 +4,7 @@
  * External dependencies
  */
 import type { MixedElement } from 'react';
-import { sprintf, __ } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 import { applyFilters } from '@wordpress/hooks';
 import { createRoot } from '@wordpress/element';
 
@@ -27,14 +27,6 @@ import {
 	NativeIconLibrariesList,
 	createStandardIconObject,
 } from '@blockera/icons';
-
-/**
- * Internal dependencies
- */
-import { Button } from '../button';
-import { Tooltip } from '../tooltip';
-import { FeatureWrapper } from '../feature-wrapper';
-import ConditionalWrapper from '../conditional-wrapper';
 
 /**
  * Whether the current icon value represents a custom SVG (not a library icon).
@@ -585,21 +577,38 @@ export function isProIconClickBlocked(event: Object): boolean {
 	return target?.classList?.contains('blockera-is-pro-icon');
 }
 
+/**
+ * Build plain records for a library or search bucket (no React nodes).
+ *
+ * @param {Object}               options
+ * @param {string}               options.library Library id or search bucket.
+ * @param {string|Object|Function} options.query Search query when library is a search bucket.
+ * @param {number}               options.limit   Search result cap.
+ * @return {Array<Object>} Icon records for the visible grid.
+ */
 export function getLibraryIcons({
 	library,
-	query,
-	onClick = () => {},
-	onDoubleClick = () => {},
+	query = '',
 	limit = 21,
 }: {
 	library: string,
-	query: string | Object | Function,
-	onClick?: Function,
-	onDoubleClick?: Function,
+	query?: string | Object | Function,
 	limit?: number,
-}): Array<*> {
+}): Array<{
+	key: string,
+	iconName: string,
+	library: string,
+	icon: Object,
+	sourceMeta: ?Object,
+}> {
 	let iconLibraryIcons = {};
-	const iconsStack: Array<*> = [];
+	const records: Array<{
+		key: string,
+		iconName: string,
+		library: string,
+		icon: Object,
+		sourceMeta: ?Object,
+	}> = [];
 
 	if (
 		'suggestions' === library ||
@@ -631,276 +640,29 @@ export function getLibraryIcons({
 
 	for (const iconKey in iconLibraryIcons) {
 		const sourceMeta = iconLibraryIcons[iconKey];
+		const resolvedLibrary = iconLibraryIcons[iconKey]?.library
+			? iconLibraryIcons[iconKey]?.library
+			: library;
 		const icon = createStandardIconObject(
 			iconKey,
-			iconLibraryIcons[iconKey]?.library
-				? iconLibraryIcons[iconKey]?.library
-				: library,
+			resolvedLibrary,
 			iconLibraryIcons[iconKey]
 		);
 
-		if (isValidIcon(icon, iconKey)) {
-			iconsStack.push(
-				<span
-					key={`${iconKey}-${icon.iconName}`}
-					className={controlInnerClassNames(
-						'icon-control-icon',
-						'library-' + icon.library,
-						'icon-' + icon.iconName
-					)}
-					aria-label={sprintf(
-						// translators: %s is icon ID in icon libraries for example arrow-left
-						__('%s Icon', 'blockera'),
-						icon.iconName
-					)}
-					onClick={(event) =>
-						onClick(event, {
-							type: 'UPDATE_ICON',
-							icon: icon.iconName,
-							library: icon.library,
-						})
-					}
-					onDoubleClick={(event) =>
-						onDoubleClick(event, {
-							type: 'UPDATE_ICON',
-							icon: icon.iconName,
-							library: icon.library,
-						})
-					}
-				>
-					<Tooltip
-						text={buildIconLibraryTooltipContent(
-							icon.iconName,
-							icon.library,
-							sourceMeta
-						)}
-						width="220px"
-					>
-						<Icon
-							library={icon.library}
-							icon={icon}
-							iconSize={
-								[
-									'faregular',
-									'fasolid',
-									'fabrands',
-									'feather',
-									'lucide',
-									'untitledui',
-									'tabler',
-									'tabler-filled',
-								].includes(icon.library)
-									? 18
-									: 24
-							}
-						/>
-					</Tooltip>
-				</span>
-			);
-		}
-	}
-
-	return iconsStack;
-}
-
-/**
- * Build React elements for recently used icons grid.
- *
- * @param {Object}   options              Options.
- * @param {Array}    options.items        Recent icon storage entries.
- * @param {Function} options.onSelect     Click handler (event, action).
- * @param {Function} options.onDoubleSelect Double-click handler (event, action).
- * @param {Function} options.onRemove     Remove handler (id).
- * @return {Array} React elements.
- */
-export function buildRecentIconElements({
-	items = [],
-	onSelect = () => {},
-	onDoubleSelect = () => {},
-	onRemove = () => {},
-}: {
-	items?: Array<*>,
-	onSelect?: Function,
-	onDoubleSelect?: Function,
-	onRemove?: Function,
-}): Array<*> {
-	const elements: Array<*> = [];
-
-	for (const entry of items) {
-		if (entry.type === 'library') {
-			const icon = getIcon(entry.icon, entry.library);
-
-			if (!icon || !isValidIcon(icon, entry.icon)) {
-				continue;
-			}
-
-			const iconType = applyFilters(
-				'blockera.controls.iconControl.utils.getLibraryIcons.type',
-				NativeIconLibrariesList.includes(entry.library)
-					? 'native'
-					: 'none',
-				entry.library
-			);
-
-			elements.push(
-				<ConditionalWrapper
-					key={entry.id}
-					condition={iconType === 'native'}
-					wrapper={(children: any) => (
-						<FeatureWrapper
-							className={controlInnerClassNames('icon-wrapper')}
-							type={iconType}
-						>
-							{children}
-						</FeatureWrapper>
-					)}
-				>
-					<span
-						className={controlInnerClassNames(
-							'icon-control-icon',
-							'recent-icon-item',
-							'library-' + icon.library,
-							'icon-' + icon.iconName
-						)}
-						aria-label={sprintf(
-							// translators: %s is icon ID in icon libraries for example arrow-left
-							__('%s Icon', 'blockera'),
-							icon.iconName
-						)}
-						onClick={(event) =>
-							onSelect(event, {
-								type: 'UPDATE_ICON',
-								icon: icon.iconName,
-								library: icon.library,
-							})
-						}
-						onDoubleClick={(event) =>
-							onDoubleSelect(event, {
-								type: 'UPDATE_ICON',
-								icon: icon.iconName,
-								library: icon.library,
-							})
-						}
-					>
-						<Button
-							className={controlInnerClassNames(
-								'recent-icon-remove'
-							)}
-							label={__('Remove from recently used', 'blockera')}
-							noBorder={true}
-							icon={
-								<Icon icon="close" library="ui" iconSize={12} />
-							}
-							onClick={(event) => {
-								event.stopPropagation();
-								onRemove(entry.id);
-							}}
-							showTooltip={true}
-						/>
-
-						<Tooltip
-							text={buildIconLibraryTooltipContent(
-								icon.iconName,
-								icon.library
-							)}
-							width="220px"
-						>
-							<Icon
-								library={icon.library}
-								icon={icon}
-								iconSize={
-									[
-										'faregular',
-										'fasolid',
-										'fabrands',
-										'feather',
-										'lucide',
-										'untitledui',
-										'tabler',
-										'tabler-filled',
-									].includes(icon.library)
-										? 18
-										: 24
-								}
-							/>
-						</Tooltip>
-					</span>
-				</ConditionalWrapper>
-			);
-
+		if (!isValidIcon(icon, iconKey)) {
 			continue;
 		}
 
-		if (entry.type === 'custom') {
-			const label =
-				entry.uploadSVG &&
-				typeof entry.uploadSVG === 'object' &&
-				entry.uploadSVG.title
-					? entry.uploadSVG.title.replaceAll('-', ' ')
-					: __('Custom icon', 'blockera');
-
-			let preview = null;
-
-			if (entry.svgString) {
-				preview = (
-					<div
-						className={controlInnerClassNames(
-							'recent-icon-custom-preview'
-						)}
-						dangerouslySetInnerHTML={{
-							__html: entry.svgString.replace(
-								/\s*style\s*=\s*["'][^"']*["']/g,
-								''
-							),
-						}}
-					/>
-				);
-			} else if (
-				entry.uploadSVG &&
-				typeof entry.uploadSVG === 'object' &&
-				entry.uploadSVG.url
-			) {
-				preview = <img src={entry.uploadSVG.url} alt={label} />;
-			}
-
-			if (!preview) {
-				continue;
-			}
-
-			elements.push(
-				<span
-					key={entry.id}
-					className={controlInnerClassNames(
-						'icon-control-icon',
-						'recent-icon-item',
-						'is-custom'
-					)}
-					aria-label={label}
-					onClick={(event) =>
-						onSelect(event, {
-							type: 'UPDATE_SVG',
-							svgString: entry.svgString,
-							uploadSVG: entry.uploadSVG || '',
-						})
-					}
-				>
-					<Button
-						className={controlInnerClassNames('recent-icon-remove')}
-						aria-label={__('Remove from recently used', 'blockera')}
-						noBorder={true}
-						icon={<Icon icon="close" library="ui" iconSize={12} />}
-						onClick={(event) => {
-							event.stopPropagation();
-							onRemove(entry.id);
-						}}
-					/>
-					<Tooltip text={label}>{preview}</Tooltip>
-				</span>
-			);
-		}
+		records.push({
+			key: `${iconKey}-${icon.iconName}`,
+			iconName: icon.iconName,
+			library: icon.library,
+			icon,
+			sourceMeta,
+		});
 	}
 
-	return elements;
+	return records;
 }
 
 /**

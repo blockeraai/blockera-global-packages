@@ -152,25 +152,25 @@ describe('Inner Blocks Functionality Tests ...', () => {
 
 		resetBlockState('Item Container');
 
-		//Check store
 		assertBlockData((data) => {
 			expect({}).to.be.deep.equal(
-				getSelectedBlock(data, 'blockeraInnerBlocks')[
+				getSelectedBlock(data, 'blockeraInnerBlocks')?.[
 					'elements/container'
-				].attributes
+				]?.attributes
 			);
 
 			expect({}).to.be.deep.equal(
-				getSelectedBlock(data, 'blockeraBlockStates').hover.breakpoints
-					.desktop.attributes.blockeraInnerBlocks[
+				getSelectedBlock(data, 'blockeraBlockStates')?.hover
+					?.breakpoints?.desktop?.attributes?.blockeraInnerBlocks?.[
 					'elements/container'
-				].attributes
+				]?.attributes
 			);
 
 			expect({}).to.be.deep.equal(
-				getSelectedBlock(data, 'blockeraBlockStates').normal.breakpoints
-					.mobile.attributes.blockeraInnerBlocks['elements/container']
-					.attributes
+				getSelectedBlock(data, 'blockeraBlockStates')?.normal
+					?.breakpoints?.mobile?.attributes?.blockeraInnerBlocks?.[
+					'elements/container'
+				]?.attributes
 			);
 		});
 	});

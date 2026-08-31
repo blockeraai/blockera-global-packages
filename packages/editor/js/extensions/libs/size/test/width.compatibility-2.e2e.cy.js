@@ -436,11 +436,11 @@ describe('Width → WP Compatibility', () => {
 
 		it('Use WP not supported value', () => {
 			appendBlocks(
-				'<!-- wp:buttons -->\n' +
-					'<div class="wp-block-buttons"><!-- wp:button {"width":25} -->\n' +
-					'<div class="wp-block-button has-custom-width wp-block-button__width-25"><a class="wp-block-button__link wp-element-button">button</a></div>\n' +
-					'<!-- /wp:button --></div>\n' +
-					'<!-- /wp:buttons -->'
+				`<!-- wp:buttons -->
+<div class="wp-block-buttons"><!-- wp:button {"width":25} -->
+<div class="wp-block-button has-custom-width wp-block-button__width-25"><a class="wp-block-button__link wp-element-button">button</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons -->`
 			);
 
 			// Select target block
@@ -606,9 +606,9 @@ describe('Width → WP Compatibility', () => {
 
 		it('Use WP not supported value', () => {
 			appendBlocks(
-				'<!-- wp:image {"id":60,"sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->\n' +
-					'<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60"/></figure>\n' +
-					'<!-- /wp:image --> '
+				`<!-- wp:image {"id":60,"sizeSlug":"full","linkDestination":"none","className":"is-resized"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://placehold.co/600x400" alt="" class="wp-image-60"/></figure>
+<!-- /wp:image --> `
 			);
 
 			// Select target block
@@ -675,13 +675,13 @@ describe('Width → WP Compatibility', () => {
 	describe('core/column Block', () => {
 		it('Simple Value', () => {
 			appendBlocks(
-				'<!-- wp:columns -->\n' +
-					'<div class="wp-block-columns"><!-- wp:column {"width":"200px","style":{"color":{"background":"#d8d8d8"}}} -->\n' +
-					'<div class="wp-block-column has-background" style="background-color:#d8d8d8;flex-basis:200px"><!-- wp:paragraph -->\n' +
-					'<p>Paragraph inside column</p>\n' +
-					'<!-- /wp:paragraph --></div>\n' +
-					'<!-- /wp:column --></div>\n' +
-					'<!-- /wp:columns -->'
+				`<!-- wp:columns -->
+<div class="wp-block-columns"><!-- wp:column {"width":"200px","style":{"color":{"background":"#d8d8d8"}}} -->
+<div class="wp-block-column has-background" style="background-color:#d8d8d8;flex-basis:200px"><!-- wp:paragraph -->
+<p>Paragraph inside column</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns -->`
 			);
 
 			// Select target block
@@ -741,13 +741,13 @@ describe('Width → WP Compatibility', () => {
 
 		it('Use WP not supported value', () => {
 			appendBlocks(
-				'<!-- wp:columns -->\n' +
-					'<div class="wp-block-columns"><!-- wp:column {"width":"20%","style":{"color":{"background":"#d8d8d8"}}} -->\n' +
-					'<div class="wp-block-column has-background" style="background-color:#d8d8d8;flex-basis:20%"><!-- wp:paragraph -->\n' +
-					'<p>Paragraph inside column</p>\n' +
-					'<!-- /wp:paragraph --></div>\n' +
-					'<!-- /wp:column --></div>\n' +
-					'<!-- /wp:columns -->'
+				`<!-- wp:columns -->
+<div class="wp-block-columns"><!-- wp:column {"width":"20%","style":{"color":{"background":"#d8d8d8"}}} -->
+<div class="wp-block-column has-background" style="background-color:#d8d8d8;flex-basis:20%"><!-- wp:paragraph -->
+<p>Paragraph inside column</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns -->`
 			);
 
 			// Select target block

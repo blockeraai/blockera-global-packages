@@ -448,13 +448,15 @@ export default function IconPickerModal({
 									/>
 								)}
 
-								<div hidden={isSearching}>
-									<RecentIcons />
-									<IconLibraries
-										libraries={libraries}
-										activeFilter={activeFilter}
-									/>
-								</div>
+								{!isSearching && (
+									<>
+										<RecentIcons />
+										<IconLibraries
+											libraries={libraries}
+											activeFilter={activeFilter}
+										/>
+									</>
+								)}
 							</div>
 						</div>
 					) : (

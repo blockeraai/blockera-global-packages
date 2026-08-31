@@ -10,6 +10,11 @@
 	justify-content: center !important;
 	transition: var(--blockera-controls-transition);
 
+	&.is-destructive {
+		--blockera-controls-primary-color: #cc1818;
+		--blockera-controls-primary-color-darker-20: #9e1313;
+	}
+
 	&.size-input,
 	&.size-small {
 		height: var(--blockera-controls-input-height);
@@ -152,7 +157,7 @@
 
 	&.is-secondary {
 		outline: 3px solid transparent;
-		box-shadow: inset 0 0 0 1px var(--blockera-controls-primary-color);
+		border-color: var(--blockera-controls-primary-color);
 		color: var(--blockera-controls-primary-color);
 		background-color: #ffffff;
 
@@ -166,15 +171,15 @@
 
 		&.is-focus:not(:disabled, .is-busy),
 		&:focus:not(:disabled, .no-border, .is-busy) {
-			box-shadow:
-				inset 0 0 0 1px var(--blockera-controls-primary-color, #ffffff),
-				0 0 0 1px var(--blockera-controls-background-color),
-				0 0 0 2.5px var(--blockera-controls-primary-color) !important;
+			border-color: var(--blockera-controls-primary-color);
 			background-color: color-mix(
 				in srgb,
 				var(--blockera-controls-primary-color) 10%,
 				#ffffff
 			);
+			box-shadow:
+				0 0 0 1px var(--blockera-controls-background-color),
+				0 0 0 2.5px var(--blockera-controls-primary-color) !important;
 		}
 
 		&:disabled,
@@ -183,7 +188,7 @@
 			opacity: 0.5;
 			outline: none;
 			transform: none;
-			box-shadow: inset 0 0 0 1px var(--blockera-controls-primary-color);
+			border-color: var(--blockera-controls-primary-color);
 			color: var(--blockera-controls-primary-color);
 			background-color: #ffffff;
 		}
@@ -197,16 +202,15 @@
 		color: var(--blockera-controls-primary-color);
 
 		&:hover:not(:disabled, .no-border, .is-busy) {
-			outline: 3px solid transparent;
-			box-shadow: inset 0 0 0 1px var(--blockera-controls-primary-color);
-			box-shadow: inset 0 0 0 1px
-				var(--blockera-controls-primary-color, #ffffff);
+			outline: none;
+			border-color: var(--blockera-controls-primary-color);
 		}
 
 		&.is-focus:not(:disabled, .is-busy),
 		&:focus:not(:disabled, .no-border, .is-busy) {
+			border-color: var(--blockera-controls-primary-color);
+			outline: none;
 			box-shadow:
-				inset 0 0 0 1px var(--blockera-controls-primary-color, #ffffff),
 				0 0 0 1px var(--blockera-controls-background-color),
 				0 0 0 2.5px var(--blockera-controls-primary-color) !important;
 		}
@@ -217,7 +221,7 @@
 			opacity: 0.5;
 			outline: none;
 			transform: none;
-			box-shadow: inset 0 0 0 1px var(--blockera-controls-primary-color);
+			border-color: var(--blockera-controls-primary-color);
 			color: var(--blockera-controls-primary-color);
 		}
 	}
@@ -228,7 +232,7 @@
 		background: transparent;
 
 		&:not(.no-border) {
-			box-shadow: inset 0 0 0 1px var(--blockera-controls-border-color);
+			border-color: var(--blockera-controls-border-color);
 			outline: 1px solid transparent;
 		}
 
@@ -246,14 +250,14 @@
 
 		&.is-focus:not(.no-border, .is-busy) {
 			background: var(--blockera-controls-background-color);
+			box-shadow:
+				0 0 0 1px var(--blockera-controls-background-color),
+				0 0 0 2.5px var(--blockera-controls-primary-color) !important;
 		}
 
 		&.is-focus:not(:disabled, .is-busy),
 		&:focus:not(:disabled, .no-border, .toggle-focus, .is-busy) {
-			box-shadow:
-				inset 0 0 0 1px var(--blockera-controls-primary-color),
-				0 0 0 1px var(--blockera-controls-primary-color) !important;
-			outline: 2px solid transparent !important;
+			border-color: var(--blockera-controls-primary-color);
 		}
 
 		&:disabled,
@@ -264,8 +268,7 @@
 			transform: none;
 
 			&:not(.no-border) {
-				box-shadow: inset 0 0 0 1px
-					var(--blockera-controls-border-color);
+				border-color: var(--blockera-controls-border-color);
 			}
 		}
 	}

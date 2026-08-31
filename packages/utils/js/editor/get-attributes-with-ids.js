@@ -157,10 +157,52 @@ function isEmptyBlockeraFeatureValue(value: mixed): boolean {
 	}
 
 	if (typeof unwrapped === 'object') {
-		return Object.keys(unwrapped).length === 0;
+		const keys = Object.keys(unwrapped);
+
+		if (keys.length === 0) {
+			return true;
+		}
+
+		for (let i = 0; i < keys.length; i++) {
+			if (!isEmptyBlockeraFeatureValue(unwrapped[keys[i]])) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	return false;
+}
+
+/**
+ * Gutenberg registration (`sanitizeDefaultAttributes`) converts empty-array
+ * defaults to `{ value: {} }`. PHP still ships `{ value: [] }`. Writing `[]`
+ * fails `===` against the registered default, so the key is serialized.
+ */
+function normalizeRegisteredEmptyArrayDefault(value: mixed): mixed {
+	if (Array.isArray(value) && value.length === 0) {
+		return { value: {} };
+	}
+
+	if (value == null || typeof value !== 'object' || Array.isArray(value)) {
+		return value;
+	}
+
+	const record: { [string]: mixed } = (value: any);
+
+	if (!Array.isArray(record.value) || record.value.length !== 0) {
+		return value;
+	}
+
+	if (Object.keys(record).length === 1) {
+		return { value: {} };
+	}
+
+	return {
+		...record,
+		value: {},
+	};
 }
 
 function getRegisteredDefaultValue(
@@ -172,17 +214,730 @@ function getRegisteredDefaultValue(
 	}
 
 	const entry = defaultAttributes[key];
-	if (entry == null || typeof entry !== 'object' || Array.isArray(entry)) {
-		return entry;
+	if (entry == null) {
+		return undefined;
+	}
+
+	if (typeof entry !== 'object' || Array.isArray(entry)) {
+		return normalizeRegisteredEmptyArrayDefault(entry);
 	}
 
 	const record: { [string]: mixed } = (entry: any);
 
 	if ('type' in record && 'default' in record) {
-		return record.default;
+		return normalizeRegisteredEmptyArrayDefault(record.default);
 	}
 
-	return entry;
+	return normalizeRegisteredEmptyArrayDefault(entry);
+}
+
+/**
+ * Host blocks (gallery, buttons, navigation, …) override `blockeraDisplay`
+ * to flex/grid. Inner elements do not inherit that default — a caption
+ * `display:flex` is a real user value even when the parent is already flex.
+ */
+function getRegisteredDefaultValueForScope(
+	defaultAttributes: ?Object,
+	key: string,
+	innerScope: boolean
+): mixed {
+	const registered = getRegisteredDefaultValue(defaultAttributes, key);
+
+	if (!innerScope || key !== 'blockeraDisplay') {
+		return registered;
+	}
+
+	const unwrapped = unwrapBlockeraAttributeValue(registered);
+
+	if (typeof unwrapped === 'string' && unwrapped !== '') {
+		return { value: '' };
+	}
+
+	return registered;
+}
+
+/**
+ * Inner-block maps from WP↔Blockera hydrate look like
+ * `{ 'elements/link': { attributes: {} } }` (optionally `{ value: ... }`).
+ * Empty slots do not count as used features at the top level (identity omit).
+ * Nested maps keep `{ attributes: {} }` so reset items are readable as `{}`
+ * without serializing leftover feature defaults.
+ */
+function isEmptyInnerBlocksTree(
+	value: mixed,
+	defaultAttributes: ?Object
+): boolean {
+	const unwrapped = unwrapBlockeraAttributeValue(value);
+
+	if (unwrapped == null) {
+		return true;
+	}
+
+	if (Array.isArray(unwrapped)) {
+		return unwrapped.length === 0;
+	}
+
+	if (typeof unwrapped !== 'object') {
+		return false;
+	}
+
+	const keys = Object.keys(unwrapped);
+
+	if (keys.length === 0) {
+		return true;
+	}
+
+	for (let i = 0; i < keys.length; i++) {
+		const item = unwrapped[keys[i]];
+
+		// Repeaters (text-shadow, box-shadow, …) are `{ 0: { x, y, … } }`
+		// without an `attributes` key. Those are not inner-block slots.
+		if (
+			!item ||
+			typeof item !== 'object' ||
+			Array.isArray(item) ||
+			!('attributes' in item)
+		) {
+			return false;
+		}
+
+		if (
+			hasBlockeraFeatureAttributes(
+				(item: any).attributes || {},
+				defaultAttributes,
+				true
+			)
+		) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+const BLOCKERA_BLOCK_STATES_KEY = 'blockeraBlockStates';
+const BLOCKERA_INNER_BLOCKS_KEY = 'blockeraInnerBlocks';
+const BLOCK_STATE_KNOWN_KEYS: { [string]: boolean } = {
+	breakpoints: true,
+	isVisible: true,
+	'css-class': true,
+	content: true,
+};
+
+function isEmptyArrayOrEmptyObject(value: mixed): boolean {
+	if (value == null) {
+		return true;
+	}
+
+	if (Array.isArray(value)) {
+		return value.length === 0;
+	}
+
+	if (typeof value === 'object') {
+		return Object.keys(value).length === 0;
+	}
+
+	return false;
+}
+
+function isMeaningfulStateFlag(value: mixed): boolean {
+	if (value === false) {
+		return true;
+	}
+
+	if (typeof value === 'string' && value !== '') {
+		return true;
+	}
+
+	if (value != null && typeof value === 'object') {
+		return !isEmptyArrayOrEmptyObject(value);
+	}
+
+	return false;
+}
+
+/**
+ * Keep inner-block item keys after reset with `{ attributes: {} }` so readers
+ * get an empty object. Do not fill schema defaults into that object.
+ */
+function normalizeInnerBlocksTree(
+	value: mixed,
+	defaultAttributes: ?Object
+): mixed {
+	if (value == null) {
+		return value;
+	}
+
+	const unwrapped = unwrapBlockeraAttributeValue(value);
+
+	if (isEmptyArrayOrEmptyObject(unwrapped)) {
+		const empty = wrapBlockStatesValue(value, {});
+
+		return isEquals(value, empty) ? value : empty;
+	}
+
+	if (typeof unwrapped !== 'object') {
+		return value;
+	}
+
+	const items: { [string]: mixed } = (unwrapped: any);
+	const nextItems: { [string]: mixed } = {};
+	let changed = false;
+
+	for (const itemId in items) {
+		const item = items[itemId];
+
+		if (item == null || typeof item !== 'object' || Array.isArray(item)) {
+			nextItems[itemId] = item;
+			continue;
+		}
+
+		const record: { [string]: mixed } = (item: any);
+		const prunedAttributes = pruneNestedFeatureAttributes(
+			record.attributes,
+			defaultAttributes,
+			true
+		);
+
+		if (Object.keys(prunedAttributes).length === 0) {
+			const emptySlot = { attributes: {} };
+			nextItems[itemId] = emptySlot;
+
+			if (!isEquals(record, emptySlot)) {
+				changed = true;
+			}
+
+			continue;
+		}
+
+		if (!isEquals(record.attributes, prunedAttributes)) {
+			changed = true;
+			nextItems[itemId] = {
+				...record,
+				attributes: prunedAttributes,
+			};
+			continue;
+		}
+
+		nextItems[itemId] = record;
+	}
+
+	if (
+		!changed &&
+		Object.keys(nextItems).length === Object.keys(items).length
+	) {
+		return value;
+	}
+
+	const wrapped = wrapBlockStatesValue(value, nextItems);
+
+	return isEquals(value, wrapped) ? value : wrapped;
+}
+
+/**
+ * Nested breakpoint/state attribute maps are not Gutenberg-registered keys.
+ * Unused Blockera features are dropped (not reset to defaults).
+ * Empty inner-block item slots keep `{ attributes: {} }` (no feature defaults).
+ * Inner-block maps compare display against an empty default so host flex/grid
+ * defaults (gallery, buttons, …) do not strip a real inner `display`.
+ */
+function pruneNestedFeatureAttributes(
+	attributes: mixed,
+	defaultAttributes: ?Object,
+	innerScope?: boolean
+): Object {
+	if (attributes == null || typeof attributes !== 'object') {
+		return {};
+	}
+
+	if (Array.isArray(attributes)) {
+		return attributes.length === 0 ? {} : { ...attributes };
+	}
+
+	const record: { [string]: mixed } = (attributes: any);
+	const next: { [string]: mixed } = {};
+
+	for (const key in record) {
+		if (!BLOCKERA_ATTR_KEY.test(key) || BLOCKERA_META_ATTRIBUTE_KEYS[key]) {
+			if (!isEmptyBlockeraFeatureValue(record[key])) {
+				next[key] = record[key];
+			}
+			continue;
+		}
+
+		if (key === BLOCKERA_INNER_BLOCKS_KEY) {
+			const normalized = normalizeInnerBlocksTree(
+				record[key],
+				defaultAttributes
+			);
+			const unwrapped = unwrapBlockeraAttributeValue(normalized);
+
+			if (
+				unwrapped &&
+				typeof unwrapped === 'object' &&
+				!Array.isArray(unwrapped) &&
+				Object.keys(unwrapped).length > 0
+			) {
+				next[key] = normalized;
+			}
+
+			continue;
+		}
+
+		if (key === BLOCKERA_BLOCK_STATES_KEY) {
+			const normalized = normalizeBlockeraBlockStatesValue(
+				record[key],
+				defaultAttributes,
+				innerScope
+			);
+
+			if (
+				!isEmptyBlockStatesValue(
+					normalized,
+					defaultAttributes,
+					innerScope
+				)
+			) {
+				next[key] = normalized;
+			}
+
+			continue;
+		}
+
+		if (
+			isUnusedBlockeraFeatureValue(
+				record[key],
+				getRegisteredDefaultValueForScope(
+					defaultAttributes,
+					key,
+					Boolean(innerScope)
+				),
+				defaultAttributes,
+				key
+			)
+		) {
+			continue;
+		}
+
+		next[key] = record[key];
+	}
+
+	return next;
+}
+
+function isEmptyBreakpointAttributes(
+	attributes: mixed,
+	defaultAttributes: ?Object,
+	innerScope?: boolean
+): boolean {
+	if (isEmptyArrayOrEmptyObject(attributes)) {
+		return true;
+	}
+
+	if (typeof attributes !== 'object') {
+		return false;
+	}
+
+	const pruned = pruneNestedFeatureAttributes(
+		attributes,
+		defaultAttributes,
+		innerScope
+	);
+
+	return Object.keys(pruned).length === 0;
+}
+
+function stateHasUnknownKeys(state: Object): boolean {
+	for (const key in state) {
+		if (!BLOCK_STATE_KNOWN_KEYS[key]) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function isEmptyBlockStateEntry(
+	state: mixed,
+	defaultAttributes: ?Object,
+	innerScope?: boolean
+): boolean {
+	if (state == null) {
+		return true;
+	}
+
+	if (typeof state !== 'object' || Array.isArray(state)) {
+		return false;
+	}
+
+	const record: { [string]: mixed } = (state: any);
+
+	if (stateHasUnknownKeys(record)) {
+		return false;
+	}
+
+	if (record.isVisible === false) {
+		return false;
+	}
+
+	if (isMeaningfulStateFlag(record['css-class'])) {
+		return false;
+	}
+
+	if (isMeaningfulStateFlag(record.content)) {
+		return false;
+	}
+
+	const breakpoints = record.breakpoints;
+
+	if (isEmptyArrayOrEmptyObject(breakpoints)) {
+		return true;
+	}
+
+	if (typeof breakpoints !== 'object') {
+		return false;
+	}
+
+	const breakpointMap: { [string]: mixed } = (breakpoints: any);
+
+	for (const breakpointType in breakpointMap) {
+		const breakpoint = breakpointMap[breakpointType];
+
+		if (breakpoint == null) {
+			continue;
+		}
+
+		if (typeof breakpoint !== 'object' || Array.isArray(breakpoint)) {
+			if (!isEmptyArrayOrEmptyObject(breakpoint)) {
+				return false;
+			}
+			continue;
+		}
+
+		if (
+			!isEmptyBreakpointAttributes(
+				(breakpoint: any).attributes,
+				defaultAttributes,
+				innerScope
+			)
+		) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+ * True when every state/breakpoint slot is empty, including PHP `attributes: []`.
+ */
+export function isEmptyBlockStatesValue(
+	value: mixed,
+	defaultAttributes: ?Object,
+	innerScope?: boolean
+): boolean {
+	const unwrapped = unwrapBlockeraAttributeValue(value);
+
+	if (isEmptyArrayOrEmptyObject(unwrapped)) {
+		return true;
+	}
+
+	if (typeof unwrapped !== 'object') {
+		return false;
+	}
+
+	const states: { [string]: mixed } = (unwrapped: any);
+
+	for (const stateId in states) {
+		if (
+			!isEmptyBlockStateEntry(
+				states[stateId],
+				defaultAttributes,
+				innerScope
+			)
+		) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+function wrapBlockStatesValue(original: mixed, unwrappedNext: Object): Object {
+	if (
+		original != null &&
+		typeof original === 'object' &&
+		!Array.isArray(original) &&
+		'value' in (original: any)
+	) {
+		return { value: unwrappedNext };
+	}
+
+	return unwrappedNext;
+}
+
+function pruneBlockStateBreakpoints(
+	breakpoints: mixed,
+	defaultAttributes: ?Object,
+	innerScope?: boolean
+): { next: { [string]: Object }, changed: boolean } {
+	if (breakpoints == null) {
+		return { next: {}, changed: false };
+	}
+
+	if (Array.isArray(breakpoints) && breakpoints.length === 0) {
+		return { next: {}, changed: true };
+	}
+
+	if (
+		typeof breakpoints === 'object' &&
+		!Array.isArray(breakpoints) &&
+		Object.keys(breakpoints).length === 0
+	) {
+		return { next: {}, changed: false };
+	}
+
+	if (typeof breakpoints !== 'object') {
+		return { next: {}, changed: true };
+	}
+
+	const breakpointMap: { [string]: mixed } = (breakpoints: any);
+	const next: { [string]: Object } = {};
+	let changed = false;
+
+	for (const breakpointType in breakpointMap) {
+		const breakpoint = breakpointMap[breakpointType];
+
+		if (breakpoint == null) {
+			changed = true;
+			continue;
+		}
+
+		if (typeof breakpoint !== 'object' || Array.isArray(breakpoint)) {
+			if (!isEmptyArrayOrEmptyObject(breakpoint)) {
+				next[breakpointType] = breakpoint;
+			} else {
+				changed = true;
+			}
+			continue;
+		}
+
+		const record: { [string]: mixed } = (breakpoint: any);
+		const prunedAttributes = pruneNestedFeatureAttributes(
+			record.attributes,
+			defaultAttributes,
+			innerScope
+		);
+
+		if (Object.keys(prunedAttributes).length === 0) {
+			// PHP leftover empty arrays must not serialize. User reset leaves
+			// `{ attributes: {} }` and those slots stay readable in the store.
+			if (
+				Array.isArray(record.attributes) ||
+				record.attributes == null
+			) {
+				changed = true;
+				continue;
+			}
+
+			const emptySlot = {
+				...record,
+				attributes: {},
+			};
+
+			if (!isEquals(record, emptySlot)) {
+				changed = true;
+			}
+
+			next[breakpointType] = emptySlot;
+			continue;
+		}
+
+		if (!isEquals(record.attributes, prunedAttributes)) {
+			changed = true;
+			next[breakpointType] = {
+				...record,
+				attributes: prunedAttributes,
+			};
+			continue;
+		}
+
+		next[breakpointType] = record;
+	}
+
+	if (
+		!changed &&
+		Object.keys(next).length !== Object.keys(breakpointMap).length
+	) {
+		changed = true;
+	}
+
+	return { next, changed };
+}
+
+/**
+ * Keep empty `{ attributes: {} }` breakpoint slots after reset. Drop a
+ * state only when it has no breakpoint keys (and no content / css-class).
+ * Empty-only `blockeraBlockStates` still collapse via isEmptyBlockStatesValue.
+ */
+export function normalizeBlockeraBlockStatesValue(
+	value: mixed,
+	defaultAttributes: ?Object,
+	innerScope?: boolean
+): mixed {
+	if (value == null) {
+		return value;
+	}
+
+	const hadWrapper =
+		typeof value === 'object' &&
+		!Array.isArray(value) &&
+		'value' in (value: any);
+	const unwrapped = unwrapBlockeraAttributeValue(value);
+
+	if (isEmptyArrayOrEmptyObject(unwrapped)) {
+		const empty = hadWrapper ? { value: {} } : {};
+
+		return isEquals(value, empty) ? value : empty;
+	}
+
+	if (typeof unwrapped !== 'object') {
+		return value;
+	}
+
+	const states: { [string]: mixed } = (unwrapped: any);
+	const nextStates: { [string]: mixed } = {};
+	let changed = false;
+
+	for (const stateId in states) {
+		const state = states[stateId];
+
+		if (state === undefined) {
+			nextStates[stateId] = undefined;
+			changed = true;
+			continue;
+		}
+
+		if (state == null || typeof state !== 'object' || Array.isArray(state)) {
+			nextStates[stateId] = state;
+			continue;
+		}
+
+		const record: { [string]: mixed } = (state: any);
+		const prunedBreakpoints = pruneBlockStateBreakpoints(
+			record.breakpoints,
+			defaultAttributes,
+			innerScope
+		);
+
+		if (prunedBreakpoints.changed) {
+			changed = true;
+		}
+
+		const nextState = prunedBreakpoints.changed
+			? {
+					...record,
+					breakpoints: prunedBreakpoints.next,
+				}
+			: record;
+
+		if (isEmptyBlockStateEntry(nextState, defaultAttributes, innerScope)) {
+			const breakpoints = (nextState: any)?.breakpoints;
+			const hasBreakpointSlots =
+				breakpoints &&
+				typeof breakpoints === 'object' &&
+				!Array.isArray(breakpoints) &&
+				Object.keys(breakpoints).length > 0;
+
+			// Reset slots stay as `{ attributes: {} }` so readers can assert
+			// empty objects. Drop the state only when no breakpoint keys remain.
+			if (!hasBreakpointSlots) {
+				changed = true;
+				continue;
+			}
+		}
+
+		nextStates[stateId] = nextState;
+	}
+
+	if (!changed && Object.keys(nextStates).length === Object.keys(states).length) {
+		return value;
+	}
+
+	const wrapped = wrapBlockStatesValue(value, nextStates);
+
+	return isEquals(value, wrapped) ? value : wrapped;
+}
+
+/**
+ * True when any state still has breakpoint keys (including `{ attributes: {} }`
+ * reset slots). Used so omitUnused does not wipe those slots to `{ value: {} }`.
+ */
+function blockStatesTreeHasBreakpointSlots(value: mixed): boolean {
+	const unwrapped = unwrapBlockeraAttributeValue(value);
+
+	if (unwrapped == null || typeof unwrapped !== 'object' || Array.isArray(unwrapped)) {
+		return false;
+	}
+
+	const states: { [string]: mixed } = (unwrapped: any);
+
+	for (const stateId in states) {
+		const state = states[stateId];
+
+		if (state == null || typeof state !== 'object' || Array.isArray(state)) {
+			continue;
+		}
+
+		const breakpoints = (state: any).breakpoints;
+
+		if (
+			breakpoints &&
+			typeof breakpoints === 'object' &&
+			!Array.isArray(breakpoints) &&
+			Object.keys(breakpoints).length > 0
+		) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function isUnusedBlockeraFeatureValue(
+	current: mixed,
+	registeredDefault: mixed,
+	defaultAttributes: ?Object,
+	key?: string
+): boolean {
+	if (current === undefined) {
+		return true;
+	}
+
+	if (registeredDefault !== undefined) {
+		if (isEquals(current, registeredDefault)) {
+			return true;
+		}
+
+		if (
+			isEquals(
+				unwrapBlockeraAttributeValue(current),
+				unwrapBlockeraAttributeValue(registeredDefault)
+			)
+		) {
+			return true;
+		}
+	}
+
+	if (key === BLOCKERA_BLOCK_STATES_KEY) {
+		return isEmptyBlockStatesValue(current, defaultAttributes);
+	}
+
+	if (key === BLOCKERA_INNER_BLOCKS_KEY) {
+		return isEmptyInnerBlocksTree(current, defaultAttributes);
+	}
+
+	return isEmptyBlockeraFeatureValue(current);
 }
 
 /**
@@ -190,7 +945,8 @@ function getRegisteredDefaultValue(
  *
  * Meta keys (`blockeraId`, legacy ids, `blockeraBlockMode`) do not count.
  * Values equal to the registered default do not count (e.g. `{ value: 'none' }`).
- * Empty wrappers, `''`, `[]`, and `{}` do not count. `0` and `false` do.
+ * Empty wrappers, `''`, `[]`, `{}`, and empty inner-block slots do not count.
+ * `0` and `false` do.
  *
  * @param {?Object} attributes Block attributes.
  * @param {?Object} defaultAttributes Registered schema or prepared default values.
@@ -198,7 +954,8 @@ function getRegisteredDefaultValue(
  */
 export function hasBlockeraFeatureAttributes(
 	attributes: ?Object,
-	defaultAttributes: ?Object
+	defaultAttributes: ?Object,
+	innerScope?: boolean
 ): boolean {
 	if (!attributes || typeof attributes !== 'object') {
 		return false;
@@ -209,31 +966,202 @@ export function hasBlockeraFeatureAttributes(
 			continue;
 		}
 
-		const current = attributes[key];
-		const registeredDefault = getRegisteredDefaultValue(
-			defaultAttributes,
-			key
-		);
-
-		// Schema defaults may be unwrapped (`defaultWithoutValue`); stored attrs
-		// still use `{ value }`. Compare both shapes.
 		if (
-			registeredDefault !== undefined &&
-			(isEquals(current, registeredDefault) ||
-				isEquals(
-					unwrapBlockeraAttributeValue(current),
-					unwrapBlockeraAttributeValue(registeredDefault)
-				))
+			!isUnusedBlockeraFeatureValue(
+				attributes[key],
+				getRegisteredDefaultValueForScope(
+					defaultAttributes,
+					key,
+					Boolean(innerScope)
+				),
+				defaultAttributes,
+				key
+			)
 		) {
-			continue;
-		}
-
-		if (!isEmptyBlockeraFeatureValue(current)) {
 			return true;
 		}
 	}
 
 	return false;
+}
+
+/**
+ * Gutenberg omits attributes that strictly equal the registered default.
+ * Unused/wrong-shape values are reset to that default (not `undefined`).
+ *
+ * @param {Object} attributes Block attributes.
+ * @param {?Object} defaultAttributes Registered schema or prepared default values.
+ * @return {Object} Attributes with unused Blockera features set to schema defaults.
+ */
+export function omitUnusedBlockeraFeatureAttributes(
+	attributes: Object,
+	defaultAttributes: ?Object
+): Object {
+	if (!attributes || typeof attributes !== 'object') {
+		return attributes || {};
+	}
+
+	let next = null;
+
+	for (const key in attributes) {
+		if (!BLOCKERA_ATTR_KEY.test(key) || BLOCKERA_META_ATTRIBUTE_KEYS[key]) {
+			continue;
+		}
+
+		const registeredDefault = getRegisteredDefaultValue(
+			defaultAttributes,
+			key
+		);
+
+		const current =
+			key === BLOCKERA_BLOCK_STATES_KEY
+				? normalizeBlockeraBlockStatesValue(
+						attributes[key],
+						defaultAttributes
+					)
+				: key === BLOCKERA_INNER_BLOCKS_KEY
+					? normalizeInnerBlocksTree(
+							attributes[key],
+							defaultAttributes
+						)
+					: attributes[key];
+
+		if (
+			!isUnusedBlockeraFeatureValue(
+				current,
+				registeredDefault,
+				defaultAttributes,
+				key
+			)
+		) {
+			if (
+				(key === BLOCKERA_BLOCK_STATES_KEY ||
+					key === BLOCKERA_INNER_BLOCKS_KEY) &&
+				current !== attributes[key]
+			) {
+				if (!next) {
+					next = { ...attributes };
+				}
+				next[key] = current;
+			}
+			continue;
+		}
+
+		if (
+			key === BLOCKERA_BLOCK_STATES_KEY &&
+			blockStatesTreeHasBreakpointSlots(current)
+		) {
+			if (current !== attributes[key]) {
+				if (!next) {
+					next = { ...attributes };
+				}
+				next[key] = current;
+			}
+			continue;
+		}
+
+		if (registeredDefault === undefined) {
+			if (attributes[key] !== undefined) {
+				if (!next) {
+					next = { ...attributes };
+				}
+				next[key] = undefined;
+			}
+			continue;
+		}
+
+		if (isEquals(attributes[key], registeredDefault)) {
+			continue;
+		}
+
+		if (!next) {
+			next = { ...attributes };
+		}
+
+		next[key] = registeredDefault;
+	}
+
+	return next || attributes;
+}
+
+/**
+ * Remove nested empty objects/arrays from WordPress `style` trees.
+ *
+ * PHP JSON round-trips empty objects as `[]` (`color: []`, `elements.link.color: []`).
+ * Those must be dropped so Gutenberg omits them. Non-empty arrays (e.g. duotone)
+ * are kept. Falsy scalars (`''`, `0`, `false`) are kept.
+ *
+ * @see source-codes/block-editor/packages/block-editor/src/hooks/utils.js `cleanEmptyObject`
+ *
+ * @param {*} object Nested value.
+ * @return {*} Cleaned value, or `undefined` when the tree is empty.
+ */
+export function cleanEmptyObject(object: mixed): mixed {
+	if (Array.isArray(object)) {
+		return object.length === 0 ? undefined : object;
+	}
+
+	if (object === null || typeof object !== 'object') {
+		return object;
+	}
+
+	const record: { [string]: mixed } = (object: any);
+	const keys = Object.keys(record);
+	let next: { [string]: mixed } | null = null;
+
+	for (let i = 0; i < keys.length; i++) {
+		const key = keys[i];
+		const value = record[key];
+		const cleaned = cleanEmptyObject(value);
+
+		if (cleaned === undefined) {
+			if (!next) {
+				next = { ...record };
+			}
+			delete next[key];
+			continue;
+		}
+
+		if (cleaned !== value) {
+			if (!next) {
+				next = { ...record };
+			}
+			next[key] = cleaned;
+		}
+	}
+
+	if (next) {
+		return Object.keys(next).length ? next : undefined;
+	}
+
+	return keys.length ? record : undefined;
+}
+
+/**
+ * Deep-clean WordPress `style` so empty branches do not serialize.
+ *
+ * @param {Object} attributes Block attributes.
+ * @return {Object} Attributes with an empty `style` tree unset.
+ */
+export function withCleanedWpStyle(attributes: Object): Object {
+	if (!attributes || typeof attributes !== 'object') {
+		return attributes;
+	}
+
+	if (!('style' in attributes)) {
+		return attributes;
+	}
+
+	const cleanedStyle = cleanEmptyObject(attributes.style);
+
+	if (cleanedStyle === attributes.style) {
+		return attributes;
+	}
+
+	return {
+		...attributes,
+		style: cleanedStyle,
+	};
 }
 
 /**
@@ -259,12 +1187,13 @@ export function stripBlockeraIdentity(attributes: Object): Object {
 }
 
 /**
- * In Advanced Mode, remove identity when no feature attributes remain.
- * Basic Mode keeps `blockeraId` even with empty features.
+ * Reset unused Blockera feature keys to registered defaults so Gutenberg
+ * omits them from markup. In Advanced Mode, also remove identity when no
+ * feature attributes remain. Basic Mode keeps `blockeraId`.
  *
  * @param {Object} attributes Block attributes.
  * @param {?Object} defaultAttributes Registered schema or prepared default values.
- * @return {Object} Attributes, possibly without identity.
+ * @return {Object} Attributes with unused features normalized (and maybe identity stripped).
  */
 export function withoutBlockeraIdentityIfUnused(
 	attributes: Object,
@@ -274,14 +1203,18 @@ export function withoutBlockeraIdentityIfUnused(
 		return attributes || {};
 	}
 
+	const next = withCleanedWpStyle(
+		omitUnusedBlockeraFeatureAttributes(attributes, defaultAttributes)
+	);
+
 	if (
-		isBlockeraBlockModeBasic(attributes) ||
-		hasBlockeraFeatureAttributes(attributes, defaultAttributes)
+		isBlockeraBlockModeBasic(next) ||
+		hasBlockeraFeatureAttributes(next, defaultAttributes)
 	) {
-		return attributes;
+		return next;
 	}
 
-	return stripBlockeraIdentity(attributes);
+	return stripBlockeraIdentity(next);
 }
 
 /**
