@@ -10,11 +10,20 @@ Platform-independent notes for agents working on shared Blockera packages. Curso
 - [package-types.md](architecture/package-types.md)
 - [repository-boundaries.md](architecture/repository-boundaries.md)
 
+## Domains
+
+- [editor-style-pipeline.md](domains/editor-style-pipeline.md) — JS extensions, PHP StyleDefinitions, Gutenberg compatibility, Pro overlays, tests
+
+## Decisions
+
+- [001-gp-write-root.md](decisions/001-gp-write-root.md) — standalone origin vs product submodule; when to bump
+
 ## Workflows
 
 - [changelog-and-readme.md](workflows/changelog-and-readme.md) — Unreleased inbox + README after a task
 - [product-scripts-and-deps.md](workflows/product-scripts-and-deps.md) — installed deps; product npm/Composer scripts only
 - [php-performance.md](workflows/php-performance.md) — detailed PHP hot-path patterns (on demand)
+- [change-classification.md](workflows/change-classification.md) — LOCAL / CROSS-MODULE / CROSS-REPOSITORY / ARCHITECTURAL
 
 ## Packages
 

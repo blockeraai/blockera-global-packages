@@ -21,7 +21,7 @@ Do not copy this architecture folder into every consumer. Point at `packages/glo
 
 Default active product is `blockera` unless the user named another. GP writes in a consumer session go to **that product’s** `packages/global-packages/` submodule, not another product’s checkout. Ask before editing a second product.
 
-This ecosystem-architecture initiative used the **standalone** `blockera-global-packages` origin. Later submodule pins pick it up; do not bump consumer gitlinks unless asked.
+Standalone origin vs submodule write root, and when to bump pins: [ADR 001](../decisions/001-gp-write-root.md).
 
 ## Out of bounds
 

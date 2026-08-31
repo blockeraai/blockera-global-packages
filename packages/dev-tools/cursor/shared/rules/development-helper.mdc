@@ -1,9 +1,12 @@
 ---
 description: Source-routing rule: use uncompiled Gutenberg for editor JS/React, WordPress develop (src/) for PHP, WooCommerce monorepo for Woo work, Create Block Theme as a secondary block-theme reference, and Blocksy theme/companion (PHP-first) for Blocksy compatibility work.
-alwaysApply: true
+globs: "**/packages/editor/**,**/packages/blocks-core/**,**/packages/global-styles-ui/**,**/packages/controls/**,**/packages/controls-pro/**,**/packages/data-editor/**,**/packages/data/js/**,**/packages/editor-pro/**,**/packages/blocks-pro/**,**/packages/features-core/**,**/packages/features-library/**,**/packages/blockera/js/**,**/packages/wordpress/**,**/packages/plugin-compatibility/**,**/source-codes/**"
+alwaysApply: false
 ---
 
-# Source Routing & Core-First Development Rule (Always)
+# Source Routing & Core-First Development Rule
+
+Glob-gated. Clone path map without this rule: Cursor command `source-code`. Style/extension index: `packages/dev-tools/ai/domains/editor-style-pipeline.md`.
 
 You are developing a WordPress plugin that deeply extends the WordPress Block Editor (Gutenberg) to behave like a website builder + IDE.
 Your #1 goal is **maximum compatibility with WordPress core + Gutenberg**, with **performance** and **upgrade-safety** as top priorities.

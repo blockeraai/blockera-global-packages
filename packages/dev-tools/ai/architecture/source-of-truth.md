@@ -4,7 +4,7 @@
 
 Canonical: this repository’s `packages/<name>/`.
 
-Consumers receive the same tree via git submodule `packages/global-packages` (sparse-checkout `/packages/` only). Update the pin with the product script `npm run submodule:bump` or CI `sync-global-packages-submodule`.
+Consumers receive the same tree via git submodule `packages/global-packages` (sparse-checkout `/packages/` only). Update the pin with the product script `npm run submodule:bump` or CI `sync-global-packages-submodule`. Which checkout to **write** is [ADR 001](../decisions/001-gp-write-root.md).
 
 Host `.cursor/` on consumers is **generated** by `npm run project:bootstrap` from `packages/dev-tools/cursor/` (`shared/` then `cursor/<project>/` overlay). Edit templates here, not the gitignored host copy.
 
