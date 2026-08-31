@@ -22,9 +22,12 @@ import type { BreakpointsComponentProps } from './types';
 import { isBaseBreakpoint, getBaseBreakpoint } from './helpers';
 import { applyBreakpointPreviewSize } from './get-breakpoint-preview-size';
 import { subscribeToEditorModeChanges } from './editor-mode-subscription';
-import { applyIframeHeight } from '../../../../zoom/utils/apply-iframe-height';
-import { calculateContentHeight, getIframeDocument } from '../../../../zoom/utils/iframeUtils';
-import { loadZoomFromStorage } from '../../../../zoom/utils/storage';
+import { applyIframeHeight } from '../../../../zoom/utils/apply-iframe-height.ts';
+import {
+	calculateContentHeight,
+	getIframeDocument,
+} from '../../../../zoom/utils/iframeUtils.ts';
+import { loadZoomFromStorage } from '../../../../zoom/utils/storage.ts';
 import { useStoreSelectors } from '../../../../hooks/use-store-selectors';
 import { useStoreDispatchers } from '../../../../hooks/use-store-dispatchers';
 import type {
