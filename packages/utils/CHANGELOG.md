@@ -1,3 +1,9 @@
+## Unreleased
+
+### New Features
+
+- Added `useEditorMode` to read Gutenberg visual vs code (`text`) editor mode from `core/editor`.
+
 ## [1.3.0] - 2026-08-26
 
 ### New Features

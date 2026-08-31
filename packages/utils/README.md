@@ -64,6 +64,7 @@ import {
 	useOutsideClick,
 	useValue,
 	useIsVisible,
+	useEditorMode,
 	useDragValue,
 	useLateEffect,
 } from '@blockera/utils';
