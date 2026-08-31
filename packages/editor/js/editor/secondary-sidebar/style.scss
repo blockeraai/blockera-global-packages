@@ -61,6 +61,31 @@
 	--list-view-height: 50%; /* Default height, overridden by store value */
 }
 
+.blockera-code-editor-sidebar-notice {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 1;
+	min-height: 0;
+	padding: 24px 16px;
+	text-align: center;
+
+	p {
+		margin: 0;
+		max-width: 240px;
+		color: #1e1e1e;
+		font-size: 13px;
+		line-height: 1.5;
+	}
+}
+
+.blockera-combined-sidebar.is-text-editor {
+	.editor-list-view-sidebar__list-view-container {
+		display: flex;
+		flex-direction: column;
+	}
+}
+
 /* The columns order in the editor interface */
 .editor-editor-interface
 	.interface-interface-skeleton__secondary-sidebar-blockera {
@@ -195,6 +220,10 @@
 	flex: 1;
 	display: flex;
 	flex-direction: column;
+	height: 100%;
+}
+
+.blockera-combined-sidebar__inserter .blockera-tabbed-sidebar {
 	height: 100%;
 }
 

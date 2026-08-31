@@ -13,10 +13,16 @@ import { ESCAPE } from '@wordpress/keycodes';
 import { store as editorStore } from '@wordpress/editor';
 
 /**
+ * Blockera dependencies
+ */
+import { useEditorMode } from '@blockera/utils';
+
+/**
  * Internal dependencies
  */
 import { store as blockeraEditorStore } from '../../store-persistence';
 import InserterCategoryPanelCloseButton from './InserterCategoryPanelCloseButton';
+import InserterTextModePanel from './InserterTextModePanel';
 
 interface InserterRemountState {
 	tab: string | undefined;
@@ -28,6 +34,7 @@ interface InserterRemountState {
  * Inserter library panel component that displays the block inserter.
  */
 export default function InserterLibraryPanel() {
+	const isTextEditorMode = useEditorMode() === 'text';
 	const isMobileViewport = useViewportMatch('medium', '<');
 
 	const { toggleSecondarySidebar } = useDispatch(blockeraEditorStore);
@@ -173,6 +180,16 @@ export default function InserterLibraryPanel() {
 	// Early return if public API is not available
 	if (!InserterLibrary) {
 		return null;
+	}
+
+	if (isTextEditorMode) {
+		return (
+			<div className="blockera-combined-sidebar__inserter">
+				<div className="editor-inserter-sidebar__content">
+					<InserterTextModePanel />
+				</div>
+			</div>
+		);
 	}
 
 	const initialTab = inserterRemountState?.tab ?? inserter.tab;

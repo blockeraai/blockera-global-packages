@@ -34,6 +34,12 @@ import { create, getTextContent } from '@wordpress/rich-text';
  * Blockera dependencies
  */
 import { Tabs, Button } from '@blockera/controls';
+import { useEditorMode } from '@blockera/utils';
+
+/**
+ * Internal dependencies
+ */
+import CodeEditorSidebarNotice from './CodeEditorSidebarNotice';
 
 /**
  * Expand all icon SVG component.
@@ -459,6 +465,8 @@ function ListViewOutline() {
  * List view panel component that displays tabs for list view and outline.
  */
 export default function ListViewPanel() {
+	const isTextEditorMode = useEditorMode() === 'text';
+
 	// All hooks must be called before any conditional returns
 	// List view sidebar logic
 	const { setIsListViewOpened } = useDispatch(editorStore) as any;
@@ -760,7 +768,7 @@ export default function ListViewPanel() {
 				]}
 				setCurrentTab={setTab}
 				injectMenuEnd={
-					tab === 'list-view' ? (
+					tab === 'list-view' && !isTextEditorMode ? (
 						<div className="blockera-list-view-controls">
 							<Button
 								variant="tertiary"
@@ -808,6 +816,19 @@ export default function ListViewPanel() {
 					) : undefined
 				}
 				getPanel={(selectedTab: any) => {
+					if (isTextEditorMode) {
+						return (
+							<div className="editor-list-view-sidebar__list-view-container">
+								<CodeEditorSidebarNotice dataTest="blockera-code-editor-list-view-notice">
+									{__(
+										'Not available in code editor.',
+										'blockera'
+									)}
+								</CodeEditorSidebarNotice>
+							</div>
+						);
+					}
+
 					if (selectedTab.name === 'list-view') {
 						return (
 							<div

@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Improvements
+
+- Code editor: the left sidebar stays open, but inserter and list view show “Not available in code editor.” instead of blocks, patterns, media, or document structure.
+
 ## [2.1.0] - 2026-08-26
 
 ### New Features
