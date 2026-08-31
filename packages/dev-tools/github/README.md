@@ -66,6 +66,7 @@ github/
     jobs/playwright-e2e-tests/   # detect-categories.sh | run.sh | collect-baselines.sh
     jobs/plugin-check/           # prepare-build.sh
     jobs/sync-global-packages-submodule/  # resolve | run-bump | commit | open-pr
+    jobs/resolve-pr-merge-conflicts/     # merge base into PR; gitlink via GP mirror + bump
     jobs/upload-release-to-plugin-repo/   # compute-release-branch.sh | publish-to-svn.sh (plugin + theme SVN via BLOCKERA_UPLOAD_SVN_LAYOUT)
     jobs/upload-release-to-blockeraai/    # publish.sh (Pro → Blockera AI)
     jobs/build-plugin-zip/                # version bump / notes / revert helpers
@@ -462,6 +463,51 @@ Explicit `workflow_dispatch` `mode=pr` or `mode=push` still updates a remote bra
 | `BLOCKERA_SYNC_GP_PR_BRANCH` | `chore/bump-global-packages` |
 | `BLOCKERA_SYNC_GP_PR_LABEL` | `dependencies` (created if missing; skipped if create fails). Empty disables labeling. |
 
+## Resolve PR merge conflicts
+
+Runs on pull requests that **cannot** merge because of conflicts. Clean merges
+are left for GitHub. Same-repo heads only (cannot push a fork).
+
+1. Merge `origin/<base>` into the PR branch (`--no-commit`).
+2. If the only conflict is the global-packages **gitlink**, merge the submodule
+   base (`origin/master` by default) into the GP **mirror** branch
+   (`<consumer-repo>/<pr-branch>`). File conflicts take the mirror side
+   (`-X ours`, then `--ours` for leftovers).
+3. Push the GP merge commit to the mirror branch.
+4. Run `bump-global-packages-submodule.sh` with that mirror ref (same as
+   `npm run submodule:bump` with an explicit ref).
+5. Finish the parent merge commit and push the PR branch.
+
+Any other conflicted path fails the job; those need a human.
+
+Template: `workflows/resolve-pr-merge-conflicts.yml`. Checkout **must** use
+`ref: head_ref` (not the PR merge SHA) so the push updates the PR. Thin
+consumer copies skip the run step when the current pin does not contain
+`jobs/resolve-pr-merge-conflicts/run.sh` (bash `-f` check in the thin workflow).
+
+```yaml
+- uses: actions/checkout@v5
+  with:
+      ref: ${{ github.head_ref || github.event.inputs.head_branch }}
+      token: ${{ secrets.BLOCKERABOT_PAT }}
+      fetch-depth: 0
+- uses: ./.github/actions/ensure-global-packages
+- run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/resolve-pr-merge-conflicts/run.sh
+```
+
+| Env | Default |
+| --- | --- |
+| `BLOCKERA_CONFLICT_BASE_BRANCH` | required (workflow: `github.base_ref`) |
+| `BLOCKERA_CONFLICT_HEAD_BRANCH` | required (workflow: `github.head_ref`) |
+| `BLOCKERA_CONFLICT_HEAD_REPO` | empty (skip when set and ≠ `github.repository`) |
+| `BLOCKERA_CONFLICT_GP_PATH` | `packages/global-packages` |
+| `BLOCKERA_CONFLICT_GP_BASE_BRANCH` | `master` |
+| `BLOCKERA_CONFLICT_GIT_NAME` | `blockerabot` |
+| `BLOCKERA_CONFLICT_GIT_EMAIL` | `blockeraai+githubbot@gmail.com` |
+| `BLOCKERA_CONFLICT_PUSH` | `true` |
+| `BLOCKERA_CONFLICT_BUMP_SCRIPT` | `packages/global-packages/packages/dev-tools/github/scripts/bump-global-packages-submodule.sh` |
+| `BLOCKERA_GLOBAL_PACKAGES_TOKEN` | required to fetch/push the submodule remote |
+
 ## Plugin check (PCP + PHP security)
 
 ```yaml
@@ -784,7 +830,8 @@ Available toolkit workflow filenames:
 `cypress-e2e-tests.yml`, `jest-unit-tests.yml`, `performance-benchmark.yml`,
 `php-snapshots.yml`, `php-unit-tests.yml`, `playwright-e2e-tests.yml`,
 `plugin-check.yml`, `remove-pr-config-files.yml`, `remove-pr-env-json.yml`,
-`sync-global-packages-submodule.yml`, `upload-release-to-blockeraai.yml`,
+`resolve-pr-merge-conflicts.yml`, `sync-global-packages-submodule.yml`,
+`upload-release-to-blockeraai.yml`,
 `upload-release-to-plugin-repo.yml`, `upload-release-to-theme-repo.yml`,
 `virus-total.yml`,
 `wp-tested-up-to-update.yml`
