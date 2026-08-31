@@ -65,8 +65,9 @@ Node `>=20.19.0`, npm `>=10`. PHP `>=7.4` for Composer tooling.
 2. **Side-effect entries** (`blockera`, `blockera-admin`, `plugin-compatibility`, some editor submodules) must not be imported as utility libraries or executed twice.
 3. Prefer **public exports** and existing bootstrap/filter/provider hooks over private deep imports or Gutenberg DOM hacks.
 4. Keep **JS ↔ PHP contracts** in sync (storage key format, icon objects, SVG codecs, experimental paths).
-5. For editor/Gutenberg research in the main plugin, use `source-code-block-editor/` / `source-code-wordpress/` per Blockera development rules.
-6. After changing a synced package, run the folder-sync process so consumers stay aligned.
+5. For editor/Gutenberg and WordPress core research, use the **product** `source-codes/block-editor/` and `source-codes/wordpress/src/` trees (see Cursor `development-helper` / `source-code` command).
+6. After changing a shared package, consumers pick it up with `npm run submodule:bump` (or CI submodule sync) — not folder-sync.
+7. Agent orientation: root [`AGENTS.md`](./AGENTS.md) and [`packages/dev-tools/ai/`](./packages/dev-tools/ai/).
 
 ---
 

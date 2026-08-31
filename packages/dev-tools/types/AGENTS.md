@@ -10,8 +10,9 @@ Loaded via `typeRoots` in `packages/dev-tools/js/typescript/tsconfig.base.json`.
 
 ## How to edit
 
-- Edit these files only in the **blockera-one** checkout of `packages/global-packages`.
-- Other repos (blockera, blockera-pro, blockera-site-toolkit) consume this folder through the submodule. After changing types, bump the submodule in those repos.
+- Edit these files in the **active product’s** `packages/global-packages` checkout (see `product-scope.mdc`), or in the standalone `blockera-global-packages` repo when that is the write target.
+- Do not add a project-root `types/` folder.
+- Other products consume this folder through the submodule pin. After changing types, bump the submodule in those repos (`npm run submodule:bump` / CI). Do not maintain a long-lived fork per product.
 
 ## What belongs here
 

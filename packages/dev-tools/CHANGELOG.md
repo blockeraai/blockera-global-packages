@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+- Agent knowledge: `packages/dev-tools/ai/` architecture and workflows (changelog/README after a task; product scripts and pre-installed deps). Cursor `global-architecture` rule plus `commit` / `test-e2e-cypress` command updates.
+- PHP performance: keep the Cursor PHP glob rule short; detailed patterns live in `packages/dev-tools/ai/workflows/php-performance.md`.
+
 ## [2.1.0] - 2026-08-31
 
 ### Features

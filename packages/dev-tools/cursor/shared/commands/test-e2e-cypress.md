@@ -6,4 +6,9 @@ While writing e2e cypress tests it's important to follow following rules:
 
 - it's important to create commands in the dev-cypress package for redundant tasks and also use current commands.
 
-- If you added a new test case or updated one, then add only to it and run command to verify test runs without problem and also only that tests runs.
+- If you added a new test case or updated one, then add only to it and verify from the **active product root** with the product script:
+
+  `npm run test:e2e -- --spec <path-to-spec>`
+
+  Do not invent a one-off `npx cypress run` unless `test:e2e` is missing from that product’s `package.json`. See `packages/global-packages/packages/dev-tools/ai/workflows/product-scripts-and-deps.md`.
+

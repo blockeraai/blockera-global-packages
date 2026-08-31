@@ -100,7 +100,7 @@ Several submodule imports **auto-register** editor plugins. Command-bar and some
 - Call dedicated bootstrap functions **once**; preserve startup order used by `@blockera/blockera`.
 - Treat `unstableBootstrapServerSideBreakpointDefinitions` as internal/unstable.
 - Prefer public extension points (`applyHooks`, extension classes, style definitions) over DOM hacks or private Gutenberg patches.
-- When researching Gutenberg behavior, use `source-code-block-editor/` first (Blockera plugin convention).
+- When researching Gutenberg behavior, use the product `source-codes/block-editor/` tree first (Cursor `development-helper`).
 
 ---
 
