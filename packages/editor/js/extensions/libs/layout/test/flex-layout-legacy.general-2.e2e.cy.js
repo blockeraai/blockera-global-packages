@@ -8,7 +8,7 @@ import {
 	getSelectedBlock,
 } from '@blockera/dev-cypress/js/helpers';
 
-const LEGACY_COLUMN_GROUP = `<!-- wp:group {"blockeraDisplay":{"value":"flex"},"blockeraFlexLayout":{"value":{"direction":"column","alignItems":"center","justifyContent":"flex-start"}},"blockeraMinHeight":{"value":"220px"},"className":"blockera-block blockera-block-legacy-flex-col"} -->
+const LEGACY_COLUMN_GROUP = `<!-- wp:group {"blockeraPropsId":"731125253101","blockeraCompatId":"731125235542","blockeraDisplay":{"value":"flex"},"blockeraFlexLayout":{"value":{"direction":"column","alignItems":"center","justifyContent":"flex-start"}},"blockeraFlexWrap":{"value":{"val":"nowrap","reverse":false}},"blockeraMinHeight":{"value":"220px"},"className":"blockera-block blockera-block-legacy-flex-col","layout":{"type":"flex","orientation":"vertical"}} -->
 <div class="wp-block-group blockera-block blockera-block-legacy-flex-col"><!-- wp:paragraph -->
 <p>A</p>
 <!-- /wp:paragraph -->
@@ -21,7 +21,7 @@ const LEGACY_COLUMN_GROUP = `<!-- wp:group {"blockeraDisplay":{"value":"flex"},"
 const LEGACY_COLUMN_ATTR =
 	'"blockeraFlexLayout":{"value":{"direction":"column","alignItems":"center","justifyContent":"flex-start"}}';
 
-const LEGACY_COLUMN_STRETCH_GROUP = `<!-- wp:group {"blockeraDisplay":{"value":"flex"},"blockeraFlexLayout":{"value":{"direction":"column","alignItems":"stretch","justifyContent":"flex-start"}},"blockeraMinHeight":{"value":"220px"},"className":"blockera-block blockera-block-legacy-flex-col-stretch"} -->
+const LEGACY_COLUMN_STRETCH_GROUP = `<!-- wp:group {"blockeraPropsId":"731125253102","blockeraCompatId":"731125235543","blockeraDisplay":{"value":"flex"},"blockeraFlexLayout":{"value":{"direction":"column","alignItems":"stretch","justifyContent":"flex-start"}},"blockeraMinHeight":{"value":"220px"},"className":"blockera-block blockera-block-legacy-flex-col-stretch","layout":{"type":"flex","orientation":"vertical"}} -->
 <div class="wp-block-group blockera-block blockera-block-legacy-flex-col-stretch"><!-- wp:paragraph -->
 <p>A</p>
 <!-- /wp:paragraph -->
@@ -34,7 +34,7 @@ const LEGACY_COLUMN_STRETCH_GROUP = `<!-- wp:group {"blockeraDisplay":{"value":"
 const LEGACY_COLUMN_STRETCH_ATTR =
 	'"blockeraFlexLayout":{"value":{"direction":"column","alignItems":"stretch","justifyContent":"flex-start"}}';
 
-const LEGACY_COLUMN_SPACE_BETWEEN_GROUP = `<!-- wp:group {"blockeraDisplay":{"value":"flex"},"blockeraFlexLayout":{"value":{"direction":"column","alignItems":"center","justifyContent":"space-between"}},"blockeraMinHeight":{"value":"220px"},"className":"blockera-block blockera-block-legacy-flex-col-space-between"} -->
+const LEGACY_COLUMN_SPACE_BETWEEN_GROUP = `<!-- wp:group {"blockeraPropsId":"731125253103","blockeraCompatId":"731125235544","blockeraDisplay":{"value":"flex"},"blockeraFlexLayout":{"value":{"direction":"column","alignItems":"center","justifyContent":"space-between"}},"blockeraMinHeight":{"value":"220px"},"className":"blockera-block blockera-block-legacy-flex-col-space-between","layout":{"type":"flex","orientation":"vertical"}} -->
 <div class="wp-block-group blockera-block blockera-block-legacy-flex-col-space-between"><!-- wp:paragraph -->
 <p>A</p>
 <!-- /wp:paragraph -->
