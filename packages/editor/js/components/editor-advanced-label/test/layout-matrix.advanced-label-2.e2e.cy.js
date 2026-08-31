@@ -363,8 +363,8 @@ describe('Layout Matrix Control label testing (Flex Layout)', () => {
 						);
 						expect({
 							direction: 'row',
-							alignItems: 'flex-start',
-							justifyContent: 'flex-start',
+							flexAlign: 'flex-start',
+							flexJustify: 'flex-start',
 						}).to.be.deep.eq(
 							getSelectedBlock(data, 'blockeraFlexLayout')
 						);
@@ -446,8 +446,8 @@ describe('Layout Matrix Control label testing (Flex Layout)', () => {
 					assertBlockData((data) => {
 						expect({
 							direction: 'row',
-							alignItems: '',
-							justifyContent: '',
+							flexAlign: '',
+							flexJustify: '',
 						}).to.be.deep.eq(
 							getSelectedBlock(data, 'blockeraFlexLayout')
 						);
@@ -560,8 +560,8 @@ describe('Layout Matrix Control label testing (Flex Layout)', () => {
 			assertBlockData((data) => {
 				expect({
 					direction: 'row',
-					alignItems: 'flex-end',
-					justifyContent: 'flex-start',
+					flexAlign: 'flex-end',
+					flexJustify: 'flex-start',
 				}).to.be.deep.eq(getSelectedBlock(data, 'blockeraFlexLayout'));
 
 				expect({}).to.be.deep.eq(
@@ -674,8 +674,8 @@ describe('Layout Matrix Control label testing (Flex Layout)', () => {
 			assertBlockData((data) => {
 				expect({
 					direction: 'row',
-					alignItems: '',
-					justifyContent: '',
+					flexAlign: '',
+					flexJustify: '',
 				}).to.be.deep.eq(getSelectedBlock(data, 'blockeraFlexLayout'));
 
 				expect({}).to.be.deep.eq(
@@ -685,8 +685,8 @@ describe('Layout Matrix Control label testing (Flex Layout)', () => {
 				expect({
 					blockeraFlexLayout: {
 						direction: 'row',
-						alignItems: 'flex-end',
-						justifyContent: 'flex-end',
+						flexAlign: 'flex-end',
+						flexJustify: 'flex-end',
 					},
 				}).to.be.deep.eq(
 					getBreakpointAttributes(data, 'hover', 'desktop')
@@ -726,8 +726,8 @@ describe('Layout Matrix Control label testing (Flex Layout)', () => {
 					assertBlockData((data) => {
 						expect({
 							direction: 'row',
-							alignItems: '',
-							justifyContent: '',
+							flexAlign: '',
+							flexJustify: '',
 						}).to.be.deep.eq(
 							getSelectedBlock(data, 'blockeraFlexLayout')
 						);
@@ -834,8 +834,8 @@ describe('Layout Matrix Control label testing (Flex Layout)', () => {
 					assertBlockData((data) => {
 						expect({
 							direction: 'row',
-							alignItems: '',
-							justifyContent: '',
+							flexAlign: '',
+							flexJustify: '',
 						}).to.be.deep.eq(
 							getSelectedBlock(data, 'blockeraFlexLayout')
 						);
@@ -928,8 +928,8 @@ describe('Layout Matrix Control label testing (Flex Layout)', () => {
 			assertBlockData((data) => {
 				expect({
 					direction: 'row',
-					alignItems: 'flex-end',
-					justifyContent: 'center',
+					flexAlign: 'flex-end',
+					flexJustify: 'center',
 				}).to.be.deep.eq(getSelectedBlock(data, 'blockeraFlexLayout'));
 
 				expect({}).to.be.deep.eq(
@@ -1044,8 +1044,8 @@ describe('Layout Matrix Control label testing (Flex Layout)', () => {
 			assertBlockData((data) => {
 				expect({
 					direction: 'row',
-					alignItems: '',
-					justifyContent: '',
+					flexAlign: '',
+					flexJustify: '',
 				}).to.be.deep.eq(getSelectedBlock(data, 'blockeraFlexLayout'));
 
 				expect({}).to.be.deep.eq(
@@ -1055,8 +1055,8 @@ describe('Layout Matrix Control label testing (Flex Layout)', () => {
 				expect({
 					blockeraFlexLayout: {
 						direction: 'row',
-						alignItems: 'flex-end',
-						justifyContent: 'flex-end',
+						flexAlign: 'flex-end',
+						flexJustify: 'flex-end',
 					},
 				}).to.be.deep.eq(
 					getBreakpointAttributes(data, 'hover', 'desktop')
