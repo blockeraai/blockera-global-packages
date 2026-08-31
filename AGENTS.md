@@ -22,7 +22,7 @@ Canonical monorepo of shared Blockera packages (`packages/`). Consumers (blocker
 - Keep JS ↔ PHP contracts in sync where both sides exist.
 - After a dedicated task: Unreleased changelog + README only if the public contract changed. [`workflows/changelog-and-readme.md`](packages/dev-tools/ai/workflows/changelog-and-readme.md)
 - Do not install deps. Run tests via **product** `package.json` / `composer.json` scripts (`npm run test:e2e`, `test:js`, `test:unit:php`). [`workflows/product-scripts-and-deps.md`](packages/dev-tools/ai/workflows/product-scripts-and-deps.md)
-- Consumers pick up changes via `submodule:bump` / CI — not folder-sync.
+- Consumers pick up changes via `submodule:bump` / CI.
 
 ## Validate
 

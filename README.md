@@ -66,7 +66,7 @@ Node `>=20.19.0`, npm `>=10`. PHP `>=7.4` for Composer tooling.
 3. Prefer **public exports** and existing bootstrap/filter/provider hooks over private deep imports or Gutenberg DOM hacks.
 4. Keep **JS ↔ PHP contracts** in sync (storage key format, icon objects, SVG codecs, experimental paths).
 5. For editor/Gutenberg and WordPress core research, use the **product** `source-codes/block-editor/` and `source-codes/wordpress/src/` trees (see Cursor `development-helper` / `source-code` command).
-6. After changing a shared package, consumers pick it up with `npm run submodule:bump` (or CI submodule sync) — not folder-sync.
+6. After changing a shared package, consumers pick it up with `npm run submodule:bump` (or CI submodule sync).
 7. Agent orientation: root [`AGENTS.md`](./AGENTS.md) and [`packages/dev-tools/ai/`](./packages/dev-tools/ai/).
 
 ---
