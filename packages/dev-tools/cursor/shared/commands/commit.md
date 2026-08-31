@@ -2,6 +2,14 @@
 
 You are in chat and we made changes into the codebase in this chat and we want to commit them.
 
+## Changelog and README (before staging)
+
+Follow `packages/global-packages/packages/dev-tools/ai/workflows/changelog-and-readme.md` (standalone GP: `packages/dev-tools/ai/workflows/changelog-and-readme.md`).
+
+- Append `## Unreleased` bullets on each **package** `CHANGELOG.md` whose source changed.
+- Update that package’s README only if the public contract changed.
+- Do not fold versions, bump package versions, or edit product-root `CHANGELOG.md` / `changelog.txt`.
+
 ## What to commit
 
 - Commit **only** changes made in **this chat**. Ignore unrelated dirty files.

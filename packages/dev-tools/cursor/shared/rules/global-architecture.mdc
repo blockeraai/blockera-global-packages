@@ -1,0 +1,17 @@
+---
+description: Where Blockera shared AI knowledge lives (global-packages architecture and workflows)
+alwaysApply: true
+---
+
+# global-architecture
+
+Shared Blockera package architecture is **not** in this rule. Read it from the global-packages tree (sparse submodule on consumers):
+
+- Standalone GP: `packages/dev-tools/ai/index.md`
+- Inside a product: `packages/global-packages/packages/dev-tools/ai/index.md`
+
+After implementation: Unreleased changelog + README only if the public API changed (`…/ai/workflows/changelog-and-readme.md`).
+
+Do not install npm/Composer deps. Run tests with the **active product** scripts (`npm run test:e2e`, `test:js`, `test:unit:php`) — `…/ai/workflows/product-scripts-and-deps.md`.
+
+Keep Gutenberg/WordPress research on `development-helper.mdc` (glob-gated) and command `source-code`. Style pipeline: `…/ai/domains/editor-style-pipeline.md`. Task depth: `…/ai/workflows/change-classification.md` / command `classify-change`. GP write root: `…/ai/decisions/001-gp-write-root.md`. Product write boundaries: `product-scope.mdc`. PHP hot-path details: `…/ai/workflows/php-performance.md` (the PHP glob rule stays short).
