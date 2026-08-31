@@ -1,3 +1,9 @@
+## Unreleased
+
+### Fixed
+
+- Hide the in-canvas breakpoint/zoom header before editor visual screenshots so device chrome is not captured.
+
 ## [2.0.0] - 2026-08-31
 
 ### Added

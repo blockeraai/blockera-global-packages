@@ -1517,6 +1517,22 @@ async function setEditorViewportForScreenshot(
 	}
 
 	containerHeight = await evaluateInEditorCanvas(page, (doc) => {
+		doc
+			.querySelectorAll(
+				'[data-blockera-canvas-header-root], .blockera-canvas-header'
+			)
+			.forEach((node) => {
+				if (node instanceof HTMLElement) {
+					node.style.display = 'none';
+				}
+			});
+
+		doc.body?.classList.remove('blockera-zoom-active');
+		doc.documentElement?.classList.remove(
+			'blockera-zoom-active',
+			'blockera-outer-scrollport'
+		);
+
 		const el = doc.querySelector('.is-root-container');
 		const elementHeight = el
 			? Math.max(
@@ -1556,6 +1572,19 @@ async function setEditorViewportForScreenshot(
 
 		const style = doc.createElement('style');
 		style.textContent = `
+			[data-blockera-canvas-header-root],
+			.blockera-canvas-header {
+				display: none !important;
+				visibility: hidden !important;
+				height: 0 !important;
+				overflow: hidden !important;
+				pointer-events: none !important;
+			}
+
+			body.blockera-zoom-active {
+				padding-top: 0 !important;
+			}
+
 			.is-root-container.has-global-padding {
 				font-size: 18px !important;
 				line-height: 0;
@@ -1678,6 +1707,52 @@ async function setFrontendViewportForScreenshot(
 	}
 }
 
+/**
+ * Keep the in-iframe breakpoint/zoom canvas header out of editor screenshots.
+ * Injects a persistent style so React remounts after waitForContentReady stay hidden.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @return {Promise<void>}
+ */
+async function hideCanvasHeaderForScreenshot(page) {
+	await evaluateInEditorCanvas(page, (doc) => {
+		let style = doc.querySelector(
+			'style[data-blockera-hide-canvas-header]'
+		);
+		if (!style) {
+			style = doc.createElement('style');
+			style.setAttribute('data-blockera-hide-canvas-header', 'true');
+			doc.head.appendChild(style);
+		}
+
+		style.textContent = `
+			[data-blockera-canvas-header-root],
+			.blockera-canvas-header {
+				display: none !important;
+				visibility: hidden !important;
+				height: 0 !important;
+				max-height: 0 !important;
+				overflow: hidden !important;
+				pointer-events: none !important;
+			}
+
+			body.blockera-zoom-active {
+				padding-top: 0 !important;
+			}
+		`;
+
+		doc
+			.querySelectorAll(
+				'[data-blockera-canvas-header-root], .blockera-canvas-header'
+			)
+			.forEach((node) => {
+				if (node instanceof HTMLElement) {
+					node.style.setProperty('display', 'none', 'important');
+				}
+			});
+	});
+}
+
 module.exports = {
 	test,
 	expect,
@@ -1727,4 +1802,5 @@ module.exports = {
 	applyDomSearchReplace,
 	setEditorViewportForScreenshot,
 	setFrontendViewportForScreenshot,
+	hideCanvasHeaderForScreenshot,
 };
