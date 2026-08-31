@@ -12,8 +12,8 @@ describe('Layout Matrix Control component testing', () => {
 	});
 	const value = {
 		direction: 'row',
-		alignItems: 'center',
-		justifyContent: 'center',
+		flexAlign: 'center',
+		flexJustify: 'center',
 		dense: false,
 	};
 
@@ -34,8 +34,8 @@ describe('Layout Matrix Control component testing', () => {
 					<LayoutMatrixControl
 						defaultValue={{
 							direction: 'column',
-							alignItems: '',
-							justifyContent: '',
+							flexAlign: '',
+							flexJustify: '',
 							dense: false,
 						}}
 					/>
@@ -174,14 +174,14 @@ describe('Layout Matrix Control component testing', () => {
 				});
 			});
 
-			it('should swap alignItems and justifyContent when direction changes', () => {
+			it('should swap flexAlign and flexJustify when direction changes', () => {
 				const name = nanoid();
 				cy.withDataProvider({
 					component: <LayoutMatrixControl />,
 					value: {
 						direction: 'row',
-						alignItems: 'flex-start',
-						justifyContent: 'center',
+						flexAlign: 'flex-start',
+						flexJustify: 'center',
 						dense: false,
 					},
 					name,
@@ -206,8 +206,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'column',
-						alignItems: 'center',
-						justifyContent: 'flex-start',
+						flexAlign: 'center',
+						flexJustify: 'flex-start',
 					});
 				});
 			});
@@ -218,8 +218,8 @@ describe('Layout Matrix Control component testing', () => {
 					component: <LayoutMatrixControl />,
 					value: {
 						direction: 'row',
-						alignItems: 'stretch',
-						justifyContent: 'space-between',
+						flexAlign: 'stretch',
+						flexJustify: 'space-between',
 						dense: false,
 					},
 					name,
@@ -230,8 +230,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'column',
-						alignItems: 'stretch',
-						justifyContent: 'space-between',
+						flexAlign: 'stretch',
+						flexJustify: 'space-between',
 					});
 				});
 
@@ -240,8 +240,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'row',
-						alignItems: 'stretch',
-						justifyContent: 'space-between',
+						flexAlign: 'stretch',
+						flexJustify: 'space-between',
 					});
 				});
 			});
@@ -296,7 +296,7 @@ describe('Layout Matrix Control component testing', () => {
 				// Check data provider
 				cy.get('body').then(() => {
 					expect('flex-start').to.be.equal(
-						getControlValue(name).alignItems
+						getControlValue(name).flexAlign
 					);
 				});
 			});
@@ -319,7 +319,7 @@ describe('Layout Matrix Control component testing', () => {
 				// Check data provider
 				cy.get('body').then(() => {
 					expect('center').to.be.equal(
-						getControlValue(name).alignItems
+						getControlValue(name).flexAlign
 					);
 				});
 			});
@@ -342,7 +342,7 @@ describe('Layout Matrix Control component testing', () => {
 				// Check data provider
 				cy.get('body').then(() => {
 					expect('flex-end').to.be.equal(
-						getControlValue(name).alignItems
+						getControlValue(name).flexAlign
 					);
 				});
 			});
@@ -364,7 +364,7 @@ describe('Layout Matrix Control component testing', () => {
 				// Check data provider
 				cy.get('body').then(() => {
 					expect('stretch').to.be.equal(
-						getControlValue(name).alignItems
+						getControlValue(name).flexAlign
 					);
 				});
 			});
@@ -385,7 +385,7 @@ describe('Layout Matrix Control component testing', () => {
 				// Check data provider
 				cy.get('body').then(() => {
 					expect('flex-start').to.be.equal(
-						getControlValue(name).justifyContent
+						getControlValue(name).flexJustify
 					);
 				});
 			});
@@ -394,7 +394,7 @@ describe('Layout Matrix Control component testing', () => {
 				const name = nanoid();
 				cy.withDataProvider({
 					component: <LayoutMatrixControl />,
-					value: { ...value, justifyContent: 'flex-start' },
+					value: { ...value, flexJustify: 'flex-start' },
 					name,
 				});
 
@@ -408,7 +408,7 @@ describe('Layout Matrix Control component testing', () => {
 				// Check data provider
 				cy.get('body').then(() => {
 					expect('center').to.be.equal(
-						getControlValue(name).justifyContent
+						getControlValue(name).flexJustify
 					);
 				});
 			});
@@ -431,7 +431,7 @@ describe('Layout Matrix Control component testing', () => {
 				// Check data provider
 				cy.get('body').then(() => {
 					expect('flex-end').to.be.equal(
-						getControlValue(name).justifyContent
+						getControlValue(name).flexJustify
 					);
 				});
 			});
@@ -454,7 +454,7 @@ describe('Layout Matrix Control component testing', () => {
 				// Check data provider
 				cy.get('body').then(() => {
 					expect('space-around').to.be.equal(
-						getControlValue(name).justifyContent
+						getControlValue(name).flexJustify
 					);
 				});
 			});
@@ -477,7 +477,7 @@ describe('Layout Matrix Control component testing', () => {
 				// Check data provider
 				cy.get('body').then(() => {
 					expect('space-between').to.be.equal(
-						getControlValue(name).justifyContent
+						getControlValue(name).flexJustify
 					);
 				});
 			});
@@ -502,8 +502,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'row',
-						alignItems: 'stretch',
-						justifyContent: 'space-between',
+						flexAlign: 'stretch',
+						flexJustify: 'space-between',
 					});
 				});
 			});
@@ -528,8 +528,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'row',
-						alignItems: 'stretch',
-						justifyContent: 'space-around',
+						flexAlign: 'stretch',
+						flexJustify: 'space-around',
 					});
 				});
 			});
@@ -547,14 +547,14 @@ describe('Layout Matrix Control component testing', () => {
 					});
 			};
 
-			it('should update alignItems when X select changes in column direction', () => {
+			it('should update flexAlign when X select changes in column direction', () => {
 				const name = nanoid();
 				cy.withDataProvider({
 					component: <LayoutMatrixControl />,
 					value: {
 						direction: 'column',
-						alignItems: 'center',
-						justifyContent: 'center',
+						flexAlign: 'center',
+						flexJustify: 'center',
 						dense: false,
 					},
 					name,
@@ -565,20 +565,20 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'column',
-						alignItems: 'flex-start',
-						justifyContent: 'center',
+						flexAlign: 'flex-start',
+						flexJustify: 'center',
 					});
 				});
 			});
 
-			it('should update justifyContent when Y select changes in column direction', () => {
+			it('should update flexJustify when Y select changes in column direction', () => {
 				const name = nanoid();
 				cy.withDataProvider({
 					component: <LayoutMatrixControl />,
 					value: {
 						direction: 'column',
-						alignItems: 'center',
-						justifyContent: 'center',
+						flexAlign: 'center',
+						flexJustify: 'center',
 						dense: false,
 					},
 					name,
@@ -589,8 +589,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'column',
-						alignItems: 'center',
-						justifyContent: 'flex-end',
+						flexAlign: 'center',
+						flexJustify: 'flex-end',
 					});
 				});
 			});
@@ -626,8 +626,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'row',
-						alignItems: 'flex-start',
-						justifyContent: 'flex-start',
+						flexAlign: 'flex-start',
+						flexJustify: 'flex-start',
 					});
 				});
 			});
@@ -654,8 +654,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'row',
-						alignItems: 'flex-start',
-						justifyContent: 'flex-start',
+						flexAlign: 'flex-start',
+						flexJustify: 'flex-start',
 					});
 				});
 			});
@@ -683,8 +683,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'row',
-						alignItems: 'flex-start',
-						justifyContent: 'space-between',
+						flexAlign: 'flex-start',
+						flexJustify: 'space-between',
 					});
 				});
 			});
@@ -693,7 +693,7 @@ describe('Layout Matrix Control component testing', () => {
 				const name = nanoid();
 				cy.withDataProvider({
 					component: <LayoutMatrixControl />,
-					value: { ...value, justifyContent: 'space-between' },
+					value: { ...value, flexJustify: 'space-between' },
 					name,
 				});
 
@@ -711,8 +711,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'row',
-						alignItems: 'center',
-						justifyContent: 'space-around',
+						flexAlign: 'center',
+						flexJustify: 'space-around',
 					});
 				});
 			});
@@ -721,7 +721,7 @@ describe('Layout Matrix Control component testing', () => {
 				const name = nanoid();
 				cy.withDataProvider({
 					component: <LayoutMatrixControl />,
-					value: { ...value, justifyContent: 'space-around' },
+					value: { ...value, flexJustify: 'space-around' },
 					name,
 				});
 
@@ -739,8 +739,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'row',
-						alignItems: 'stretch',
-						justifyContent: 'center',
+						flexAlign: 'stretch',
+						flexJustify: 'center',
 					});
 				});
 			});
@@ -749,7 +749,7 @@ describe('Layout Matrix Control component testing', () => {
 				const name = nanoid();
 				cy.withDataProvider({
 					component: <LayoutMatrixControl />,
-					value: { ...value, alignItems: 'stretch' },
+					value: { ...value, flexAlign: 'stretch' },
 					name,
 				});
 
@@ -767,8 +767,8 @@ describe('Layout Matrix Control component testing', () => {
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
 						direction: 'row',
-						alignItems: 'center',
-						justifyContent: 'center',
+						flexAlign: 'center',
+						flexJustify: 'center',
 					});
 				});
 			});
