@@ -81,8 +81,8 @@ describe('Flex Layout → WP Data Compatibility', () => {
 			// WP vertical → justifyContent; WP horizontal → alignItems in column.
 			assertBlockeraFlexLayout(data, {
 				direction: 'column',
-				alignItems: 'flex-end',
-				justifyContent: 'flex-start',
+				flexAlign: 'flex-end',
+				flexJustify: 'flex-start',
 			});
 		});
 	});
@@ -99,8 +99,8 @@ describe('Flex Layout → WP Data Compatibility', () => {
 
 			assertBlockeraFlexLayout(data, {
 				direction: 'row',
-				alignItems: 'center',
-				justifyContent: 'flex-start',
+				flexAlign: 'center',
+				flexJustify: 'flex-start',
 			});
 		});
 	});
@@ -121,8 +121,8 @@ describe('Flex Layout → WP Data Compatibility', () => {
 
 			assertBlockeraFlexLayout(data, {
 				direction: 'row',
-				alignItems: 'flex-start',
-				justifyContent: 'flex-end',
+				flexAlign: 'flex-start',
+				flexJustify: 'flex-end',
 			});
 		});
 
@@ -139,8 +139,8 @@ describe('Flex Layout → WP Data Compatibility', () => {
 
 			assertBlockeraFlexLayout(data, {
 				direction: 'column',
-				alignItems: 'flex-end',
-				justifyContent: 'flex-start',
+				flexAlign: 'flex-end',
+				flexJustify: 'flex-start',
 			});
 		});
 	});
@@ -165,8 +165,8 @@ describe('Flex Layout → WP Data Compatibility', () => {
 
 			assertBlockeraFlexLayout(data, {
 				direction: 'row',
-				alignItems: 'center',
-				justifyContent: 'flex-start',
+				flexAlign: 'center',
+				flexJustify: 'flex-start',
 			});
 		});
 	});
@@ -187,8 +187,8 @@ describe('Flex Layout → WP Data Compatibility', () => {
 
 			assertBlockeraFlexLayout(data, {
 				direction: 'column',
-				alignItems: 'flex-start',
-				justifyContent: 'center',
+				flexAlign: 'flex-start',
+				flexJustify: 'center',
 			});
 		});
 	});
@@ -208,8 +208,8 @@ describe('Flex Layout → WP Data Compatibility', () => {
 
 			assertBlockeraFlexLayout(data, {
 				direction: 'row',
-				alignItems: '',
-				justifyContent: '',
+				flexAlign: '',
+				flexJustify: '',
 			});
 		});
 	});

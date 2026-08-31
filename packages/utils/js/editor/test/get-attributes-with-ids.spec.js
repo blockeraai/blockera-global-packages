@@ -354,8 +354,8 @@ describe('withoutBlockeraIdentityIfUnused', () => {
 		const flexDefault = {
 			value: {
 				direction: 'row',
-				alignItems: '',
-				justifyContent: '',
+				flexAlign: '',
+				flexJustify: '',
 			},
 		};
 		const schema = {
@@ -382,12 +382,12 @@ describe('withoutBlockeraIdentityIfUnused', () => {
 				blockeraFlexLayout: {
 					value: {
 						direction: 'row',
-						alignItems: '',
-						justifyContent: '',
+						flexAlign: '',
+						flexJustify: '',
 					},
 					direction: 'row',
-					alignItems: '',
-					justifyContent: '',
+					flexAlign: '',
+					flexJustify: '',
 				},
 				blockeraInnerBlocks: {
 					value: {
@@ -540,8 +540,8 @@ describe('withoutBlockeraIdentityIfUnused', () => {
 				default: {
 					value: {
 						direction: 'row',
-						alignItems: '',
-						justifyContent: '',
+						flexAlign: '',
+						flexJustify: '',
 					},
 				},
 			},
@@ -562,8 +562,8 @@ describe('withoutBlockeraIdentityIfUnused', () => {
 								blockeraDisplay: 'flex',
 								blockeraFlexLayout: {
 									direction: 'row',
-									alignItems: 'center',
-									justifyContent: 'center',
+									flexAlign: 'center',
+									flexJustify: 'center',
 								},
 								blockeraGap: {
 									lock: true,

@@ -198,7 +198,7 @@ describe('Blockera layout toolbar', () => {
 
 			assertBlockData((data) => {
 				expect('center').to.equal(
-					getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+					getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 				);
 
 				assertWpLayout(data, {
@@ -212,7 +212,7 @@ describe('Blockera layout toolbar', () => {
 
 			assertBlockData((data) => {
 				expect('center').to.equal(
-					getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+					getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 				);
 
 				assertWpLayout(data, {
@@ -228,7 +228,7 @@ describe('Blockera layout toolbar', () => {
 
 			assertBlockData((data) => {
 				expect('space-around').to.equal(
-					getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+					getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 				);
 			});
 
@@ -236,7 +236,7 @@ describe('Blockera layout toolbar', () => {
 
 			assertBlockData((data) => {
 				expect('stretch').to.equal(
-					getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+					getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 				);
 			});
 		});
@@ -256,7 +256,7 @@ describe('Blockera layout toolbar', () => {
 				});
 
 				expect('flex-start').to.equal(
-					getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+					getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 				);
 			});
 
@@ -272,7 +272,7 @@ describe('Blockera layout toolbar', () => {
 
 			assertBlockData((data) => {
 				expect('space-between').to.equal(
-					getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+					getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 				);
 
 				assertWpLayout(data, {
@@ -286,7 +286,7 @@ describe('Blockera layout toolbar', () => {
 
 			assertBlockData((data) => {
 				expect('space-around').to.equal(
-					getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+					getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 				);
 
 				assertWpLayout(data, {
@@ -304,7 +304,7 @@ describe('Blockera layout toolbar', () => {
 
 			assertBlockData((data) => {
 				expect('center').to.equal(
-					getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+					getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 				);
 			});
 
@@ -316,7 +316,7 @@ describe('Blockera layout toolbar', () => {
 
 			assertBlockData((data) => {
 				expect('flex-start').to.equal(
-					getMobileBreakpointFlexLayout(data)?.justifyContent
+					getMobileBreakpointFlexLayout(data)?.flexJustify
 				);
 			});
 
@@ -326,7 +326,7 @@ describe('Blockera layout toolbar', () => {
 
 			assertBlockData((data) => {
 				expect('center').to.equal(
-					getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+					getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 				);
 			});
 		});
@@ -356,7 +356,7 @@ describe('Blockera layout toolbar', () => {
 
 			assertBlockData((data) => {
 				expect('center').to.equal(
-					getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+					getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 				);
 			});
 		});
@@ -376,7 +376,7 @@ describe('Blockera layout toolbar', () => {
 
 			assertBlockData((data) => {
 				expect('center').to.equal(
-					getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+					getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 				);
 			});
 		});

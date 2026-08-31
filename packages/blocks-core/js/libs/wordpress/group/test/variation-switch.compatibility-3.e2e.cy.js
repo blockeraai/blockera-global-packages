@@ -55,11 +55,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -101,11 +101,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -162,11 +162,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -224,11 +224,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -278,11 +278,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -325,11 +325,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -363,11 +363,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -393,11 +393,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -423,11 +423,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -453,11 +453,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -485,11 +485,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -518,11 +518,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 
@@ -548,11 +548,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 			);
 
 			expect('').to.be.equal(
-				getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+				getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 			);
 		});
 	});
@@ -606,11 +606,11 @@ describe('Group Block → Variation Switch Compatibility', () => {
 
 					expect('').to.be.equal(
 						getSelectedBlock(data, 'blockeraFlexLayout')
-							?.justifyContent
+							?.flexJustify
 					);
 
 					expect('').to.be.equal(
-						getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+						getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 					);
 				});
 			}
