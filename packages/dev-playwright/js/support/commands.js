@@ -835,6 +835,60 @@ function normalizeCSSContent(cssContent) {
 }
 
 /**
+ * Consumer plugin root (not global-packages). Tests start from the product
+ * repo; __dirname would resolve into the monorepo checkout on CI.
+ *
+ * @return {string} Absolute plugin root path.
+ */
+function getPluginRoot() {
+	return process.env.BLOCKERA_CONSUMER_ROOT &&
+		fs.existsSync(process.env.BLOCKERA_CONSUMER_ROOT)
+		? path.resolve(process.env.BLOCKERA_CONSUMER_ROOT)
+		: process.cwd();
+}
+
+/**
+ * Map a host path inside the plugin to the path inside the wp-env CLI container.
+ *
+ * @param {string} hostPath - Absolute path on the host.
+ * @return {string} Path relative to the WordPress root inside the container.
+ */
+function getWpEnvPluginContainerPath(hostPath) {
+	const pluginRoot = getPluginRoot();
+	const pluginSlug = path.basename(pluginRoot);
+	const relative = path
+		.relative(pluginRoot, hostPath)
+		.split(path.sep)
+		.join('/');
+
+	return `wp-content/plugins/${pluginSlug}/${relative}`;
+}
+
+/**
+ * Parse a post ID from WP-CLI `wp eval` stdout (ignore wp-env banner lines).
+ *
+ * @param {string} stdout - Combined command output.
+ * @return {number} Post ID, or 0 when none is found.
+ */
+function parseWpEvalPostId(stdout) {
+	const lines = String(stdout || '')
+		.trim()
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
+
+	for (let i = lines.length - 1; i >= 0; i--) {
+		const id = parseInt(lines[i], 10);
+
+		if (Number.isFinite(id) && id > 0 && String(id) === lines[i]) {
+			return id;
+		}
+	}
+
+	return 0;
+}
+
+/**
  * Execute WP CLI command.
  *
  * @param {import('@playwright/test').Page} page - Playwright page object (not used, but kept for API consistency).
@@ -859,11 +913,7 @@ async function wpCli(
 
 	// Consumer plugin root (not global-packages). Tests start from the product
 	// repo; __dirname would resolve into the monorepo checkout on CI.
-	const pluginRoot =
-		process.env.BLOCKERA_CONSUMER_ROOT &&
-		fs.existsSync(process.env.BLOCKERA_CONSUMER_ROOT)
-			? path.resolve(process.env.BLOCKERA_CONSUMER_ROOT)
-			: process.cwd();
+	const pluginRoot = getPluginRoot();
 
 	try {
 		const result = await execAsync(
@@ -881,6 +931,86 @@ async function wpCli(
 		}
 		throw error;
 	}
+}
+
+/**
+ * Create a published post from an HTML file via PHP (`wp_insert_post`).
+ *
+ * Reads markup from a plugin file already mounted in wp-env so large block
+ * HTML is not passed on the command line. Does not open the block editor.
+ *
+ * @param {import('@playwright/test').Page} page - Playwright page object.
+ * @param {Object} options - Post fields.
+ * @param {string} options.contentFileHostPath - Absolute host path to post HTML.
+ * @param {string} options.postTitle - Post title.
+ * @param {string} [options.postStatus='publish'] - Post status.
+ * @param {string} [options.postType='post'] - Post type.
+ * @param {string} [options.postDate] - `Y-m-d H:i:s` post date.
+ * @param {string} [options.commentStatus] - Comment status (`open` / `closed`).
+ * @param {string} [options.pingStatus] - Ping status (`open` / `closed`).
+ * @return {Promise<number>} Created post ID.
+ */
+async function createPostViaPhp(page, options) {
+	const {
+		contentFileHostPath,
+		postTitle,
+		postStatus = 'publish',
+		postType = 'post',
+		postDate,
+		commentStatus,
+		pingStatus,
+	} = options;
+
+	if (!contentFileHostPath || !fs.existsSync(contentFileHostPath)) {
+		throw new Error(
+			`createPostViaPhp requires an existing content file: ${contentFileHostPath}`
+		);
+	}
+
+	const containerPath = getWpEnvPluginContainerPath(contentFileHostPath);
+	const escapePhp = (value) => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+	const extraArgs = [];
+
+	if (postDate) {
+		extraArgs.push(`'post_date' => '${escapePhp(postDate)}'`);
+	}
+
+	if (commentStatus) {
+		extraArgs.push(`'comment_status' => '${escapePhp(commentStatus)}'`);
+	}
+
+	if (pingStatus) {
+		extraArgs.push(`'ping_status' => '${escapePhp(pingStatus)}'`);
+	}
+
+	const extraPhp = extraArgs.length ? ', ' + extraArgs.join(', ') : '';
+
+	const phpCode =
+		`$path = '${escapePhp(containerPath)}'; ` +
+		`$content = file_get_contents($path); ` +
+		`if ($content === false) { echo 'ERROR: failed to read ' . $path; return; } ` +
+		`$post_id = wp_insert_post(array(` +
+		`'post_title' => '${escapePhp(postTitle)}', ` +
+		`'post_content' => $content, ` +
+		`'post_status' => '${escapePhp(postStatus)}', ` +
+		`'post_type' => '${escapePhp(postType)}', ` +
+		`'post_author' => 1` +
+		`${extraPhp}` +
+		`)); ` +
+		`echo is_wp_error($post_id) ? $post_id->get_error_message() : $post_id;`;
+
+	const escapedPhpCode = phpCode.replace(/'/g, "'\\''");
+	const result = await wpCli(page, `wp eval '${escapedPhpCode}'`, false, true);
+	const postId = parseWpEvalPostId(result.stdout);
+
+	if (!postId) {
+		throw new Error(
+			`Failed to create post via PHP. stdout: ${result.stdout} stderr: ${result.stderr}`
+		);
+	}
+
+	return postId;
 }
 
 /**
@@ -1585,6 +1715,7 @@ module.exports = {
 	closeSpotlightPopover,
 	normalizeCSSContent,
 	wpCli,
+	createPostViaPhp,
 	checkBlockCardItems,
 	checkBlockStatesPickerItems,
 	checkBlockSections,
