@@ -17,10 +17,6 @@ jest.mock('@wordpress/data', () => ({
 	useSelect: jest.fn(),
 }));
 
-jest.mock('@wordpress/editor', () => ({
-	store: 'core/editor',
-}));
-
 describe('useEditorMode', () => {
 	afterEach(() => {
 		useSelect.mockReset();
@@ -28,14 +24,24 @@ describe('useEditorMode', () => {
 
 	function mockEditorMode(mode) {
 		useSelect.mockImplementation((mapSelect) =>
-			mapSelect(() => ({
-				getEditorMode: () => mode,
-			}))
+			mapSelect((storeName) => {
+				expect(storeName).toBe('core/editor');
+
+				return {
+					getEditorMode: () => mode,
+				};
+			})
 		);
 	}
 
 	it('returns visual by default when getEditorMode is missing', () => {
-		useSelect.mockImplementation((mapSelect) => mapSelect(() => ({})));
+		useSelect.mockImplementation((mapSelect) =>
+			mapSelect((storeName) => {
+				expect(storeName).toBe('core/editor');
+
+				return {};
+			})
+		);
 
 		const { result } = renderHook(() => useEditorMode());
 
