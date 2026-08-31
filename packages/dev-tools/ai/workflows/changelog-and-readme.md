@@ -1,6 +1,6 @@
 # Changelog and README after a task
 
-Source of truth for release notes is each **package** `CHANGELOG.md` (see `packages/dev-tools/github/README.md`). Authors append `## Unreleased`. CI folds Unreleased (GP master merge, submodule bump) and product zip accumulates notes.
+Source of truth for release notes is each **package** `CHANGELOG.md`. Authors append `## Unreleased`. CI folds Unreleased (GP master merge, submodule bump) and product zip accumulates notes. Policy: [../decisions/002-changelog-fold.md](../decisions/002-changelog-fold.md). Mechanics: `packages/dev-tools/github/README.md`.
 
 ## When
 

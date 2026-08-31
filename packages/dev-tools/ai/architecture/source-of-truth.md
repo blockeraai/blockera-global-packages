@@ -22,4 +22,4 @@ Host root configs (ESLint, Cypress examples, `.gitignore` shared section, …) c
 
 ## Changelog fold (do not run in feature PRs)
 
-Package `CHANGELOG.md` `## Unreleased` is the inbox. GP master merge and submodule bump **fold** Unreleased; product zip **accumulates** notes. See `packages/dev-tools/github/README.md` and [../workflows/changelog-and-readme.md](../workflows/changelog-and-readme.md).
+Package `CHANGELOG.md` `## Unreleased` is the inbox. GP master merge and submodule bump **fold** Unreleased; product zip **accumulates** notes. Agent rules: [ADR 002](../decisions/002-changelog-fold.md). Mechanics: `packages/dev-tools/github/README.md` and [../workflows/changelog-and-readme.md](../workflows/changelog-and-readme.md).

@@ -4,6 +4,7 @@
 - Agent knowledge: `packages/dev-tools/ai/` architecture and workflows (changelog/README after a task; product scripts and pre-installed deps). Cursor `global-architecture` rule plus `commit` / `test-e2e-cypress` command updates.
 - PHP performance: keep the Cursor PHP glob rule short; detailed patterns live in `packages/dev-tools/ai/workflows/php-performance.md`.
 - Agent knowledge: editor style-pipeline domain card, GP write-root ADR, change-classification workflow; Cursor `classify-change` command. Gutenberg `development-helper` rule is glob-gated (not always-on).
+- Agent knowledge: free-vs-Pro overlay domain card; changelog Unreleased-vs-fold ADR (CI README remains the mechanics source).
 
 ## [2.1.0] - 2026-08-31
 

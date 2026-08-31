@@ -13,10 +13,12 @@ Platform-independent notes for agents working on shared Blockera packages. Curso
 ## Domains
 
 - [editor-style-pipeline.md](domains/editor-style-pipeline.md) — JS extensions, PHP StyleDefinitions, Gutenberg compatibility, Pro overlays, tests
+- [free-vs-pro.md](domains/free-vs-pro.md) — when to read or ask to edit blockera-pro overlays
 
 ## Decisions
 
 - [001-gp-write-root.md](decisions/001-gp-write-root.md) — standalone origin vs product submodule; when to bump
+- [002-changelog-fold.md](decisions/002-changelog-fold.md) — Unreleased inbox vs CI fold vs zip accumulation
 
 ## Workflows
 
