@@ -85,6 +85,13 @@ export const ZOOMED_OUT_CLASS = 'is-zoomed-out';
 export const IN_BREAKPOINT_CLASS = 'blockera-in-breakpoint';
 
 /**
+ * CSS class on the iframe document when the visual editor is the scrollport
+ * (zoom or non-base breakpoint). The in-iframe canvas header must not stay
+ * `position: fixed` in this mode or it overlays block content in screenshots.
+ */
+export const OUTER_SCROLLPORT_CLASS = 'blockera-outer-scrollport';
+
+/**
  * CSS class added to scale container when zoomed.
  */
 export const SCALE_CONTAINER_ZOOMED_CLASS = 'iframe-zoomed';

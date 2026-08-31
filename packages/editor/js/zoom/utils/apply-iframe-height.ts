@@ -8,6 +8,7 @@ import {
 	IN_BREAKPOINT_CLASS,
 	MAX_REASONABLE_HEIGHT,
 	MIN_IFRAME_HEIGHT,
+	OUTER_SCROLLPORT_CLASS,
 	ZOOMED_OUT_CLASS,
 } from './constants';
 import { getEditorCanvasIframe, getIframeDocument } from './iframeUtils';
@@ -46,12 +47,25 @@ export function applyIframeHeight(
 			: height;
 
 	const useOuterScrollport = iframeUsesOuterScrollport(iframe);
+	const iframeDoc = getIframeDocument(iframe);
+
+	const setOuterScrollportClass = (enabled: boolean): void => {
+		if (!iframeDoc?.documentElement) {
+			return;
+		}
+
+		iframeDoc.documentElement.classList.toggle(
+			OUTER_SCROLLPORT_CLASS,
+			enabled
+		);
+	};
 
 	// At 100% zoom on the base breakpoint, let WordPress size the iframe.
 	if (zoomPercent === DEFAULT_ZOOM && !useOuterScrollport) {
 		iframe.style.removeProperty('height');
 		iframe.style.removeProperty('overflow');
 		iframe.removeAttribute('scrolling');
+		setOuterScrollportClass(false);
 
 		requestAnimationFrame(() => {
 			if (!iframeUsesOuterScrollport(iframe)) {
@@ -69,7 +83,6 @@ export function applyIframeHeight(
 	) {
 		const finalHeight = Math.max(MIN_IFRAME_HEIGHT, effectiveHeight);
 
-		const iframeDoc = getIframeDocument(iframe);
 		if (iframeDoc?.defaultView) {
 			iframeDoc.defaultView.postMessage(
 				{ type: 'BLOCKERA_ZOOM_PAUSE_UPDATES', pause: true },
@@ -80,6 +93,7 @@ export function applyIframeHeight(
 		iframe.style.setProperty('height', `${finalHeight}px`, 'important');
 		iframe.setAttribute('scrolling', 'no');
 		iframe.style.setProperty('overflow', 'hidden', 'important');
+		setOuterScrollportClass(true);
 
 		setTimeout(() => {
 			if (iframeDoc?.defaultView) {
