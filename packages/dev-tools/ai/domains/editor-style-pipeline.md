@@ -23,7 +23,7 @@ PHP is **property-level** (e.g. `BackgroundColor.php`, `FlexWrap.php`), not one 
 2. Read `extension.js` / `index.js`, then `compatibility/` if present.
 3. Match PHP in `packages/editor/php/StyleDefinitions/`.
 4. Tests: `libs/<lib>/test/*.e2e.cy.js`, `test/global-styles/` + `fixtures/*.php`.
-5. If the feature is gated or extended in Pro: `blockera-pro` `packages/editor-pro/js/extensions/config/<lib>.js` (and `register.js`). **Ask** before editing Pro (`product-scope`).
+5. If the feature is gated or extended in Pro: [free-vs-pro.md](free-vs-pro.md). **Ask** before editing Pro (`product-scope`).
 6. Gutenberg behavior: product `source-codes/block-editor/` (Cursor `development-helper` / `source-code` command).
 
 Skip steps that do not apply (e.g. no `compatibility/` folder).

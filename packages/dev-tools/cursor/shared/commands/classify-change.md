@@ -7,6 +7,6 @@ Classify the current task before a wide codebase search. Follow `packages/dev-to
 3. Load only the knowledge that class needs (package README, editor style pipeline, Pro ask, `source-codes/`).
 4. Do not run Gutenberg clone research for LOCAL chores. Do not edit a second product until the user agrees.
 
-Style/extension tasks: `packages/dev-tools/ai/domains/editor-style-pipeline.md`.
+Style/extension tasks: `packages/dev-tools/ai/domains/editor-style-pipeline.md`. Paid overlay: `packages/dev-tools/ai/domains/free-vs-pro.md`.
 
-GP write root: `packages/dev-tools/ai/decisions/001-gp-write-root.md`.
+GP write root: `packages/dev-tools/ai/decisions/001-gp-write-root.md`. Changelog fold: `packages/dev-tools/ai/decisions/002-changelog-fold.md`.
