@@ -79,6 +79,12 @@ export const ZOOM_CSS_VAR = '--blockera-block-editor-iframe-zoom';
 export const ZOOMED_OUT_CLASS = 'is-zoomed-out';
 
 /**
+ * CSS class added to the canvas iframe for non-base breakpoint preview.
+ * Must match `IN_BREAKPOINT_CLASS` in breakpoints UI.
+ */
+export const IN_BREAKPOINT_CLASS = 'blockera-in-breakpoint';
+
+/**
  * CSS class added to scale container when zoomed.
  */
 export const SCALE_CONTAINER_ZOOMED_CLASS = 'iframe-zoomed';

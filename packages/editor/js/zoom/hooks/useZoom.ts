@@ -18,6 +18,7 @@ import {
 	ZOOM_STEP,
 	ZOOM_CSS_VAR,
 	ZOOMED_OUT_CLASS,
+	IN_BREAKPOINT_CLASS,
 	SCALE_CONTAINER_ZOOMED_CLASS,
 	MIN_IFRAME_HEIGHT,
 	MAX_REASONABLE_HEIGHT,
@@ -209,7 +210,10 @@ export function useZoom(): UseZoomReturn {
 							iframe.style.removeProperty(ZOOM_CSS_VAR);
 
 							// If transitioning back to 100%, remove height constraint
-							if (isTransitioningTo100) {
+							if (
+								isTransitioningTo100 &&
+								!iframe.classList.contains(IN_BREAKPOINT_CLASS)
+							) {
 								iframe.style.removeProperty('height');
 								iframe.style.removeProperty('overflow');
 								iframe.removeAttribute('scrolling');
@@ -219,6 +223,9 @@ export function useZoom(): UseZoomReturn {
 									if (
 										!iframe.classList.contains(
 											ZOOMED_OUT_CLASS
+										) &&
+										!iframe.classList.contains(
+											IN_BREAKPOINT_CLASS
 										)
 									) {
 										iframe.style.setProperty(
@@ -272,7 +279,10 @@ export function useZoom(): UseZoomReturn {
 			iframe.style.removeProperty(ZOOM_CSS_VAR);
 
 			// If transitioning back to 100%, remove height constraint and reset initial height
-			if (isTransitioningTo100) {
+			if (
+				isTransitioningTo100 &&
+				!iframe.classList.contains(IN_BREAKPOINT_CLASS)
+			) {
 				iframe.style.removeProperty('height');
 				iframe.style.removeProperty('overflow');
 				iframe.removeAttribute('scrolling');

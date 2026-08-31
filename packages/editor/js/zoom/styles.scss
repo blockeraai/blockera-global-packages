@@ -65,11 +65,16 @@ iframe[name="editor-canvas"].is-zoomed-out {
 	border: 1px solid #c3c3c3 !important;
 }
 
+iframe[name="editor-canvas"].blockera-in-breakpoint {
+	overflow: hidden;
+}
+
 /*
  * WP 7.1 / Gutenberg sets overflow:hidden on `.editor-visual-editor`
  * (source-codes/block-editor/packages/editor/src/components/visual-editor/style.scss)
  * so the scaled iframe is clipped. Restore a scrollport only while Blockera
- * zoom is applied. `:has()` is more specific than core's single-class rule.
+ * zoom or a non-base breakpoint preview is applied. `:has()` is more specific
+ * than core's single-class rule.
  *
  * Core also uses overflow:auto on `.interface-interface-skeleton__content`
  * and `flex: 1 0 auto` on `.editor-visual-editor` (editor-interface/style.scss).
@@ -77,7 +82,11 @@ iframe[name="editor-canvas"].is-zoomed-out {
  * both layers grow scrollbars. Contain the parent; only the visual editor scrolls.
  */
 .editor-visual-editor:has(iframe[name="editor-canvas"].is-zoomed-out),
-.edit-post-visual-editor:has(iframe[name="editor-canvas"].is-zoomed-out) {
+.edit-post-visual-editor:has(iframe[name="editor-canvas"].is-zoomed-out),
+.editor-visual-editor:has(iframe[name="editor-canvas"].blockera-in-breakpoint),
+.edit-post-visual-editor:has(
+	iframe[name="editor-canvas"].blockera-in-breakpoint
+) {
 	overflow: auto;
 	min-height: 0;
 	flex-shrink: 1;
@@ -85,6 +94,23 @@ iframe[name="editor-canvas"].is-zoomed-out {
 
 .interface-interface-skeleton__content:has(
 	iframe[name="editor-canvas"].is-zoomed-out
+),
+.interface-interface-skeleton__content:has(
+	iframe[name="editor-canvas"].blockera-in-breakpoint
 ) {
 	overflow: hidden;
+}
+
+/*
+ * Gutenberg's scale container can become a second scrollport when the iframe
+ * is shorter than content (breakpoint preview) or has top margin. Grow with
+ * the iframe; only the visual editor should scroll.
+ */
+.block-editor-iframe__scale-container:has(
+	> iframe[name="editor-canvas"].is-zoomed-out
+),
+.block-editor-iframe__scale-container:has(
+	> iframe[name="editor-canvas"].blockera-in-breakpoint
+) {
+	overflow: visible;
 }

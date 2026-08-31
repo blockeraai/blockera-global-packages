@@ -1,5 +1,13 @@
 ## Unreleased
 
+### Bug Fixes
+
+- Non-base breakpoint canvas preview uses the same outer visual-editor scrollport as zoom, so tall content no longer shows a double scrollbar.
+
+### Automated Tests
+
+- Breakpoint canvas: e2e coverage that Mobile Portrait with tall fixture content scrolls `.editor-visual-editor` and not the canvas iframe.
+
 ### Improvements
 
 - Code editor: the left sidebar stays open, but inserter and list view show “Not available in code editor.” instead of blocks, patterns, media, or document structure.
