@@ -1,4 +1,4 @@
-## Unreleased
+## [2.1.0] - 2026-08-31
 
 ### Features
 - Upload to Blockera AI: publish RC and stable GitHub releases; send `files_mode` (`append` for RC, `replace` for stable) so Downloadable files can keep prior RC rows.

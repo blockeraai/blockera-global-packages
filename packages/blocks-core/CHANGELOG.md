@@ -1,3 +1,16 @@
+## [2.0.0] - 2026-08-31
+
+### Changed
+- Assert cleared global styles do not rehydrate from theme.json.
+- Drop empty link inner-block attributes after clear.
+- Use template literals for multiline block markup in e2e.
+- Expect cleared group inner-block attributes to be omitted.
+- Expect buttons display default to remain flex after WP layout sync.
+
+### Fixed
+- For latest data cleanup changes.
+- Wrap transform origin attribute defaults.
+
 ## [1.5.0] - 2026-08-26
 
 ### New Features

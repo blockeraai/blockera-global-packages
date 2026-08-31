@@ -1,3 +1,15 @@
+## [3.0.0] - 2026-08-31
+
+### Added
+- Add Cypress helpers to target the unique frontend block.
+
+### Changed
+- Assert cleared global styles do not rehydrate from theme.json.
+
+### Fixed
+- Query welcome guide against the top document.
+- Map spec failure stacks with inline source maps.
+
 ## [2.0.0] - 2026-08-26
 
 ### Improvements

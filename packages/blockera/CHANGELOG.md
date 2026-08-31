@@ -1,3 +1,8 @@
+## [2.0.0] - 2026-08-31
+
+### Fixed
+- Enqueue canvas CSS from vendor package path.
+
 ## [1.4.0] - 2026-08-26
 
 ### New Features

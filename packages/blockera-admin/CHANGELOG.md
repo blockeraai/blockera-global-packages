@@ -1,3 +1,13 @@
+## [2.0.0] - 2026-08-31
+
+### Changed
+- Move dashboard golden to screenshots/dashboard-actual.png.
+- Update baseline.
+- Stabilize version text in visual snapshot.
+
+### Fixed
+- Button design.
+
 ## 1.3.0 (2025-07-16)
 
 ### New Features

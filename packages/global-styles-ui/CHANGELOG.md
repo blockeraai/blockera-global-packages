@@ -1,3 +1,8 @@
+## [2.0.0] - 2026-08-31
+
+### Fixed
+- Remove duplicate code.
+
 ## [1.1.0] - 2026-08-26
 
 ### New Features

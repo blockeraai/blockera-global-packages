@@ -1,3 +1,19 @@
+## [2.0.0] - 2026-08-31
+
+### Added
+- Improve design.
+
+### Changed
+- Use template literals for multiline block markup in e2e.
+- Cover window reset and intersection root.
+- Window grids and skip remounts on search.
+
+### Fixed
+- Keep background type options when merging extension config.
+- For latest data cleanup changes.
+- Fix(icon picker).
+- Design conflicts with WP 7.1.
+
 ## [1.5.0] - 2026-08-26
 
 ### New Features
