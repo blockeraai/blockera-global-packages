@@ -3,6 +3,9 @@
 ### Improvements
 - Workspace tabs: the free pinned-tab limit is now 0. Pin remains in the tab context menu and opens the upgrade prompt instead of pinning. Tabs already pinned (for example from an earlier limit of 1) still load. Pro still unlocks unlimited pinning.
 
+### Automated Tests
+- Workspace tabs: e2e asserts Pin is visible on free and the first pin attempt shows the upgrade prompt instead of pinning.
+
 ## [2.1.0] - 2026-08-26
 
 ### New Features
