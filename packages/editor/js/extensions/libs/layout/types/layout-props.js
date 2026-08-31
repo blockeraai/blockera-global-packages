@@ -29,8 +29,8 @@ export type TLayoutProps = {
 		blockeraDisplay: DisplayType,
 		blockeraFlexLayout: {
 			direction: 'row' | 'column',
-			alignItems: string,
-			justifyContent: string,
+			flexAlign: string,
+			flexJustify: string,
 		},
 		blockeraGap: {
 			lock: boolean,
