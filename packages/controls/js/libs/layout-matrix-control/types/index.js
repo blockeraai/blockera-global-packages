@@ -36,8 +36,8 @@ export type JustifyContent =
 	| 'space-around';
 
 export type LayoutMatrix = {
-	alignItems: AlignItems,
-	justifyContent: JustifyContent,
+	flexAlign: AlignItems,
+	flexJustify: JustifyContent,
 	direction: 'row' | 'column',
 	dense?: boolean,
 	props?: Object,

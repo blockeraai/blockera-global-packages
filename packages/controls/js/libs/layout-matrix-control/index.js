@@ -30,6 +30,10 @@ import {
 	ToggleSelectControl,
 } from '../index';
 import { MatrixItem } from './components/matrix-item';
+import {
+	isLegacyFlexLayout,
+	migrateFlexLayoutToStored,
+} from './flex-layout-value';
 // Matrix Icons
 import MatrixNormalEmptyIcon from './matrix/matrix-normal-empty';
 import MatrixNormalTopLeftIcon from './matrix/matrix-normal-top-left';
@@ -51,11 +55,11 @@ import MatrixSpaceBetweenEndFillIcon from './matrix/matrix-space-between-end-fil
 import MatrixStretchSpaceBetweenIcon from './matrix/matrix-stretch-space-between';
 import MatrixStretchSpaceAroundIcon from './matrix/matrix-stretch-space-around';
 
-type FlexAxisKey = 'justifyContent' | 'alignItems';
+type FlexAxisKey = 'flexJustify' | 'flexAlign';
 
 const AXIS_CLASS_NAMES: { [key: FlexAxisKey]: string } = {
-	justifyContent: 'layout-matrix__justify-content',
-	alignItems: 'layout-matrix__align-items',
+	flexJustify: 'layout-matrix__justify-content',
+	flexAlign: 'layout-matrix__align-items',
 };
 
 function getAxisTooltip(
@@ -63,7 +67,7 @@ function getAxisTooltip(
 	propertyValue: string
 ): string {
 	const cssProperty =
-		propertyKey === 'justifyContent' ? 'justify-content' : 'align-items';
+		propertyKey === 'flexJustify' ? 'justify-content' : 'align-items';
 
 	if (propertyValue) {
 		return cssProperty + ': ' + propertyValue;
@@ -206,9 +210,27 @@ function getAlignItemsOptions(): Array<Object> {
 }
 
 function getAxisOptions(propertyKey: FlexAxisKey): Array<Object> {
-	return propertyKey === 'justifyContent'
+	return propertyKey === 'flexJustify'
 		? getJustifyContentOptions()
 		: getAlignItemsOptions();
+}
+
+function withAxisValue(
+	layout: Object,
+	axisKey: FlexAxisKey,
+	newValue: mixed
+): Object {
+	if (axisKey === 'flexJustify') {
+		return {
+			...layout,
+			flexJustify: newValue,
+		};
+	}
+
+	return {
+		...layout,
+		flexAlign: newValue,
+	};
 }
 
 const SIMPLE_AXIS_VALUES: Set<string> = new Set([
@@ -225,29 +247,29 @@ const SIMPLE_AXIS_VALUES: Set<string> = new Set([
  *   → keep values on the same property when direction changes.
  */
 function remapFlexLayoutForDirectionChange(
-	alignItems: string,
-	justifyContent: string,
+	flexAlign: string,
+	flexJustify: string,
 	nextDirection: string
 ): {
 	direction: string,
-	alignItems: string,
-	justifyContent: string,
+	flexAlign: string,
+	flexJustify: string,
 } {
-	const alignSimple = SIMPLE_AXIS_VALUES.has(alignItems);
-	const justifySimple = SIMPLE_AXIS_VALUES.has(justifyContent);
+	const alignSimple = SIMPLE_AXIS_VALUES.has(flexAlign);
+	const justifySimple = SIMPLE_AXIS_VALUES.has(flexJustify);
 
 	if (alignSimple && justifySimple) {
 		return {
 			direction: nextDirection,
-			alignItems: justifyContent,
-			justifyContent: alignItems,
+			flexAlign: flexJustify,
+			flexJustify: flexAlign,
 		};
 	}
 
 	return {
 		direction: nextDirection,
-		alignItems,
-		justifyContent,
+		flexAlign,
+		flexJustify,
 	};
 }
 
@@ -260,34 +282,33 @@ function flexLayoutFromScreenAxes(
 	vertical: string,
 	horizontal: string
 ): {
-	alignItems: string,
-	justifyContent: string,
+	flexAlign: string,
+	flexJustify: string,
 } {
 	if (direction === 'column') {
 		return {
-			alignItems: horizontal,
-			justifyContent: vertical,
+			flexAlign: horizontal,
+			flexJustify: vertical,
 		};
 	}
 
 	return {
-		alignItems: vertical,
-		justifyContent: horizontal,
+		flexAlign: vertical,
+		flexJustify: horizontal,
 	};
 }
 
 function matchesScreenAxes(
 	direction: string,
-	alignItems: string,
-	justifyContent: string,
+	flexAlign: string,
+	flexJustify: string,
 	vertical: string,
 	horizontal: string
 ): boolean {
 	const layout = flexLayoutFromScreenAxes(direction, vertical, horizontal);
 
 	return (
-		alignItems === layout.alignItems &&
-		justifyContent === layout.justifyContent
+		flexAlign === layout.flexAlign && flexJustify === layout.flexJustify
 	);
 }
 
@@ -306,8 +327,8 @@ export default function LayoutMatrixControl({
 	style,
 	defaultValue = {
 		direction: 'row',
-		alignItems: '',
-		justifyContent: '',
+		flexAlign: '',
+		flexJustify: '',
 		dense: false,
 	},
 	onChange,
@@ -320,7 +341,7 @@ export default function LayoutMatrixControl({
 	fieldProps,
 }: Props): MixedElement {
 	const {
-		value,
+		value: storedValue,
 		setValue,
 		attribute,
 		blockName,
@@ -332,17 +353,25 @@ export default function LayoutMatrixControl({
 		defaultValue,
 		mergeInitialAndDefault: true,
 		valueCleanup: (data) => {
+			const next = isLegacyFlexLayout(data)
+				? migrateFlexLayoutToStored(data)
+				: data;
+
 			if (!isDirectionActive) {
-				delete data.direction;
+				delete next.direction;
 			}
 
 			if (!isDenseActive) {
-				delete data.dense;
+				delete next.dense;
 			}
 
-			return data;
+			return next;
 		},
 	});
+
+	const value = isLegacyFlexLayout(storedValue)
+		? migrateFlexLayoutToStored(storedValue)
+		: storedValue;
 
 	const labelProps = {
 		value,
@@ -362,17 +391,17 @@ export default function LayoutMatrixControl({
 
 	let matrixType = 'normal';
 
-	if (value.alignItems === 'stretch') {
-		if (value.justifyContent === 'space-around') {
+	if (value.flexAlign === 'stretch') {
+		if (value.flexJustify === 'space-around') {
 			matrixType = 'stretch-space-around';
-		} else if (value.justifyContent === 'space-between') {
+		} else if (value.flexJustify === 'space-between') {
 			matrixType = 'stretch-space-between';
 		} else {
 			matrixType = 'stretch';
 		}
-	} else if (value.justifyContent === 'space-around') {
+	} else if (value.flexJustify === 'space-around') {
 		matrixType = 'space-around';
-	} else if (value.justifyContent === 'space-between') {
+	} else if (value.flexJustify === 'space-between') {
 		matrixType = 'space-between';
 	}
 
@@ -386,13 +415,21 @@ export default function LayoutMatrixControl({
 
 	const isRowDirection = direction === 'row';
 	const xAxisKey: FlexAxisKey = isRowDirection
-		? 'justifyContent'
-		: 'alignItems';
+		? 'flexJustify'
+		: 'flexAlign';
 	const yAxisKey: FlexAxisKey = isRowDirection
-		? 'alignItems'
-		: 'justifyContent';
+		? 'flexAlign'
+		: 'flexJustify';
 
 	const clickTimerRef = useRef<?TimeoutID>();
+
+	useEffect(() => {
+		if (!isLegacyFlexLayout(storedValue)) {
+			return;
+		}
+
+		setValue(migrateFlexLayoutToStored(storedValue));
+	}, [setValue, storedValue]);
 
 	// Single-click commits are deferred 200ms to allow double-click detection.
 	// Cancel any pending commit when the controlled value changes externally
@@ -402,7 +439,7 @@ export default function LayoutMatrixControl({
 		return () => {
 			clearTimeout(clickTimerRef.current);
 		};
-	}, [value?.alignItems, value?.justifyContent, value?.direction]);
+	}, [value?.flexAlign, value?.flexJustify, value?.direction]);
 
 	const createMatrixHandlers = (
 		singleClickAction: () => void,
@@ -432,14 +469,14 @@ export default function LayoutMatrixControl({
 		}
 
 		const remapped = remapFlexLayoutForDirectionChange(
-			value.alignItems ?? '',
-			value.justifyContent ?? '',
+			value.flexAlign ?? '',
+			value.flexJustify ?? '',
 			nextDirection
 		);
 
 		if (
-			remapped.alignItems === value.alignItems &&
-			remapped.justifyContent === value.justifyContent &&
+			remapped.flexAlign === value.flexAlign &&
+			remapped.flexJustify === value.flexJustify &&
 			remapped.direction === value?.direction
 		) {
 			return;
@@ -489,8 +526,8 @@ export default function LayoutMatrixControl({
 					className={controlClassNames(
 						'layout-matrix',
 						'layout-matrix__direction-' + value.direction,
-						'layout-matrix__align-items-' + value.alignItems,
-						'layout-matrix__justify-content-' + value.justifyContent
+						'layout-matrix__align-items-' + value.flexAlign,
+						'layout-matrix__justify-content-' + value.flexJustify
 					)}
 				>
 					<div
@@ -514,8 +551,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'flex-start' &&
-										value.justifyContent === 'flex-start'
+										value.flexAlign === 'flex-start' &&
+										value.flexJustify === 'flex-start'
 									}
 									normalIcon={
 										<MatrixNormalEmptyIcon
@@ -531,15 +568,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'flex-start',
-												justifyContent: 'flex-start',
+												flexAlign: 'flex-start',
+												flexJustify: 'flex-start',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'flex-start',
-												justifyContent: 'space-between',
+												flexAlign: 'flex-start',
+												flexJustify: 'space-between',
 											});
 										}
 									)}
@@ -566,8 +603,8 @@ export default function LayoutMatrixControl({
 									}
 									selected={matchesScreenAxes(
 										direction,
-										value.alignItems ?? '',
-										value.justifyContent ?? '',
+										value.flexAlign ?? '',
+										value.flexJustify ?? '',
 										'flex-start',
 										'center'
 									)}
@@ -596,15 +633,15 @@ export default function LayoutMatrixControl({
 											if (direction === 'row') {
 												setValue({
 													...value,
-													alignItems: 'flex-start',
-													justifyContent:
+													flexAlign: 'flex-start',
+													flexJustify:
 														'space-between',
 												});
 											} else {
 												setValue({
 													...value,
-													alignItems: 'center',
-													justifyContent:
+													flexAlign: 'center',
+													flexJustify:
 														'space-between',
 												});
 											}
@@ -633,8 +670,8 @@ export default function LayoutMatrixControl({
 									}
 									selected={matchesScreenAxes(
 										direction,
-										value.alignItems ?? '',
-										value.justifyContent ?? '',
+										value.flexAlign ?? '',
+										value.flexJustify ?? '',
 										'flex-start',
 										'flex-end'
 									)}
@@ -663,15 +700,15 @@ export default function LayoutMatrixControl({
 											if (direction === 'row') {
 												setValue({
 													...value,
-													alignItems: 'flex-start',
-													justifyContent:
+													flexAlign: 'flex-start',
+													flexJustify:
 														'space-between',
 												});
 											} else {
 												setValue({
 													...value,
-													alignItems: 'flex-end',
-													justifyContent:
+													flexAlign: 'flex-end',
+													flexJustify:
 														'space-between',
 												});
 											}
@@ -700,8 +737,8 @@ export default function LayoutMatrixControl({
 									}
 									selected={matchesScreenAxes(
 										direction,
-										value.alignItems ?? '',
-										value.justifyContent ?? '',
+										value.flexAlign ?? '',
+										value.flexJustify ?? '',
 										'center',
 										'flex-start'
 									)}
@@ -730,15 +767,15 @@ export default function LayoutMatrixControl({
 											if (direction === 'row') {
 												setValue({
 													...value,
-													alignItems: 'center',
-													justifyContent:
+													flexAlign: 'center',
+													flexJustify:
 														'space-between',
 												});
 											} else {
 												setValue({
 													...value,
-													alignItems: 'flex-start',
-													justifyContent:
+													flexAlign: 'flex-start',
+													flexJustify:
 														'space-between',
 												});
 											}
@@ -758,8 +795,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'center' &&
-										value.justifyContent === 'center'
+										value.flexAlign === 'center' &&
+										value.flexJustify === 'center'
 									}
 									normalIcon={
 										<MatrixNormalEmptyIcon
@@ -775,15 +812,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'center',
-												justifyContent: 'center',
+												flexAlign: 'center',
+												flexJustify: 'center',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'center',
-												justifyContent: 'space-between',
+												flexAlign: 'center',
+												flexJustify: 'space-between',
 											});
 										}
 									)}
@@ -810,8 +847,8 @@ export default function LayoutMatrixControl({
 									}
 									selected={matchesScreenAxes(
 										direction,
-										value.alignItems ?? '',
-										value.justifyContent ?? '',
+										value.flexAlign ?? '',
+										value.flexJustify ?? '',
 										'center',
 										'flex-end'
 									)}
@@ -840,15 +877,15 @@ export default function LayoutMatrixControl({
 											if (direction === 'row') {
 												setValue({
 													...value,
-													alignItems: 'center',
-													justifyContent:
+													flexAlign: 'center',
+													flexJustify:
 														'space-between',
 												});
 											} else {
 												setValue({
 													...value,
-													alignItems: 'flex-end',
-													justifyContent:
+													flexAlign: 'flex-end',
+													flexJustify:
 														'space-between',
 												});
 											}
@@ -877,8 +914,8 @@ export default function LayoutMatrixControl({
 									}
 									selected={matchesScreenAxes(
 										direction,
-										value.alignItems ?? '',
-										value.justifyContent ?? '',
+										value.flexAlign ?? '',
+										value.flexJustify ?? '',
 										'flex-end',
 										'flex-start'
 									)}
@@ -907,15 +944,15 @@ export default function LayoutMatrixControl({
 											if (direction === 'row') {
 												setValue({
 													...value,
-													alignItems: 'flex-end',
-													justifyContent:
+													flexAlign: 'flex-end',
+													flexJustify:
 														'space-between',
 												});
 											} else {
 												setValue({
 													...value,
-													alignItems: 'flex-start',
-													justifyContent:
+													flexAlign: 'flex-start',
+													flexJustify:
 														'space-between',
 												});
 											}
@@ -944,8 +981,8 @@ export default function LayoutMatrixControl({
 									}
 									selected={matchesScreenAxes(
 										direction,
-										value.alignItems ?? '',
-										value.justifyContent ?? '',
+										value.flexAlign ?? '',
+										value.flexJustify ?? '',
 										'flex-end',
 										'center'
 									)}
@@ -974,15 +1011,15 @@ export default function LayoutMatrixControl({
 											if (direction === 'row') {
 												setValue({
 													...value,
-													alignItems: 'flex-end',
-													justifyContent:
+													flexAlign: 'flex-end',
+													flexJustify:
 														'space-between',
 												});
 											} else {
 												setValue({
 													...value,
-													alignItems: 'center',
-													justifyContent:
+													flexAlign: 'center',
+													flexJustify:
 														'space-between',
 												});
 											}
@@ -1002,8 +1039,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'flex-end' &&
-										value.justifyContent === 'flex-end'
+										value.flexAlign === 'flex-end' &&
+										value.flexJustify === 'flex-end'
 									}
 									normalIcon={
 										<MatrixNormalEmptyIcon
@@ -1019,15 +1056,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'flex-end',
-												justifyContent: 'flex-end',
+												flexAlign: 'flex-end',
+												flexJustify: 'flex-end',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'flex-end',
-												justifyContent: 'space-between',
+												flexAlign: 'flex-end',
+												flexJustify: 'space-between',
 											});
 										}
 									)}
@@ -1049,8 +1086,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'stretch' &&
-										value.justifyContent === 'space-around'
+										value.flexAlign === 'stretch' &&
+										value.flexJustify === 'space-around'
 									}
 									normalIcon={
 										<MatrixStretchSpaceAroundIcon
@@ -1066,15 +1103,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'stretch',
-												justifyContent: 'space-around',
+												flexAlign: 'stretch',
+												flexJustify: 'space-around',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'center',
-												justifyContent: 'center',
+												flexAlign: 'center',
+												flexJustify: 'center',
 											});
 										}
 									)}
@@ -1096,8 +1133,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'stretch' &&
-										value.justifyContent === 'space-between'
+										value.flexAlign === 'stretch' &&
+										value.flexJustify === 'space-between'
 									}
 									normalIcon={
 										<MatrixStretchSpaceBetweenIcon
@@ -1113,15 +1150,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'stretch',
-												justifyContent: 'space-between',
+												flexAlign: 'stretch',
+												flexJustify: 'space-between',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'center',
-												justifyContent: 'center',
+												flexAlign: 'center',
+												flexJustify: 'center',
 											});
 										}
 									)}
@@ -1143,8 +1180,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'stretch' &&
-										value.justifyContent === 'flex-start'
+										value.flexAlign === 'stretch' &&
+										value.flexJustify === 'flex-start'
 									}
 									normalIcon={
 										<MatrixStretchFillIcon
@@ -1160,15 +1197,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'stretch',
-												justifyContent: 'flex-start',
+												flexAlign: 'stretch',
+												flexJustify: 'flex-start',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'center',
-												justifyContent: 'flex-start',
+												flexAlign: 'center',
+												flexJustify: 'flex-start',
 											});
 										}
 									)}
@@ -1186,8 +1223,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'stretch' &&
-										value.justifyContent === 'center'
+										value.flexAlign === 'stretch' &&
+										value.flexJustify === 'center'
 									}
 									normalIcon={
 										<MatrixStretchFillIcon
@@ -1203,15 +1240,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'stretch',
-												justifyContent: 'center',
+												flexAlign: 'stretch',
+												flexJustify: 'center',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'center',
-												justifyContent: 'center',
+												flexAlign: 'center',
+												flexJustify: 'center',
 											});
 										}
 									)}
@@ -1229,8 +1266,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'stretch' &&
-										value.justifyContent === 'flex-end'
+										value.flexAlign === 'stretch' &&
+										value.flexJustify === 'flex-end'
 									}
 									normalIcon={
 										<MatrixStretchFillIcon
@@ -1246,15 +1283,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'stretch',
-												justifyContent: 'flex-end',
+												flexAlign: 'stretch',
+												flexJustify: 'flex-end',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'center',
-												justifyContent: 'flex-end',
+												flexAlign: 'center',
+												flexJustify: 'flex-end',
 											});
 										}
 									)}
@@ -1276,8 +1313,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'flex-start' &&
-										value.justifyContent === 'space-around'
+										value.flexAlign === 'flex-start' &&
+										value.flexJustify === 'space-around'
 									}
 									normalIcon={
 										<MatrixSpaceAroundStartFillIcon
@@ -1293,15 +1330,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'flex-start',
-												justifyContent: 'space-around',
+												flexAlign: 'flex-start',
+												flexJustify: 'space-around',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'stretch',
-												justifyContent: 'flex-start',
+												flexAlign: 'stretch',
+												flexJustify: 'flex-start',
 											});
 										}
 									)}
@@ -1319,8 +1356,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'center' &&
-										value.justifyContent === 'space-around'
+										value.flexAlign === 'center' &&
+										value.flexJustify === 'space-around'
 									}
 									normalIcon={
 										<MatrixSpaceAroundCenterFillIcon
@@ -1336,15 +1373,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'center',
-												justifyContent: 'space-around',
+												flexAlign: 'center',
+												flexJustify: 'space-around',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'stretch',
-												justifyContent: 'center',
+												flexAlign: 'stretch',
+												flexJustify: 'center',
 											});
 										}
 									)}
@@ -1362,8 +1399,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'flex-end' &&
-										value.justifyContent === 'space-around'
+										value.flexAlign === 'flex-end' &&
+										value.flexJustify === 'space-around'
 									}
 									normalIcon={
 										<MatrixSpaceAroundEndFillIcon
@@ -1379,15 +1416,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'flex-end',
-												justifyContent: 'space-around',
+												flexAlign: 'flex-end',
+												flexJustify: 'space-around',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'stretch',
-												justifyContent: 'flex-end',
+												flexAlign: 'stretch',
+												flexJustify: 'flex-end',
 											});
 										}
 									)}
@@ -1409,8 +1446,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'flex-start' &&
-										value.justifyContent === 'space-between'
+										value.flexAlign === 'flex-start' &&
+										value.flexJustify === 'space-between'
 									}
 									normalIcon={
 										<MatrixSpaceBetweenStartFillIcon
@@ -1426,15 +1463,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'flex-start',
-												justifyContent: 'space-between',
+												flexAlign: 'flex-start',
+												flexJustify: 'space-between',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'flex-start',
-												justifyContent: 'space-around',
+												flexAlign: 'flex-start',
+												flexJustify: 'space-around',
 											});
 										}
 									)}
@@ -1452,8 +1489,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'center' &&
-										value.justifyContent === 'space-between'
+										value.flexAlign === 'center' &&
+										value.flexJustify === 'space-between'
 									}
 									normalIcon={
 										<MatrixSpaceBetweenCenterFillIcon
@@ -1469,15 +1506,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'center',
-												justifyContent: 'space-between',
+												flexAlign: 'center',
+												flexJustify: 'space-between',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'center',
-												justifyContent: 'space-around',
+												flexAlign: 'center',
+												flexJustify: 'space-around',
 											});
 										}
 									)}
@@ -1495,8 +1532,8 @@ export default function LayoutMatrixControl({
 										</>
 									}
 									selected={
-										value.alignItems === 'flex-end' &&
-										value.justifyContent === 'space-between'
+										value.flexAlign === 'flex-end' &&
+										value.flexJustify === 'space-between'
 									}
 									normalIcon={
 										<MatrixSpaceBetweenEndFillIcon
@@ -1512,15 +1549,15 @@ export default function LayoutMatrixControl({
 										() => {
 											setValue({
 												...value,
-												alignItems: 'flex-end',
-												justifyContent: 'space-between',
+												flexAlign: 'flex-end',
+												flexJustify: 'space-between',
 											});
 										},
 										() => {
 											setValue({
 												...value,
-												alignItems: 'flex-end',
-												justifyContent: 'space-around',
+												flexAlign: 'flex-end',
+												flexJustify: 'space-around',
 											});
 										}
 									)}
@@ -1579,17 +1616,13 @@ export default function LayoutMatrixControl({
 									}}
 									options={getAxisOptions(xAxisKey)}
 									onChange={(newValue) => {
-										if (xAxisKey === 'justifyContent') {
-											setValue({
-												...value,
-												justifyContent: newValue,
-											});
-										} else {
-											setValue({
-												...value,
-												alignItems: newValue,
-											});
-										}
+										setValue(
+											withAxisValue(
+												value,
+												xAxisKey,
+												newValue
+											)
+										);
 									}}
 									type="custom"
 									defaultValue={defaultValue[xAxisKey]}
@@ -1639,17 +1672,13 @@ export default function LayoutMatrixControl({
 									}}
 									options={getAxisOptions(yAxisKey)}
 									onChange={(newValue) => {
-										if (yAxisKey === 'justifyContent') {
-											setValue({
-												...value,
-												justifyContent: newValue,
-											});
-										} else {
-											setValue({
-												...value,
-												alignItems: newValue,
-											});
-										}
+										setValue(
+											withAxisValue(
+												value,
+												yAxisKey,
+												newValue
+											)
+										);
 									}}
 									type="custom"
 									defaultValue={defaultValue[yAxisKey]}
