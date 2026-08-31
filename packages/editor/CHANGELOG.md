@@ -1,3 +1,8 @@
+## Unreleased
+
+### Bug Fixes
+- Closing the canvas iframe header now also selects the base breakpoint in the header breakpoint picker, instead of leaving a non-base icon active while the canvas already reset.
+
 ## [2.1.0] - 2026-08-26
 
 ### New Features
