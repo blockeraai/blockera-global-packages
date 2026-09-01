@@ -101,6 +101,9 @@ Several submodule imports **auto-register** editor plugins. Command-bar and some
 - Treat `unstableBootstrapServerSideBreakpointDefinitions` as internal/unstable.
 - Prefer public extension points (`applyHooks`, extension classes, style definitions) over DOM hacks or private Gutenberg patches.
 - When researching Gutenberg behavior, use the product `source-codes/block-editor/` tree first (Cursor `development-helper`).
+- JS style libs (`js/extensions/libs/<lib>/`, `css-generators/`) pair with PHP **by CSS property**, not one class per lib: `php/StyleDefinitions/` (`StyleDefinitionsProvider`). Search that folder after changing a generator.
+- Inner blocks / states live under `js/extensions/libs/block-card/` (attributes `blockeraInnerBlocks`, `blockeraBlockStates`). Domain index: `packages/dev-tools/ai/domains/inner-blocks-and-block-states.md`. Style pipeline index: `packages/dev-tools/ai/domains/editor-style-pipeline.md`.
+- Run e2e from the **active product** (`npm run test:e2e -- --spec …`), not a hardcoded free-plugin root.
 
 ---
 

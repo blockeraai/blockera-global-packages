@@ -22,4 +22,4 @@ Pick a class **before** a wide search. Depth must match blast radius. Cursor com
 
 State the class in the plan (one line). Cite paths. If unsure between LOCAL and CROSS-MODULE, treat as CROSS-MODULE.
 
-Write-root: [../decisions/001-gp-write-root.md](../decisions/001-gp-write-root.md). Style work: [../domains/editor-style-pipeline.md](../domains/editor-style-pipeline.md). Free vs Pro overlays: [../domains/free-vs-pro.md](../domains/free-vs-pro.md). Changelog fold: [../decisions/002-changelog-fold.md](../decisions/002-changelog-fold.md).
+Write-root: [../decisions/001-gp-write-root.md](../decisions/001-gp-write-root.md). Style work: [../domains/editor-style-pipeline.md](../domains/editor-style-pipeline.md). Inner blocks / states: [../domains/inner-blocks-and-block-states.md](../domains/inner-blocks-and-block-states.md). Free vs Pro: [../domains/free-vs-pro.md](../domains/free-vs-pro.md). Changelog fold: [../decisions/002-changelog-fold.md](../decisions/002-changelog-fold.md).
