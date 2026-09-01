@@ -767,29 +767,62 @@ export function setBlockStyle(style) {
 }
 
 /**
- * Select the block using the Block navigation component.
- * Input parameter is the name of the block to select.
- * Allows chaining.
+ * Expand every collapsed List View row so nested blocks are visible.
  *
- * @param {string}  name         The name of the block to select eg: highlight or click-to-tweet
- * @param {boolean} isChildBlock Optional selector for children blocks. Default will be top level blocks.
+ * Prefers the List View "Expand all" control. Falls back to clicking
+ * collapsed expanders until none remain.
+ *
+ * @param {number} iteration Recursion guard for nested expander clicks.
  */
-export function selectBlock(name, isChildBlock = false) {
-	openBlockNavigator();
-
-	if (isChildBlock) {
-		cy.get('.block-editor-list-view__expander svg').first().click();
+function expandAllBlocksInListView(iteration = 0) {
+	if (iteration > 50) {
+		return;
 	}
+
+	cy.get('body').then(($body) => {
+		const $expandAll = $body.find(
+			'.blockera-list-view-controls button[aria-label^="Expand all"]'
+		);
+
+		if ($expandAll.length) {
+			cy.wrap($expandAll.first()).click();
+			return;
+		}
+
+		const $collapsed = $body.find(
+			'a[aria-expanded="false"] > [data-testid="list-view-expander"], a[aria-expanded="false"] .block-editor-list-view__expander'
+		);
+
+		if (!$collapsed.length) {
+			return;
+		}
+
+		cy.wrap($collapsed.first()).click({ force: true });
+		expandAllBlocksInListView(iteration + 1);
+	});
+}
+
+/**
+ * Select a block by its List View label. Allows chaining.
+ *
+ * Opens List View, expands all rows, clicks the matching leaf, then closes
+ * List View.
+ *
+ * @param {string} name The List View label to select, e.g. highlight or WordPress
+ */
+export function selectBlockByListView(name) {
+	openBlockNavigator();
+	expandAllBlocksInListView();
 
 	// A small wait seems needed to make sure that the list of blocks on the left is complete
 	// eslint-disable-next-line
 	cy.wait(250);
 
-	// Returning the cy.get function allows to chain off of selectBlock
+	// Returning the cy.get function allows to chain off of selectBlockByListView
 	// eslint-disable-next-line
 	return cy
 		.get('.block-editor-block-navigation-leaf,.block-editor-list-view-leaf')
-		.contains(isChildBlock ? RegExp(`${name}$`, 'i') : RegExp(name, 'i'))
+		.contains(RegExp(name, 'i'))
 		.click()
 		.then(() => {
 			// Then close the block navigator if still open.

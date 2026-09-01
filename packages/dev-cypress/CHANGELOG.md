@@ -1,3 +1,9 @@
+## Unreleased
+
+### Development Notes
+- Rename Cypress helper `selectBlock` to `selectBlockByListView` and always
+  expand List View before selecting a block.
+
 ## [3.0.0] - 2026-08-31
 
 ### Added
