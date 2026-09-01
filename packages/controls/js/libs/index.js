@@ -129,6 +129,11 @@ export { default as PositionButtonControl } from './position-button';
 export { default as DividerControl } from './divider-control';
 export { default as MaskControl } from './mask-control';
 export { default as LayoutMatrixControl } from './layout-matrix-control';
+export {
+	isLegacyFlexLayout,
+	migrateFlexLayoutToStored,
+	resolveFlexLayoutCssAxes,
+} from './layout-matrix-control/flex-layout-value';
 export { RendererControl } from './renderer-control';
 export { default as CodeControl } from './code-control';
 export { BlockeraLoading } from './blockera-loading';

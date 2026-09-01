@@ -1,7 +1,7 @@
 import {
 	savePage,
 	createPost,
-	selectBlock,
+	selectBlockByListView,
 	appendBlocks,
 	assertBlockData,
 	getSelectedBlock,
@@ -25,7 +25,7 @@ describe('Social Links Block → Gap → Compatibility', () => {
 
 			openBlockNavigator();
 
-			selectBlock('Social Icons');
+			selectBlockByListView('Social Icons');
 
 			cy.getByAriaControls('styles-view').click();
 
@@ -214,7 +214,7 @@ describe('Social Links Block → Gap → Compatibility', () => {
 
 			openBlockNavigator();
 
-			selectBlock('Social Icons');
+			selectBlockByListView('Social Icons');
 
 			cy.getByAriaControls('styles-view').click();
 
@@ -434,7 +434,7 @@ describe('Social Links Block → Gap → Compatibility', () => {
 
 			openBlockNavigator();
 
-			selectBlock('Social Icons');
+			selectBlockByListView('Social Icons');
 
 			cy.getByAriaControls('styles-view').click();
 
@@ -762,7 +762,7 @@ describe('Social Links Block → Gap → Compatibility', () => {
 
 			openBlockNavigator();
 
-			selectBlock('Social Icons');
+			selectBlockByListView('Social Icons');
 
 			cy.getByAriaControls('styles-view').click();
 

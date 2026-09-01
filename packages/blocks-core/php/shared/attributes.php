@@ -405,8 +405,8 @@ return [
 		'default' => [
 			'value' => [
 				'direction'      => 'row',
-				'alignItems'     => '',
-				'justifyContent' => '',
+				'flexAlign'      => '',
+				'flexJustify'    => '',
 			],
 		],
 	],

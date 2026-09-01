@@ -206,9 +206,31 @@ export const BreakpointsUI = ({
 	}, [deviceType, editorMode]);
 
 	useEffect(() => {
-		if (!isEquals(canvasSettings, getCanvasSettings())) {
-			setCanvasSettings(canvasSettings);
+		const current = getCanvasSettings();
+		const {
+			updatePickedDeviceType: currentPicked,
+			updateDeviceIndicator: currentIndicator,
+			...currentRest
+		} = current;
+		const {
+			updatePickedDeviceType: snapPicked,
+			updateDeviceIndicator: snapIndicator,
+			...snapRest
+		} = canvasSettings;
+
+		// Skip when equal, or when the only store extras are registered updaters.
+		// Replacing those functions with the mount snapshot leaves the picker stale
+		// after canvas-header close.
+		if (isEquals(snapRest, currentRest)) {
+			return;
 		}
+
+		setCanvasSettings({
+			...current,
+			...canvasSettings,
+			updatePickedDeviceType: currentPicked || snapPicked,
+			updateDeviceIndicator: currentIndicator || snapIndicator,
+		});
 		// eslint-disable-next-line
 	}, [canvasSettings]);
 
@@ -237,6 +259,19 @@ export const BreakpointsUI = ({
 		[selectedBlock, updateBlockAttributes]
 	);
 
+	const syncPickedBreakpointUi = useCallback((device: string): void => {
+		const editorSelect = (select('blockera/editor'): any);
+		const canvas = editorSelect?.getCanvasSettings?.() || {};
+
+		// Selectors of the same name always exist; the stored updater may not.
+		if (typeof canvas.updateDeviceIndicator === 'function') {
+			canvas.updateDeviceIndicator(device);
+		}
+		if (typeof canvas.updatePickedDeviceType === 'function') {
+			canvas.updatePickedDeviceType(device);
+		}
+	}, []);
+
 	const handleOnClick = useCallback(
 		(device: string): void => {
 			// Updating the device type by WordPress Core api.
@@ -247,11 +282,16 @@ export const BreakpointsUI = ({
 
 			// Updating the selected block blockeraCurrentDevice attribute.
 			updateSelectedBlock(device);
+
+			// Same path as an icon click: keep the header picker in sync when
+			// the switch is programmatic (canvas header close).
+			syncPickedBreakpointUi(device);
 		},
 		[
 			updateDeviceType,
 			changeExtensionCurrentBlockStateBreakpoint,
 			updateSelectedBlock,
+			syncPickedBreakpointUi,
 		]
 	);
 
@@ -261,21 +301,8 @@ export const BreakpointsUI = ({
 			if (!data || data.type !== 'BLOCKERA_BREAKPOINT_RESET_TO_BASE') {
 				return;
 			}
-			const base = getBaseBreakpoint();
 
-			// Use the same switching path as a real icon click:
-			// - update global device type + extension state + selected block
-			handleOnClick(base);
-
-			// - also update the picked-breakpoints local state via the registered updaters,
-			//   so the active icon/indicator immediately reflects the new breakpoint.
-			const editorSelect = (select('blockera/editor'): any);
-			if (editorSelect?.updateDeviceIndicator) {
-				editorSelect.updateDeviceIndicator(base);
-			}
-			if (editorSelect?.updatePickedDeviceType) {
-				editorSelect.updatePickedDeviceType(base);
-			}
+			handleOnClick(getBaseBreakpoint());
 		};
 
 		// Persist for the effect lifetime — `{ once: true }` was consumed by

@@ -117,8 +117,8 @@ describe('syncGroupLayoutFromWp', () => {
 				blockeraFlexLayout: {
 					value: {
 						direction: 'row',
-						justifyContent: '',
-						alignItems: '',
+						flexJustify: '',
+						flexAlign: '',
 					},
 				},
 			},

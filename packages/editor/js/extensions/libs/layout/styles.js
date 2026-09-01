@@ -3,7 +3,10 @@
 /**
  * Blockera dependencies
  */
-import { getValueAddonRealValue } from '@blockera/controls';
+import {
+	getValueAddonRealValue,
+	resolveFlexLayoutCssAxes,
+} from '@blockera/controls';
 import { prepare } from '@blockera/data-editor';
 import { isEquals } from '@blockera/utils';
 
@@ -243,6 +246,10 @@ export const LayoutStyles = ({
 		_attributes?.blockeraFlexLayout !== undefined
 	) {
 		const flexLayout = unwrapBlockeraAttr(_attributes?.blockeraFlexLayout);
+		const flexAxes =
+			flexLayout && typeof flexLayout === 'object'
+				? resolveFlexLayoutCssAxes(flexLayout)
+				: { flexAlign: '', flexJustify: '' };
 
 		if (
 			flexLayout &&
@@ -286,11 +293,11 @@ export const LayoutStyles = ({
 		if (
 			flexLayout &&
 			typeof flexLayout === 'object' &&
-			flexLayout?.alignItems
+			flexAxes.flexAlign
 		) {
 			const pickedSelector = getCompatibleBlockCssSelector({
 				...sharedParams,
-				query: 'blockeraFlexLayout.alignItems',
+				query: 'blockeraFlexLayout.flexAlign',
 				fallbackSupportId: getBlockSupportFallback(
 					supports,
 					'blockeraFlexLayout'
@@ -305,7 +312,7 @@ export const LayoutStyles = ({
 							{
 								...staticDefinitionParams,
 								properties: {
-									'align-items': flexLayout.alignItems,
+									'align-items': flexAxes.flexAlign,
 								},
 							},
 						],
@@ -319,11 +326,11 @@ export const LayoutStyles = ({
 		if (
 			flexLayout &&
 			typeof flexLayout === 'object' &&
-			flexLayout?.justifyContent
+			flexAxes.flexJustify
 		) {
 			const pickedSelector = getCompatibleBlockCssSelector({
 				...sharedParams,
-				query: 'blockeraFlexLayout.justifyContent',
+				query: 'blockeraFlexLayout.flexJustify',
 				fallbackSupportId: getBlockSupportFallback(
 					supports,
 					'blockeraFlexLayout'
@@ -338,8 +345,7 @@ export const LayoutStyles = ({
 							{
 								...staticDefinitionParams,
 								properties: {
-									'justify-content':
-										flexLayout.justifyContent,
+									'justify-content': flexAxes.flexJustify,
 								},
 							},
 						],

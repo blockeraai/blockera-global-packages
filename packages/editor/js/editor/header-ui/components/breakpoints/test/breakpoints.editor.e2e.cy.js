@@ -43,15 +43,42 @@ describe('Breakpoints canvas iframe header', () => {
 			.should('contain', label);
 	};
 
-	const assertActiveBreakpoint = (deviceType) => {
+	const assertBreakpointClass = (deviceType, isActive) => {
 		cy.getByAriaLabel('Breakpoints')
 			.first()
 			.within(() => {
 				cy.getByAriaLabel(deviceType).should(
-					'have.class',
+					isActive ? 'have.class' : 'not.have.class',
 					activatedClassName
 				);
 			});
+	};
+
+	const assertActiveBreakpoint = (deviceType) =>
+		assertBreakpointClass(deviceType, true);
+
+	const assertInactiveBreakpoint = (deviceType) =>
+		assertBreakpointClass(deviceType, false);
+
+	const closeCanvasHeader = () => {
+		cy.getIframeBody()
+			.find('[test-id="blockera-canvas-header-close"]', {
+				timeout: 20000,
+			})
+			.should('be.visible')
+			.click({ force: true });
+	};
+
+	const assertResetToBaseBreakpoint = (previousDeviceType) => {
+		assertActiveBreakpoint('Desktop');
+		assertInactiveBreakpoint(previousDeviceType);
+
+		cy.getIframeBody().find('.blockera-canvas-header').should('not.exist');
+
+		cy.get('iframe[name="editor-canvas"]').should(
+			'have.class',
+			'blockera-not-in-breakpoint'
+		);
 	};
 
 	it('should hide the canvas header on the base breakpoint', () => {
@@ -76,26 +103,30 @@ describe('Breakpoints canvas iframe header', () => {
 		assertHeaderLabel('Mobile Portrait');
 	});
 
-	it('should reset to the base breakpoint when closing the canvas header', () => {
+	it('should reset to the base breakpoint when closing the canvas header from tablet', () => {
 		setDeviceType('Tablet');
 		assertActiveBreakpoint('Tablet');
 		assertHeaderLabel('Tablet');
+		getCanvasHeader().should('not.contain', 'Zoom');
 
-		cy.getIframeBody()
-			.find('[test-id="blockera-canvas-header-close"]', {
-				timeout: 20000,
-			})
-			.should('be.visible')
-			.click({ force: true });
+		closeCanvasHeader();
+		assertResetToBaseBreakpoint('Tablet');
+	});
 
-		assertActiveBreakpoint('Desktop');
-
-		cy.getIframeBody().find('.blockera-canvas-header').should('not.exist');
+	it('should reset the breakpoint picker when closing the canvas header from mobile', () => {
+		setDeviceType('Mobile Portrait');
+		assertActiveBreakpoint('Mobile Portrait');
+		assertInactiveBreakpoint('Desktop');
+		assertHeaderLabel('Mobile Portrait');
+		getCanvasHeader().should('not.contain', 'Zoom');
 
 		cy.get('iframe[name="editor-canvas"]').should(
 			'have.class',
-			'blockera-not-in-breakpoint'
+			'blockera-in-breakpoint'
 		);
+
+		closeCanvasHeader();
+		assertResetToBaseBreakpoint('Mobile Portrait');
 	});
 
 	it('should scroll the visual editor on a non-base breakpoint over tall fixture content', () => {

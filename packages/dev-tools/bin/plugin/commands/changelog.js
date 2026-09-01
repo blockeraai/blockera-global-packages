@@ -11,7 +11,7 @@ const execPromise = util.promisify(exec);
 
 const PRODUCT_SECTION_ORDER = [
 	'Breaking Changes',
-	'Features',
+	'New Features',
 	'Improvements',
 	'Bug Fixes',
 	'Security',
@@ -21,6 +21,8 @@ const PRODUCT_SECTION_ORDER = [
 	'Code Quality',
 	'Tools',
 	'Experiments',
+	'Automated Tests',
+	'Development Notes',
 	'Various',
 ];
 
@@ -30,18 +32,20 @@ const PRODUCT_SECTION_ORDER = [
  * @type {Record<string,string>}
  */
 const KEEP_A_CHANGELOG_TO_PRODUCT = {
-	Added: 'Features',
+	Added: 'New Features',
 	Changed: 'Improvements',
 	Deprecated: 'Improvements',
 	Removed: 'Breaking Changes',
 	Fixed: 'Bug Fixes',
 	Security: 'Security',
-	'New Features': 'Features',
-	Features: 'Features',
+	'New Features': 'New Features',
+	Features: 'New Features',
 	Enhancements: 'Improvements',
 	Improvements: 'Improvements',
 	'Bug Fixes': 'Bug Fixes',
 	'Breaking Changes': 'Breaking Changes',
+	'Automated Tests': 'Automated Tests',
+	'Development Notes': 'Development Notes',
 };
 
 /**

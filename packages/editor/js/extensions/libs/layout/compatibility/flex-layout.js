@@ -4,6 +4,10 @@
  * Blockera dependencies
  */
 import { isEquals, mergeObject } from '@blockera/utils';
+import {
+	migrateFlexLayoutToStored,
+	resolveFlexLayoutCssAxes,
+} from '@blockera/controls';
 
 /** WP `verticalAlignment` toolbar keys → Blockera CSS values. */
 export const WP_VERTICAL_TO_CSS: { [string]: string } = {
@@ -44,19 +48,19 @@ export const CSS_JUSTIFY_TO_WP: { [string]: string } = {
 	stretch: 'stretch',
 };
 
-export type BlockeraFlexLayoutAxis = 'justifyContent' | 'alignItems';
+export type BlockeraFlexLayoutAxis = 'flexJustify' | 'flexAlign';
 
 /** Main-axis property on screen for the horizontal toolbar control. */
 export const getHorizontalScreenFlexProperty = (
 	direction: string
 ): BlockeraFlexLayoutAxis =>
-	'column' === direction ? 'alignItems' : 'justifyContent';
+	'column' === direction ? 'flexAlign' : 'flexJustify';
 
 /** Cross/main-axis property on screen for the vertical toolbar control. */
 export const getVerticalScreenFlexProperty = (
 	direction: string
 ): BlockeraFlexLayoutAxis =>
-	'column' === direction ? 'justifyContent' : 'alignItems';
+	'column' === direction ? 'flexJustify' : 'flexAlign';
 
 const normalizeToolbarCssValue = (value: ?string): ?string => {
 	if (!value) {
@@ -76,14 +80,15 @@ export const blockeraFlexLayoutToToolbarValues = (
 	verticalValue: ?string,
 	direction: string,
 } => {
-	const direction = flexLayout?.direction || 'row';
+	const stored = migrateFlexLayoutToStored(flexLayout || {});
+	const direction = stored.direction || 'row';
 	const horizontalProp = getHorizontalScreenFlexProperty(direction);
 	const verticalProp = getVerticalScreenFlexProperty(direction);
 
 	return {
 		direction,
-		horizontalValue: normalizeToolbarCssValue(flexLayout?.[horizontalProp]),
-		verticalValue: normalizeToolbarCssValue(flexLayout?.[verticalProp]),
+		horizontalValue: normalizeToolbarCssValue(stored[horizontalProp]),
+		verticalValue: normalizeToolbarCssValue(stored[verticalProp]),
 	};
 };
 
@@ -91,19 +96,20 @@ export const applyHorizontalToolbarToBlockeraFlexLayout = (
 	flexLayout: Object,
 	cssValue: ?string
 ): Object => {
-	const direction = flexLayout?.direction || 'row';
+	const stored = migrateFlexLayoutToStored(flexLayout);
+	const direction = stored.direction || 'row';
 	const isColumn = 'column' === direction;
 
 	if (isColumn) {
 		return {
-			...flexLayout,
-			alignItems: cssValue ?? '',
+			...stored,
+			flexAlign: cssValue ?? '',
 		};
 	}
 
 	return {
-		...flexLayout,
-		justifyContent: cssValue ?? '',
+		...stored,
+		flexJustify: cssValue ?? '',
 	};
 };
 
@@ -111,19 +117,20 @@ export const applyVerticalToolbarToBlockeraFlexLayout = (
 	flexLayout: Object,
 	cssValue: ?string
 ): Object => {
-	const direction = flexLayout?.direction || 'row';
+	const stored = migrateFlexLayoutToStored(flexLayout);
+	const direction = stored.direction || 'row';
 	const isColumn = 'column' === direction;
 
 	if (isColumn) {
 		return {
-			...flexLayout,
-			justifyContent: cssValue ?? '',
+			...stored,
+			flexJustify: cssValue ?? '',
 		};
 	}
 
 	return {
-		...flexLayout,
-		alignItems: cssValue ?? '',
+		...stored,
+		flexAlign: cssValue ?? '',
 	};
 };
 
@@ -140,26 +147,27 @@ export function alignItemsFromWPCompatibility({
 	// CSS props, so in row it lands on `align-items` (cross axis) but in column
 	// the vertical axis is the main axis → it must land on `justifyContent`.
 	// (Mirrors wp-includes/block-supports/layout.php flex orientation handling.)
-	const direction = attributes?.blockeraFlexLayout?.value?.direction || 'row';
+	const stored = migrateFlexLayoutToStored(
+		attributes?.blockeraFlexLayout?.value || {}
+	);
+	const direction = stored.direction || 'row';
 	const isColumn = 'column' === direction;
 
 	const mappedValue =
 		WP_VERTICAL_TO_CSS[attributes?.layout?.verticalAlignment] ?? '';
 	const nextValue = isColumn
-		? { justifyContent: mappedValue }
-		: { alignItems: mappedValue };
+		? { flexJustify: mappedValue }
+		: { flexAlign: mappedValue };
 
-	if (
-		'' !==
-		attributes?.blockeraFlexLayout?.value?.[
-			isColumn ? 'justifyContent' : 'alignItems'
-		]
-	) {
+	if ('' !== stored[isColumn ? 'flexJustify' : 'flexAlign']) {
 		return attributes;
 	}
 
 	attributes.blockeraFlexLayout = mergeObject(attributes.blockeraFlexLayout, {
-		value: nextValue,
+		value: {
+			...stored,
+			...nextValue,
+		},
 	});
 
 	return attributes;
@@ -178,26 +186,27 @@ export function justifyContentFromWPCompatibility({
 	// CSS props, so in row it lands on `justify-content` (main axis) but in
 	// column the horizontal axis is the cross axis → it must land on `alignItems`.
 	// (Mirrors wp-includes/block-supports/layout.php flex orientation handling.)
-	const direction = attributes?.blockeraFlexLayout?.value?.direction || 'row';
+	const stored = migrateFlexLayoutToStored(
+		attributes?.blockeraFlexLayout?.value || {}
+	);
+	const direction = stored.direction || 'row';
 	const isColumn = 'column' === direction;
 
 	const mappedValue =
 		WP_JUSTIFY_TO_CSS[attributes?.layout?.justifyContent] ?? '';
 	const nextValue = isColumn
-		? { alignItems: mappedValue }
-		: { justifyContent: mappedValue };
+		? { flexAlign: mappedValue }
+		: { flexJustify: mappedValue };
 
-	if (
-		'' !==
-		attributes?.blockeraFlexLayout?.value?.[
-			isColumn ? 'alignItems' : 'justifyContent'
-		]
-	) {
+	if ('' !== stored[isColumn ? 'flexAlign' : 'flexJustify']) {
 		return attributes;
 	}
 
 	attributes.blockeraFlexLayout = mergeObject(attributes.blockeraFlexLayout, {
-		value: nextValue,
+		value: {
+			...stored,
+			...nextValue,
+		},
 	});
 
 	return attributes;
@@ -295,13 +304,11 @@ export function flexLayoutToWPCompatibility({
 	// fields are screen-oriented (`verticalAlignment` / `justifyContent`). Resolve
 	// each screen axis from the raw props per direction so the right value lands on
 	// the right WP attribute in both row and column.
-	const isColumn = 'column' === newValue?.direction;
-	const verticalValue = isColumn
-		? newValue?.justifyContent
-		: newValue?.alignItems;
-	const horizontalValue = isColumn
-		? newValue?.alignItems
-		: newValue?.justifyContent;
+	const stored = migrateFlexLayoutToStored(newValue || {});
+	const axes = resolveFlexLayoutCssAxes(stored);
+	const isColumn = 'column' === stored.direction;
+	const verticalValue = isColumn ? axes.flexJustify : axes.flexAlign;
+	const horizontalValue = isColumn ? axes.flexAlign : axes.flexJustify;
 
 	const finalLayout: {
 		orientation?: string,
@@ -309,7 +316,7 @@ export function flexLayoutToWPCompatibility({
 		justifyContent?: string,
 		type?: string,
 	} = {
-		orientation: directionValues[newValue?.direction] ?? undefined,
+		orientation: directionValues[stored.direction] ?? undefined,
 		verticalAlignment: CSS_VERTICAL_TO_WP[verticalValue] ?? undefined,
 		justifyContent: CSS_JUSTIFY_TO_WP[horizontalValue] ?? undefined,
 	};

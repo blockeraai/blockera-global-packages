@@ -46,6 +46,16 @@ export default function ({
 	}, []);
 
 	useEffect(() => {
+		if (!currentBreakpoint) {
+			return;
+		}
+
+		setActiveBreakpoint((active) =>
+			active === currentBreakpoint ? active : currentBreakpoint
+		);
+	}, [currentBreakpoint]);
+
+	useEffect(() => {
 		updateBlock(currentActiveBreakpoint);
 		setCurrentBreakpoint(currentActiveBreakpoint);
 		// eslint-disable-next-line

@@ -10,7 +10,7 @@ Agents confuse three changelog surfaces: package `## Unreleased` (author inbox),
 
 ## Decision
 
-1. **Authors** only append `## Unreleased` on the package `CHANGELOG.md` whose source changed. Headings must match that file. Never add `## [x.y.z] - date` in feature work.
+1. **Authors** only append `## Unreleased` on the package `CHANGELOG.md` whose source changed. Headings must match that file; authors may introduce `### Development Notes`. Insert Unreleased at the top if missing; never rename a version heading into Unreleased. Never add `## [x.y.z] - date` in feature work.
 2. **Do not** run `npm run update:changelogs`, `update:master-package-changelogs`, or equivalent fold/zip changelog scripts unless the user is running a release and asked.
 3. **Do not** edit product-root `CHANGELOG.md` / `changelog.txt` in feature PRs. Zip accumulates those.
 4. **GP:** merge to GP `master` folds Unreleased (dated/semver job). **Consumer pin:** bump may fold remaining GP Unreleased on a branch tip (`chore(changelog): fold Unreleased`). **Product zip:** diffs GP package versions in the pin window and folds **consumer** Unreleased into the product version heading.

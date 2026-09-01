@@ -362,11 +362,11 @@ function configureBlockMatrixAlignment(blockIndex, type, point) {
 
 	assertBlockData((data) => {
 		expect(alignItems).to.equal(
-			getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+			getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 		);
 
 		expect(justifyContent).to.equal(
-			getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+			getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 		);
 	});
 }
@@ -445,11 +445,11 @@ function configureBlockSpecialUnit(blockIndex, type, unit) {
 
 	assertBlockData((data) => {
 		expect(unit.alignItems).to.equal(
-			getSelectedBlock(data, 'blockeraFlexLayout')?.alignItems
+			getSelectedBlock(data, 'blockeraFlexLayout')?.flexAlign
 		);
 
 		expect(unit.justifyContent).to.equal(
-			getSelectedBlock(data, 'blockeraFlexLayout')?.justifyContent
+			getSelectedBlock(data, 'blockeraFlexLayout')?.flexJustify
 		);
 	});
 }

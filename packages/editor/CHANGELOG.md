@@ -1,6 +1,7 @@
 ## [3.0.0] - 2026-09-01
 
 ### Bug Fixes
+- Closing the canvas iframe header now also selects the base breakpoint in the header breakpoint picker, instead of leaving a non-base icon active while the canvas already reset.
 
 - Non-base breakpoint canvas preview uses the same outer visual-editor scrollport as zoom, so tall content no longer shows a double scrollbar.
 - Canvas header no longer overlays block content when breakpoint or zoom uses the outer visual-editor scrollport.
