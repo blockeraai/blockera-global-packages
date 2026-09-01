@@ -1516,7 +1516,12 @@ async function setEditorViewportForScreenshot(
 		width = 450;
 	}
 
-	containerHeight = await evaluateInEditorCanvas(page, (doc) => {
+	containerHeight = await evaluateInEditorCanvas(page, (doc, win) => {
+		const iframe = win.frameElement;
+		if (iframe instanceof HTMLElement) {
+			iframe.style.setProperty('transition', 'none', 'important');
+			iframe.style.setProperty('overflow', 'visible', 'important');
+		}
 		doc
 			.querySelectorAll(
 				'[data-blockera-canvas-header-root], .blockera-canvas-header'
@@ -1581,6 +1586,23 @@ async function setEditorViewportForScreenshot(
 				pointer-events: none !important;
 			}
 
+			html, body {
+				height: auto !important;
+				min-height: 0 !important;
+				overflow: visible !important;
+				background-color: #fff !important;
+			}
+
+			iframe.blockera-in-breakpoint,
+			iframe.is-zoomed-out {
+				overflow: visible !important;
+				transition: none !important;
+			}
+
+			.block-list-appender {
+				display: none !important;
+			}
+
 			body.blockera-zoom-active {
 				padding-top: 0 !important;
 			}
@@ -1591,8 +1613,9 @@ async function setEditorViewportForScreenshot(
 				letter-spacing: 0 !important;
 				padding: 30px !important;
 				margin-top: 30px !important;
-				margin-bottom: 30px !important;
+				margin-bottom: 0 !important;
 				box-sizing: border-box !important;
+				background-color: #fff !important;
 			}
 
 			.is-root-container.has-global-padding > * {
@@ -1635,6 +1658,8 @@ async function setEditorViewportForScreenshot(
 	if (hideButtonCount > 0) {
 		await hideSecondarySidebarButton.first().click();
 	}
+
+	await hideCanvasHeaderForScreenshot(page);
 
 	if (config?.wait) {
 		await page.waitForTimeout(config.wait);
@@ -1708,14 +1733,126 @@ async function setFrontendViewportForScreenshot(
 }
 
 /**
- * Keep the in-iframe breakpoint/zoom canvas header out of editor screenshots.
- * Injects a persistent style so React remounts after waitForContentReady stay hidden.
+ * Keep editor chrome out of canvas screenshots and stop the iframe from
+ * clipping tall content (breakpoint preview uses overflow:hidden + a height
+ * lock; the iframe also transitions width/height).
  *
  * @param {import('@playwright/test').Page} page
  * @return {Promise<void>}
  */
 async function hideCanvasHeaderForScreenshot(page) {
-	await evaluateInEditorCanvas(page, (doc) => {
+	await evaluateInEditorCanvas(page, (doc, win) => {
+		const iframe = win.frameElement;
+		const parentDoc = iframe instanceof HTMLElement ? iframe.ownerDocument : null;
+
+		const sizeIframeToContent = () => {
+			if (doc.documentElement) {
+				doc.documentElement.style.setProperty(
+					'height',
+					'auto',
+					'important'
+				);
+				doc.documentElement.style.setProperty(
+					'min-height',
+					'0',
+					'important'
+				);
+			}
+			if (doc.body) {
+				doc.body.style.setProperty('height', 'auto', 'important');
+				doc.body.style.setProperty('min-height', '0', 'important');
+			}
+
+			const root = doc.querySelector('.is-root-container');
+			if (root instanceof HTMLElement) {
+				root.style.setProperty('height', 'auto', 'important');
+				root.style.setProperty('min-height', '0', 'important');
+			}
+
+			const lastBlock =
+				root instanceof HTMLElement
+					? Array.from(root.children).findLast(
+							(node) =>
+								node instanceof HTMLElement &&
+								node.offsetHeight > 0 &&
+								!node.classList.contains(
+									'block-list-appender'
+								) &&
+								!node.classList.contains(
+									'block-editor-default-block-appender'
+								)
+						)
+					: null;
+
+			const lastBottom =
+				lastBlock instanceof HTMLElement
+					? Math.ceil(
+							lastBlock.getBoundingClientRect().bottom +
+								(win.scrollY || 0)
+						)
+					: 0;
+
+			const needed = Math.max(
+				root instanceof HTMLElement ? root.scrollHeight : 0,
+				lastBottom,
+				doc.body ? doc.body.scrollHeight : 0,
+				doc.documentElement.scrollHeight || 0
+			);
+
+			if (!(iframe instanceof HTMLElement) || needed <= 0) {
+				return needed;
+			}
+
+			const height = `${needed}px`;
+			iframe.setAttribute('data-blockera-screenshot-canvas', 'true');
+			iframe.style.setProperty('transition', 'none', 'important');
+			iframe.style.setProperty('overflow', 'visible', 'important');
+			iframe.style.setProperty('height', height, 'important');
+			iframe.style.setProperty('min-height', height, 'important');
+			iframe.style.setProperty('max-height', 'none', 'important');
+			iframe.removeAttribute('scrolling');
+
+			const scale = iframe.parentElement;
+			if (scale instanceof HTMLElement) {
+				scale.style.setProperty('overflow', 'visible', 'important');
+				scale.style.setProperty('height', 'auto', 'important');
+			}
+
+			if (parentDoc?.head) {
+				let parentStyle = parentDoc.querySelector(
+					'style[data-blockera-screenshot-canvas]'
+				);
+				if (!parentStyle) {
+					parentStyle = parentDoc.createElement('style');
+					parentStyle.setAttribute(
+						'data-blockera-screenshot-canvas',
+						'true'
+					);
+					parentDoc.head.appendChild(parentStyle);
+				}
+				parentStyle.textContent = `
+					iframe[name="editor-canvas"][data-blockera-screenshot-canvas] {
+						transition: none !important;
+						overflow: visible !important;
+					}
+					.block-editor-iframe__scale-container:has(
+						> iframe[name="editor-canvas"][data-blockera-screenshot-canvas]
+					) {
+						overflow: visible !important;
+						height: auto !important;
+					}
+				`;
+			}
+
+			return needed;
+		};
+
+		if (iframe instanceof HTMLElement) {
+			iframe.setAttribute('data-blockera-screenshot-canvas', 'true');
+			iframe.style.setProperty('transition', 'none', 'important');
+			iframe.style.setProperty('overflow', 'visible', 'important');
+		}
+
 		let style = doc.querySelector(
 			'style[data-blockera-hide-canvas-header]'
 		);
@@ -1727,13 +1864,30 @@ async function hideCanvasHeaderForScreenshot(page) {
 
 		style.textContent = `
 			[data-blockera-canvas-header-root],
-			.blockera-canvas-header {
+			.blockera-canvas-header,
+			.block-list-appender,
+			.block-editor-default-block-appender {
 				display: none !important;
 				visibility: hidden !important;
 				height: 0 !important;
 				max-height: 0 !important;
 				overflow: hidden !important;
 				pointer-events: none !important;
+			}
+
+			html,
+			body {
+				height: auto !important;
+				min-height: 0 !important;
+				overflow: visible !important;
+				background-color: #fff !important;
+			}
+
+			.is-root-container {
+				height: auto !important;
+				min-height: 0 !important;
+				margin-bottom: 0 !important;
+				background-color: #fff !important;
 			}
 
 			body.blockera-zoom-active {
@@ -1743,13 +1897,45 @@ async function hideCanvasHeaderForScreenshot(page) {
 
 		doc
 			.querySelectorAll(
-				'[data-blockera-canvas-header-root], .blockera-canvas-header'
+				'[data-blockera-canvas-header-root], .blockera-canvas-header, .block-list-appender, .block-editor-default-block-appender'
 			)
 			.forEach((node) => {
 				if (node instanceof HTMLElement) {
 					node.style.setProperty('display', 'none', 'important');
 				}
 			});
+
+		doc.documentElement?.classList.remove(
+			'blockera-zoom-active',
+			'blockera-outer-scrollport'
+		);
+		doc.body?.classList.remove('blockera-zoom-active');
+
+		win.scrollTo(0, 0);
+		doc.documentElement.scrollTop = 0;
+		if (doc.body) {
+			doc.body.scrollTop = 0;
+		}
+
+		sizeIframeToContent();
+
+		const visual = iframe?.ownerDocument?.querySelector(
+			'.editor-visual-editor, .edit-post-visual-editor'
+		);
+		if (visual instanceof HTMLElement) {
+			visual.scrollTop = 0;
+			visual.scrollLeft = 0;
+		}
+
+		return new Promise((resolve) => {
+			requestAnimationFrame(() => {
+				sizeIframeToContent();
+				requestAnimationFrame(() => {
+					sizeIframeToContent();
+					resolve();
+				});
+			});
+		});
 	});
 }
 

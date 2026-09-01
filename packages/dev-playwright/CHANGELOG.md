@@ -3,6 +3,7 @@
 ### Fixed
 
 - Hide the in-canvas breakpoint/zoom header before editor visual screenshots so device chrome is not captured.
+- Size the editor canvas iframe to the block tree, disable its transition, and paint an opaque canvas background before screenshots so breakpoint previews are not clipped and do not show parent chrome at the footer.
 
 ## [2.0.0] - 2026-08-31
 
