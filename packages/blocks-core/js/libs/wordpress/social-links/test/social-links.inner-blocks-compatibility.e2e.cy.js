@@ -3,7 +3,7 @@
  */
 import {
 	createPost,
-	selectBlock,
+	selectBlockByListView,
 	appendBlocks,
 	setInnerBlock,
 	setParentBlock,
@@ -36,7 +36,7 @@ describe('Social Links Block → WP Compatibility', () => {
 		openBlockNavigator();
 
 		// Select target block
-		selectBlock('Social Icons');
+		selectBlockByListView('Social Icons');
 
 		cy.getByAriaControls('styles-view').click();
 
@@ -249,7 +249,7 @@ describe('Social Links Block → WP Compatibility', () => {
 		openBlockNavigator();
 
 		// Select target block
-		selectBlock('Social Icons');
+		selectBlockByListView('Social Icons');
 
 		cy.getByAriaControls('styles-view').click();
 

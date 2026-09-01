@@ -3,7 +3,7 @@
  */
 import {
 	savePage,
-	selectBlock,
+	selectBlockByListView,
 	createPost,
 	appendBlocks,
 	setInnerBlock,
@@ -25,7 +25,7 @@ describe('Social Link Block', () => {
 		appendBlocks(testContent);
 
 		// Select target block
-		selectBlock('WordPress', true);
+		selectBlockByListView('WordPress');
 
 		// Block supported is active
 		cy.get('.blockera-extension-block-card').should('be.visible');

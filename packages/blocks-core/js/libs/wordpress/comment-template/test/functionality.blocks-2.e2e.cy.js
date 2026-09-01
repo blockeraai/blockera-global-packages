@@ -4,7 +4,7 @@
 import {
 	savePage,
 	editPost,
-	selectBlock,
+	selectBlockByListView,
 	appendBlocks,
 	openBlockNavigator,
 	redirectToFrontPage,
@@ -30,7 +30,7 @@ describe('Comment Template Block', () => {
 		openBlockNavigator();
 
 		// Select target block
-		selectBlock('Comment Template');
+		selectBlockByListView('Comment Template');
 
 		// Block supported is active
 		cy.get('.blockera-extension-block-card').should('be.visible');
