@@ -18,6 +18,16 @@ for shared-package tests that must not live in consumer suites (currently
 2. **Bootstrap action** — `.github/actions/ensure-global-packages/` (via `sync-consumer-bootstrap.sh`); required before the submodule tree exists
 3. **Call shared actions/jobs** — under `packages/global-packages/packages/dev-tools/github/`
 
+Husky (copied from `packages/dev-tools/root-configs/.husky/`):
+
+- `post-checkout` — `ensure-global-packages-mirror-branch.sh` creates
+  `<consumer-repo>/<branch>` from GP `origin/master` and **pushes** it to GP
+  origin (`BLOCKERA_SKIP_SUBMODULE_BRANCH=1` / `BLOCKERA_SKIP_SUBMODULE_PUSH=1`).
+- `pre-commit` — `--ensure-pushed` retries that push if origin still lacks the
+  mirror (does not create a branch).
+- `pre-push` — `ensure-global-packages-pre-push.sh` pushes the mirror when the
+  consumer pin SHA is not on origin yet.
+
 Typical job steps:
 
 ```yaml
