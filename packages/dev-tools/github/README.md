@@ -481,15 +481,18 @@ are left for GitHub. Same-repo heads only (cannot push a fork).
 
 Any other conflicted path fails the job; those need a human.
 
-Template: `workflows/resolve-pr-merge-conflicts.yml`. Checkout **must** use
-`ref: head_ref` (not the PR merge SHA) so the push updates the PR. Thin
+Template: `workflows/resolve-pr-merge-conflicts.yml`. The resolve job runs only
+when `pull_request.mergeable == false` (GitHub conflict status). Checkout uses
+the PR **head SHA** (not `head_ref`) so a deleted branch name cannot fail
+`actions/checkout`; the script then skips if `origin/<head>` is gone. Thin
 consumer copies skip the run step when the current pin does not contain
 `jobs/resolve-pr-merge-conflicts/run.sh` (bash `-f` check in the thin workflow).
 
 ```yaml
 - uses: actions/checkout@v5
   with:
-      ref: ${{ github.head_ref || github.event.inputs.head_branch }}
+      repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+      ref: ${{ github.event.pull_request.head.sha || github.event.inputs.head_branch }}
       token: ${{ secrets.BLOCKERABOT_PAT }}
       fetch-depth: 0
 - uses: ./.github/actions/ensure-global-packages
