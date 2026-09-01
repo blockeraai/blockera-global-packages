@@ -67,13 +67,19 @@ fi
 git config user.name "${GIT_NAME}"
 git config user.email "${GIT_EMAIL}"
 
-git fetch --prune origin \
-	"+refs/heads/${BASE_BRANCH}:refs/remotes/origin/${BASE_BRANCH}" \
-	"+refs/heads/${HEAD_BRANCH}:refs/remotes/origin/${HEAD_BRANCH}"
+git fetch --prune origin "+refs/heads/${BASE_BRANCH}:refs/remotes/origin/${BASE_BRANCH}"
 
 if ! git rev-parse --verify --quiet "origin/${BASE_BRANCH}^{commit}" >/dev/null; then
 	die "cannot resolve origin/${BASE_BRANCH}"
 fi
+
+if ! git ls-remote --exit-code origin "refs/heads/${HEAD_BRANCH}" >/dev/null 2>&1; then
+	log "skip — origin/${HEAD_BRANCH} does not exist (deleted head); cannot push a conflict fix"
+	exit 0
+fi
+
+git fetch origin "+refs/heads/${HEAD_BRANCH}:refs/remotes/origin/${HEAD_BRANCH}"
+git checkout -B "${HEAD_BRANCH}" "HEAD"
 
 if git merge-base --is-ancestor "origin/${BASE_BRANCH}" HEAD; then
 	log "origin/${BASE_BRANCH} already contained in HEAD; nothing to do"
