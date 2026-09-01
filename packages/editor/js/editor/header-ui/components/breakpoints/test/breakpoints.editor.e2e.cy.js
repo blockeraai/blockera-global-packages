@@ -5,17 +5,19 @@
  * - Header is hidden on the base breakpoint (Desktop) at 100% zoom.
  * - Header appears when switching to a non-base breakpoint and shows its label.
  * - Header label updates when switching between non-base breakpoints.
- * - Close button resets to the base breakpoint, clears the header, and
- *   selects Desktop in the header breakpoint picker (not only the canvas).
+ * - Close button resets to the base breakpoint and removes the header.
+ * - Non-base breakpoint: `.editor-visual-editor` is the scrollport (iframe is not).
  *
  * Selectors: in-iframe `.blockera-canvas-header`, `test-id="blockera-canvas-header-close"`.
  *
  * Blockera dependencies
  */
 import {
+	appendBlocks,
 	createPostClearingZoomStorage,
 	setDeviceType,
 } from '@blockera/dev-cypress/js/helpers';
+import { loadE2ETallScrollBlocks } from '../../../../../test/fixtures/e2e-tall-scroll-content';
 
 describe('Breakpoints canvas iframe header', () => {
 	const activatedClassName = 'is-active-breakpoint';
@@ -125,5 +127,61 @@ describe('Breakpoints canvas iframe header', () => {
 
 		closeCanvasHeader();
 		assertResetToBaseBreakpoint('Mobile Portrait');
+	});
+
+	it('should scroll the visual editor on a non-base breakpoint over tall fixture content', () => {
+		loadE2ETallScrollBlocks().then((blocks) => {
+			appendBlocks(blocks);
+		});
+
+		cy.getIframeBody()
+			.find('[data-test="blockera-e2e-tall-scroll-fixture"]', {
+				timeout: 30000,
+			})
+			.should('exist');
+
+		setDeviceType('Mobile Portrait');
+		assertActiveBreakpoint('Mobile Portrait');
+
+		cy.get('iframe[name="editor-canvas"]', { timeout: 20000 }).should(
+			'have.class',
+			'blockera-in-breakpoint'
+		);
+
+		cy.get('.editor-visual-editor, .edit-post-visual-editor', {
+			timeout: 30000,
+		})
+			.first()
+			.should(($el) => {
+				const el = $el[0];
+				expect(
+					el.scrollHeight,
+					'visual editor scrollHeight'
+				).to.be.greaterThan(el.clientHeight + 100);
+
+				const overflowY = window.getComputedStyle(el).overflowY;
+				expect(
+					['auto', 'scroll', 'overlay'],
+					`visual editor overflow-y (${overflowY})`
+				).to.include(overflowY);
+
+				el.scrollTop = 400;
+				expect(el.scrollTop, 'visual editor scrollTop').to.be.greaterThan(
+					0
+				);
+			});
+
+		cy.get('iframe[name="editor-canvas"]').should(($iframe) => {
+			const iframe = $iframe[0];
+			const overflowY = window.getComputedStyle(iframe).overflowY;
+			expect(
+				['hidden', 'clip'],
+				`canvas iframe overflow-y (${overflowY})`
+			).to.include(overflowY);
+			expect(
+				iframe.scrollHeight,
+				'canvas iframe is not the scrollport'
+			).to.be.at.most(iframe.clientHeight + 2);
+		});
 	});
 });

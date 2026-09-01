@@ -6,7 +6,12 @@
 import type { MixedElement } from 'react';
 import { Fill } from '@wordpress/components';
 import { applyFilters } from '@wordpress/hooks';
-import { useSelect, dispatch } from '@wordpress/data';
+import { dispatch } from '@wordpress/data';
+
+/**
+ * Blockera dependencies
+ */
+import { useEditorMode } from '@blockera/utils';
 
 /**
  * Internal dependencies
@@ -16,10 +21,7 @@ import { BreakpointsUI, ErrorBoundary } from './components';
 import type { BreakpointTypes } from '../../extensions/libs/block-card/block-states/types';
 
 export default function HeaderUI(): MixedElement {
-	const { editorMode } = useSelect((select) => {
-		const { getEditorMode } = select('core/editor');
-		return { editorMode: getEditorMode() };
-	});
+	const editorMode = useEditorMode();
 
 	// Only render in visual editor mode
 	if ('visual' !== editorMode) {

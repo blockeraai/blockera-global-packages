@@ -128,6 +128,12 @@
 		&:not(:has(.blockera-stroke-svg-icon)) svg {
 			fill: currentcolor;
 		}
+
+		& > .blockera-stroke-svg-icon {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+		}
 	}
 
 	.blockera-control-icon-picker-library-footer-selection-details {

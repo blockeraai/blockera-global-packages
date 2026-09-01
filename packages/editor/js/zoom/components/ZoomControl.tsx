@@ -27,86 +27,13 @@ import { useZoom } from '../hooks/useZoom';
 import { useZoomKeyboard } from '../hooks/useZoomKeyboard';
 import { useIframeObserver } from '../hooks/useIframeObserver';
 import { useIframeHeight } from '../hooks/useIframeHeight';
-import { getEditorCanvasIframe, getIframeDocument } from '../utils/iframeUtils';
+import { applyIframeHeight } from '../utils/apply-iframe-height';
 import {
 	DEFAULT_ZOOM,
 	MIN_ZOOM,
 	MAX_ZOOM,
-	MIN_IFRAME_HEIGHT,
-	MAX_REASONABLE_HEIGHT,
 } from '../utils/constants';
 import type { ZoomControlProps } from '../types';
-
-/**
- * Apply height to iframe based on content height and zoom level.
- * Prevents double scrollbars by setting iframe height to actual content height.
- */
-function applyIframeHeight(
-	height: number,
-	zoomPercent: number,
-	initialHeight?: number | null
-): void {
-	const iframe = getEditorCanvasIframe();
-	if (!iframe) {
-		return;
-	}
-
-	// If we have an initial height and the received height is smaller, use initial height
-	// This prevents the iframe from shrinking below the initial height set before zoom
-	const effectiveHeight =
-		initialHeight !== null &&
-		initialHeight !== undefined &&
-		initialHeight > height
-			? initialHeight
-			: height;
-
-	// If zoom is at 100%, remove height constraint and let WordPress handle it
-	if (zoomPercent === DEFAULT_ZOOM) {
-		iframe.style.removeProperty('height');
-		iframe.style.removeProperty('overflow');
-
-		// Ensure overflow is set to auto to allow scrolling
-		requestAnimationFrame(() => {
-			if (!iframe.classList.contains('is-zoomed-out')) {
-				iframe.style.setProperty('overflow', 'auto', 'important');
-			}
-		});
-
-		return;
-	}
-
-	// When zoomed, set iframe height to content height
-	// CSS transform scale is visual only - it doesn't change DOM measurements
-	// So iframe height should match content height exactly
-	// Use effectiveHeight which already has initial height protection applied
-	if (effectiveHeight > 0 && effectiveHeight <= MAX_REASONABLE_HEIGHT) {
-		const finalHeight = Math.max(MIN_IFRAME_HEIGHT, effectiveHeight);
-
-		// Temporarily pause iframe updates to prevent feedback loop
-		const iframeDoc = getIframeDocument(iframe);
-		if (iframeDoc?.defaultView) {
-			iframeDoc.defaultView.postMessage(
-				{ type: 'BLOCKERA_ZOOM_PAUSE_UPDATES', pause: true },
-				'*'
-			);
-		}
-
-		// Set height with !important to override any WordPress styles
-		iframe.style.setProperty('height', `${finalHeight}px`, 'important');
-		iframe.setAttribute('scrolling', 'no');
-		iframe.style.setProperty('overflow', 'hidden', 'important');
-
-		// Resume iframe updates after a delay
-		setTimeout(() => {
-			if (iframeDoc?.defaultView) {
-				iframeDoc.defaultView.postMessage(
-					{ type: 'BLOCKERA_ZOOM_PAUSE_UPDATES', pause: false },
-					'*'
-				);
-			}
-		}, 1000);
-	}
-}
 
 /**
  * ZoomControl component that renders in the editor header.

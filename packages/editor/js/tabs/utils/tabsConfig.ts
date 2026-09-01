@@ -17,7 +17,7 @@ const DEFAULT_TABS_CONFIG: TabsConfig = {
 	limits: {
 		regular: 3,
 		recentlyClosed: 3,
-		pinned: 1,
+		pinned: 0,
 	},
 };
 

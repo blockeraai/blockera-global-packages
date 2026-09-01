@@ -2,7 +2,7 @@
  * End-to-end tests for Blockera workspace tabs — reloads, REST, and Pro limits
  * (split from UI spec to reduce Chrome renderer memory pressure in CI).
  *
- * @see workspace-1.editor.e2e.cy.js — tab title, rename, pin, view/copy links
+ * @see tabs-title.editor.e2e.cy.js — tab title, rename, view/copy links
  */
 import {
 	createPost,

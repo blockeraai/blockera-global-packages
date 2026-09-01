@@ -1,16 +1,30 @@
-## Unreleased
+## [3.0.0] - 2026-09-01
 
 ### Bug Fixes
 - Closing the canvas iframe header now also selects the base breakpoint in the header breakpoint picker, instead of leaving a non-base icon active while the canvas already reset.
 
+- Non-base breakpoint canvas preview uses the same outer visual-editor scrollport as zoom, so tall content no longer shows a double scrollbar.
+- Canvas header no longer overlays block content when breakpoint or zoom uses the outer visual-editor scrollport.
+- Visual screenshot helpers can freeze canvas iframe sizing so breakpoint preview does not clip content or show parent chrome in the shot.
+
+### Automated Tests
+
+- Breakpoint canvas: e2e coverage that Mobile Portrait with tall fixture content scrolls `.editor-visual-editor` and not the canvas iframe.
+
+### Improvements
+
+- Code editor: the left sidebar stays open, but inserter and list view show “Not available in code editor.” instead of blocks, patterns, media, or document structure.
+
 ## [2.1.0] - 2026-08-26
 
 ### New Features
-- Added Grid Settings: The grid columns count and columns min width setting while support in breakpoints. 
+
+- Added Grid Settings: The grid columns count and columns min width setting while support in breakpoints.
 - Added support for WordPress block theme developers to include Blockera features in their theme.json files, making it easier to customize and configure themes with Blockera's capabilities.
 - Added search functionality for block features: You can now quickly find any feature by typing in the search box. Simply type what you're looking for, and the list will automatically filter to show matching features, making it much easier to find the settings you need.
 
 ### Improvements
+
 - BlockBase: reduced extra re-renders by keeping the WordPress store subscription on data values (not selector function identities), initializing the pending-attributes overlay only for user edits, and memoizing inspector context callbacks.
 - Improved block features organization for better code structure and easier maintenance.
 - Added support for third-party developers to extend and customize the style engine filters.
@@ -33,6 +47,7 @@
 - Text Orientation Feature: improve label for options.
 
 ### Bug Fixes
+
 - After resetting a control, unused Blockera repeater attributes are no longer saved as `{ "value": [] }` in block markup.
 - WordPress `style` written during feature compatibility is deep-cleaned so empty objects (for example `"style":{"typography":{}}`) are not saved in block markup.
 - Preview mode: Clicks on links, linked images, buttons, and featured-image permalinks inside the preview iframe no longer navigate or reload the preview.
@@ -42,16 +57,17 @@
 - Cursor feature: Fix pointer option icon and improve auto icon.
 
 ### Automated Tests
+
 - WordPress `style` cleanup: unit tests for empty-object pruning after compatibility merges, and e2e coverage that leftover `"style":{"typography":{}}` is not saved after font-size or text-color reset.
 - Block cleanup: e2e asserts unused repeater attributes are not saved as `{ "value": [] }` after a text-color reset.
 - BlockBase: e2e coverage that idle time and sibling-block edits do not re-render every mounted BlockBase instance.
 - Preview mode: e2e coverage that clicking paragraph links, linked images, buttons, and featured-image permalinks does not navigate the preview iframe.
-- Automated test to check `font color` WP data compatibility if variables not found. 
-- Automated test to check `background color` WP data compatibility if variables not found. 
-- Automated test to check `background image` WP data compatibility if variables not found. 
-- Automated test to check `border color` WP data compatibility if variables not found. 
-- Automated test to check `font size` WP data compatibility if variables not found. 
-- Automated test to check `spacing` WP data compatibility if variables not found. 
+- Automated test to check `font color` WP data compatibility if variables not found.
+- Automated test to check `background color` WP data compatibility if variables not found.
+- Automated test to check `background image` WP data compatibility if variables not found.
+- Automated test to check `border color` WP data compatibility if variables not found.
+- Automated test to check `font size` WP data compatibility if variables not found.
+- Automated test to check `spacing` WP data compatibility if variables not found.
 - Automated test to check `font size` WP data compatibility in global styles context.
 - Automated test to check `font family` WP data compatibility in global styles context.
 - Automated test to check `font color` WP data compatibility in global styles context (simple and variable values).
@@ -78,35 +94,43 @@
 ## 2.0.1 (2025-07-22)
 
 ### Improvements
-- Animation of editor frame while changing the responsive breakpoints. 
+
+- Animation of editor frame while changing the responsive breakpoints.
 
 ### Bug Fixes
+
 - Icons of breakpoints are not showing correctly in features change graph.
 
 ## 2.0.0 (2025-07-20)
 
 ### Improvements
+
 - Reorganized the breakpoint device sizes in the settings panel to be more intuitive and easier to understand.
 
 ### Bug Fixes
+
 - Fixed an issue where styles weren't being applied in the correct order across different screen sizes, ensuring your responsive designs now work as expected.
 
 ## 1.9.0 (2025-07-16)
 
 ### New Features
+
 - Added support for automatically generating styles for all screen sizes and devices that you've set up in your responsive settings.
 
 ## 1.8.2 (2025-06-25)
 
 ### Bug Fixes
+
 - Fixed an issue where the marker pseudo element's content field was not working properly as a blockera block state.
 
 ## 1.8.1 (2025-06-15)
 
 ### Bug Fixed
+
 - Fixed an issue where advanced mode block card was shown when `Basic Mode` was enabled.
 
 ### Improvements
+
 - Improved UX by showing all available states in editor store, making it easier to manage block states.
 
 ## 1.8.0 (2025-06-10)
@@ -135,6 +159,7 @@
 - Fixed an issue where the `Restricts Blocks by Post Types` option was not working properly. Thanks Hoang 🙏🏻
 
 ### Automated Tests
+
 - Added E2E tests to check `Flex` display on `Columns` block.
 
 ## 1.7.1 (2025-05-25)

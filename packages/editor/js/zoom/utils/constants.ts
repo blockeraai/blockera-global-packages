@@ -79,6 +79,19 @@ export const ZOOM_CSS_VAR = '--blockera-block-editor-iframe-zoom';
 export const ZOOMED_OUT_CLASS = 'is-zoomed-out';
 
 /**
+ * CSS class added to the canvas iframe for non-base breakpoint preview.
+ * Must match `IN_BREAKPOINT_CLASS` in breakpoints UI.
+ */
+export const IN_BREAKPOINT_CLASS = 'blockera-in-breakpoint';
+
+/**
+ * CSS class on the iframe document when the visual editor is the scrollport
+ * (zoom or non-base breakpoint). The in-iframe canvas header must not stay
+ * `position: fixed` in this mode or it overlays block content in screenshots.
+ */
+export const OUTER_SCROLLPORT_CLASS = 'blockera-outer-scrollport';
+
+/**
  * CSS class added to scale container when zoomed.
  */
 export const SCALE_CONTAINER_ZOOMED_CLASS = 'iframe-zoomed';
@@ -88,3 +101,9 @@ export const SCALE_CONTAINER_ZOOMED_CLASS = 'iframe-zoomed';
  * (see iframeUtils): scales core host-document popovers with Blockera canvas zoom.
  */
 export const EDITOR_ZOOM_COMPAT_STYLE_ATTR = 'data-blockera-editor-zoom-compat';
+
+/**
+ * Set on the canvas iframe by visual screenshot helpers so height/overflow
+ * locks do not clip content or show parent chrome at the footer.
+ */
+export const SCREENSHOT_CANVAS_ATTR = 'data-blockera-screenshot-canvas';

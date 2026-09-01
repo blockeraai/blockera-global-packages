@@ -799,7 +799,7 @@ const TabsBar = memo(function TabsBar({
 
 							<Flex direction="row" gap="6px">
 								<span className="blockera-free-plan-hint">
-									{__('Free: 1 tab', 'blockera')}
+									{__('Free: 0 tabs', 'blockera')}
 								</span>
 								<span className="blockera-pro-plan-hint">
 									{__('Pro: Unlimited tabs', 'blockera')}

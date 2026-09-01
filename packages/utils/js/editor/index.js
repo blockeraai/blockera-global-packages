@@ -1,6 +1,7 @@
 // @flow
 
 export * from './get-attributes-with-ids';
+export * from './use-editor-mode';
 
 export function getEditorDocumentElement(): ?Document {
 	const canvasElement = document.querySelector("[name='editor-canvas']");

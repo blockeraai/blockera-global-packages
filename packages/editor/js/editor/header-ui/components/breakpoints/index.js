@@ -22,6 +22,12 @@ import type { BreakpointsComponentProps } from './types';
 import { isBaseBreakpoint, getBaseBreakpoint } from './helpers';
 import { applyBreakpointPreviewSize } from './get-breakpoint-preview-size';
 import { subscribeToEditorModeChanges } from './editor-mode-subscription';
+import { applyIframeHeight } from '../../../../zoom/utils/apply-iframe-height.ts';
+import {
+	calculateContentHeight,
+	getIframeDocument,
+} from '../../../../zoom/utils/iframeUtils.ts';
+import { loadZoomFromStorage } from '../../../../zoom/utils/storage.ts';
 import { useStoreSelectors } from '../../../../hooks/use-store-selectors';
 import { useStoreDispatchers } from '../../../../hooks/use-store-dispatchers';
 import type {
@@ -139,6 +145,15 @@ export const BreakpointsUI = ({
 							);
 							iframe.style.transform = '';
 							iframe.parentElement.style.background = '';
+
+							if (
+								!iframe.classList.contains('is-zoomed-out')
+							) {
+								applyIframeHeight(
+									0,
+									loadZoomFromStorage()
+								);
+							}
 						}
 					}
 				}
@@ -161,15 +176,23 @@ export const BreakpointsUI = ({
 						if (deviceType !== getBaseBreakpoint()) {
 							iframe.style.transformOrigin = '50% 50%'; // Center both horizontally and vertically.
 							editorWrapper.style.transformOrigin = '50% 50%'; // Center both horizontally and vertically.
-
-							iframe.parentElement.style.overflowX = 'auto';
-						} else {
-							iframe.parentElement.style.overflowX = 'none';
 						}
 
 						// Center the preview.
 						editorWrapper.style.margin = '0 auto';
 						iframe.style.margin = '50px auto';
+
+						if (iframe.parentElement) {
+							iframe.parentElement.style.overflowX = '';
+						}
+
+						const iframeDoc = getIframeDocument(iframe);
+						if (iframeDoc) {
+							applyIframeHeight(
+								calculateContentHeight(iframeDoc),
+								loadZoomFromStorage()
+							);
+						}
 					}
 				}
 			}
