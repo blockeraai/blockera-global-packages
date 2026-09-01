@@ -313,6 +313,15 @@ only packages that changed since the previous merge (`--semver`, `--from`,
 `--to` on `update-master-package-changelogs`). It is not the zip
 `update:changelogs` command.
 
+When that changelog workflow **completes successfully** on `master` (a merge
+commit, or its `workflow_dispatch`), `.github/workflows/notify-blockera-submodule.yml`
+dispatches `global-packages-updated` to enabled rows in
+`.github/global-packages-consumers.json`. The payload SHA is **current
+`origin/master`**, so consumers pin the fold commit when one was pushed. The
+follow-up `build: Update Changelog` push is not a merge, so notify does not
+run a second time. Feature-branch pushes do not notify. Notify has no
+`workflow_dispatch` of its own.
+
 **GP fold happens on submodule bump**, not on product zip:
 
 1. Consumer sync/bump pins global-packages.
@@ -451,6 +460,10 @@ all rows with the new version.
 | `RELEASE_ENDPOINT` / `BLOCKERAAI_PRODUCT_ID` / `RELEASE_*` / `BLOCKERABOT_API_KEY` | required secrets |
 
 ## Sync global-packages submodule
+
+GP origin: after **Update Changelogs** on `master` (see changelog section
+above), `notify-blockera-submodule.yml` `repository_dispatch`es consumers.
+It does not run on every GP push.
 
 Consumer bootstrap: `.github/actions/ensure-global-packages/` (synced via
 `sync-consumer-bootstrap.sh`). Job scripts run from the toolkit (stashed across
