@@ -5,6 +5,11 @@ import { useEffect } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 
 /**
+ * Blockera dependencies
+ */
+import { useEditorMode } from '@blockera/utils';
+
+/**
  * Internal dependencies
  */
 import { store as blockeraEditorStore } from '../../store-persistence';
@@ -16,6 +21,8 @@ import ListViewPanel from './ListViewPanel';
  * Secondary sidebar component that displays both inserter (top) and list view (bottom).
  */
 export default function SecondarySidebar() {
+	const isTextEditorMode = useEditorMode() === 'text';
+
 	// Get list view height from store
 	const listViewHeight = useSelect((select) => {
 		const storeSelect = select(blockeraEditorStore) as any;
@@ -54,7 +61,11 @@ export default function SecondarySidebar() {
 	};
 
 	return (
-		<div className="blockera-combined-sidebar">
+		<div
+			className={`blockera-combined-sidebar${
+				isTextEditorMode ? ' is-text-editor' : ''
+			}`}
+		>
 			<InserterLibraryPanel />
 
 			{/* Resize handle - only show when sidebar is visible */}

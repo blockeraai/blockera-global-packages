@@ -39,6 +39,23 @@ body.blockera-zoom-active {
 	z-index: 999999;
 }
 
+/*
+ * Outer scrollport (zoom / non-base breakpoint): the iframe is as tall as
+ * the content, so `position: fixed` covers the whole document and overlays
+ * `.is-root-container` (visual snapshots and the first blocks). Keep the
+ * header in normal flow above the canvas instead.
+ */
+html.blockera-outer-scrollport body.blockera-zoom-active {
+	padding-top: 0 !important;
+}
+
+html.blockera-outer-scrollport .blockera-canvas-header[data-blockera-zoom-header] {
+	position: relative;
+	top: auto;
+	left: auto;
+	right: auto;
+}
+
 .blockera-canvas-header.breakpoint-small {
 	gap: 8px;
 }

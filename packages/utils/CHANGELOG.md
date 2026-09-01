@@ -1,3 +1,13 @@
+## Unreleased
+
+### New Features
+
+- Added `useEditorMode` to read Gutenberg visual vs code (`text`) editor mode from `core/editor`.
+
+### Bug Fixes
+
+- `useEditorMode` selects `core/editor` by store name instead of importing `@wordpress/editor`, so Cypress specs that load `@blockera/utils` no longer fail on Gutenberg private-API unlock.
+
 ## [1.3.0] - 2026-08-26
 
 ### New Features

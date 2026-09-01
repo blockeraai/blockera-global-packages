@@ -73,12 +73,11 @@ function enforceWorkspaceLimits(
 	limits: TabsLimitsConfig
 ): WorkspaceTabs {
 	let pinnedTabs: Tab[];
-	if (hasReachedLimit(0, limits.pinned)) {
-		pinnedTabs = [];
-	} else if (Number.isFinite(limits.pinned)) {
-		pinnedTabs = workspaceTabs['pinned-tabs'].slice(0, limits.pinned);
-	} else {
+	if (!Number.isFinite(limits.pinned) || limits.pinned === 0) {
+		// Limit 0 blocks new pins in pinTab; keep stored pins (grandfathered).
 		pinnedTabs = workspaceTabs['pinned-tabs'];
+	} else {
+		pinnedTabs = workspaceTabs['pinned-tabs'].slice(0, limits.pinned);
 	}
 
 	let regularTabs: Tab[];
