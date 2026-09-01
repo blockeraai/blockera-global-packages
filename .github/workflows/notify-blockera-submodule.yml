@@ -1,30 +1,72 @@
 name: Notify consumers submodule sync
 
-# Fires each consumer's sync-global-packages-submodule workflow so they never
-# need to manually bump packages/global-packages.
-# Consumers are listed in .github/global-packages-consumers.json.
+# After Update Changelogs finishes on master (PR merge fold, or that workflow’s
+# manual dispatch). Consumers are listed in .github/global-packages-consumers.json.
+# Pin SHA is origin/master tip so a fold commit is included when one was pushed.
+# The changelog bot’s own push is not a merge, so this does not dispatch twice.
 on:
-    push:
-    workflow_dispatch:
+    workflow_run:
+        workflows:
+            - Update Changelogs
+        types:
+            - completed
+        branches:
+            - master
 
 concurrency:
-    group: notify-consumers-${{ github.ref }}
+    group: notify-consumers-master
     cancel-in-progress: true
 
 jobs:
     resolve-consumers:
         name: Resolve consumer matrix
         runs-on: ubuntu-latest
-        if: ${{ github.repository == 'blockeraai/blockera-global-packages' }}
+        if: ${{ github.repository == 'blockeraai/blockera-global-packages' && github.event.workflow_run.conclusion == 'success' }}
         outputs:
             matrix: ${{ steps.build.outputs.matrix }}
+            should_run: ${{ steps.pin.outputs.should_run }}
+            sha: ${{ steps.pin.outputs.sha }}
+            ref: ${{ steps.pin.outputs.ref }}
+            branch: ${{ steps.pin.outputs.branch }}
+            message: ${{ steps.pin.outputs.message }}
         steps:
-            - name: Checkout consumers config
+            - name: Checkout master
               uses: actions/checkout@v5
               with:
+                  ref: master
+                  fetch-depth: 0
                   sparse-checkout: |
                       .github/global-packages-consumers.json
                   sparse-checkout-cone-mode: false
+
+            - name: Resolve pin SHA
+              id: pin
+              env:
+                  TRIGGER_SHA: ${{ github.event.workflow_run.head_sha }}
+                  TRIGGER_EVENT: ${{ github.event.workflow_run.event }}
+              run: |
+                  set -euo pipefail
+                  git fetch origin master
+                  PIN_SHA="$(git rev-parse origin/master)"
+                  should_run=false
+
+                  if [ "${TRIGGER_EVENT}" = "workflow_dispatch" ]; then
+                    should_run=true
+                  elif [ -n "${TRIGGER_SHA}" ] && git rev-parse -q --verify "${TRIGGER_SHA}^2" >/dev/null; then
+                    should_run=true
+                  else
+                    echo "Skip notify: Update Changelogs did not run on a master merge (or that workflow’s dispatch)."
+                  fi
+
+                  {
+                    echo "should_run=${should_run}"
+                    echo "sha=${PIN_SHA}"
+                    echo "ref=refs/heads/master"
+                    echo "branch=master"
+                    echo "message<<MSG"
+                    git log -1 --format=%B "${PIN_SHA}"
+                    echo "MSG"
+                  } >> "${GITHUB_OUTPUT}"
 
             - name: Build matrix from consumers.json
               id: build
@@ -37,12 +79,17 @@ jobs:
                     exit 1
                   fi
                   echo "matrix=${MATRIX}" >> "$GITHUB_OUTPUT"
-                  echo "Dispatching to ${COUNT} consumer(s):"
-                  echo "${MATRIX}" | jq -r '.include[].repository'
+                  if [[ "${{ steps.pin.outputs.should_run }}" == "true" ]]; then
+                    echo "Dispatching ${PIN_SHA} to ${COUNT} consumer(s):"
+                    echo "${MATRIX}" | jq -r '.include[].repository'
+                  fi
+              env:
+                  PIN_SHA: ${{ steps.pin.outputs.sha }}
 
     notify:
         name: repository_dispatch → ${{ matrix.repository }}
         needs: resolve-consumers
+        if: ${{ needs.resolve-consumers.outputs.should_run == 'true' }}
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -57,9 +104,9 @@ jobs:
                   event-type: global-packages-updated
                   client-payload: |-
                       {
-                        "sha": "${{ github.sha }}",
-                        "ref": "${{ github.ref }}",
-                        "branch": "${{ github.ref_name }}",
-                        "message": ${{ toJSON(github.event.head_commit.message || github.event_name) }},
+                        "sha": "${{ needs.resolve-consumers.outputs.sha }}",
+                        "ref": "${{ needs.resolve-consumers.outputs.ref }}",
+                        "branch": "${{ needs.resolve-consumers.outputs.branch }}",
+                        "message": ${{ toJSON(needs.resolve-consumers.outputs.message) }},
                         "source_repository": "${{ github.repository }}"
                       }
