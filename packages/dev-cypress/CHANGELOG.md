@@ -1,4 +1,4 @@
-## Unreleased
+## [4.0.0] - 2026-09-01
 
 ### Development Notes
 - Rename Cypress helper `selectBlock` to `selectBlockByListView` and always

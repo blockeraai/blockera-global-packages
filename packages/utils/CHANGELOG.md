@@ -1,3 +1,8 @@
+## [2.0.0] - 2026-09-01
+
+### Changed
+- Update flex layout assertions for new keys.
+
 ## [1.4.0] - 2026-09-01
 
 ### New Features

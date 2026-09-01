@@ -1,3 +1,13 @@
+## [4.0.0] - 2026-09-01
+
+### Changed
+- Assert layout matrix flexAlign/flexJustify keys.
+- Cover flex layout migrate helpers.
+
+### Fixed
+- Persist layout matrix on flexAlign/flexJustify.
+- Add flexAlign/flexJustify migrate helpers.
+
 ## [3.0.0] - 2026-09-01
 
 ### Fixed

@@ -1,3 +1,14 @@
+## [4.0.0] - 2026-09-01
+
+### Changed
+- Use selectBlockByListView in List View e2e specs.
+- Use better block selection to prevent flaky test.
+- Update test content.
+- Update flex layout assertions for new keys.
+
+### Fixed
+- Map flex defaults and WP compatibility to new keys.
+
 ## [3.0.0] - 2026-09-01
 
 ### Improvements
