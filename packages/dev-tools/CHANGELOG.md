@@ -1,3 +1,8 @@
+## Unreleased
+
+### Features
+- Agent knowledge: inner-blocks / block-states domain card; free-vs-Pro card covers controls-pro, blocks-pro, canvas/global-styles, and license packages; style-pipeline tests run from the Cursor active product.
+
 ## [2.2.0] - 2026-09-01
 
 ### Features

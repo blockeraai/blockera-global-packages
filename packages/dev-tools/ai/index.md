@@ -13,7 +13,8 @@ Platform-independent notes for agents working on shared Blockera packages. Curso
 ## Domains
 
 - [editor-style-pipeline.md](domains/editor-style-pipeline.md) — JS extensions, PHP StyleDefinitions, Gutenberg compatibility, Pro overlays, tests
-- [free-vs-pro.md](domains/free-vs-pro.md) — when to read or ask to edit blockera-pro overlays
+- [inner-blocks-and-block-states.md](domains/inner-blocks-and-block-states.md) — block-card inner blocks / states, attributes, Pro `native` unlock
+- [free-vs-pro.md](domains/free-vs-pro.md) — editor-pro overlays, controls-pro, blocks-pro, canvas/GS, license gate
 
 ## Decisions
 
