@@ -17,6 +17,10 @@
 	color: var(--blockera-controls-color);
 	gap: 2px;
 
+	span {
+		min-width: 34px;
+	}
+
 	/* The chevron down icon */
 	svg:last-child {
 		color: var(--blockera-controls-color);
@@ -36,6 +40,10 @@
 	.blockera-zoom-control-wrapper
 	.components-button.is-zoomed {
 	color: var(--blockera-controls-primary-color);
+	font-weight: 600;
+	--blockera-controls-border-color-soft: var(
+		--blockera-controls-primary-color
+	);
 }
 
 /* Iframe zoom transform styles */
