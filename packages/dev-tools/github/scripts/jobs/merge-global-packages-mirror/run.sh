@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # After a consumer PR merges to master, open (or update) a pull request on the
-# global-packages repo: mirror branch → GP base (master).
+# global-packages repo: mirror branch → GP base (master), then enable
+# auto-merge so GitHub merges it when required checks pass.
 #
 # Mirror name matches husky: <consumer-repo>/<head-branch>
 # (e.g. blockera-pro/fix/foo).
@@ -19,6 +20,8 @@
 #   BLOCKERA_GP_PR_SKIP_HEADS      space-separated heads to ignore
 #                                  default: chore/bump-global-packages
 #   BLOCKERA_GP_PR_LABEL           label on the GP PR (empty = none)
+#   BLOCKERA_GP_PR_AUTO_MERGE      true|false (default: true)
+#   BLOCKERA_GP_PR_MERGE_METHOD    merge|squash|rebase (default: merge)
 #   GH_TOKEN / BLOCKERA_GLOBAL_PACKAGES_TOKEN / GITHUB_TOKEN
 set -euo pipefail
 
@@ -37,6 +40,24 @@ uri_encode() {
 	jq -nr --arg s "$1" '$s|@uri'
 }
 
+enable_auto_merge() {
+	local number="$1"
+	if [[ "${AUTO_MERGE}" != "true" ]]; then
+		log "skip auto-merge (BLOCKERA_GP_PR_AUTO_MERGE=${AUTO_MERGE})"
+		return 0
+	fi
+	case "${MERGE_METHOD}" in
+		merge | squash | rebase) ;;
+		*)
+			die "BLOCKERA_GP_PR_MERGE_METHOD must be merge, squash, or rebase (got '${MERGE_METHOD}')"
+			;;
+	esac
+	log "enable auto-merge on ${GP_REPO}#${number} (--${MERGE_METHOD} after checks)"
+	if ! gh pr merge "${number}" --repo "${GP_REPO}" --auto "--${MERGE_METHOD}"; then
+		die "could not enable auto-merge on ${GP_REPO}#${number} (enable Allow auto-merge on ${GP_REPO}, and grant the PAT merge rights)"
+	fi
+}
+
 HEAD_BRANCH="${BLOCKERA_GP_PR_HEAD_BRANCH:-}"
 GP_REPO="${BLOCKERA_GP_PR_REPO:-blockeraai/blockera-global-packages}"
 GP_BASE="${BLOCKERA_GP_PR_BASE:-master}"
@@ -47,6 +68,8 @@ PR_NUMBER="${BLOCKERA_GP_PR_NUMBER:-}"
 PR_TITLE="${BLOCKERA_GP_PR_TITLE:-}"
 SKIP_HEADS="${BLOCKERA_GP_PR_SKIP_HEADS:-chore/bump-global-packages}"
 PR_LABEL="${BLOCKERA_GP_PR_LABEL:-}"
+AUTO_MERGE="${BLOCKERA_GP_PR_AUTO_MERGE:-true}"
+MERGE_METHOD="${BLOCKERA_GP_PR_MERGE_METHOD:-merge}"
 export GH_TOKEN="${GH_TOKEN:-${BLOCKERA_GLOBAL_PACKAGES_TOKEN:-${GITHUB_TOKEN:-}}}"
 
 if [[ -z "${HEAD_BRANCH}" ]]; then
@@ -126,7 +149,7 @@ fi
 if [[ -n "${PR_TITLE}" ]]; then
 	BODY+=$'\n'"- Title: ${PR_TITLE}"
 fi
-BODY+=$'\n\n## Test plan\n- [ ] GP CI on this PR is green\n- [ ] Mirror commits belong on '"\`${GP_BASE}\`"$'\n'
+BODY+=$'\n\n## Test plan\n- [ ] GP CI on this PR is green (auto-merge when required checks pass)\n- [ ] Mirror commits belong on '"\`${GP_BASE}\`"$'\n'
 
 EXISTING="$(gh pr list --repo "${GP_REPO}" --head "${MIRROR_BRANCH}" --base "${GP_BASE}" --json number --jq '.[0].number // empty')"
 
@@ -137,6 +160,7 @@ if [[ -n "${EXISTING}" ]]; then
 	fi
 	log "updated ${GP_REPO}#${EXISTING} (${AHEAD} commit(s) ahead)"
 	gh pr view "${EXISTING}" --repo "${GP_REPO}" --json url --jq .url
+	enable_auto_merge "${EXISTING}"
 	exit 0
 fi
 
@@ -151,5 +175,8 @@ if [[ -n "${PR_LABEL}" ]]; then
 	CREATE_ARGS+=(--label "${PR_LABEL}")
 fi
 
-gh pr create "${CREATE_ARGS[@]}"
-log "opened PR for ${MIRROR_BRANCH} (${AHEAD} commit(s) ahead of ${GP_BASE})"
+CREATED_URL="$(gh pr create "${CREATE_ARGS[@]}")"
+CREATED_NUMBER="$(gh pr view "${CREATED_URL}" --repo "${GP_REPO}" --json number --jq .number)"
+log "opened ${GP_REPO}#${CREATED_NUMBER} for ${MIRROR_BRANCH} (${AHEAD} commit(s) ahead of ${GP_BASE})"
+printf '%s\n' "${CREATED_URL}"
+enable_auto_merge "${CREATED_NUMBER}"
