@@ -20,6 +20,12 @@ import { ResizeHandle } from '../shared/ResizeHandle';
 import SecondarySidebar from './components/SecondarySidebar';
 import ToggleButton from './components/ToggleButton';
 import { useIsCanvasEditMode } from './hooks/useIsCanvasEditMode';
+import { DEFAULT_SIDEBAR_LAYOUT } from '../sidebar-layout/constants';
+import { getVisibleDockSections } from '../sidebar-layout/layout';
+import { useSidebarDrag } from '../sidebar-layout/useSidebarDrag';
+import type { SidebarLayout } from '../sidebar-layout/types';
+import './style.scss';
+import '../shared/style.scss';
 
 /**
  * Renders toggle + sidebar only when in Site Editor canvas edit mode (or outside Site Editor).
@@ -90,10 +96,37 @@ function SecondarySidebarContentUI() {
 	const wasContentRenderedRef = useRef(false); // Track if content was ever rendered
 
 	// Get sidebar visibility state from store
-	const isSidebarVisible = useSelect((select) => {
+	const isSecondaryOpen = useSelect((select) => {
 		const storeSelect = select(blockeraEditorStore) as any;
 		return storeSelect.isSecondarySidebarOpen();
 	}, []);
+
+	const sidebarLayout = useSelect((select) => {
+		const storeSelect = select(blockeraEditorStore) as {
+			getSidebarLayout?: () => SidebarLayout;
+		};
+		return storeSelect.getSidebarLayout?.() ?? DEFAULT_SIDEBAR_LAYOUT;
+	}, []);
+
+	const isComplementaryOpen = useSelect((select) => {
+		const interfaceSelect = select('core/interface') as
+			| {
+					getActiveComplementaryArea?: (
+						scope: string
+					) => string | null;
+			  }
+			| undefined;
+		return !!interfaceSelect?.getActiveComplementaryArea?.('core');
+	}, []);
+
+	const drag = useSidebarDrag();
+
+	const hasLeftPanes =
+		getVisibleDockSections(sidebarLayout, 'left', isComplementaryOpen)
+			.length > 0;
+
+	const isLeftDockActive =
+		(isSecondaryOpen && hasLeftPanes) || !!drag;
 
 	// Get secondary sidebar width from store
 	const secondarySidebarWidth = useSelect((select) => {
@@ -109,9 +142,9 @@ function SecondarySidebarContentUI() {
 	// Track initial sidebar state (for determining if we should animate on first open)
 	const initialSidebarVisibleRef = useRef<boolean | null>(null);
 	if (initialSidebarVisibleRef.current === null) {
-		initialSidebarVisibleRef.current = isSidebarVisible;
+		initialSidebarVisibleRef.current = isLeftDockActive;
 		// If sidebar is visible initially, content was rendered
-		if (isSidebarVisible) {
+		if (isLeftDockActive) {
 			wasContentRenderedRef.current = true;
 		}
 	}
@@ -120,7 +153,7 @@ function SecondarySidebarContentUI() {
 	// When opening: render immediately to allow animation
 	// When closing: keep rendered until animation completes, then remove
 	const [shouldRenderContent, setShouldRenderContent] =
-		useState(isSidebarVisible);
+		useState(isLeftDockActive);
 
 	// Track if content was just rendered (for toggle animation)
 	const [isContentJustRendered, setIsContentJustRendered] = useState(false);
@@ -172,7 +205,7 @@ function SecondarySidebarContentUI() {
 			return;
 		}
 
-		if (isSidebarVisible) {
+		if (isLeftDockActive) {
 			// Visible state
 			const isInitialMount = isInitialMountRef.current;
 
@@ -195,7 +228,7 @@ function SecondarySidebarContentUI() {
 			}
 			setIsContentJustRendered(false);
 		}
-	}, [isSidebarVisible, shouldRenderContent]);
+	}, [isLeftDockActive, shouldRenderContent]);
 
 	// Initialize default sidebar reference and body class (runs once)
 	// Also set CSS variables early to ensure they're available for animations
@@ -242,7 +275,7 @@ function SecondarySidebarContentUI() {
 			closeAnimationTimeoutRef.current = null;
 		}
 
-		if (isSidebarVisible) {
+		if (isLeftDockActive) {
 			// Opening: render content immediately to allow animation
 			const isInitialMount = isInitialMountRef.current;
 			const initialSidebarVisible = initialSidebarVisibleRef.current;
@@ -279,7 +312,7 @@ function SecondarySidebarContentUI() {
 				closeAnimationTimeoutRef.current = null;
 			}
 		};
-	}, [isSidebarVisible]);
+	}, [isLeftDockActive]);
 
 	// Handle resize callback - updates store width
 	const handleResize = (width: string) => {
@@ -291,7 +324,7 @@ function SecondarySidebarContentUI() {
 			{/* Toggle button in header toolbar */}
 			<Fill name="blockera/slots/editor-header-toolbar">
 				<ToggleButton
-					isVisible={isSidebarVisible}
+					isVisible={isLeftDockActive}
 					onToggle={toggleSecondarySidebar}
 				/>
 			</Fill>
@@ -313,7 +346,7 @@ function SecondarySidebarContentUI() {
 								(!isInitialMountRef.current ||
 									(isInitialMountRef.current &&
 										!initialSidebarVisibleRef.current));
-							if (el && isSidebarVisible && shouldAnimate) {
+							if (el && isLeftDockActive && shouldAnimate) {
 								// Content was just rendered for toggle open - trigger animation
 								requestAnimationFrame(() => {
 									requestAnimationFrame(() => {
@@ -332,17 +365,17 @@ function SecondarySidebarContentUI() {
 						}}
 						className={`blockera-secondary-sidebar-content ${
 							isInitialMountRef.current &&
-							isSidebarVisible &&
+							isLeftDockActive &&
 							initialSidebarVisibleRef.current
 								? 'is-visible'
 								: 'is-hidden'
 						}`}
 					>
 						{/* Resize handle - only show when sidebar is visible */}
-						{isSidebarVisible && (
+						{isLeftDockActive && (
 							<ResizeHandle
 								side="right"
-								isVisible={isSidebarVisible}
+								isVisible={isLeftDockActive}
 								minWidth={280}
 								maxWidth={600}
 								defaultValue={defaultSecondarySidebarWidth}

@@ -94,10 +94,14 @@ export const ResizeHandle = ({
 
 		const findContainer = () => {
 			if (side === 'left') {
-				// Primary sidebar (right side of screen, resizable from left)
-				return document.querySelector(
-					'.interface-interface-skeleton__sidebar'
-				) as HTMLElement | null;
+				return (
+					(document.querySelector(
+						'.blockera-primary-sidebar-content'
+					) as HTMLElement | null) ||
+					(document.querySelector(
+						'.interface-interface-skeleton__sidebar'
+					) as HTMLElement | null)
+				);
 			} else if (side === 'right') {
 				// Secondary sidebar (left side of screen, resizable from right)
 				return document.querySelector(

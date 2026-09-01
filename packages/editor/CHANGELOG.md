@@ -1,3 +1,61 @@
+## Unreleased
+
+### New Features
+
+- Editor sidebars: inserter, list view, and settings can be moved between the
+  left and right docks. Each dock stacks one to three panels with a resize
+  handle between them. Drop position sets the order.
+
+### Improvements
+
+- Sidebar panel drag handles use the WordPress drag-handle icon at 20px.
+- Moving a sidebar panel now follows the pointer at the panel’s current size.
+  Drop placeholders depend on how many panels are already in that dock and
+  whether you picked the panel up from there: a full-height slot when the
+  source dock had one panel (or the other dock is empty), two slots to reorder
+  or insert, a third slot only when dropping onto a two-panel dock, and three
+  slots when that dock already has three panels. The hovered slot uses the
+  primary color. Drop slots are translucent so the panels underneath stay
+  visible, with 2px between placeholders.
+- Moving a sidebar panel no longer re-renders the blocks and list view on
+  every pointer move. Drop placeholders still update when the hovered slot
+  changes.
+- Releasing a sidebar panel away from a drop placeholder eases it back to
+  its original place.
+
+### Bug Fixes
+
+- Drop placeholders keep the resized panel heights when you drag a panel from a
+  two-panel dock.
+- Dragging a sidebar panel no longer leaves a blank extra column beside the
+  docks.
+- Settings stays visible while another sidebar panel is being dragged.
+- Settings drag handle stays on the settings tab bar, so it remains visible
+  when switching between document and block tabs.
+- While dragging a panel, drop slots stay visible on the settings dock and the
+  dragged panel paints above that dock.
+- The blocks panel is no longer clipped when it sits in the right sidebar.
+- Sidebar panels can be dragged across the editor canvas, not only along
+  the top toolbar.
+
+### Automated Tests
+
+- Sidebar layout: e2e coverage for moving list view to the right dock (above
+  or below settings) and stacking all three panels on the right.
+- Sidebar layout: e2e coverage for occupancy-based drop slots (source vs
+  foreign docks, 0–3 panels) and drop order for each insert slot.
+- Sidebar layout: e2e coverage that settings stays filled while another panel
+  is dragged.
+- Sidebar layout: e2e coverage that drop slots and the dragged pane paint
+  above the settings overlay.
+- Sidebar layout: e2e coverage that the settings drag handle lives in the
+  settings tab bar and stays visible when switching tabs.
+- Sidebar layout: e2e coverage that resized drop slots keep their share of
+  height with a 2px gap between placeholders, including when dragging from
+  the two-panel source dock.
+- Sidebar layout: drag session notifies layout only when the hovered slot
+  changes, and e2e checks that layout updates stay below pointer-move count.
+
 ## [3.0.0] - 2026-09-01
 
 ### Bug Fixes

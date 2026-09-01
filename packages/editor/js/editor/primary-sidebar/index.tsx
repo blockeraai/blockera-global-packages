@@ -8,6 +8,7 @@ import {
 	useShortcut,
 	store as keyboardShortcutsStore,
 } from '@wordpress/keyboard-shortcuts';
+import { Fill } from '@wordpress/components';
 /**
  * Internal dependencies
  */
@@ -19,6 +20,12 @@ import {
 	isCoreToggleSidebarDefaultCombo,
 } from './sidebar-shortcut-swap';
 import { toggleBothSidebars } from './toggle-both-sidebars';
+import SidebarDock from '../sidebar-layout/SidebarDock';
+import { DEFAULT_SIDEBAR_LAYOUT } from '../sidebar-layout/constants';
+import { getVisibleDockSections } from '../sidebar-layout/layout';
+import { useSidebarDrag } from '../sidebar-layout/useSidebarDrag';
+import { useIsCanvasEditMode } from '../secondary-sidebar/hooks/useIsCanvasEditMode';
+import type { SidebarLayout } from '../sidebar-layout/types';
 
 /**
  * Component that watches the primary sidebar (right panel) state and sets CSS variable
@@ -109,6 +116,22 @@ export default function PrimarySidebarController() {
 	const blockeraPrimarySidebarOpen = useSelect((select) => {
 		return (select(blockeraEditorStore) as any).isPrimarySidebarOpen();
 	}, []);
+
+	const sidebarLayout = useSelect((select) => {
+		const storeSelect = select(blockeraEditorStore) as {
+			getSidebarLayout?: () => SidebarLayout;
+		};
+		return storeSelect.getSidebarLayout?.() ?? DEFAULT_SIDEBAR_LAYOUT;
+	}, []);
+
+	const isCanvasEdit = useIsCanvasEditMode();
+	const drag = useSidebarDrag();
+
+	const visibleRightSections = getVisibleDockSections(
+		sidebarLayout,
+		'right',
+		!!activeComplementaryArea
+	);
 
 	// Update CSS variables on body whenever width changes
 	// Body always exists, so this is simple and reliable
@@ -319,18 +342,33 @@ export default function PrimarySidebarController() {
 		setPrimarySidebarWidth(width);
 	};
 
+	const showRightDock =
+		isCanvasEdit && (visibleRightSections.length > 0 || !!drag);
+
 	return (
 		<>
-			{/* Resize handle — any open complementary area (core or third-party). */}
-			{isAnySidebarOpen && (
-				<ResizeHandle
-					side="left"
-					isVisible={isAnySidebarOpen}
-					minWidth={280}
-					maxWidth={600}
-					defaultValue={defaultPrimarySidebarWidth}
-					onResize={handleResize}
-				/>
+			{isCanvasEdit && (
+				<Fill name="blockera/slots/editor-primary-sidebar">
+					{showRightDock && (
+						<div
+							data-test="blockera-primary-sidebar-content"
+							className="blockera-primary-sidebar-content is-visible"
+						>
+							<ResizeHandle
+								side="left"
+								isVisible={showRightDock}
+								minWidth={280}
+								maxWidth={600}
+								defaultValue={defaultPrimarySidebarWidth}
+								onResize={handleResize}
+							/>
+							<SidebarDock
+								dock="right"
+								isDockOpen={showRightDock}
+							/>
+						</div>
+					)}
+				</Fill>
 			)}
 		</>
 	);

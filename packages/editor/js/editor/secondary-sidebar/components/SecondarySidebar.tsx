@@ -1,86 +1,28 @@
 /**
  * WordPress dependencies
  */
-import { useEffect } from '@wordpress/element';
-import { useDispatch, useSelect } from '@wordpress/data';
-
-/**
- * Blockera dependencies
- */
-import { useEditorMode } from '@blockera/utils';
+import { useSelect } from '@wordpress/data';
 
 /**
  * Internal dependencies
  */
 import { store as blockeraEditorStore } from '../../store-persistence';
-import { ResizeHandle } from '../../shared/ResizeHandle';
-import InserterLibraryPanel from './InserterLibraryPanel';
-import ListViewPanel from './ListViewPanel';
+import SidebarDock from '../../sidebar-layout/SidebarDock';
+import { useSidebarDrag } from '../../sidebar-layout/useSidebarDrag';
 
 /**
- * Secondary sidebar component that displays both inserter (top) and list view (bottom).
+ * Left dock: inserter, list view, and/or settings as stacked panes.
  */
 export default function SecondarySidebar() {
-	const isTextEditorMode = useEditorMode() === 'text';
-
-	// Get list view height from store
-	const listViewHeight = useSelect((select) => {
-		const storeSelect = select(blockeraEditorStore) as any;
-		return storeSelect.getListViewHeight();
-	}, []);
-
-	// Get sidebar visibility state from store
+	const drag = useSidebarDrag();
 	const isSidebarVisible = useSelect((select) => {
-		const storeSelect = select(blockeraEditorStore) as any;
+		const storeSelect = select(blockeraEditorStore) as {
+			isSecondarySidebarOpen: () => boolean;
+		};
 		return storeSelect.isSecondarySidebarOpen();
 	}, []);
 
-	// Get dispatch function for updating list view height
-	const { setListViewHeight } = useDispatch(blockeraEditorStore) as {
-		setListViewHeight: (height: string) => void;
-	};
-
-	// Update CSS variable on container whenever height changes
-	useEffect(() => {
-		if (!listViewHeight) {
-			return;
-		}
-
-		// Find the combined sidebar container
-		const container = document.querySelector(
-			'.blockera-combined-sidebar'
-		) as HTMLElement | null;
-		if (container) {
-			container.style.setProperty('--list-view-height', listViewHeight);
-		}
-	}, [listViewHeight]);
-
-	// Handle resize callback - updates store height
-	const handleResize = (height: string) => {
-		setListViewHeight(height);
-	};
-
 	return (
-		<div
-			className={`blockera-combined-sidebar${
-				isTextEditorMode ? ' is-text-editor' : ''
-			}`}
-		>
-			<InserterLibraryPanel />
-
-			{/* Resize handle - only show when sidebar is visible */}
-			{isSidebarVisible && (
-				<ResizeHandle
-					side="top"
-					isVisible={isSidebarVisible}
-					minWidth={20}
-					maxWidth={80}
-					defaultValue="50%"
-					onResize={handleResize}
-				/>
-			)}
-
-			<ListViewPanel />
-		</div>
+		<SidebarDock dock="left" isDockOpen={isSidebarVisible || !!drag} />
 	);
 }

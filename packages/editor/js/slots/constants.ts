@@ -24,6 +24,13 @@ export const SLOTS_CONFIG: SlotConfig[] = [
 		className: 'interface-interface-skeleton__secondary-sidebar-blockera',
 	},
 	{
+		id: 'blockera/slots/editor-primary-sidebar',
+		selectors: ['.interface-interface-skeleton__body'],
+		placement: 'before',
+		placementSelector: '.interface-interface-skeleton__sidebar',
+		className: 'interface-interface-skeleton__primary-sidebar-blockera',
+	},
+	{
 		id: 'blockera/slots/keyboard-shortcut-help-modal',
 		selectors: [
 			'.editor-keyboard-shortcut-help-modal__section.editor-keyboard-shortcut-help-modal__main-shortcuts',
