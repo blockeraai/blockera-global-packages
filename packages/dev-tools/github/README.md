@@ -66,7 +66,8 @@ github/
     jobs/playwright-e2e-tests/   # detect-categories.sh | run.sh | collect-baselines.sh
     jobs/plugin-check/           # prepare-build.sh
     jobs/sync-global-packages-submodule/  # resolve | run-bump | commit | open-pr
-    jobs/resolve-pr-merge-conflicts/     # merge base into PR; gitlink via GP mirror + bump
+    jobs/resolve-pr-merge-conflicts/     # after master push: merge-tree scan; GP mirror then bump
+    jobs/merge-global-packages-mirror/   # after consumer merge: GP PR mirror → master
     jobs/upload-release-to-plugin-repo/   # compute-release-branch.sh | publish-to-svn.sh (plugin + theme SVN via BLOCKERA_UPLOAD_SVN_LAYOUT)
     jobs/upload-release-to-blockeraai/    # publish.sh (Pro → Blockera AI)
     jobs/build-plugin-zip/                # version bump / notes / revert helpers
@@ -465,48 +466,96 @@ Explicit `workflow_dispatch` `mode=pr` or `mode=push` still updates a remote bra
 
 ## Resolve PR merge conflicts
 
-Runs on pull requests that **cannot** merge because of conflicts. Clean merges
-are left for GitHub. Same-repo heads only (cannot push a fork).
+Ops job (same shape as merge-global-packages-mirror: **no** `pr-workflow-gate`).
+Runs on **push to master** and **workflow_dispatch**. It does not run on
+`pull_request` — that event is the wrong PR (or never fires) when master
+moves, and GitHub `mergeable` is often `UNKNOWN`.
 
-1. Merge `origin/<base>` into the PR branch (`--no-commit`).
-2. If the only conflict is the global-packages **gitlink**, merge the submodule
-   base (`origin/master` by default) into the GP **mirror** branch
-   (`<consumer-repo>/<pr-branch>`). File conflicts take the mirror side
-   (`-X ours`, then `--ours` for leftovers).
-3. Push the GP merge commit to the mirror branch.
-4. Run `bump-global-packages-submodule.sh` with that mirror ref (same as
-   `npm run submodule:bump` with an explicit ref).
-5. Finish the parent merge commit and push the PR branch.
+For each open same-repo PR whose **local** `git merge-tree` with the base
+conflicts (not the bump branch, not a fork, not a default line):
 
-Any other conflicted path fails the job; those need a human.
+1. **Global-packages:** merge `origin/master` into the husky **mirror**
+   (`<consumer-repo>/<pr-head>`) and **push** that merge commit. File conflicts
+   on the mirror keep the mirror side (`--ours`).
+2. **Consumer:** merge `origin/master` into the **PR branch**, run
+   `bump-global-packages-submodule.sh` with that mirror ref (same as
+   `npm run submodule:bump -- <mirror>`), **push** the PR.
 
-Template: `workflows/resolve-pr-merge-conflicts.yml`. Checkout **must** use
-`ref: head_ref` (not the PR merge SHA) so the push updates the PR. Thin
-consumer copies skip the run step when the current pin does not contain
-`jobs/resolve-pr-merge-conflicts/run.sh` (bash `-f` check in the thin workflow).
+Dispatch `head_branch` limits the list to that head. Other conflicted paths
+fail that PR and post Slack when `SLACK_BOT_TOKEN` / `SLACK_CHANNEL_ID` are set.
+
+Template: `workflows/resolve-pr-merge-conflicts.yml`. Thin copies skip when the
+pin lacks `jobs/resolve-pr-merge-conflicts/run.sh`.
 
 ```yaml
 - uses: actions/checkout@v5
   with:
-      ref: ${{ github.head_ref || github.event.inputs.head_branch }}
+      ref: ${{ github.event.inputs.base_branch || github.event.repository.default_branch }}
       token: ${{ secrets.BLOCKERABOT_PAT }}
       fetch-depth: 0
 - uses: ./.github/actions/ensure-global-packages
 - run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/resolve-pr-merge-conflicts/run.sh
+  env:
+      GH_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+      BLOCKERA_CONFLICT_BASE_BRANCH: ${{ github.event.inputs.base_branch || github.event.repository.default_branch }}
+      BLOCKERA_CONFLICT_HEAD_BRANCH: ${{ github.event.inputs.head_branch }}
+      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
 ```
 
 | Env | Default |
 | --- | --- |
-| `BLOCKERA_CONFLICT_BASE_BRANCH` | required (workflow: `github.base_ref`) |
-| `BLOCKERA_CONFLICT_HEAD_BRANCH` | required (workflow: `github.head_ref`) |
-| `BLOCKERA_CONFLICT_HEAD_REPO` | empty (skip when set and ≠ `github.repository`) |
+| `BLOCKERA_CONFLICT_BASE_BRANCH` | required (workflow: dispatch input or default branch) |
+| `BLOCKERA_CONFLICT_HEAD_BRANCH` | empty = all locally conflicted PRs (dispatch may set one head) |
+| `BLOCKERA_CONFLICT_SKIP_HEADS` | `chore/bump-global-packages` |
 | `BLOCKERA_CONFLICT_GP_PATH` | `packages/global-packages` |
 | `BLOCKERA_CONFLICT_GP_BASE_BRANCH` | `master` |
 | `BLOCKERA_CONFLICT_GIT_NAME` | `blockerabot` |
 | `BLOCKERA_CONFLICT_GIT_EMAIL` | `blockeraai+githubbot@gmail.com` |
 | `BLOCKERA_CONFLICT_PUSH` | `true` |
 | `BLOCKERA_CONFLICT_BUMP_SCRIPT` | `packages/global-packages/packages/dev-tools/github/scripts/bump-global-packages-submodule.sh` |
-| `BLOCKERA_GLOBAL_PACKAGES_TOKEN` | required to fetch/push the submodule remote |
+| `BLOCKERA_GLOBAL_PACKAGES_TOKEN` / `GH_TOKEN` | required to list PRs and fetch/push the submodule remote |
+| `SLACK_BOT_TOKEN` / `BLOCKERA_SLACK_BOT_TOKEN` | empty = skip Slack (same secret as blockera-pull-watch) |
+| `SLACK_CHANNEL_ID` / `BLOCKERA_SLACK_CHANNEL_ID` | empty = skip Slack |
+
+## Merge global-packages mirror
+
+Runs on the **consumer** after a pull request **merges** to `master` (not on
+clean closes). Opens or updates a PR on the global-packages repository:
+
+`<consumer-repo>/<merged-head>` → `master`
+
+(same mirror name as husky `ensure-global-packages-mirror-branch.sh`). Skips
+when the mirror branch is missing, already contained in the GP base, the head
+is a default line, a fork, or listed in `BLOCKERA_GP_PR_SKIP_HEADS`
+(default: the submodule bump PR branch).
+
+Template: `workflows/merge-global-packages-mirror.yml`. No `pr-workflow-gate`
+(post-merge must always be eligible to run). Thin copies skip when the pin
+does not contain `jobs/merge-global-packages-mirror/run.sh`.
+
+```yaml
+- uses: actions/checkout@v5
+  with:
+      token: ${{ secrets.BLOCKERABOT_PAT }}
+- uses: ./.github/actions/ensure-global-packages
+- run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/merge-global-packages-mirror/run.sh
+  env:
+      GH_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+      BLOCKERA_GP_PR_HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+```
+
+| Env | Default |
+| --- | --- |
+| `BLOCKERA_GP_PR_HEAD_BRANCH` | required (merged consumer head) |
+| `BLOCKERA_GP_PR_REPO` | `blockeraai/blockera-global-packages` |
+| `BLOCKERA_GP_PR_BASE` | `master` |
+| `BLOCKERA_GP_PR_CONSUMER_REPO` | `GITHUB_REPOSITORY` |
+| `BLOCKERA_GP_PR_HEAD_REPO` | empty (skip when set and ≠ consumer repo) |
+| `BLOCKERA_GP_PR_URL` / `_NUMBER` / `_TITLE` | empty (consumer PR metadata for the body) |
+| `BLOCKERA_GP_PR_SKIP_HEADS` | `chore/bump-global-packages` |
+| `BLOCKERA_GP_PR_LABEL` | empty (no label) |
+| `GH_TOKEN` / `BLOCKERA_GLOBAL_PACKAGES_TOKEN` | required (`gh` against the GP repo) |
 
 ## Plugin check (PCP + PHP security)
 
@@ -830,7 +879,8 @@ Available toolkit workflow filenames:
 `cypress-e2e-tests.yml`, `jest-unit-tests.yml`, `performance-benchmark.yml`,
 `php-snapshots.yml`, `php-unit-tests.yml`, `playwright-e2e-tests.yml`,
 `plugin-check.yml`, `remove-pr-config-files.yml`, `remove-pr-env-json.yml`,
-`resolve-pr-merge-conflicts.yml`, `sync-global-packages-submodule.yml`,
+`merge-global-packages-mirror.yml`, `resolve-pr-merge-conflicts.yml`,
+`sync-global-packages-submodule.yml`,
 `upload-release-to-blockeraai.yml`,
 `upload-release-to-plugin-repo.yml`, `upload-release-to-theme-repo.yml`,
 `virus-total.yml`,
