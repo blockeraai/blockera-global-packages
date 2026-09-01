@@ -41,6 +41,8 @@ export function getDefaults(): StoreState {
 	const base: StoreState = {
 		...editorPersistenceDefaultsJson,
 		primarySidebarOpen: false,
+		sidebarLayout:
+			editorPersistenceDefaultsJson.sidebarLayout as SidebarLayout,
 	};
 	const fromPhp = (window as any).blockeraEditorPersistenceDefaults as
 		Partial<StoreState> | undefined;
