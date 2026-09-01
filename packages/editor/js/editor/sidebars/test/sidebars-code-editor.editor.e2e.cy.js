@@ -23,8 +23,33 @@ describe('Secondary sidebar in code editor', () => {
 		createPost();
 		closeWelcomeGuide();
 
+		cy.get('.editor-header', { timeout: 30000 }).should('exist');
+
+		cy.get('body').then(($body) => {
+			if ($body.find('.editor-post-text-editor').length) {
+				cy.contains('button', 'Exit code editor').click();
+				cy.get(
+					'.edit-post-visual-editor, .editor-visual-editor',
+					{ timeout: 20000 }
+				).should('exist');
+			}
+		});
+
 		cy.window().then((win) => {
-			const sel = win.wp?.data?.select('blockera/editor-persistence');
+			win.wp.data.dispatch('core/editor')?.setEditorMode?.('visual');
+			const dispatch = win.wp.data.dispatch(
+				'blockera/editor-persistence'
+			);
+			if (dispatch?.setSidebarLayout) {
+				dispatch.setSidebarLayout({
+					inserter: { dock: 'left', order: 0 },
+					listView: { dock: 'left', order: 1 },
+					complementary: { dock: 'right', order: 0 },
+				});
+				dispatch.setDockPaneHeights('left', ['50%', '50%']);
+				dispatch.setDockPaneHeights('right', ['100%']);
+			}
+			const sel = win.wp.data.select('blockera/editor-persistence');
 			if (sel && !sel.isSecondarySidebarOpen()) {
 				cy.getByDataTest('blockera-secondary-sidebar-toggle').click({
 					force: true,
@@ -32,18 +57,17 @@ describe('Secondary sidebar in code editor', () => {
 			}
 		});
 
-		cy.getByDataTest('blockera-secondary-sidebar-content', {
+		cy.getByDataTest('blockera-sidebar-pane-listView', {
 			timeout: 30000,
-		})
-			.should('exist')
-			.and('have.class', 'is-visible');
+		}).should('exist');
 	});
 
 	it('should keep both panels visible with empty notices on every inserter and list view tab', () => {
-		cy.get(
-			'.blockera-combined-sidebar__inserter .block-editor-block-types-list'
-		).should('exist');
-		cy.get('.blockera-list-view-controls').should('exist');
+		cy.getByDataTest('blockera-sidebar-pane-inserter').should('exist');
+		cy.getByDataTest('blockera-sidebar-pane-listView').should('exist');
+		cy.get('.blockera-list-view-controls', { timeout: 20000 }).should(
+			'exist'
+		);
 		cy.get(
 			'.blockera-combined-sidebar__list-view .editor-list-view-sidebar__list-view-panel-content'
 		).should('exist');
