@@ -16,6 +16,7 @@ import type { BlockDetail } from '@blockera/editor/js/extensions/libs/block-card
  * Internal dependencies
  */
 import { applyCoreIconBlockCompatibility } from './compatibility/core-icon-block-sync';
+import { applyCoreIconWidthHeightCompatibility } from './compatibility/core-icon-width-height';
 import { hydrateBlockeraIconFromCoreEntity } from './compatibility/hydrate-icon';
 import { syncIconBlockClassName } from '@blockera/feature-icon';
 
@@ -75,7 +76,12 @@ export const bootstrapCoreIconBlock = (): void => {
 			}
 
 			return applyCoreIconBlockCompatibility(
-				nextState,
+				applyCoreIconWidthHeightCompatibility(
+					nextState,
+					featureId,
+					newValue,
+					blockDetail
+				),
 				featureId,
 				newValue
 			);
