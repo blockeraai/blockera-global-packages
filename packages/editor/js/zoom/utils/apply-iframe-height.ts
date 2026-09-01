@@ -9,6 +9,7 @@ import {
 	MAX_REASONABLE_HEIGHT,
 	MIN_IFRAME_HEIGHT,
 	OUTER_SCROLLPORT_CLASS,
+	SCREENSHOT_CANVAS_ATTR,
 	ZOOMED_OUT_CLASS,
 } from './constants';
 import { getEditorCanvasIframe, getIframeDocument } from './iframeUtils';
@@ -35,7 +36,7 @@ export function applyIframeHeight(
 	initialHeight?: number | null
 ): void {
 	const iframe = getEditorCanvasIframe();
-	if (!iframe) {
+	if (!iframe || iframe.hasAttribute(SCREENSHOT_CANVAS_ATTR)) {
 		return;
 	}
 

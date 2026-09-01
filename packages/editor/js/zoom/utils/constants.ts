@@ -101,3 +101,9 @@ export const SCALE_CONTAINER_ZOOMED_CLASS = 'iframe-zoomed';
  * (see iframeUtils): scales core host-document popovers with Blockera canvas zoom.
  */
 export const EDITOR_ZOOM_COMPAT_STYLE_ATTR = 'data-blockera-editor-zoom-compat';
+
+/**
+ * Set on the canvas iframe by visual screenshot helpers so height/overflow
+ * locks do not clip content or show parent chrome at the footer.
+ */
+export const SCREENSHOT_CANVAS_ATTR = 'data-blockera-screenshot-canvas';

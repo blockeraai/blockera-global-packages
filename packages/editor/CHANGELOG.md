@@ -4,6 +4,7 @@
 
 - Non-base breakpoint canvas preview uses the same outer visual-editor scrollport as zoom, so tall content no longer shows a double scrollbar.
 - Canvas header no longer overlays block content when breakpoint or zoom uses the outer visual-editor scrollport.
+- Visual screenshot helpers can freeze canvas iframe sizing so breakpoint preview does not clip content or show parent chrome in the shot.
 
 ### Automated Tests
 
