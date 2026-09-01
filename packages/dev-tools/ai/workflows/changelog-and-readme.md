@@ -14,16 +14,41 @@ After every dedicated implementation task, **before** commit.
 ## CHANGELOG.md — do
 
 - Edit `packages/<name>/CHANGELOG.md`.
-- Append under `## Unreleased`. If the file is empty or has no Unreleased heading, add `## Unreleased` at the top. Do **not** add `## [x.y.z] - date`.
-- One user-facing bullet per notable change.
-- Use an existing `###` heading **in that file**. Majority: `New Features`, `Improvements`, `Bug Fixes`, `Automated Tests`. `dev-tools` Unreleased may use `Features` — match the file.
-- Map: `feat` → New Features or Features; `fix` → Bug Fixes; user-visible refactor → Improvements; `perf` → Performance Improvements if present, else Improvements. `test:` commits often skip the changelog.
+- Append bullets under `## Unreleased`. If that heading is missing, **insert**
+  `## Unreleased` at the top of the file (above the latest `## [x.y.z]`).
+  Do **not** rename, replace, or delete a version heading. Leave published
+  version sections as they are. Do **not** add `## [x.y.z] - date`.
+- One bullet per notable change (a task may add both a user bullet and a Development Notes bullet).
+- Wrap a long bullet onto the next line; indent the continuation.
+- If one change has several parts, nest indented sub-bullets under that item.
+
+### Audience (pick the heading)
+
+1. **End user** — they see it or are affected.
+   - Headings: `New Features`, `Improvements`, `Bug Fixes` (match the file).
+   - Plain language. No helper names, file paths, or architecture unless
+     the user would recognize them.
+2. **Tests only** — `Automated Tests`. Add the heading if Unreleased does
+   not have it.
+3. **Other internals** — users will not notice (helpers, architecture,
+   tooling, agent knowledge).
+   - Heading: `Development Notes`. Add this `###` under Unreleased even if
+     the file never had it.
+   - Do not put these under Features/Improvements.
+
+Reuse other `###` headings that already exist in that file.
+`dev-tools` Unreleased may use `New Features` — match the file.
+
+Map: `feat` → New Features or Features; `fix` → Bug Fixes;
+user-visible refactor → Improvements; `perf` → Performance Improvements
+if present, else Improvements; `test:` → Automated Tests.
 
 Skip Unreleased for pure `chore` / `style` / `ci` / formatting-only `docs`, and for generated files.
 
 ## CHANGELOG.md — do not
 
 - Run `npm run update:changelogs` or `update:master-package-changelogs`.
+- Turn `## [x.y.z]` (or any dated version heading) into `## Unreleased`.
 - Edit product-root `CHANGELOG.md` / `changelog.txt` in feature work.
 - Bump `package.json` / `composer.json` versions to “support” the note.
 - Copy the same bullet into every consumer (they pick it up via pin + zip).

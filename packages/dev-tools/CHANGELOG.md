@@ -3,6 +3,15 @@
 ### Features
 - Agent knowledge: inner-blocks / block-states domain card; free-vs-Pro card covers controls-pro, blocks-pro, canvas/global-styles, and license packages; style-pipeline tests run from the Cursor active product.
 
+### Development Notes
+- Agent changelog workflow: split end-user notes from internals;
+  internals go under `Development Notes` (Automated Tests stays a sibling).
+  Zip section order includes both headings.
+  - Wrap long bullets onto the next line; nest sub-bullets when one item
+    has several parts.
+  - Insert `## Unreleased` above the latest version heading; never replace
+    `## [x.y.z]` with Unreleased.
+
 ## [2.2.0] - 2026-09-01
 
 ### Features
