@@ -525,6 +525,11 @@ clean closes). Opens or updates a PR on the global-packages repository:
 
 `<consumer-repo>/<merged-head>` → `master`
 
+then enables **auto-merge** (`gh pr merge --auto`) so GitHub merges it into
+GP `master` after required checks pass. The consumer job does not wait for
+GP CI (that can exceed this job’s timeout). GP must have **Allow auto-merge**
+enabled; the PAT must be able to merge.
+
 (same mirror name as husky `ensure-global-packages-mirror-branch.sh`). Skips
 when the mirror branch is missing, already contained in the GP base, the head
 is a default line, a fork, or listed in `BLOCKERA_GP_PR_SKIP_HEADS`
@@ -555,6 +560,8 @@ does not contain `jobs/merge-global-packages-mirror/run.sh`.
 | `BLOCKERA_GP_PR_URL` / `_NUMBER` / `_TITLE` | empty (consumer PR metadata for the body) |
 | `BLOCKERA_GP_PR_SKIP_HEADS` | `chore/bump-global-packages` |
 | `BLOCKERA_GP_PR_LABEL` | empty (no label) |
+| `BLOCKERA_GP_PR_AUTO_MERGE` | `true` (`gh pr merge --auto` after open/update) |
+| `BLOCKERA_GP_PR_MERGE_METHOD` | `merge` (`squash` / `rebase` allowed) |
 | `GH_TOKEN` / `BLOCKERA_GLOBAL_PACKAGES_TOKEN` | required (`gh` against the GP repo) |
 
 ## Plugin check (PCP + PHP security)
