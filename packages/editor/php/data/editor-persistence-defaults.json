@@ -2,5 +2,12 @@
 	"secondarySidebarOpen": true,
 	"primarySidebarWidth": "300px",
 	"secondarySidebarWidth": "330px",
-	"listViewHeight": "50%"
+	"listViewHeight": "50%",
+	"sidebarLayout": {
+		"inserter": { "dock": "left", "order": 0 },
+		"listView": { "dock": "left", "order": 1 },
+		"complementary": { "dock": "right", "order": 0 }
+	},
+	"leftDockPaneHeights": ["50%", "50%"],
+	"rightDockPaneHeights": ["100%"]
 }

@@ -89,6 +89,23 @@ async function initializePersistence() {
 			mergedState.listViewHeight
 		);
 	}
+	if (mergedState.sidebarLayout) {
+		(dispatch(STORE_NAME) as typeof actions).setSidebarLayout(
+			mergedState.sidebarLayout
+		);
+	}
+	if (Array.isArray(mergedState.leftDockPaneHeights)) {
+		(dispatch(STORE_NAME) as typeof actions).setDockPaneHeights(
+			'left',
+			mergedState.leftDockPaneHeights
+		);
+	}
+	if (Array.isArray(mergedState.rightDockPaneHeights)) {
+		(dispatch(STORE_NAME) as typeof actions).setDockPaneHeights(
+			'right',
+			mergedState.rightDockPaneHeights
+		);
+	}
 
 	// NOW enable persistence - all subsequent actions will be saved
 	reducerModule.setPersistenceLayerReference(persistenceLayer);

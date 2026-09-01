@@ -3,6 +3,15 @@
  */
 import editorPersistenceDefaultsJson from '../../../php/data/editor-persistence-defaults.json';
 import type { PersistenceLayer } from './persistence';
+import type { SidebarDockId, SidebarLayout, SidebarSectionId } from '../sidebar-layout/types';
+import {
+	getDockSections,
+	heightsAfterMove,
+	listViewHeightFromLayout,
+	migrateLayoutState,
+	moveSection,
+	normalizeSidebarLayout,
+} from '../sidebar-layout/layout';
 
 /**
  * Blockera dependencies
@@ -19,6 +28,9 @@ export type StoreState = {
 	primarySidebarWidth: string;
 	secondarySidebarWidth: string;
 	listViewHeight: string;
+	sidebarLayout: SidebarLayout;
+	leftDockPaneHeights: string[];
+	rightDockPaneHeights: string[];
 };
 
 /**
@@ -33,14 +45,17 @@ export function getDefaults(): StoreState {
 	const fromPhp = (window as any).blockeraEditorPersistenceDefaults as
 		Partial<StoreState> | undefined;
 
-	if (!fromPhp) {
-		return base;
-	}
+	const merged = fromPhp
+		? {
+				...base,
+				...fromPhp,
+				primarySidebarOpen: false,
+			}
+		: base;
 
 	return {
-		...base,
-		...fromPhp,
-		// Never restore from PHP/meta; session mirror only.
+		...merged,
+		...migrateLayoutState(merged),
 		primarySidebarOpen: false,
 	};
 }
@@ -91,11 +106,15 @@ function getInitialState(): StoreState {
 		// Extract clean state (without _modified timestamp) and merge with defaults
 		// Persisted data takes precedence over defaults
 		const { _modified, ...cleanState } = selectedData as any;
-		return {
+		const merged = {
 			...defaults,
 			...cleanState,
 			primarySidebarOpen: false,
 		} as StoreState;
+		return {
+			...merged,
+			...migrateLayoutState(merged),
+		};
 	}
 
 	// Return PHP defaults (no persisted data found)
@@ -118,6 +137,18 @@ type StoreAction =
 	| { type: 'SET_PRIMARY_SIDEBAR_WIDTH'; width: string }
 	| { type: 'SET_SECONDARY_SIDEBAR_WIDTH'; width: string }
 	| { type: 'SET_LIST_VIEW_HEIGHT'; height: string }
+	| { type: 'SET_SIDEBAR_LAYOUT'; layout: SidebarLayout }
+	| {
+			type: 'SET_DOCK_PANE_HEIGHTS';
+			dock: 'left' | 'right';
+			heights: string[];
+	  }
+	| {
+			type: 'MOVE_SIDEBAR_SECTION';
+			sectionId: SidebarSectionId;
+			dock: SidebarDockId;
+			insertIndex: number;
+	  }
 	| {
 			type: 'SET_PERSISTENCE_LAYER';
 			persistenceLayer: PersistenceLayer<StoreState>;
@@ -166,7 +197,95 @@ function baseReducer(
 			return {
 				...state,
 				listViewHeight: action.height,
+				leftDockPaneHeights:
+					state.leftDockPaneHeights.length === 2
+						? [
+								`${100 - parseFloat(action.height)}%`,
+								action.height,
+							]
+						: state.leftDockPaneHeights,
 			};
+		case 'SET_SIDEBAR_LAYOUT':
+			return {
+				...state,
+				...migrateLayoutState({
+					...state,
+					sidebarLayout: normalizeSidebarLayout(action.layout),
+				}),
+			};
+		case 'SET_DOCK_PANE_HEIGHTS': {
+			const migrated = migrateLayoutState({
+				sidebarLayout: state.sidebarLayout,
+				leftDockPaneHeights:
+					action.dock === 'left'
+						? action.heights
+						: state.leftDockPaneHeights,
+				rightDockPaneHeights:
+					action.dock === 'right'
+						? action.heights
+						: state.rightDockPaneHeights,
+				listViewHeight: state.listViewHeight,
+			});
+			return {
+				...state,
+				...migrated,
+			};
+		}
+		case 'MOVE_SIDEBAR_SECTION': {
+			const currentLayout = normalizeSidebarLayout(state.sidebarLayout);
+			const nextLayout = moveSection(
+				currentLayout,
+				action.sectionId,
+				action.dock,
+				action.insertIndex
+			);
+			const fromDock = currentLayout[action.sectionId].dock;
+			const toDock = action.dock;
+			const fromSectionsBefore = getDockSections(
+				currentLayout,
+				fromDock
+			);
+			const toSectionsBefore = getDockSections(currentLayout, toDock);
+			const toSectionsAfter = getDockSections(nextLayout, toDock);
+			const moved = heightsAfterMove({
+				fromDock,
+				toDock,
+				fromSectionsBefore,
+				toSectionsBefore,
+				fromHeights:
+					fromDock === 'left'
+						? state.leftDockPaneHeights
+						: state.rightDockPaneHeights,
+				toHeights:
+					toDock === 'left'
+						? state.leftDockPaneHeights
+						: state.rightDockPaneHeights,
+				toSectionsAfter,
+			});
+			const leftDockPaneHeights =
+				fromDock === 'left'
+					? moved.fromHeights
+					: toDock === 'left'
+						? moved.toHeights
+						: state.leftDockPaneHeights;
+			const rightDockPaneHeights =
+				fromDock === 'right'
+					? moved.fromHeights
+					: toDock === 'right'
+						? moved.toHeights
+						: state.rightDockPaneHeights;
+
+			return {
+				...state,
+				sidebarLayout: nextLayout,
+				leftDockPaneHeights,
+				rightDockPaneHeights,
+				listViewHeight: listViewHeightFromLayout(
+					nextLayout,
+					leftDockPaneHeights
+				),
+			};
+		}
 		case 'SET_PERSISTENCE_LAYER':
 			// Merge persisted data with defaults to ensure all fields exist
 			// Exclude _modified field from state (it's only for persistence layer)
@@ -176,7 +295,10 @@ function baseReducer(
 				...defaults,
 				...persistedStateData,
 			};
-			return mergedState;
+			return {
+				...mergedState,
+				...migrateLayoutState(mergedState),
+			};
 		default:
 			return state;
 	}
@@ -230,7 +352,10 @@ function withPersistenceLayer(
 				action.type === 'TOGGLE_SECONDARY_SIDEBAR_OPEN' ||
 				action.type === 'SET_PRIMARY_SIDEBAR_WIDTH' ||
 				action.type === 'SET_SECONDARY_SIDEBAR_WIDTH' ||
-				action.type === 'SET_LIST_VIEW_HEIGHT')
+				action.type === 'SET_LIST_VIEW_HEIGHT' ||
+				action.type === 'SET_SIDEBAR_LAYOUT' ||
+				action.type === 'SET_DOCK_PANE_HEIGHTS' ||
+				action.type === 'MOVE_SIDEBAR_SECTION')
 		) {
 			const { primarySidebarOpen: _omit, ...persistable } = nextState;
 			currentPersistenceLayer.set(persistable as StoreState);

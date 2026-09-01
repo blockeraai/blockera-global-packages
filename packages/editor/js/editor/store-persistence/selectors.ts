@@ -64,3 +64,37 @@ export function getSecondarySidebarWidth(state: {
 export function getListViewHeight(state: { listViewHeight: string }) {
 	return state.listViewHeight;
 }
+
+/**
+ * Selector for movable sidebar section placement.
+ *
+ * @param {Object} state Store state.
+ * @return {Object} Dock and order for each section.
+ */
+export function getSidebarLayout(state: { sidebarLayout: unknown }) {
+	return state.sidebarLayout;
+}
+
+/**
+ * Selector for left dock pane heights.
+ *
+ * @param {Object} state Store state.
+ * @return {string[]} Percentage strings.
+ */
+export function getLeftDockPaneHeights(state: {
+	leftDockPaneHeights: string[];
+}) {
+	return state.leftDockPaneHeights;
+}
+
+/**
+ * Selector for right dock pane heights.
+ *
+ * @param {Object} state Store state.
+ * @return {string[]} Percentage strings.
+ */
+export function getRightDockPaneHeights(state: {
+	rightDockPaneHeights: string[];
+}) {
+	return state.rightDockPaneHeights;
+}

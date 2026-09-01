@@ -1,4 +1,9 @@
 /**
+ * Internal dependencies
+ */
+import type { SidebarLayout } from '../sidebar-layout/types';
+
+/**
  * Action to set whether the secondary sidebar is open.
  *
  * @param {boolean} open Whether the sidebar should be open.
@@ -71,5 +76,54 @@ export function setListViewHeight(height: string) {
 	return {
 		type: 'SET_LIST_VIEW_HEIGHT',
 		height,
+	};
+}
+
+/**
+ * Action to set movable sidebar section placement.
+ *
+ * @param {Object} layout Dock and order for inserter, list view, and settings.
+ * @return {Object} Action object.
+ */
+export function setSidebarLayout(layout: SidebarLayout) {
+	return {
+		type: 'SET_SIDEBAR_LAYOUT',
+		layout,
+	};
+}
+
+/**
+ * Action to set stacked pane heights for one dock.
+ *
+ * @param {'left'|'right'} dock Which dock.
+ * @param {string[]} heights Percentage strings that match pane count.
+ * @return {Object} Action object.
+ */
+export function setDockPaneHeights(dock: 'left' | 'right', heights: string[]) {
+	return {
+		type: 'SET_DOCK_PANE_HEIGHTS',
+		dock,
+		heights,
+	};
+}
+
+/**
+ * Action to move a sidebar section to a dock insert index.
+ *
+ * @param {string} sectionId Section to move.
+ * @param {'left'|'right'} dock Target dock.
+ * @param {number} insertIndex Band index in the target dock.
+ * @return {Object} Action object.
+ */
+export function moveSidebarSection(
+	sectionId: 'inserter' | 'listView' | 'complementary',
+	dock: 'left' | 'right',
+	insertIndex: number
+) {
+	return {
+		type: 'MOVE_SIDEBAR_SECTION',
+		sectionId,
+		dock,
+		insertIndex,
 	};
 }
