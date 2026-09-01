@@ -1,4 +1,4 @@
-## Unreleased
+## [3.0.0] - 2026-09-01
 
 ### Improvements
 - `Icon` block: setting width or icon size now persists height as `auto` unless a custom height is already set, so SVG aspect ratio is preserved.

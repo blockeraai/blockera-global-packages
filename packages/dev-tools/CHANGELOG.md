@@ -1,4 +1,4 @@
-## Unreleased
+## [2.2.0] - 2026-09-01
 
 ### Features
 - Agent knowledge: `packages/dev-tools/ai/` architecture and workflows (changelog/README after a task; product scripts and pre-installed deps). Cursor `global-architecture` rule plus `commit` / `test-e2e-cypress` command updates.
