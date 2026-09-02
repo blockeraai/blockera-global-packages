@@ -26,6 +26,19 @@ command: `refactor-github-ci`. Path policy:
 This repository also runs its own PHPUnit workflow (`.github/workflows/php-unit-tests.yml`)
 for shared-package tests that must not live in consumer suites (currently
 `packages/autoloader-coordinator/php/tests` and `packages/products/php/tests`).
+It still runs on pull requests. After a merge to `master` it runs again
+(skipping the `build: Update Changelog` fold commit). If any PHP unit or
+coordinator wp-env job fails on that master run, `jobs/php-unit-tests/open-master-hotfix.sh`
+opens `hotfix/php-unit-<shortsha>` into `master` (empty placeholder commit)
+and posts Slack via `scripts/lib/slack-chat-post-message.sh` when
+`SLACK_BOT_TOKEN` / `SLACK_CHANNEL_ID` are set. Feature-PR failures do not
+open a hotfix.
+
+| Env | Default |
+| --- | --- |
+| `BLOCKERA_PHP_UNIT_HOTFIX_BASE` | `master` |
+| `BLOCKERA_PHP_UNIT_HOTFIX_PREFIX` | `hotfix/php-unit` (branch `prefix-<shortsha>`) |
+| `SLACK_BOT_TOKEN` / `SLACK_CHANNEL_ID` | empty = skip Slack (same names as conflict-resolve) |
 
 ## Consumer keeps
 
@@ -87,7 +100,7 @@ github/
     jobs/cypress-e2e-tests/      # detect | run | prepare.sh
     jobs/performance-benchmark/  # setup.sh | run-*.sh | stop.sh
     jobs/php-snapshots/          # compute-previous-wordpress-version.sh | run.sh
-    jobs/php-unit-tests/         # run.sh
+    jobs/php-unit-tests/         # run.sh | open-master-hotfix.sh
     jobs/playwright-e2e-tests/   # detect-categories.sh | run.sh | collect-baselines.sh
     jobs/plugin-check/           # prepare-build.sh
     jobs/sync-global-packages-submodule/  # resolve | run-bump | commit | open-pr
