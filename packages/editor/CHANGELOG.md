@@ -22,9 +22,12 @@
   changes.
 - Releasing a sidebar panel away from a drop placeholder eases it back to
   its original place.
+- Close buttons close the sidebar that currently holds that panel. Header
+  buttons and Cmd/Ctrl+Shift+, / . always open or close the left and right
+  sidebars. Gutenberg APIs that show the inserter, list view, or settings
+  still open the sidebar those panels currently live in.
 
 ### Bug Fixes
-
 - Opening or closing the left or right sidebar now shifts the panel in and out
   instead of popping it into place.
 - Settings no longer stay off-screen after a refresh when they are docked on

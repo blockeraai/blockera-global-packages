@@ -30,6 +30,7 @@ import {
 } from './layout';
 import { countDockRender, logSidebarPerf } from './sidebar-perf';
 import { useSidebarDrag } from './useSidebarDrag';
+import { openDock } from './dock-bridge';
 import type { SidebarDockId, SidebarLayout, SidebarSectionId } from './types';
 import './style.scss';
 
@@ -212,8 +213,10 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 				y: event.clientY,
 				pointerId: event.pointerId,
 				captureTarget: event.currentTarget,
-				onDrop: (id, targetDock, slot) =>
-					moveSidebarSection(id, targetDock, slot),
+				onDrop: (id, targetDock, slot) => {
+					moveSidebarSection(id, targetDock, slot);
+					openDock(targetDock);
+				},
 			});
 		},
 		[canDrag, moveSidebarSection]

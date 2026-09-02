@@ -6,11 +6,12 @@ import { __ } from '@wordpress/i18n';
 import { store as keyboardShortcutsStore } from '@wordpress/keyboard-shortcuts';
 
 /**
- * Core defaults `core/editor/toggle-sidebar` to Cmd+Shift+, (comma). Blockera moves
- * the primary sidebar toggle to Cmd+Shift+. (period) so the secondary sidebar can use comma.
+ * Core defaults `core/editor/toggle-sidebar` to Cmd+Shift+, (comma). Blockera
+ * unregisters that shortcut so Gutenberg's handler does not toggle Settings.
+ * Cmd+Shift+. is registered as Blockera's physical right-dock toggle.
  *
- * The Site Editor registers shortcuts after Blockera's first run; subscribe to the
- * keyboard-shortcuts store and re-call this when core restores the default combo.
+ * The Site Editor registers core's shortcut after Blockera's first run; subscribe
+ * to the keyboard-shortcuts store and re-call this when core restores it.
  */
 export function applyBlockeraPrimarySidebarShortcutSwap(): void {
 	const { unregisterShortcut, registerShortcut } = dispatch(
@@ -18,18 +19,6 @@ export function applyBlockeraPrimarySidebarShortcutSwap(): void {
 	);
 
 	unregisterShortcut('core/editor/toggle-sidebar');
-	registerShortcut({
-		name: 'core/editor/toggle-sidebar',
-		category: 'core',
-		description: __(
-			'Show or hide the primary sidebar (right side).',
-			'blockera'
-		),
-		keyCombination: {
-			modifier: 'primaryShift',
-			character: '.',
-		},
-	});
 	registerShortcut({
 		name: 'blockera/sidebars/toggle-sidebar',
 		category: 'blockera',
@@ -46,9 +35,9 @@ export function applyBlockeraPrimarySidebarShortcutSwap(): void {
 }
 
 /**
- * True when core's binding is still the default (comma), including right after core re-registers it.
+ * True when Gutenberg's settings shortcut is bound again (any combo).
  */
-export function isCoreToggleSidebarDefaultCombo(): boolean {
+export function isCoreToggleSidebarRegistered(): boolean {
 	const combo = (
 		select(keyboardShortcutsStore) as {
 			getShortcutKeyCombination: (
@@ -57,5 +46,5 @@ export function isCoreToggleSidebarDefaultCombo(): boolean {
 		}
 	).getShortcutKeyCombination('core/editor/toggle-sidebar');
 
-	return combo?.modifier === 'primaryShift' && combo?.character === ',';
+	return !!combo?.character;
 }

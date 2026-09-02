@@ -224,6 +224,13 @@ export function normalizeSidebarLayout(
 	return DEFAULT_SIDEBAR_LAYOUT;
 }
 
+export function getSectionDock(
+	layout: SidebarLayout,
+	sectionId: SidebarSectionId
+): SidebarDockId {
+	return normalizeSidebarLayout(layout)[sectionId].dock;
+}
+
 export function getDockSections(
 	layout: SidebarLayout,
 	dock: SidebarDockId

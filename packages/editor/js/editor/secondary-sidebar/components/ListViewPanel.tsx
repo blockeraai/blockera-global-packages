@@ -39,6 +39,7 @@ import { useEditorMode } from '@blockera/utils';
 /**
  * Internal dependencies
  */
+import { closeSection } from '../../sidebar-layout/dock-bridge';
 import CodeEditorSidebarNotice from './CodeEditorSidebarNotice';
 
 /**
@@ -521,6 +522,7 @@ export default function ListViewPanel() {
 	]);
 
 	const closeListView = useCallback(() => {
+		closeSection('listView');
 		setIsListViewOpened?.(false);
 		getListViewToggleRef?.current?.focus();
 	}, [getListViewToggleRef, setIsListViewOpened]);

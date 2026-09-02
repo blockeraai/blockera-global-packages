@@ -20,9 +20,9 @@ import { useEditorMode } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { store as blockeraEditorStore } from '../../store-persistence';
 import InserterCategoryPanelCloseButton from './InserterCategoryPanelCloseButton';
 import InserterTextModePanel from './InserterTextModePanel';
+import { closeSection } from '../../sidebar-layout/dock-bridge';
 
 interface InserterRemountState {
 	tab: string | undefined;
@@ -36,8 +36,6 @@ interface InserterRemountState {
 export default function InserterLibraryPanel() {
 	const isTextEditorMode = useEditorMode() === 'text';
 	const isMobileViewport = useViewportMatch('medium', '<');
-
-	const { toggleSecondarySidebar } = useDispatch(blockeraEditorStore);
 
 	// Inserter sidebar logic
 	const {
@@ -108,10 +106,10 @@ export default function InserterLibraryPanel() {
 		useState<InserterRemountState | null>(null);
 
 	const closeInserterSidebar = useCallback(() => {
-		toggleSecondarySidebar();
+		closeSection('inserter');
 		setIsInserterOpened?.(false);
 		inserterSidebarToggleRef?.current?.focus();
-	}, [inserterSidebarToggleRef, setIsInserterOpened, toggleSecondarySidebar]);
+	}, [inserterSidebarToggleRef, setIsInserterOpened]);
 
 	const closeCategoryPanel = useCallback(() => {
 		const root = libraryRef.current;

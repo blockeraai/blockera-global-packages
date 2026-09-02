@@ -121,3 +121,12 @@
 		}
 	}
 }
+
+/* Blockera owns physical left/right dock toggles. Hide Gutenberg's Settings pin only. */
+.editor-header .interface-pinned-items {
+	button[aria-controls="edit-post:document"],
+	button[aria-controls="edit-post:block"] {
+		/* stylelint-disable-next-line declaration-no-important -- Hide core pin so it cannot fight the right-dock toggle. */
+		display: none !important;
+	}
+}

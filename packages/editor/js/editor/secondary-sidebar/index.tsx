@@ -8,7 +8,6 @@ import {
 	useShortcut,
 	store as keyboardShortcutsStore,
 } from '@wordpress/keyboard-shortcuts';
-import { store as editorStore } from '@wordpress/editor';
 import { Fill } from '@wordpress/components';
 
 /**
@@ -21,8 +20,9 @@ import SecondarySidebar from './components/SecondarySidebar';
 import ToggleButton from './components/ToggleButton';
 import { useIsCanvasEditMode } from './hooks/useIsCanvasEditMode';
 import { DEFAULT_SIDEBAR_LAYOUT, SIDEBAR_CLIP_TRANSITION_MS } from '../sidebar-layout/constants';
-import { getVisibleDockSections } from '../sidebar-layout/layout';
+import { getDockSections } from '../sidebar-layout/layout';
 import { useSidebarDrag } from '../sidebar-layout/useSidebarDrag';
+import { toggleDock } from '../sidebar-layout/dock-bridge';
 import type { SidebarLayout } from '../sidebar-layout/types';
 import './style.scss';
 import '../shared/style.scss';
@@ -53,13 +53,9 @@ export default function SecondarySidebarInjector() {
  * Only mounted when isCanvasEdit is true (or forceShowSidebar).
  */
 function SecondarySidebarContentUI() {
-	const { setIsInserterOpened, setIsListViewOpened } = useDispatch(
-		editorStore
-	) as any;
-	const { toggleSecondarySidebar, setSecondarySidebarWidth } = useDispatch(
+	const { setSecondarySidebarWidth } = useDispatch(
 		blockeraEditorStore
 	) as unknown as {
-		toggleSecondarySidebar: () => void;
 		setSecondarySidebarWidth: (width: string) => void;
 	};
 	const { registerShortcut } = useDispatch(keyboardShortcutsStore);
@@ -83,7 +79,7 @@ function SecondarySidebarContentUI() {
 
 	useShortcut(
 		'blockera/sidebars/toggle-secondary-sidebar',
-		toggleSecondarySidebar
+		() => toggleDock('left')
 	);
 
 	// Cache DOM element references to avoid repeated queries
@@ -107,22 +103,10 @@ function SecondarySidebarContentUI() {
 		return storeSelect.getSidebarLayout?.() ?? DEFAULT_SIDEBAR_LAYOUT;
 	}, []);
 
-	const isComplementaryOpen = useSelect((select) => {
-		const interfaceSelect = select('core/interface') as
-			| {
-					getActiveComplementaryArea?: (
-						scope: string
-					) => string | null;
-			  }
-			| undefined;
-		return !!interfaceSelect?.getActiveComplementaryArea?.('core');
-	}, []);
-
 	const drag = useSidebarDrag();
 
 	const hasLeftPanes =
-		getVisibleDockSections(sidebarLayout, 'left', isComplementaryOpen)
-			.length > 0;
+		getDockSections(sidebarLayout, 'left').length > 0;
 
 	const isLeftDockActive =
 		(isSecondaryOpen && hasLeftPanes) || !!drag;
@@ -155,31 +139,6 @@ function SecondarySidebarContentUI() {
 	const [isContentVisible, setIsContentVisible] = useState(
 		() => initialSidebarVisibleRef.current === true
 	);
-
-	// Monitor the state of default sidebars and keep them disabled
-	const { isInserterOpened, isListViewOpened } = useSelect((select) => {
-		const editorSelect = select(editorStore) as any;
-		return {
-			isInserterOpened: editorSelect.isInserterOpened?.() || false,
-			isListViewOpened: editorSelect.isListViewOpened?.() || false,
-		};
-	}, []);
-
-	// Keep default sidebars disabled while our custom sidebar is active
-	useEffect(() => {
-		if (isInserterOpened) {
-			setIsInserterOpened?.(false);
-		}
-
-		if (isListViewOpened) {
-			setIsListViewOpened?.(false);
-		}
-	}, [
-		isInserterOpened,
-		isListViewOpened,
-		setIsInserterOpened,
-		setIsListViewOpened,
-	]);
 
 	// Update CSS variables on body whenever width changes
 	// Body always exists, so this is simple and reliable
@@ -302,7 +261,7 @@ function SecondarySidebarContentUI() {
 			<Fill name="blockera/slots/editor-header-toolbar">
 				<ToggleButton
 					isVisible={isLeftDockActive}
-					onToggle={toggleSecondarySidebar}
+					onToggle={() => toggleDock('left')}
 				/>
 			</Fill>
 

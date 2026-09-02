@@ -12,6 +12,12 @@ export const SLOTS_CONFIG: SlotConfig[] = [
 		placementSelector: '.editor-header__post-preview-button',
 	},
 	{
+		id: 'blockera/slots/editor-header-primary-sidebar',
+		selectors: ['.editor-header__settings', '.edit-post-header__settings'],
+		placement: 'after',
+		placementSelector: '.interface-pinned-items',
+	},
+	{
 		id: 'blockera/slots/editor-header-toolbar',
 		selectors: ['.editor-header .editor-header__toolbar'],
 		placement: 'start',

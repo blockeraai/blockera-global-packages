@@ -17,12 +17,17 @@ import { getDefaults } from '../store-persistence/reducer';
 import { ResizeHandle } from '../shared/ResizeHandle';
 import {
 	applyBlockeraPrimarySidebarShortcutSwap,
-	isCoreToggleSidebarDefaultCombo,
+	isCoreToggleSidebarRegistered,
 } from './sidebar-shortcut-swap';
 import { toggleBothSidebars } from './toggle-both-sidebars';
+import {
+	subscribeEditorSidebarApis,
+	toggleDock,
+} from '../sidebar-layout/dock-bridge';
+import PrimaryToggleButton from './ToggleButton';
 import SidebarDock from '../sidebar-layout/SidebarDock';
 import { DEFAULT_SIDEBAR_LAYOUT, SIDEBAR_CLIP_TRANSITION_MS } from '../sidebar-layout/constants';
-import { getVisibleDockSections } from '../sidebar-layout/layout';
+import { getDockSections } from '../sidebar-layout/layout';
 import { useSidebarDrag } from '../sidebar-layout/useSidebarDrag';
 import { useIsCanvasEditMode } from '../secondary-sidebar/hooks/useIsCanvasEditMode';
 import type { SidebarLayout } from '../sidebar-layout/types';
@@ -30,20 +35,18 @@ import type { SidebarLayout } from '../sidebar-layout/types';
 /**
  * Component that watches the primary sidebar (right panel) state and sets CSS variable
  * to hide it when opened. Handles both edit-post (document sidebar) and edit-site (global-styles sidebar).
- * Also owns the main (WordPress) sidebar keyboard shortcut: unregisters core's Cmd+Shift+, and
- * re-registers it as Cmd+Shift+. so the secondary sidebar can use Cmd+Shift+,.
+ * Also unregisters Gutenberg's `core/editor/toggle-sidebar` shortcut so Cmd+Shift+.
+ * toggles the physical right dock instead of Settings wherever it lives.
  */
 export default function PrimarySidebarController() {
-	// Unregister core's main sidebar shortcut (Cmd+Shift+,) and re-register as Cmd+Shift+.
-	// so Blockera can use Cmd+Shift+, for the secondary sidebar. Core's useShortcut
-	// for 'core/editor/toggle-sidebar' will then respond to Cmd+Shift+. instead.
-	// Site Editor re-registers core's shortcut after this runs; subscribe below and
-	// re-apply when the store shows the default comma binding again.
+	// Unregister Gutenberg's settings shortcut so Cmd+Shift+. toggles the right dock.
+	// Site Editor re-registers core's shortcut after this runs; subscribe and
+	// unregister again when it comes back.
 	useEffect(() => {
 		applyBlockeraPrimarySidebarShortcutSwap();
 
 		const unsubscribe = subscribe(() => {
-			if (!isCoreToggleSidebarDefaultCombo()) {
+			if (!isCoreToggleSidebarRegistered()) {
 				return;
 			}
 			applyBlockeraPrimarySidebarShortcutSwap();
@@ -51,6 +54,8 @@ export default function PrimarySidebarController() {
 
 		return unsubscribe;
 	}, []);
+
+	useEffect(() => subscribeEditorSidebarApis(), []);
 
 	const { registerShortcut } = useDispatch(keyboardShortcutsStore);
 
@@ -75,6 +80,11 @@ export default function PrimarySidebarController() {
 		toggleBothSidebars();
 	});
 
+	useShortcut('blockera/sidebars/toggle-sidebar', (event) => {
+		event.preventDefault();
+		toggleDock('right');
+	});
+
 	// Cache DOM element reference to avoid repeated queries
 	const sidebarContainerRef = useRef<HTMLElement | null>(null);
 	const sidebarContentRef = useRef<HTMLDivElement | null>(null);
@@ -89,11 +99,8 @@ export default function PrimarySidebarController() {
 	const previousSidebarRef = useRef<string | null | undefined>(undefined);
 
 	// Get dispatch function for updating sidebar width
-	const { setPrimarySidebarWidth, setPrimarySidebarOpen } = useDispatch(
-		blockeraEditorStore
-	) as unknown as {
+	const { setPrimarySidebarWidth } = useDispatch(blockeraEditorStore) as unknown as {
 		setPrimarySidebarWidth: (width: string) => void;
-		setPrimarySidebarOpen: (open: boolean) => void;
 	};
 
 	// Watch the active complementary area from the interface store
@@ -133,14 +140,12 @@ export default function PrimarySidebarController() {
 	const isCanvasEdit = useIsCanvasEditMode();
 	const drag = useSidebarDrag();
 
-	const visibleRightSections = getVisibleDockSections(
-		sidebarLayout,
-		'right',
-		!!activeComplementaryArea
-	);
+	const assignedRightSections = getDockSections(sidebarLayout, 'right');
 
 	const hasRightDockContent =
-		isCanvasEdit && (visibleRightSections.length > 0 || !!drag);
+		isCanvasEdit &&
+		((blockeraPrimarySidebarOpen && assignedRightSections.length > 0) ||
+			!!drag);
 	const hasRightDockContentRef = useRef(hasRightDockContent);
 	hasRightDockContentRef.current = hasRightDockContent;
 	const openAnimationFramesRef = useRef<number[]>([]);
@@ -180,14 +185,6 @@ export default function PrimarySidebarController() {
 
 	// Any complementary area (including third-party plugin sidebars like Spectra).
 	const isAnySidebarOpen = !!activeComplementaryArea;
-
-	// Keep Blockera session flag in sync with the real complementary area (for areBothSidebarsClosed / toggle-both).
-	useEffect(() => {
-		if (blockeraPrimarySidebarOpen === isAnySidebarOpen) {
-			return;
-		}
-		setPrimarySidebarOpen(isAnySidebarOpen);
-	}, [blockeraPrimarySidebarOpen, isAnySidebarOpen, setPrimarySidebarOpen]);
 
 	// Initialize sidebar container reference (runs once, retries if not found)
 	useEffect(() => {
@@ -450,6 +447,14 @@ export default function PrimarySidebarController() {
 
 	return (
 		<>
+			{isCanvasEdit && (
+				<Fill name="blockera/slots/editor-header-primary-sidebar">
+					<PrimaryToggleButton
+						isVisible={hasRightDockContent}
+						onToggle={() => toggleDock('right')}
+					/>
+				</Fill>
+			)}
 			{isCanvasEdit && (
 				<Fill name="blockera/slots/editor-primary-sidebar">
 					{shouldRenderContent && (

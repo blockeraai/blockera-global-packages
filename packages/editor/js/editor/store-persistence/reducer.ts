@@ -23,7 +23,7 @@ import { localStorage } from '@blockera/storage';
  */
 export type StoreState = {
 	secondarySidebarOpen: boolean;
-	/** Session UI only (not persisted): mirrors WP complementary area for primary/settings sidebar. */
+	/** Session UI only (not persisted): physical right dock is open. */
 	primarySidebarOpen: boolean;
 	primarySidebarWidth: string;
 	secondarySidebarWidth: string;
