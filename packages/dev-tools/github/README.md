@@ -320,6 +320,7 @@ consumer `npm run update:changelogs`.
 starts with an empty `## Unreleased` inbox. Authors append bullets there.
 Pick the `###` heading by audience (`packages/dev-tools/ai/workflows/changelog-and-readme.md`):
 end-user vs `Automated Tests` vs `Development Notes` for internals.
+Never Unreleased notes that explain how Pro unlocks or license validation.
 Do not add dated or version headings in feature PRs.
 
 The **global-packages repository** (not a consumer product) also runs

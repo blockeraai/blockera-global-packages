@@ -14,7 +14,7 @@ Platform-independent notes for agents working on shared Blockera packages. Curso
 
 - [editor-style-pipeline.md](domains/editor-style-pipeline.md) — JS extensions, PHP StyleDefinitions, Gutenberg compatibility, Pro overlays, tests
 - [inner-blocks-and-block-states.md](domains/inner-blocks-and-block-states.md) — block-card inner blocks / states, attributes, Pro `native` unlock
-- [free-vs-pro.md](domains/free-vs-pro.md) — editor-pro overlays, controls-pro, blocks-pro, canvas/GS, license gate
+- [free-vs-pro.md](domains/free-vs-pro.md) — free `applyFilters` for Pro `addFilter`; license gate; overlays; controls-pro / blocks-pro / canvas
 
 ## Decisions
 
@@ -23,7 +23,7 @@ Platform-independent notes for agents working on shared Blockera packages. Curso
 
 ## Workflows
 
-- [changelog-and-readme.md](workflows/changelog-and-readme.md) — Unreleased inbox; heading by audience (`Development Notes` for internals)
+- [changelog-and-readme.md](workflows/changelog-and-readme.md) — Unreleased by audience; skip Pro unlock / license-gate how-to
 - [product-scripts-and-deps.md](workflows/product-scripts-and-deps.md) — installed deps; product npm/Composer scripts only
 - [php-performance.md](workflows/php-performance.md) — detailed PHP hot-path patterns (on demand)
 - [change-classification.md](workflows/change-classification.md) — LOCAL / CROSS-MODULE / CROSS-REPOSITORY / ARCHITECTURAL

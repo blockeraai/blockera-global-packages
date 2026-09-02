@@ -20,7 +20,7 @@ Canonical monorepo of shared Blockera packages (`packages/`). Consumers (blocker
 - Prefer public package APIs. No deep imports of private files. No new abstraction when an existing export works.
 - Side-effect entries (`blockera`, `blockera-admin`, `plugin-compatibility`) are boots, not utility libraries.
 - Keep JS ↔ PHP contracts in sync where both sides exist.
-- After a dedicated task: Unreleased changelog with heading by audience (internals → `Development Notes`). README only if the public contract changed. [`workflows/changelog-and-readme.md`](packages/dev-tools/ai/workflows/changelog-and-readme.md)
+- After a dedicated task: Unreleased changelog with heading by audience (internals → `Development Notes`). Skip notes that explain Pro unlock / license validation. README only if the public contract changed. [`workflows/changelog-and-readme.md`](packages/dev-tools/ai/workflows/changelog-and-readme.md)
 - Do not install deps. Run tests via **product** `package.json` / `composer.json` scripts (`npm run test:e2e`, `test:js`, `test:unit:php`). [`workflows/product-scripts-and-deps.md`](packages/dev-tools/ai/workflows/product-scripts-and-deps.md)
 - GitHub workflows (add or change): Cursor command `refactor-github-ci`. Do not hardcode `packages/global-packages/` inside `packages/dev-tools/` ([`dev-tools-paths.md`](packages/dev-tools/ai/workflows/dev-tools-paths.md)).
 - Local commit: command `commit`. Commit + push + pin all consumers: command `commit-and-sync`.

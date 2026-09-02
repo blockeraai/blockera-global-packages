@@ -10,7 +10,7 @@ Shared Blockera package architecture is **not** in this rule. Read it from the g
 - Standalone GP: `packages/dev-tools/ai/index.md`
 - Inside a product: `packages/global-packages/packages/dev-tools/ai/index.md`
 
-After implementation: Unreleased changelog with heading by audience (`…/ai/workflows/changelog-and-readme.md` — internals under `Development Notes`, not Features). README only if the public API changed.
+After implementation: Unreleased changelog with heading by audience (`…/ai/workflows/changelog-and-readme.md` — internals under `Development Notes`, not Features; **skip** Pro unlock / license-gate how-to). README only if the public API changed.
 
 Do not install npm/Composer deps. Run tests with the **active product** scripts (`npm run test:e2e`, `test:js`, `test:unit:php`) — `…/ai/workflows/product-scripts-and-deps.md`.
 
