@@ -1,6 +1,9 @@
 ## Unreleased
 
 ### Development Notes
+- Sync global-packages: keep one bump PR with a stable title (no commit
+  count or gitlink); later GP master pins commit on that branch instead of
+  closing the PR.
 - GP PHP unit on master: after a merge, if a check fails, open
   `hotfix/php-unit-<sha>` and Slack the run plus PR (skip changelog-fold
   pushes; feature PRs still run tests without a hotfix PR).
