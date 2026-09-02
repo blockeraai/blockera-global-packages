@@ -19,7 +19,7 @@ import ListViewPanel from '../secondary-sidebar/components/ListViewPanel';
 import ComplementaryAnchor from './ComplementaryAnchor';
 import PaneSplitHandle from './PaneSplitHandle';
 import SectionPane from './SectionPane';
-import { DEFAULT_SIDEBAR_LAYOUT } from './constants';
+import { DEFAULT_SIDEBAR_LAYOUT, PANE_GAP_PX } from './constants';
 import { startSidebarDrag } from './drag-session';
 import {
 	dropSlotPlan,
@@ -127,17 +127,22 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 		drag?.sectionId ?? null
 	);
 
+	const occupancyHeights =
+		heights.length === occupancy ? heights : equalHeights(occupancy);
 	const paneHeights =
 		visibleSections.length === heights.length
 			? heights
-			: equalHeights(visibleSections.length);
+			: remainingHeights.length === visibleSections.length
+				? remainingHeights
+				: equalHeights(visibleSections.length);
 
 	const canDrag = isLargeViewport;
 	const showDropSlots = !!drag && isLargeViewport && !drag.returning;
 	const isEmptyDuringDrag = showDropSlots && visibleSections.length === 0;
-
-	const occupancyHeights =
-		heights.length === occupancy ? heights : equalHeights(occupancy);
+	const stackedSections =
+		showDropSlots && isSource ? sections : visibleSections;
+	const stackedHeights =
+		showDropSlots && isSource ? occupancyHeights : paneHeights;
 	const revealThird = showDropSlots && drag?.revealThirdDock === dock;
 	const slotPlan = dropSlotPlan({
 		occupancy,
@@ -293,6 +298,7 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 			data-test={`blockera-sidebar-dock-${dock}`}
 			data-drop-heights={dropHeightsAttr}
 			data-can-reveal-third={baseSlotPlan.canRevealThird ? '1' : '0'}
+			style={{ ['--blockera-pane-gap' as string]: `${PANE_GAP_PX}px` }}
 		>
 			{showDropSlots && slotPlan.heights.length > 0 && (
 				<div
@@ -320,10 +326,11 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 				</div>
 			)}
 			{!isEmptyDuringDrag &&
-				visibleSections.map((sectionId, index) => {
+				stackedSections.map((sectionId, index) => {
 					const height =
-						paneHeights[index] ??
-						`${100 / visibleSections.length}%`;
+						stackedHeights[index] ??
+						`${100 / stackedSections.length}%`;
+					const isDraggedSlot = drag?.sectionId === sectionId;
 
 					return (
 						<div
@@ -342,7 +349,7 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 							{index > 0 && !showDropSlots && (
 								<PaneSplitHandle
 									dockRef={dockRef}
-									heights={paneHeights}
+									heights={stackedHeights}
 									boundaryIndex={index - 1}
 									isVisible={isDockOpen}
 									onResize={(next) =>
@@ -350,15 +357,22 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 									}
 								/>
 							)}
-							{renderPane(sectionId, height)}
+							{!isDraggedSlot && renderPane(sectionId, height)}
 						</div>
 					);
 				})}
 			{drag?.sectionId &&
-				sections.includes(drag.sectionId) &&
-				renderPane(
-					drag.sectionId,
-					paneHeights[0] ?? '100%'
+				sections.includes(drag.sectionId) && (
+					<div className="blockera-sidebar-pane-float-layer">
+						{renderPane(
+							drag.sectionId,
+							occupancyHeights[
+								sections.indexOf(drag.sectionId)
+							] ??
+								paneHeights[0] ??
+								'100%'
+						)}
+					</div>
 				)}
 		</div>
 	);

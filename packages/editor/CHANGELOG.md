@@ -16,7 +16,7 @@
   or insert, a third slot only when dropping onto a two-panel dock, and three
   slots when that dock already has three panels. The hovered slot uses the
   primary color. Drop slots are translucent so the panels underneath stay
-  visible, with 2px between placeholders.
+  visible, with 4px between placeholders.
 - Moving a sidebar panel no longer re-renders the blocks and list view on
   every pointer move. Drop placeholders still update when the hovered slot
   changes.
@@ -27,6 +27,8 @@
 
 - Drop placeholders keep the resized panel heights when you drag a panel from a
   two-panel dock.
+- Dragging a stacked panel no longer pulls the other panels up; the 4px
+  resize gap between panes stays in the layout.
 - Dragging a sidebar panel no longer leaves a blank extra column beside the
   docks.
 - Settings stays visible while another sidebar panel is being dragged.

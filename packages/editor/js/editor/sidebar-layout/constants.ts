@@ -18,3 +18,6 @@ export const DEFAULT_SIDEBAR_LAYOUT: SidebarLayout = {
 export const MIN_PANE_PERCENT = 15;
 
 export const REVEAL_THIRD_ZONE_PX = 20;
+
+/** Space between stacked panes; matches `.blockera-sidebar-resize-handle--top`. */
+export const PANE_GAP_PX = 4;
