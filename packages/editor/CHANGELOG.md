@@ -49,6 +49,9 @@
 
 ### Automated Tests
 
+- Sidebar layout: e2e coverage for Patterns and Media category columns on
+  the left and right docks (full height, correct side, tab direction on the
+  right dock).
 - Sidebar layout: e2e coverage for moving list view to the right dock (above
   or below settings) and stacking all three panels on the right.
 - Sidebar layout: e2e coverage for occupancy-based drop slots (source vs
