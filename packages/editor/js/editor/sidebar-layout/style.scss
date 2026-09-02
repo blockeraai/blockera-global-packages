@@ -321,8 +321,165 @@ body.has-blockera-complementary-overlay .interface-interface-skeleton__sidebar {
 ),
 .interface-interface-skeleton__primary-sidebar-blockera:has(
 	.block-editor-inserter__menu.show-panel
-) {
+),
+.blockera-secondary-sidebar-content:has(
+	.block-editor-inserter__menu.show-panel
+),
+.blockera-primary-sidebar-content:has(
+	.block-editor-inserter__menu.show-panel
+),
+.blockera-sidebar-dock:has(.block-editor-inserter__menu.show-panel) {
 	--sidebar-pattern-inserter-width: 280px;
+}
+
+.blockera-secondary-sidebar-content:has(
+	.block-editor-inserter__menu.show-panel
+),
+.blockera-primary-sidebar-content:has(
+	.block-editor-inserter__menu.show-panel
+),
+.blockera-combined-sidebar:has(.block-editor-inserter__menu.show-panel) {
+	--sidebar-width: calc(
+		var(--sidebar-width-raw) + var(--sidebar-pattern-inserter-width, 280px)
+	);
+}
+
+@media (min-width: 782px) {
+	.interface-interface-skeleton__secondary-sidebar-blockera:has(
+			.block-editor-inserter__menu.show-panel
+		),
+	.interface-interface-skeleton__primary-sidebar-blockera:has(
+			.block-editor-inserter__menu.show-panel
+		),
+	.blockera-secondary-sidebar-content:has(
+			.block-editor-inserter__menu.show-panel
+		),
+	.blockera-primary-sidebar-content:has(
+			.block-editor-inserter__menu.show-panel
+		) {
+		overflow: visible;
+	}
+
+	.blockera-sidebar-dock:has(.block-editor-inserter__menu.show-panel) {
+		position: static;
+		overflow: visible;
+
+		.blockera-sidebar-dock__slot,
+		.blockera-sidebar-pane,
+		.blockera-combined-sidebar__inserter,
+		.editor-inserter-sidebar__content,
+		.block-editor-inserter__menu.show-panel,
+		.block-editor-inserter__main-area {
+			position: static !important;
+			overflow: visible !important;
+		}
+
+		.block-editor-inserter__menu.show-panel {
+			width: var(--sidebar-width-raw);
+		}
+	}
+
+	.blockera-secondary-sidebar-content:has(
+			.block-editor-inserter__menu.show-panel
+		)
+		.block-editor-inserter__category-panel,
+	.blockera-primary-sidebar-content:has(
+			.block-editor-inserter__menu.show-panel
+		)
+		.block-editor-inserter__category-panel {
+		position: absolute !important;
+		top: 0 !important;
+		bottom: 0 !important;
+		height: auto !important;
+		width: var(--sidebar-pattern-inserter-width, 280px) !important;
+		padding: 0;
+		z-index: 2;
+		transform: none !important;
+	}
+
+	.blockera-secondary-sidebar-content:has(
+			.block-editor-inserter__menu.show-panel
+		)
+		.block-editor-inserter__category-panel {
+		left: var(--sidebar-width-raw) !important;
+		right: auto !important;
+		background: #f0f0f0;
+		border-left: 1px solid #dddddd;
+		border-top: 1px solid #dddddd;
+	}
+
+	.blockera-primary-sidebar-content:has(
+			.block-editor-inserter__menu.show-panel
+		) {
+		.block-editor-inserter__main-area .block-editor-tabbed-sidebar {
+			margin-inline-start: var(--sidebar-pattern-inserter-width, 280px);
+		}
+
+		.block-editor-inserter__category-panel {
+			left: 0 !important;
+			right: auto !important;
+			background: #f0f0f0;
+			border-right: 1px solid #dddddd;
+			border-top: 1px solid #dddddd;
+			z-index: 3;
+		}
+	}
+
+	/* Right dock: category column opens to the left — label on the right,
+	   chevron on the left pointing toward the panel. */
+	.blockera-sidebar-dock--right .block-editor-inserter__category-tablist {
+		[role='tab'] {
+			flex-direction: row-reverse;
+
+			> span {
+				justify-content: flex-end;
+				text-align: right;
+			}
+
+			> svg {
+				transform: rotate(180deg);
+				margin-inline-end: 0;
+				margin-inline-start: -4px;
+			}
+		}
+	}
+
+	.blockera-sidebar-dock {
+		.blockera-inserter-category-panel-close.components-button {
+			color: #1e1e1e;
+			flex-shrink: 0;
+			min-width: 24px;
+			padding: 0;
+
+			&:hover {
+				background-color: transparent;
+				color: var(--blockera-controls-primary-color);
+			}
+
+			&:focus:not(:disabled) {
+				color: var(--blockera-controls-primary-color);
+			}
+
+			svg {
+				width: 24px;
+				height: 24px;
+			}
+		}
+
+		.blockera-inserter-category-panel-close--media {
+			position: absolute;
+			top: 20px;
+			right: 16px;
+			z-index: 2;
+		}
+
+		.block-editor-inserter__category-panel:has(
+				.block-editor-inserter__media-panel
+			)
+			.components-input-control__container {
+			width: calc(100% - 32px);
+		}
+	}
 }
 
 .blockera-complementary-overlay

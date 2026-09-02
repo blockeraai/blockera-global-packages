@@ -27,6 +27,11 @@
 
 - Settings no longer stay off-screen after a refresh when they are docked on
   the left; they follow the sidebar as it slides in.
+- Patterns and Media category columns now span the full sidebar height and
+  open on the correct side: to the right on the left dock and to the left on
+  the right dock, including when settings is stacked above the blocks panel.
+- On the right dock, Patterns and Media category tabs show the label on the
+  right and the chevron on the left, matching the direction the column opens.
 - Drop placeholders keep the resized panel heights when you drag a panel from a
   two-panel dock.
 - Dragging a stacked panel no longer pulls the other panels up; the 4px

@@ -15,6 +15,64 @@ const OVERLAY_CLASS = 'blockera-complementary-overlay';
 const SLIDE_HOST_SELECTOR =
 	'.blockera-secondary-sidebar-content, .blockera-primary-sidebar-content';
 
+function parsePx(value: string, fallback: number): number {
+	const parsed = Number.parseFloat(value);
+	return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+/**
+ * When a category column is open in the same dock, the complementary placeholder
+ * spans the expanded sidebar width. Inset the overlay so it only covers the main
+ * column, not the category flyout band.
+ */
+function overlayRectForCategoryPanel(
+	anchor: HTMLElement,
+	rect: DOMRect
+): DOMRect {
+	const dock = anchor.closest('.blockera-sidebar-dock');
+	const sidebarContent =
+		anchor.closest('.blockera-primary-sidebar-content') ??
+		anchor.closest('.blockera-secondary-sidebar-content');
+
+	if (
+		!dock ||
+		!sidebarContent?.querySelector('.block-editor-inserter__menu.show-panel')
+	) {
+		return rect;
+	}
+
+	const patternWidth = parsePx(
+		getComputedStyle(sidebarContent).getPropertyValue(
+			'--sidebar-pattern-inserter-width'
+		),
+		280
+	);
+	const rawWidth = parsePx(
+		getComputedStyle(sidebarContent).getPropertyValue(
+			'--sidebar-width-raw'
+		),
+		300
+	);
+	const isRightDock = dock.classList.contains('blockera-sidebar-dock--right');
+	const isLeftDock = dock.classList.contains('blockera-sidebar-dock--left');
+
+	if (!isRightDock && !isLeftDock) {
+		return rect;
+	}
+
+	const insetWidth = Math.min(
+		rawWidth,
+		Math.max(0, rect.width - patternWidth)
+	);
+
+	return new DOMRect(
+		isRightDock ? rect.left + patternWidth : rect.left,
+		rect.top,
+		insetWidth,
+		rect.height
+	);
+}
+
 export function findSidebar(): HTMLElement | null {
 	return document.querySelector(SIDEBAR_SELECTOR) as HTMLElement | null;
 }
@@ -86,7 +144,8 @@ export function useComplementaryOverlay(
 				return;
 			}
 
-			const rect = anchor.getBoundingClientRect();
+			const anchorRect = anchor.getBoundingClientRect();
+			const rect = overlayRectForCategoryPanel(anchor, anchorRect);
 			if (
 				rect.top === lastTop &&
 				rect.left === lastLeft &&
@@ -153,6 +212,15 @@ export function useComplementaryOverlay(
 				attributeFilter: ['class', 'style'],
 			});
 		}
+		const dock = anchorRef.current?.closest('.blockera-sidebar-dock');
+		const showPanelObserver = new MutationObserver(syncOnFrame);
+		if (dock) {
+			showPanelObserver.observe(dock, {
+				subtree: true,
+				attributes: true,
+				attributeFilter: ['class'],
+			});
+		}
 		window.addEventListener('resize', syncOnFrame);
 		window.addEventListener('scroll', syncOnFrame, true);
 		const unsubscribePosition = subscribeSidebarDrag(
@@ -168,6 +236,7 @@ export function useComplementaryOverlay(
 			}
 			observer.disconnect();
 			classObserver.disconnect();
+			showPanelObserver.disconnect();
 			slideHost?.removeEventListener(
 				'transitionstart',
 				startSlideTracking
