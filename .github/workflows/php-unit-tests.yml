@@ -3,6 +3,8 @@ name: PHP Unit Tests
 on:
     pull_request:
         types: [opened, synchronize, ready_for_review]
+    push:
+        branches: [master]
     workflow_dispatch:
 
 concurrency:
@@ -10,11 +12,35 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
+    should-run:
+        name: Should run PHP unit
+        runs-on: ubuntu-latest
+        if: ${{ github.repository == 'blockeraai/blockera-global-packages' || github.event_name == 'pull_request' }}
+        outputs:
+            tests: ${{ steps.gate.outputs.tests }}
+        steps:
+            - id: gate
+              env:
+                  EVENT_NAME: ${{ github.event_name }}
+                  COMMIT_SUBJECT: ${{ github.event.head_commit.message }}
+              run: |
+                  set -euo pipefail
+                  tests=true
+                  if [ "${EVENT_NAME}" = "push" ]; then
+                    subject="$(printf '%s' "${COMMIT_SUBJECT}" | head -n1)"
+                    if [[ "${subject}" == "build: Update Changelog"* ]]; then
+                      tests=false
+                      echo "Skip: changelog fold commit on master."
+                    fi
+                  fi
+                  echo "tests=${tests}" >> "${GITHUB_OUTPUT}"
+
     php-unit:
         name: PHP ${{ matrix.php }} on ubuntu-latest
+        needs: should-run
         runs-on: ubuntu-latest
         timeout-minutes: 25
-        if: ${{ github.repository == 'blockeraai/blockera-global-packages' || github.event_name == 'pull_request' }}
+        if: ${{ needs.should-run.outputs.tests == 'true' && (github.repository == 'blockeraai/blockera-global-packages' || github.event_name == 'pull_request') }}
         strategy:
             fail-fast: true
             matrix:
@@ -61,9 +87,10 @@ jobs:
 
     coordinator-wp-env:
         name: Coordinator WP ${{ matrix.scenario_name }}
+        needs: should-run
         runs-on: ubuntu-latest
         timeout-minutes: 25
-        if: ${{ github.repository == 'blockeraai/blockera-global-packages' || github.event_name == 'pull_request' }}
+        if: ${{ needs.should-run.outputs.tests == 'true' && (github.repository == 'blockeraai/blockera-global-packages' || github.event_name == 'pull_request') }}
         strategy:
             fail-fast: false
             matrix:
@@ -119,3 +146,27 @@ jobs:
             - name: Stop wp-env
               if: always()
               run: npx --yes @wordpress/env stop || true
+
+    open-hotfix:
+        name: Open hotfix PR on master failure
+        needs: [should-run, php-unit, coordinator-wp-env]
+        if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'blockeraai/blockera-global-packages' && needs.should-run.outputs.tests == 'true' && (needs.php-unit.result == 'failure' || needs.coordinator-wp-env.result == 'failure') }}
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
+        env:
+            BLOCKERA_GLOBAL_PACKAGES_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+            GH_TOKEN: ${{ secrets.BLOCKERABOT_PAT }}
+            HUSKY: '0'
+            SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+            SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  ref: ${{ github.sha }}
+                  token: ${{ secrets.BLOCKERABOT_PAT }}
+                  fetch-depth: 0
+
+            - name: Open hotfix PR and notify Slack
+              run: bash packages/dev-tools/github/scripts/jobs/php-unit-tests/open-master-hotfix.sh

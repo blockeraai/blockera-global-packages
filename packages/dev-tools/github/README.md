@@ -26,6 +26,19 @@ command: `refactor-github-ci`. Path policy:
 This repository also runs its own PHPUnit workflow (`.github/workflows/php-unit-tests.yml`)
 for shared-package tests that must not live in consumer suites (currently
 `packages/autoloader-coordinator/php/tests` and `packages/products/php/tests`).
+It still runs on pull requests. After a merge to `master` it runs again
+(skipping the `build: Update Changelog` fold commit). If any PHP unit or
+coordinator wp-env job fails on that master run, `jobs/php-unit-tests/open-master-hotfix.sh`
+opens `hotfix/php-unit-<shortsha>` into `master` (empty placeholder commit)
+and posts Slack via `scripts/lib/slack-chat-post-message.sh` when
+`SLACK_BOT_TOKEN` / `SLACK_CHANNEL_ID` are set. Feature-PR failures do not
+open a hotfix.
+
+| Env | Default |
+| --- | --- |
+| `BLOCKERA_PHP_UNIT_HOTFIX_BASE` | `master` |
+| `BLOCKERA_PHP_UNIT_HOTFIX_PREFIX` | `hotfix/php-unit` (branch `prefix-<shortsha>`) |
+| `SLACK_BOT_TOKEN` / `SLACK_CHANNEL_ID` | empty = skip Slack (same names as conflict-resolve) |
 
 ## Consumer keeps
 
@@ -87,7 +100,7 @@ github/
     jobs/cypress-e2e-tests/      # detect | run | prepare.sh
     jobs/performance-benchmark/  # setup.sh | run-*.sh | stop.sh
     jobs/php-snapshots/          # compute-previous-wordpress-version.sh | run.sh
-    jobs/php-unit-tests/         # run.sh
+    jobs/php-unit-tests/         # run.sh | open-master-hotfix.sh
     jobs/playwright-e2e-tests/   # detect-categories.sh | run.sh | collect-baselines.sh
     jobs/plugin-check/           # prepare-build.sh
     jobs/sync-global-packages-submodule/  # resolve | run-bump | commit | open-pr
@@ -486,7 +499,7 @@ Consumer bootstrap: `.github/actions/ensure-global-packages/` (synced via
 `sync-consumer-bootstrap.sh`). Job scripts run from the toolkit (stashed across
 target-branch checkout when the feature branch may not have the latest pin yet).
 
-Auto mode: **master/main** opens a bump PR; **feature branches are skipped** so
+Auto mode: **master/main** opens or **updates one** bump PR (`submodule: update global-packages`, no commit count or gitlink in the title). A later GP `master` commit bumps the pin **on that PR branch** and does not close the PR. **feature branches are skipped** so
 the gitlink is created with local `npm run submodule:bump` (not pushed by CI).
 Explicit `workflow_dispatch` `mode=pr` or `mode=push` still updates a remote branch.
 
@@ -495,13 +508,14 @@ Explicit `workflow_dispatch` `mode=pr` or `mode=push` still updates a remote bra
 | `jobs/sync-global-packages-submodule/resolve-targets.sh` | dispatch/schedule/manual → source/target/mode (`auto` skips feature branches; pin those with `npm run submodule:bump`) |
 | `jobs/sync-global-packages-submodule/run-bump.sh` | git user + `bump-global-packages-submodule.sh` (folds GP Unreleased on branch tips) |
 | `jobs/sync-global-packages-submodule/commit-bump.sh` | commit staged gitlink |
-| `jobs/sync-global-packages-submodule/open-or-update-pr.sh` | force-push PR branch + `gh pr` |
-| `jobs/sync-global-packages-submodule/delete-bump-branch.sh` | close leftover bump PR + delete bump branch when open-pr is skipped or failed |
+| `jobs/sync-global-packages-submodule/open-or-update-pr.sh` | push PR branch (no force when the PR exists) + `gh pr` |
+| `jobs/sync-global-packages-submodule/delete-bump-branch.sh` | delete orphan bump branch only; never close an open pin PR |
 
 | Env | Default |
 | --- | --- |
 | `BLOCKERA_SYNC_GP_DEFAULT_BRANCH` | `master` |
 | `BLOCKERA_SYNC_GP_PR_BRANCH` | `chore/bump-global-packages` |
+| `BLOCKERA_SYNC_GP_PR_TITLE` | `submodule: update global-packages` (no count / gitlink URL) |
 | `BLOCKERA_SYNC_GP_PR_LABEL` | `dependencies` (created if missing; skipped if create fails). Empty disables labeling. |
 
 ## Resolve PR merge conflicts
