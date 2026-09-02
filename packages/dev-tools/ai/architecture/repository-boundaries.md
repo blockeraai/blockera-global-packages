@@ -2,7 +2,7 @@
 
 ## This repo (GLOBAL_SHARED)
 
-Write shared packages, Cursor templates, GitHub shared CI under `packages/dev-tools/github/`, and this `packages/dev-tools/ai/` tree.
+Write shared packages, Cursor templates, GitHub shared CI under `packages/dev-tools/github/` (no hardcoded consumer prefix — [../workflows/dev-tools-paths.md](../workflows/dev-tools-paths.md)), and this `packages/dev-tools/ai/` tree.
 
 Consumers sparse-checkout **only** `/packages/`. Root `AGENTS.md` is visible when this standalone checkout is open; inside a product, use `packages/global-packages/packages/dev-tools/ai/` and the product `AGENTS.md`.
 

@@ -1,0 +1,18 @@
+---
+description: Do not hardcode the consumer global-packages prefix in shared packages/dev-tools files
+globs: "**/packages/dev-tools/**,**/packages/global-packages/packages/dev-tools/**"
+alwaysApply: false
+---
+
+# Shared dev-tools paths
+
+Glob-gated. Files that **live in** `packages/dev-tools/` must work in both checkouts. Full rule: `packages/dev-tools/ai/workflows/dev-tools-paths.md` (consumers: prefix `packages/global-packages/`).
+
+Do **not** hardcode `packages/global-packages/packages/dev-tools/` as the only path in shared scripts, actions, or agent docs.
+
+- Origin: `packages/dev-tools/…`
+- Consumer: `packages/global-packages/packages/dev-tools/…`
+
+Resolve with a path relative to the current file, `github/scripts/lib/resolve-dev-tools-root.sh`, or `BLOCKERA_DEV_TOOLS_ROOT`.
+
+Exceptions: product-root `root-configs/` copies; README **examples** of consumer workflows; the product’s own `.github/workflows/`.

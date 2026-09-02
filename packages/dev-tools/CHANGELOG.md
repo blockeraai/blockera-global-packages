@@ -1,3 +1,18 @@
+## Unreleased
+
+### Development Notes
+- Agent GitHub CI: follow Cursor command `refactor-github-ci` when adding or
+  changing workflows; glob rule `github-ci`. Shared `packages/dev-tools` must
+  not hardcode the consumer path (`dev-tools-paths` workflow +
+  `resolve-dev-tools-root.sh`).
+- Changelog helpers: pick the Unreleased `###` heading by **audience**, not
+  commit type. Internals (agent knowledge, Cursor rules, CI helpers) go under
+  `Development Notes`, never `Features`.
+- Cursor command `commit-and-sync`: same rules as `commit`, then push; after
+  GP is on origin, `submodule:bump` all consumers and push them too.
+  Commit sparse-checkout GP via `packages/global-packages`; pull `--ff-only`
+  (no merge commits) before any commit in each repo.
+
 ## [2.3.0] - 2026-09-01
 
 ### Features

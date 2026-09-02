@@ -8,6 +8,21 @@ filters, and other knobs via `with:` / `env:` / CLI flags. Generic defaults
 (e.g. scan `packages` + `tests`) are runner conventions, not plugin/pro/theme
 presets.
 
+**Shared scripts have no hardcoded checkout path.** Files under this package
+must resolve both layouts (do not bake in only
+`packages/global-packages/packages/dev-tools/`):
+
+| Checkout | `dev-tools` root |
+|----------|------------------|
+| This origin repo | `packages/dev-tools` |
+| Consumer submodule | `packages/global-packages/packages/dev-tools` |
+
+Prefer `GITHUB_ACTION_PATH` / script directory, or
+`scripts/lib/resolve-dev-tools-root.sh` (`BLOCKERA_DEV_TOOLS_ROOT` override).
+Consumer **thin** workflows **may** hardcode the long consumer path. Agent
+command: `refactor-github-ci`. Path policy:
+`packages/dev-tools/ai/workflows/dev-tools-paths.md`.
+
 This repository also runs its own PHPUnit workflow (`.github/workflows/php-unit-tests.yml`)
 for shared-package tests that must not live in consumer suites (currently
 `packages/autoloader-coordinator/php/tests` and `packages/products/php/tests`).
@@ -302,9 +317,10 @@ Release bump runs `jobs/build-plugin-zip/update-changelogs.sh`, which calls the
 consumer `npm run update:changelogs`.
 
 **Source of truth is package `CHANGELOG.md`.** Every consumer package file
-starts with an empty `## Unreleased` inbox. Authors append bullets there
-(Keep a Changelog headings: Added, Fixed, …). Do not add dated or version
-headings in feature PRs.
+starts with an empty `## Unreleased` inbox. Authors append bullets there.
+Pick the `###` heading by audience (`packages/dev-tools/ai/workflows/changelog-and-readme.md`):
+end-user vs `Automated Tests` vs `Development Notes` for internals.
+Do not add dated or version headings in feature PRs.
 
 The **global-packages repository** (not a consumer product) also runs
 `.github/workflows/update-changelogs.yml` on merge to `master`. That GP-only

@@ -22,28 +22,30 @@ After every dedicated implementation task, **before** commit.
 - Wrap a long bullet onto the next line; indent the continuation.
 - If one change has several parts, nest indented sub-bullets under that item.
 
-### Audience (pick the heading)
+### Audience (pick the heading first)
 
-1. **End user** — they see it or are affected.
-   - Headings: `New Features`, `Improvements`, `Bug Fixes` (match the file).
+Do **not** choose `### Features` because the commit type is `feat`. Choose by
+who notices the change. Then reuse an existing `###` name in **that file**
+(`Features` vs `New Features`, etc.).
+
+1. **End user** — they see it or are affected in the product.
+   - Headings: `New Features` / `Features`, `Improvements`, `Bug Fixes`
+     (match the file).
    - Plain language. No helper names, file paths, or architecture unless
      the user would recognize them.
+   - Only then map commit type: `feat` → Features; `fix` → Bug Fixes;
+     user-visible refactor → Improvements; `perf` → Performance Improvements
+     if present, else Improvements.
 2. **Tests only** — `Automated Tests`. Add the heading if Unreleased does
-   not have it.
-3. **Other internals** — users will not notice (helpers, architecture,
-   tooling, agent knowledge).
-   - Heading: `Development Notes`. Add this `###` under Unreleased even if
-     the file never had it.
-   - Do not put these under Features/Improvements.
+   not have it. `test:` commits.
+3. **Internals** — users will not notice:
+   agent knowledge, Cursor rules/commands, CI helper scripts, path resolvers,
+   architecture cards, changelog/README helper text.
+   - Heading: **`Development Notes`**. Add this `###` under Unreleased even
+     if the file never had it (including `dev-tools`).
+   - Never put these under Features / New Features / Improvements.
 
-Reuse other `###` headings that already exist in that file.
-`dev-tools` Unreleased may use `New Features` — match the file.
-
-Map: `feat` → New Features or Features; `fix` → Bug Fixes;
-user-visible refactor → Improvements; `perf` → Performance Improvements
-if present, else Improvements; `test:` → Automated Tests.
-
-Skip Unreleased for pure `chore` / `style` / `ci` / formatting-only `docs`, and for generated files.
+Skip Unreleased for pure `chore` / `style` / `ci` / formatting-only `docs`, and for generated files. If the only change is internals that still deserve a note, use Development Notes — do not skip just because the commit is `docs` when you added agent/CI helpers.
 
 ## CHANGELOG.md — do not
 

@@ -10,5 +10,5 @@ While writing e2e cypress tests it's important to follow following rules:
 
   `npm run test:e2e -- --spec <path-to-spec>`
 
-  Do not invent a one-off `npx cypress run` unless `test:e2e` is missing from that product’s `package.json`. See `packages/global-packages/packages/dev-tools/ai/workflows/product-scripts-and-deps.md`.
+  Do not invent a one-off `npx cypress run` unless `test:e2e` is missing from that product’s `package.json`. See `packages/dev-tools/ai/workflows/product-scripts-and-deps.md` (consumers: prefix `packages/global-packages/`).
 

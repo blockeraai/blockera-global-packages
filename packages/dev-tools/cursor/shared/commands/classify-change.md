@@ -6,6 +6,7 @@ Classify the current task before a wide codebase search. Follow `packages/dev-to
 2. Reply with one line: class + why (paths).
 3. Load only the knowledge that class needs (package README, editor style pipeline, Pro ask, `source-codes/`).
 4. Do not run Gutenberg clone research for LOCAL chores. Do not edit a second product until the user agrees.
+5. GitHub workflow / `packages/dev-tools/github/` work: follow command `refactor-github-ci` (add and refactor). Shared paths: `packages/dev-tools/ai/workflows/dev-tools-paths.md`.
 
 Style/extension tasks: `packages/dev-tools/ai/domains/editor-style-pipeline.md`. Inner blocks / states: `packages/dev-tools/ai/domains/inner-blocks-and-block-states.md`. Paid overlay: `packages/dev-tools/ai/domains/free-vs-pro.md`.
 
