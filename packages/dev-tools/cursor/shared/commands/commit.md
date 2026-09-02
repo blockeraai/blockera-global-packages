@@ -25,7 +25,26 @@ Follow `packages/global-packages/packages/dev-tools/ai/workflows/changelog-and-r
 ## What to commit
 
 - Commit **only** changes made in **this chat**. Ignore unrelated dirty files.
-- Prefer **micro commits**: if changes are not related or can be separated, commit them separately (multiple commits are better than one mixed commit). Apply this **per repo** (parent and/or submodule).
+- **Micro commits are required** (next section). Do not squash the chat into one mixed commit.
+
+## Micro commits (required)
+
+**Multiple commits are the default.** One commit is allowed **only** when every this-chat file is one inseparable change (same user-facing outcome; cannot land alone). If you would need “and” in the subject to cover two topics, split.
+
+Do this **before the first `git add`**:
+
+1. List this-chat paths (`git status` / `git diff`).
+2. Group them into **changesets** (independent topics), for example:
+   - Separate user prompts or features in this chat
+   - Separate packages or layers (editor vs CI vs Cursor commands)
+   - Runtime / product code vs agent docs vs generated files
+   - Implementation vs tests (see **Separate test commits**)
+3. Write a one-line plan: `1) … 2) …` (changeset + paths). Then commit **in that order**.
+4. For each group: stage **only** those files, conventional subject **for that group**, `git commit`. Repeat. Never `git add -A` / `git add .` for this chat.
+5. **Changelog:** Unreleased bullets for **this group only** in the same commit as that group’s source. Do not put later groups’ notes in an earlier commit. Add bullets as you go (or edit `CHANGELOG.md` so each commit’s hunk matches that changeset).
+6. A user- or chat-supplied **single** subject applies to **one** group (the one it describes). Write new subjects for the other groups. Do not fold groups because only one message was given.
+
+`commit-and-sync` uses this same split **per repo**, then **one push** after that repo’s micro commits succeed.
 
 ## Separate test commits
 
@@ -49,9 +68,9 @@ Allowed conventional commit types and changelog rules live in the shared global-
 
 Husky `commit-msg` validates against that file via `--config`. Use only types listed there when writing subjects.
 
-1. If the chat already has a final commit subject and message → use them and commit immediately.
-2. If the user sent a subject/message → use that and commit immediately.
-3. Otherwise → generate a conventional subject/message from the chat changes and **commit immediately** (no confirmation / wait for accept).
+1. If the chat already has a final commit subject and message → use them for the **matching changeset only** and commit that group immediately (still split other groups).
+2. If the user sent a subject/message → use that for the matching group only; commit immediately; split the rest.
+3. Otherwise → generate a conventional subject/message **per group** and **commit each immediately** (no confirmation / wait for accept).
 4. If impl and tests must be paired (see **Separate test commits**), still split: use the provided/generated subject for the implementation commit, then write a `test:` subject for the covering test commit. Do not fold tests into the implementation commit just because only one message was supplied.
 
 Follow the repo’s conventional commit style (types from the shared YAML above) and the usual git commit safety protocol (no force, no amend unless rules allow, no secrets, HEREDOC for messages, etc.).
@@ -64,7 +83,7 @@ When this chat touched files under `packages/global-packages/` (sparse checkout 
 
 1. Treat that folder as the GP git repo. Commit **there** (`git -C packages/global-packages …`). Do **not** copy the same diffs into a standalone `blockera-global-packages` checkout to commit them.
 2. Pull that repo first (section above), including detaching → branch if needed.
-3. Use micro commits inside the submodule when changes are unrelated.
+3. Use **Micro commits** inside the submodule (group by changeset; never one mixed GP commit for unrelated topics).
 4. **Do not push** the submodule; the user pushes manually (`commit-and-sync` pushes).
 5. **Do not** stage or commit the parent-repo gitlink / submodule SHA bump for `packages/global-packages`. CI (`sync-global-packages-submodule`) updates the parent pin after the submodule is pushed.
 

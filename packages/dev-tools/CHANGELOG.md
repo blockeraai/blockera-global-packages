@@ -12,6 +12,8 @@
   GP is on origin, `submodule:bump` all consumers and push them too.
   Commit sparse-checkout GP via `packages/global-packages`; pull `--ff-only`
   (no merge commits) before any commit in each repo.
+- Commit commands: **micro commits are required** — group this-chat files by
+  changeset and commit each group separately (`commit` and `commit-and-sync`).
 
 ## [2.3.0] - 2026-09-01
 
