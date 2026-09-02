@@ -234,10 +234,32 @@ body.is-blockera-sidebar-dragging:has(
 	z-index: 3;
 }
 
-body.has-blockera-complementary-overlay .interface-interface-skeleton__sidebar {
+/* Gutenberg's settings column sits to the right of the Blockera right dock.
+ * Keep it out of flex layout whenever Blockera owns the docks, or closing
+ * the left dock (overlay teardown) lets it expand and flash empty columns. */
+body.has-blockera-combined-sidebar
+	.interface-interface-skeleton__sidebar:not(
+		.blockera-complementary-overlay
+	) {
 	width: 0 !important;
 	min-width: 0 !important;
-	overflow: visible;
+	max-width: 0 !important;
+	overflow: hidden !important;
+	flex: 0 0 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: none !important;
+	transition: none !important;
+	visibility: hidden !important;
+}
+
+body.has-blockera-complementary-overlay
+	.interface-interface-skeleton__sidebar:not(
+		.blockera-complementary-overlay
+	) {
+	width: 0 !important;
+	min-width: 0 !important;
+	overflow: hidden;
 	flex: 0 0 0;
 }
 
@@ -260,7 +282,7 @@ body.has-blockera-complementary-overlay .interface-interface-skeleton__sidebar {
 }
 
 .interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='left'] {
-	justify-content: flex-end;
+	justify-content: flex-start;
 }
 
 .interface-interface-skeleton__sidebar.blockera-complementary-overlay

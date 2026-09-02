@@ -36,6 +36,8 @@
   complementary area so those cases do not flake.
 
 ### Bug Fixes
+- Closing the left sidebar no longer flashes Gutenberg's empty settings
+  column beside the right dock.
 - Opening or closing the left or right sidebar now shifts the panel in and out
   instead of popping it into place.
 - Settings no longer stay off-screen after a refresh when they are docked on

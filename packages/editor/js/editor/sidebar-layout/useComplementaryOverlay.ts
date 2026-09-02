@@ -109,11 +109,38 @@ export function isSlideHostOpening(host: HTMLElement | null): boolean {
 	return targetWidth > 1 && hostWidth < targetWidth - 1;
 }
 
-function overlayRectFromSlideHost(
+function findSlideHost(anchor: HTMLElement): HTMLElement | null {
+	const dock = anchor.closest('.blockera-sidebar-dock');
+	if (dock?.classList.contains('blockera-sidebar-dock--left')) {
+		return anchor.closest(
+			'.interface-interface-skeleton__secondary-sidebar-blockera'
+		) as HTMLElement | null;
+	}
+	if (dock?.classList.contains('blockera-sidebar-dock--right')) {
+		return anchor.closest(
+			'.interface-interface-skeleton__primary-sidebar-blockera'
+		) as HTMLElement | null;
+	}
+
+	return anchor.closest(SLIDE_HOST_SELECTOR) as HTMLElement | null;
+}
+
+function clipPathFromIntersection(
+	anchorRect: DOMRect,
+	clipRect: DOMRect
+): string {
+	const top = Math.max(0, clipRect.top - anchorRect.top);
+	const right = Math.max(0, anchorRect.right - clipRect.right);
+	const bottom = Math.max(0, anchorRect.bottom - clipRect.bottom);
+	const left = Math.max(0, clipRect.left - anchorRect.left);
+	return `inset(${top}px ${right}px ${bottom}px ${left}px)`;
+}
+
+function overlayClipRectFromSlideHost(
 	anchor: HTMLElement,
 	anchorRect: DOMRect
 ): DOMRect {
-	const slideHost = anchor.closest(SLIDE_HOST_SELECTOR) as HTMLElement | null;
+	const slideHost = findSlideHost(anchor);
 	if (!slideHost) {
 		return anchorRect;
 	}
@@ -138,13 +165,15 @@ function clearOverlay(sidebar: HTMLElement | null): void {
 		return;
 	}
 
-	// Hide before returning the node to document flow to avoid a post-close flash.
+	// Hide and keep the node at 0 flex width. Dropping the overlay width
+	// lets Gutenberg's right-side settings column expand for one frame.
 	sidebar.style.setProperty('visibility', 'hidden', 'important');
 	sidebar.classList.remove(OVERLAY_CLASS);
 	sidebar.style.removeProperty('top');
 	sidebar.style.removeProperty('left');
-	sidebar.style.removeProperty('width');
+	sidebar.style.setProperty('width', '0', 'important');
 	sidebar.style.removeProperty('height');
+	sidebar.style.removeProperty('clip-path');
 	sidebar.style.setProperty('--sidebar-width', '0');
 	sidebar.style.removeProperty('--sidebar-width-raw');
 	delete sidebar.dataset.blockeraOverlayDock;
@@ -195,6 +224,7 @@ export function useComplementaryOverlay(
 		let lastLeft = Number.NaN;
 		let lastWidth = Number.NaN;
 		let lastHeight = Number.NaN;
+		let lastClipPath = '';
 
 		const sync = () => {
 			const anchor = anchorRef.current;
@@ -204,20 +234,32 @@ export function useComplementaryOverlay(
 			}
 
 			const anchorRect = anchor.getBoundingClientRect();
-			const rect = overlayRectFromSlideHost(anchor, anchorRect);
+			const slideHost = findSlideHost(anchor);
+			const hostRect = slideHost?.getBoundingClientRect();
+			const overlayLeft = hostRect ? hostRect.left : anchorRect.left;
+			const overlayBox = new DOMRect(
+				overlayLeft,
+				anchorRect.top,
+				anchorRect.width,
+				anchorRect.height
+			);
+			const clipRect = overlayClipRectFromSlideHost(anchor, overlayBox);
+			const clipPath = clipPathFromIntersection(overlayBox, clipRect);
 			if (
-				rect.top === lastTop &&
-				rect.left === lastLeft &&
-				rect.width === lastWidth &&
-				rect.height === lastHeight
+				overlayBox.top === lastTop &&
+				overlayBox.left === lastLeft &&
+				overlayBox.width === lastWidth &&
+				overlayBox.height === lastHeight &&
+				clipPath === lastClipPath
 			) {
 				return;
 			}
 
-			lastTop = rect.top;
-			lastLeft = rect.left;
-			lastWidth = rect.width;
-			lastHeight = rect.height;
+			lastTop = overlayBox.top;
+			lastLeft = overlayBox.left;
+			lastWidth = overlayBox.width;
+			lastHeight = overlayBox.height;
+			lastClipPath = clipPath;
 
 			const dock = anchor.closest('.blockera-sidebar-dock');
 			const dockSide = dock?.classList.contains('blockera-sidebar-dock--right')
@@ -234,12 +276,13 @@ export function useComplementaryOverlay(
 			countSidebarPerf('overlaySyncs');
 			node.classList.add(OVERLAY_CLASS);
 			node.style.removeProperty('visibility');
-			node.style.setProperty('top', `${rect.top}px`, 'important');
-			node.style.setProperty('left', `${rect.left}px`, 'important');
-			node.style.setProperty('width', `${rect.width}px`, 'important');
-			node.style.setProperty('height', `${rect.height}px`, 'important');
-			node.style.setProperty('--sidebar-width', `${rect.width}px`);
-			node.style.setProperty('--sidebar-width-raw', `${rect.width}px`);
+			node.style.setProperty('top', `${overlayBox.top}px`, 'important');
+			node.style.setProperty('left', `${overlayBox.left}px`, 'important');
+			node.style.setProperty('width', `${overlayBox.width}px`, 'important');
+			node.style.setProperty('height', `${overlayBox.height}px`, 'important');
+			node.style.setProperty('--sidebar-width', `${overlayBox.width}px`);
+			node.style.setProperty('--sidebar-width-raw', `${overlayBox.width}px`);
+			node.style.setProperty('clip-path', clipPath, 'important');
 		};
 
 		const syncOnFrame = () => {
@@ -275,9 +318,9 @@ export function useComplementaryOverlay(
 		};
 
 		const observer = new ResizeObserver(syncOnFrame);
-		const slideHost = anchorRef.current?.closest(
-			SLIDE_HOST_SELECTOR
-		) as HTMLElement | null;
+		const slideHost = anchorRef.current
+			? findSlideHost(anchorRef.current)
+			: null;
 
 		const onTransitionStart = (event: TransitionEvent) => {
 			if (event.propertyName !== 'width') {
