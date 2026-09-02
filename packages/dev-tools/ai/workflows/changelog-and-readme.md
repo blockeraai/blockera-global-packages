@@ -45,7 +45,20 @@ who notices the change. Then reuse an existing `###` name in **that file**
      if the file never had it (including `dev-tools`).
    - Never put these under Features / New Features / Improvements.
 
-Skip Unreleased for pure `chore` / `style` / `ci` / formatting-only `docs`, and for generated files. If the only change is internals that still deserve a note, use Development Notes — do not skip just because the commit is `docs` when you added agent/CI helpers.
+Skip Unreleased for:
+
+- Pure `chore` / `style` / `ci` / formatting-only `docs`, and generated files
+- **Pro unlock / license-gate mechanics** — how a site becomes licensed, secret
+  keys, `validateSecretKeys`, `blockeraAccount`, `CI_ENV` skips, or “how to
+  unlock Pro”. Not under Features **or** Development Notes. Agent-only docs
+  that only teach that gate (`free-vs-pro.md` license section, and similar)
+  also skip.
+- End-user bullets may still say a capability is **Pro** (what they get). They
+  must not describe how unlock/validation works.
+
+If the only change is other internals that still deserve a note (Cursor
+commands, CI helpers, architecture that is not the license gate), use
+Development Notes — do not skip just because the commit is `docs`.
 
 ## CHANGELOG.md — do not
 

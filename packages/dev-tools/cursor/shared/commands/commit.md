@@ -18,7 +18,7 @@ Run this **once per repo** immediately before the first commit in that repo (aft
 
 Follow `packages/global-packages/packages/dev-tools/ai/workflows/changelog-and-readme.md` (standalone GP: `packages/dev-tools/ai/workflows/changelog-and-readme.md`).
 
-- Append `## Unreleased` bullets on each **package** `CHANGELOG.md` whose source changed. Pick the `###` heading by **audience** (`changelog-and-readme.md`): end-user → Features / Improvements / Bug Fixes; tests → Automated Tests; internals (agents, Cursor, CI helpers) → **Development Notes**, never Features.
+- Append `## Unreleased` bullets on each **package** `CHANGELOG.md` whose source changed, **except** skips in `changelog-and-readme.md` (chore/style/ci; **never** Pro unlock / license-gate how-to). Pick the `###` heading by **audience**: end-user → Features / Improvements / Bug Fixes; tests → Automated Tests; internals → **Development Notes**, never Features.
 - Update that package’s README only if the public contract changed.
 - Do not fold versions, bump package versions, or edit product-root `CHANGELOG.md` / `changelog.txt`.
 

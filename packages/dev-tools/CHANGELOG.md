@@ -14,6 +14,8 @@
   (no merge commits) before any commit in each repo.
 - Commit commands: **micro commits are required** — group this-chat files by
   changeset and commit each group separately (`commit` and `commit-and-sync`).
+- Changelog: never Unreleased notes that explain how Pro unlocks or license
+  validation; skip inbox for agent docs that only encode that gate.
 
 ## [2.3.0] - 2026-09-01
 
