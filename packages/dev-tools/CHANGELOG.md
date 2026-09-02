@@ -16,6 +16,8 @@
   changeset and commit each group separately (`commit` and `commit-and-sync`).
 - Changelog: never Unreleased notes that explain how Pro unlocks or license
   validation; skip inbox for agent docs that only encode that gate.
+- Agent knowledge: free+Pro features extend via WordPress `applyFilters` /
+  `addFilter` rather than forking the feature in Pro.
 
 ## [2.3.0] - 2026-09-01
 
