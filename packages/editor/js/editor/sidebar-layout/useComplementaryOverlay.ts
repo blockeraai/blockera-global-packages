@@ -12,6 +12,8 @@ import { countSidebarPerf } from './sidebar-perf';
 
 const SIDEBAR_SELECTOR = '.interface-interface-skeleton__sidebar';
 const OVERLAY_CLASS = 'blockera-complementary-overlay';
+const SLIDE_HOST_SELECTOR =
+	'.blockera-secondary-sidebar-content, .blockera-primary-sidebar-content';
 
 export function findSidebar(): HTMLElement | null {
 	return document.querySelector(SIDEBAR_SELECTOR) as HTMLElement | null;
@@ -71,6 +73,7 @@ export function useComplementaryOverlay(
 		document.body.classList.add('has-blockera-complementary-overlay');
 
 		let frame = 0;
+		let trackingSlide = false;
 		let lastTop = Number.NaN;
 		let lastLeft = Number.NaN;
 		let lastWidth = Number.NaN;
@@ -115,14 +118,40 @@ export function useComplementaryOverlay(
 			frame = window.requestAnimationFrame(() => {
 				frame = 0;
 				sync();
+				if (trackingSlide) {
+					syncOnFrame();
+				}
 			});
+		};
+
+		const startSlideTracking = () => {
+			trackingSlide = true;
+			syncOnFrame();
+		};
+
+		const stopSlideTracking = () => {
+			trackingSlide = false;
+			sync();
 		};
 
 		sync();
 
 		const observer = new ResizeObserver(syncOnFrame);
+		const slideHost = anchorRef.current?.closest(
+			SLIDE_HOST_SELECTOR
+		) as HTMLElement | null;
 		if (anchorRef.current) {
 			observer.observe(anchorRef.current);
+		}
+		slideHost?.addEventListener('transitionstart', startSlideTracking);
+		slideHost?.addEventListener('transitionend', stopSlideTracking);
+		slideHost?.addEventListener('transitioncancel', stopSlideTracking);
+		const classObserver = new MutationObserver(syncOnFrame);
+		if (slideHost) {
+			classObserver.observe(slideHost, {
+				attributes: true,
+				attributeFilter: ['class', 'style'],
+			});
 		}
 		window.addEventListener('resize', syncOnFrame);
 		window.addEventListener('scroll', syncOnFrame, true);
@@ -133,10 +162,21 @@ export function useComplementaryOverlay(
 		const unsubscribeLayout = subscribeSidebarDrag(sync, 'layout');
 
 		return () => {
+			trackingSlide = false;
 			if (frame) {
 				window.cancelAnimationFrame(frame);
 			}
 			observer.disconnect();
+			classObserver.disconnect();
+			slideHost?.removeEventListener(
+				'transitionstart',
+				startSlideTracking
+			);
+			slideHost?.removeEventListener('transitionend', stopSlideTracking);
+			slideHost?.removeEventListener(
+				'transitioncancel',
+				stopSlideTracking
+			);
 			window.removeEventListener('resize', syncOnFrame);
 			window.removeEventListener('scroll', syncOnFrame, true);
 			unsubscribePosition();

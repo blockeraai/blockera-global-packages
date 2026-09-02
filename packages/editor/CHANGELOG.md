@@ -25,6 +25,8 @@
 
 ### Bug Fixes
 
+- Settings no longer stay off-screen after a refresh when they are docked on
+  the left; they follow the sidebar as it slides in.
 - Drop placeholders keep the resized panel heights when you drag a panel from a
   two-panel dock.
 - Dragging a stacked panel no longer pulls the other panels up; the 4px
