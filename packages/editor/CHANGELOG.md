@@ -51,6 +51,9 @@
 
 ### Automated Tests
 
+- Complementary overlay: unit tests for detecting when the dock wrapper is still opening.
+- Sidebar open/close: e2e checks that dock wrappers animate width while inner
+  content keeps `is-visible` / `is-hidden` classes.
 - Sidebar layout: e2e coverage for Patterns and Media category columns on
   the left and right docks (full height, correct side, tab direction on the
   right dock).

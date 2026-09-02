@@ -7,6 +7,29 @@ import {
 	closeWelcomeGuide,
 } from '@blockera/dev-cypress/js/helpers';
 
+const DEFAULT_SIDEBAR_LAYOUT = {
+	inserter: { dock: 'left', order: 0 },
+	listView: { dock: 'left', order: 1 },
+	complementary: { dock: 'right', order: 0 },
+};
+
+function persistenceDispatch(win) {
+	return win.wp.data.dispatch('blockera/editor-persistence');
+}
+
+function applyDefaultSidebarLayout(win) {
+	const dispatch = persistenceDispatch(win);
+	dispatch.setSidebarLayout(DEFAULT_SIDEBAR_LAYOUT);
+	dispatch.setDockPaneHeights('left', ['50%', '50%']);
+	dispatch.setDockPaneHeights('right', ['100%']);
+}
+
+function resetSidebarLayout() {
+	cy.window().then((win) => {
+		applyDefaultSidebarLayout(win);
+	});
+}
+
 describe('Blockera sidebars (primary + secondary)', () => {
 	/**
 	 * Ensures Blockera editor persistence store is available (for assertions).
@@ -62,6 +85,7 @@ describe('Blockera sidebars (primary + secondary)', () => {
 		it('should toggle the secondary sidebar via the header toggle button and expose its resize handle', () => {
 			createPost();
 			closeWelcomeGuide();
+			resetSidebarLayout();
 			expectSidebarsStore();
 
 			// Secondary toggle is Blockera-owned; use stable data-test.
@@ -70,6 +94,12 @@ describe('Blockera sidebars (primary + secondary)', () => {
 				.and('have.attr', 'aria-label');
 
 			ensureBothClosed();
+
+			cy.get(
+				'.interface-interface-skeleton__secondary-sidebar-blockera'
+			).should(($el) => {
+				expect($el[0].getBoundingClientRect().width).to.be.lessThan(2);
+			});
 
 			// Open secondary via button.
 			cy.getByDataTest('blockera-secondary-sidebar-toggle').click({
@@ -87,6 +117,14 @@ describe('Blockera sidebars (primary + secondary)', () => {
 			cy.getByDataTest('blockera-secondary-sidebar-content')
 				.should('exist')
 				.and('have.class', 'is-visible');
+
+			cy.get(
+				'.interface-interface-skeleton__secondary-sidebar-blockera'
+			).should(($el) => {
+				expect($el[0].getBoundingClientRect().width).to.be.greaterThan(
+					200
+				);
+			});
 
 			// Resize handle is portal-rendered inside the sidebar container.
 			cy.getByDataTest('blockera-sidebar-resize-handle--right')
@@ -118,6 +156,7 @@ describe('Blockera sidebars (primary + secondary)', () => {
 		it('should toggle primary, secondary, and both sidebars via keyboard shortcuts and keep actions scoped correctly', () => {
 			createPost();
 			closeWelcomeGuide();
+			resetSidebarLayout();
 			expectSidebarsStore();
 			focusEditorChrome();
 
@@ -164,6 +203,7 @@ describe('Blockera sidebars (primary + secondary)', () => {
 		it('should show a primary sidebar resize handle only when the primary sidebar is open', () => {
 			createPost();
 			closeWelcomeGuide();
+			resetSidebarLayout();
 			expectSidebarsStore();
 			focusEditorChrome();
 
@@ -183,6 +223,18 @@ describe('Blockera sidebars (primary + secondary)', () => {
 				'exist'
 			);
 
+			cy.getByDataTest('blockera-primary-sidebar-content')
+				.should('exist')
+				.and('have.class', 'is-visible');
+
+			cy.get(
+				'.interface-interface-skeleton__primary-sidebar-blockera'
+			).should(($el) => {
+				expect($el[0].getBoundingClientRect().width).to.be.greaterThan(
+					200
+				);
+			});
+
 			// Close primary via shortcut.
 			cy.pressPrimaryShiftKey('.', 'Period');
 			cy.window().should((win) => {
@@ -193,7 +245,17 @@ describe('Blockera sidebars (primary + secondary)', () => {
 				).to.eq(false);
 			});
 
+			cy.get(
+				'.interface-interface-skeleton__primary-sidebar-blockera'
+			).should(($el) => {
+				expect($el[0].getBoundingClientRect().width).to.be.lessThan(2);
+			});
+
+			cy.wait(450);
 			cy.getByDataTest('blockera-sidebar-resize-handle--left').should(
+				'not.exist'
+			);
+			cy.getByDataTest('blockera-primary-sidebar-content').should(
 				'not.exist'
 			);
 		});
@@ -258,6 +320,7 @@ describe('Blockera sidebars (primary + secondary)', () => {
 			);
 
 			focusEditorChrome();
+			resetSidebarLayout();
 			ensureBothClosed();
 
 			cy.pressPrimaryShiftKey(',', 'Comma');
