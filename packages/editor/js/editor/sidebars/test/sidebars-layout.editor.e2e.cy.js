@@ -329,7 +329,7 @@ describe('Movable sidebar docks', () => {
 
 		cy.getByDataTest('blockera-sidebar-dock-left').then(($dock) => {
 			const dockHeight = $dock[0].getBoundingClientRect().height;
-			const gap = 2;
+			const gap = 4;
 			const available = dockHeight - gap;
 			cy.getByDataTest('blockera-sidebar-drop-slot-left-0').should(
 				($slot) => {
@@ -344,6 +344,34 @@ describe('Movable sidebar docks', () => {
 					expect($slot[0].getBoundingClientRect().height).to.be.closeTo(
 						available * 0.3,
 						4
+					);
+				}
+			);
+		});
+
+		pointerUp();
+	});
+
+	it('should keep the remaining pane in place when a stacked panel is dragged', () => {
+		cy.window().then((win) => {
+			persistenceDispatch(win).setDockPaneHeights('left', [
+				'70%',
+				'30%',
+			]);
+		});
+
+		cy.getByDataTest('blockera-sidebar-pane-listView').then(($pane) => {
+			cy.wrap($pane[0].getBoundingClientRect().top).as('listViewTop');
+		});
+
+		startPaneDrag('inserter');
+
+		cy.get('@listViewTop').then((top) => {
+			cy.getByDataTest('blockera-sidebar-pane-listView').should(
+				($pane) => {
+					expect($pane[0].getBoundingClientRect().top).to.be.closeTo(
+						Number(top),
+						6
 					);
 				}
 			);
@@ -367,7 +395,7 @@ describe('Movable sidebar docks', () => {
 
 		cy.getByDataTest('blockera-sidebar-dock-left').then(($dock) => {
 			const dockHeight = $dock[0].getBoundingClientRect().height;
-			const gap = 2;
+			const gap = 4;
 			const available = dockHeight - gap;
 			cy.getByDataTest('blockera-sidebar-drop-slot-left-0').should(
 				($slot) => {
@@ -392,7 +420,7 @@ describe('Movable sidebar docks', () => {
 							expect(
 								$second[0].getBoundingClientRect().top -
 									$first[0].getBoundingClientRect().bottom
-							).to.be.closeTo(2, 2);
+							).to.be.closeTo(4, 2);
 						}
 					);
 				}

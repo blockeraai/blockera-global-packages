@@ -53,8 +53,10 @@
 - Sidebar layout: e2e coverage that the settings drag handle lives in the
   settings tab bar and stays visible when switching tabs.
 - Sidebar layout: e2e coverage that resized drop slots keep their share of
-  height with a 2px gap between placeholders, including when dragging from
+  height with a 4px gap between placeholders, including when dragging from
   the two-panel source dock.
+- Sidebar layout: e2e coverage that the remaining pane stays in place when
+  a stacked panel is dragged.
 - Sidebar layout: drag session notifies layout only when the hovered slot
   changes, and e2e checks that layout updates stay below pointer-move count.
 
