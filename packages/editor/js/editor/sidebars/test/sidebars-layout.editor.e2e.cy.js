@@ -64,11 +64,15 @@ function startPaneDrag(sectionId) {
 			const rect = $handle[0].getBoundingClientRect();
 			cy.wrap($handle).trigger('pointerdown', {
 				button: 0,
+				pointerId: 1,
 				clientX: rect.left + 8,
 				clientY: rect.top + 8,
 				force: true,
 			});
 		}
+	);
+	cy.get(`[data-test="blockera-sidebar-pane-${sectionId}"].is-floating`).should(
+		'exist'
 	);
 }
 
@@ -78,6 +82,7 @@ function pointerMove(clientX, clientY) {
 			new win.PointerEvent('pointermove', {
 				clientX,
 				clientY,
+				pointerId: 1,
 				bubbles: true,
 			})
 		);
@@ -90,6 +95,7 @@ function pointerUp(clientX = 0, clientY = 0) {
 			new win.PointerEvent('pointerup', {
 				clientX,
 				clientY,
+				pointerId: 1,
 				bubbles: true,
 			})
 		);
@@ -97,22 +103,44 @@ function pointerUp(clientX = 0, clientY = 0) {
 }
 
 function hoverDockBottom(dock) {
+	cy.getByDataTest(`blockera-sidebar-dock-${dock}`).should(($dock) => {
+		expect($dock[0].getBoundingClientRect().height).to.be.greaterThan(40);
+	});
 	cy.getByDataTest(`blockera-sidebar-dock-${dock}`).then(($dock) => {
 		const rect = $dock[0].getBoundingClientRect();
-		pointerMove(rect.left + rect.width / 2, rect.bottom - 8);
+		const clientX = rect.left + rect.width / 2;
+		cy.window().then((win) => {
+			for (let offset = 2; offset <= 16; offset += 2) {
+				win.dispatchEvent(
+					new win.PointerEvent('pointermove', {
+						clientX,
+						clientY: rect.bottom - offset,
+						pointerId: 1,
+						bubbles: true,
+					})
+				);
+			}
+		});
 	});
 }
 
 function dropOnSlot(dock, slot) {
-	cy.getByDataTest(`blockera-sidebar-drop-slot-${dock}-${slot}`).then(
-		($slot) => {
-			const rect = $slot[0].getBoundingClientRect();
-			const clientX = rect.left + rect.width / 2;
-			const clientY = rect.top + rect.height / 2;
-			pointerMove(clientX, clientY);
-			pointerUp(clientX, clientY);
-		}
-	);
+	const testId = `blockera-sidebar-drop-slot-${dock}-${slot}`;
+	cy.getByDataTest(testId).should('exist');
+	cy.getByDataTest(testId).then(($slot) => {
+		const rect = $slot[0].getBoundingClientRect();
+		cy.wrap({
+			clientX: rect.left + rect.width / 2,
+			clientY: rect.top + rect.height / 2,
+		}).as('dropPoint');
+	});
+	cy.get('@dropPoint').then(({ clientX, clientY }) => {
+		pointerMove(clientX, clientY);
+	});
+	cy.getByDataTest(testId).should('have.class', 'is-active');
+	cy.get('@dropPoint').then(({ clientX, clientY }) => {
+		pointerUp(clientX, clientY);
+	});
 }
 
 function dropOnRevealedThird(dock) {
@@ -358,6 +386,18 @@ describe('Movable sidebar docks', () => {
 				'70%',
 				'30%',
 			]);
+		});
+
+		cy.getByDataTest('blockera-sidebar-dock-left').then(($dock) => {
+			const available =
+				$dock[0].getBoundingClientRect().height - 4;
+			cy.getByDataTest('blockera-sidebar-pane-listView').should(
+				($pane) => {
+					expect(
+						$pane[0].getBoundingClientRect().height
+					).to.be.closeTo(available * 0.3, 12);
+				}
+			);
 		});
 
 		cy.getByDataTest('blockera-sidebar-pane-listView').then(($pane) => {
@@ -718,8 +758,160 @@ describe('Movable sidebar docks', () => {
 		});
 	});
 
+	it('should open the physical right dock from the header when settings is on the left', () => {
+		cy.window().then((win) => {
+			applySidebarLayout(
+				win,
+				{
+					complementary: { dock: 'left', order: 0 },
+					inserter: { dock: 'right', order: 0 },
+					listView: { dock: 'right', order: 1 },
+				},
+				['100%'],
+				['50%', '50%']
+			);
+			win.wp.data
+				.dispatch('blockera/editor-persistence')
+				.setSecondarySidebarOpen(false);
+			win.wp.data
+				.dispatch('blockera/editor-persistence')
+				.setPrimarySidebarOpen(false);
+		});
+
+		cy.getByDataTest('blockera-primary-sidebar-toggle').click({
+			force: true,
+		});
+
+		cy.window().should((win) => {
+			const sel = persistenceSelect(win);
+			expect(sel.isPrimarySidebarOpen()).to.eq(true);
+			expect(sel.isSecondarySidebarOpen()).to.eq(false);
+		});
+		cy.getByDataTest('blockera-sidebar-dock-right')
+			.find('[data-test="blockera-sidebar-pane-inserter"]')
+			.should('exist');
+		cy.getByDataTest('blockera-sidebar-dock-left').should('not.exist');
+	});
+
+	it('should close the right dock when the blocks panel close button is used there', () => {
+		cy.window().then((win) => {
+			applyAllRightLayout(win);
+			win.wp.data
+				.dispatch('blockera/editor-persistence')
+				.setSecondarySidebarOpen(false);
+			win.wp.data
+				.dispatch('blockera/editor-persistence')
+				.setPrimarySidebarOpen(true);
+			win.wp.data
+				.dispatch('core/interface')
+				.enableComplementaryArea('core', 'edit-post/document');
+		});
+
+		cy.getByDataTest('blockera-sidebar-dock-right').should('exist');
+		cy.get(
+			'.blockera-combined-sidebar__inserter .block-editor-tabbed-sidebar__close-button'
+		).click({ force: true });
+
+		cy.window().should((win) => {
+			expect(persistenceSelect(win).isPrimarySidebarOpen()).to.eq(false);
+		});
+		cy.getByDataTest('blockera-primary-sidebar-content').should(
+			'have.class',
+			'is-hidden'
+		);
+	});
+
+	it('should open the dock that currently hosts blocks when Gutenberg opens the inserter', () => {
+		cy.window().then((win) => {
+			applyAllRightLayout(win);
+			win.wp.data
+				.dispatch('blockera/editor-persistence')
+				.setSecondarySidebarOpen(false);
+			win.wp.data
+				.dispatch('blockera/editor-persistence')
+				.setPrimarySidebarOpen(false);
+			win.wp.data.dispatch('core/editor').setIsInserterOpened(true);
+		});
+
+		cy.window().should((win) => {
+			expect(persistenceSelect(win).isPrimarySidebarOpen()).to.eq(true);
+			expect(persistenceSelect(win).isSecondarySidebarOpen()).to.eq(
+				false
+			);
+			expect(win.wp.data.select('core/editor').isInserterOpened()).to.eq(
+				false
+			);
+		});
+		cy.getByDataTest('blockera-sidebar-dock-right')
+			.find('[data-test="blockera-sidebar-pane-inserter"]')
+			.should('exist');
+	});
+
+	it('should open the dock that currently hosts settings when complementary area is enabled', () => {
+		cy.window().then((win) => {
+			applySidebarLayout(
+				win,
+				{
+					complementary: { dock: 'left', order: 0 },
+					inserter: { dock: 'right', order: 0 },
+					listView: { dock: 'right', order: 1 },
+				},
+				['100%'],
+				['50%', '50%']
+			);
+			win.wp.data
+				.dispatch('core/interface')
+				.disableComplementaryArea('core');
+			win.wp.data
+				.dispatch('blockera/editor-persistence')
+				.setSecondarySidebarOpen(false);
+			win.wp.data
+				.dispatch('blockera/editor-persistence')
+				.setPrimarySidebarOpen(false);
+		});
+
+		cy.window().should((win) => {
+			expect(
+				win.wp.data
+					.select('core/interface')
+					.getActiveComplementaryArea('core') ?? null
+			).to.eq(null);
+			expect(persistenceSelect(win).isSecondarySidebarOpen()).to.eq(
+				false
+			);
+		});
+
+		cy.window().then((win) => {
+			win.wp.data
+				.dispatch('core/interface')
+				.enableComplementaryArea('core', 'edit-post/document');
+		});
+
+		cy.window().should((win) => {
+			expect(persistenceSelect(win).isSecondarySidebarOpen()).to.eq(true);
+			expect(persistenceSelect(win).isPrimarySidebarOpen()).to.eq(false);
+		});
+		cy.getByDataTest('blockera-sidebar-dock-left')
+			.find('[data-test="blockera-sidebar-pane-complementary"]')
+			.should('exist');
+	});
+
 	afterEach(() => {
-		cy.get('.blockera-sidebar-pane.is-floating').should('not.exist');
+		cy.window().then((win) => {
+			if (win.document.querySelector('.blockera-sidebar-pane.is-floating')) {
+				win.dispatchEvent(
+					new win.PointerEvent('pointerup', {
+						clientX: 0,
+						clientY: 0,
+						pointerId: 1,
+						bubbles: true,
+					})
+				);
+			}
+		});
+		cy.get('.blockera-sidebar-pane.is-floating', { timeout: 4000 }).should(
+			'not.exist'
+		);
 		cy.window().then((win) => {
 			if (!win.wp?.data?.dispatch) {
 				return;

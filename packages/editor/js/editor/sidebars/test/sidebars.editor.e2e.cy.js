@@ -93,6 +93,10 @@ describe('Blockera sidebars (primary + secondary)', () => {
 				.should('exist')
 				.and('have.attr', 'aria-label');
 
+			cy.getByDataTest('blockera-primary-sidebar-toggle')
+				.should('exist')
+				.and('have.attr', 'aria-label');
+
 			ensureBothClosed();
 
 			cy.get(

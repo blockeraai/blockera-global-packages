@@ -7,6 +7,7 @@ import {
 	dropSlotPlan,
 	equalHeights,
 	getDockSections,
+	getSectionDock,
 	getVisibleDockSections,
 	heightsAfterMove,
 	moveSection,
@@ -24,6 +25,23 @@ describe('sidebar layout helpers', () => {
 		expect(getDockSections(DEFAULT_SIDEBAR_LAYOUT, 'right')).toEqual([
 			'complementary',
 		]);
+	});
+
+	it('resolves the dock that currently hosts each panel', () => {
+		expect(getSectionDock(DEFAULT_SIDEBAR_LAYOUT, 'inserter')).toBe('left');
+		expect(getSectionDock(DEFAULT_SIDEBAR_LAYOUT, 'listView')).toBe('left');
+		expect(getSectionDock(DEFAULT_SIDEBAR_LAYOUT, 'complementary')).toBe(
+			'right'
+		);
+
+		const swapped = {
+			inserter: { dock: 'right', order: 0 },
+			listView: { dock: 'right', order: 1 },
+			complementary: { dock: 'left', order: 0 },
+		};
+		expect(getSectionDock(swapped, 'inserter')).toBe('right');
+		expect(getSectionDock(swapped, 'listView')).toBe('right');
+		expect(getSectionDock(swapped, 'complementary')).toBe('left');
 	});
 
 	it('moves list view to the top of the right dock', () => {

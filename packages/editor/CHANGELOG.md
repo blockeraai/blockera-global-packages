@@ -27,6 +27,14 @@
   sidebars. Gutenberg APIs that show the inserter, list view, or settings
   still open the sidebar those panels currently live in.
 
+### Automated Tests
+
+- Sidebar docks: close buttons, header toggles, and Gutenberg show-inserter /
+  show-settings APIs follow the panel’s current dock.
+- Sidebar layout e2e waits for an active drop slot before releasing a panel,
+  ends a leftover drag in afterEach, and re-enables settings from a closed
+  complementary area so those cases do not flake.
+
 ### Bug Fixes
 - Opening or closing the left or right sidebar now shifts the panel in and out
   instead of popping it into place.
