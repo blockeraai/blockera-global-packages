@@ -44,9 +44,9 @@ If `pull --ff-only` / rebase cannot proceed, stop that repo. Do not skip pull be
 
 For every repository you commit (GP submodule repo and/or product parent):
 
-1. Open and follow **`commit.md` in full** (changelog audience headings, this-chat files only, micro commits, separate `test:` commits, message rules, mixed parent/submodule order).
+1. Open and follow **`commit.md` in full**, including **Micro commits (required)** (changelog audience, this-chat files only, changeset groups, separate `test:` commits, message rules, mixed parent/submodule order). Do not replace that split with one push-sized commit.
 2. **Override only these `commit.md` lines** when running **this** command:
-   - After successful commits in a repo, **you must `git push origin HEAD`** (or the branch’s upstream). `commit.md`’s “do not push the submodule” does **not** apply here.
+   - After **all** micro commits in a repo succeed, **you must `git push origin HEAD` once** (or the branch’s upstream). Do not push after every micro commit unless a later step in this command needs that SHA on origin (GP must be fully pushed before consumer `submodule:bump`).
    - Consumer **gitlink** updates are **not** done by hand. They are done only via `npm run submodule:bump` (step B). Do not `git add packages/global-packages` yourself.
 
 Ignore unrelated dirty files in every repo.
@@ -57,10 +57,10 @@ Ignore unrelated dirty files in every repo.
 
 1. Choose the GP git dir: sparse `packages/global-packages` if that working tree has this-chat diffs; else standalone origin if that is where you edited.
 2. Pull that repo (`commit.md` Update from origin).
-3. `commit.md` **inside that same git dir** (`git -C packages/global-packages` when sparse).
-4. Confirm those commits exist (`git status` / `git log -1`).
-5. **Push GP** from **that** repo (`git push origin HEAD` or the branch you attached). Confirm the SHA is on `origin`.
-6. Record `GP_SHA` (full hash).
+3. `commit.md` **inside that same git dir** (`git -C packages/global-packages` when sparse), including required micro commits by changeset.
+4. Confirm those commits exist (`git status` / `git log`).
+5. **Push GP** from **that** repo **once** after **all** GP micro commits (`git push origin HEAD` or the branch you attached). Confirm `HEAD` is on `origin`.
+6. Record `GP_SHA` (full hash of the tip).
 
 If this chat has **no** GP diffs, skip A. Do not bump consumers in B.
 
@@ -108,7 +108,7 @@ Order: all commits in a repo first, then push that repo. You may push consumers 
 
 ## Output (required)
 
-One short table: repo id → local commit(s) → pushed `yes` + remote SHA (or `skipped` + why).
+One short table: repo id → local commit(s) (**each** micro SHA, not one blob) → pushed `yes` + remote tip SHA (or `skipped` + why).
 
 If something failed, the table still lists completed rows, then the failure.
 
