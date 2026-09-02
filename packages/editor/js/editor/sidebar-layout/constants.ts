@@ -21,3 +21,6 @@ export const REVEAL_THIRD_ZONE_PX = 20;
 
 /** Space between stacked panes; matches `.blockera-sidebar-resize-handle--top`. */
 export const PANE_GAP_PX = 4;
+
+/** Dock wrapper clip duration; keep in sync with sidebar-layout/style.scss. */
+export const SIDEBAR_CLIP_TRANSITION_MS = 350;

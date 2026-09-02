@@ -235,11 +235,42 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 		[startPaneDragFromEvent]
 	);
 
-	if (!showDropSlots && (!isDockOpen || sections.length === 0)) {
+	const complementaryOnThisDock = layout.complementary.dock === dock;
+	const keepComplementaryDuringDockClose =
+		isDockOpen && complementaryOnThisDock && !isComplementaryOpen;
+	const showComplementaryClosePlaceholder =
+		!showDropSlots &&
+		isDockOpen &&
+		complementaryOnThisDock &&
+		sections.length === 0;
+
+	if (!showDropSlots && !isDockOpen) {
 		return null;
 	}
 
-	const useFlexFill = visibleSections.length === 1 && !showDropSlots;
+	if (
+		!showDropSlots &&
+		sections.length === 0 &&
+		!showComplementaryClosePlaceholder
+	) {
+		return null;
+	}
+
+	const useFlexFill =
+		(visibleSections.length === 1 || showComplementaryClosePlaceholder) &&
+		!showDropSlots;
+	const complementaryOverlayActive =
+		isComplementaryOpen || keepComplementaryDuringDockClose;
+	const displayStackedSections: SidebarSectionId[] =
+		showComplementaryClosePlaceholder
+			? ['complementary']
+			: stackedSections;
+	const displayStackedHeights =
+		displayStackedSections.length === 1
+			? ['100%']
+			: displayStackedSections === stackedSections
+				? stackedHeights
+				: equalHeights(displayStackedSections.length);
 
 	const renderPane = (sectionId: SidebarSectionId, height: string) => {
 		const isFloating = drag?.sectionId === sectionId;
@@ -277,7 +308,7 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 
 		return (
 			<ComplementaryAnchor
-				isActive={isComplementaryOpen}
+				isActive={complementaryOverlayActive}
 				canDrag={canDrag}
 				height={useFlexFill ? '100%' : height}
 				isFloating={isFloating}
@@ -326,10 +357,10 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 				</div>
 			)}
 			{!isEmptyDuringDrag &&
-				stackedSections.map((sectionId, index) => {
+				displayStackedSections.map((sectionId, index) => {
 					const height =
-						stackedHeights[index] ??
-						`${100 / stackedSections.length}%`;
+						displayStackedHeights[index] ??
+						`${100 / displayStackedSections.length}%`;
 					const isDraggedSlot = drag?.sectionId === sectionId;
 
 					return (

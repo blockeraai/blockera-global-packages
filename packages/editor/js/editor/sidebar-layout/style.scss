@@ -199,15 +199,11 @@ body.is-blockera-sidebar-dragging {
 	cursor: grabbing;
 }
 
-body.is-blockera-sidebar-dragging .blockera-secondary-sidebar-content,
-body.is-blockera-sidebar-dragging .blockera-primary-sidebar-content {
-	transition: none !important;
-}
-
 body.is-blockera-sidebar-dragging
 	.interface-interface-skeleton__secondary-sidebar-blockera,
 body.is-blockera-sidebar-dragging
 	.interface-interface-skeleton__primary-sidebar-blockera {
+	transition: none !important;
 	--sidebar-width: var(--sidebar-width-raw);
 	z-index: auto !important;
 	overflow: visible !important;
@@ -255,15 +251,42 @@ body.has-blockera-complementary-overlay .interface-interface-skeleton__sidebar {
 	margin: 0 !important;
 	box-sizing: border-box;
 	overflow: hidden !important;
+	display: flex !important;
+	transition: none !important;
+}
+
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='right'] {
+	justify-content: flex-start;
+}
+
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='left'] {
+	justify-content: flex-end;
 }
 
 .interface-interface-skeleton__sidebar.blockera-complementary-overlay
 	.interface-complementary-area__fill,
 .interface-interface-skeleton__sidebar.blockera-complementary-overlay
 	.interface-complementary-area {
-	width: 100% !important;
 	height: 100% !important;
 	max-width: none;
+	flex-shrink: 0;
+	transition: none !important;
+}
+
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='right']
+	.interface-complementary-area__fill,
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='right']
+	.interface-complementary-area {
+	width: var(--blockera-primary-sidebar-width, 300px) !important;
+	min-width: var(--blockera-primary-sidebar-width, 300px) !important;
+}
+
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='left']
+	.interface-complementary-area__fill,
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='left']
+	.interface-complementary-area {
+	width: var(--blockera-secondary-sidebar-width, 350px) !important;
+	min-width: var(--blockera-secondary-sidebar-width, 350px) !important;
 }
 
 .editor-editor-interface
@@ -271,11 +294,22 @@ body.has-blockera-complementary-overlay .interface-interface-skeleton__sidebar {
 	order: 2;
 	flex-shrink: 0;
 	display: flex;
+	justify-content: flex-start;
 	overflow: hidden;
 	background: #ffffff;
 	color: #1e1e1e;
+	width: 0;
+	transition: width 0.35s cubic-bezier(0.6, 0, 0.4, 1);
 	--sidebar-width: var(--blockera-primary-sidebar-width, 300px);
 	--sidebar-width-raw: var(--blockera-primary-sidebar-width, 300px);
+
+	&:has(.blockera-primary-sidebar-content.is-visible) {
+		width: var(--sidebar-width);
+	}
+
+	&:has(.is-resizing) {
+		transition: none !important;
+	}
 
 	@media (min-width: 782px) {
 		position: relative !important;
@@ -293,19 +327,7 @@ body.has-blockera-complementary-overlay .interface-interface-skeleton__sidebar {
 	width: var(--sidebar-width);
 	height: 100%;
 	position: relative;
-	transition: all 0.35s cubic-bezier(0.6, 0, 0.4, 1);
-
-	&.is-resizing {
-		transition: none !important;
-	}
-}
-
-.blockera-primary-sidebar-content.is-visible {
-	margin-right: 0;
-}
-
-.blockera-primary-sidebar-content.is-hidden {
-	margin-right: calc(var(--sidebar-width) * -1);
+	flex-shrink: 0;
 }
 
 .interface-interface-skeleton__primary-sidebar-blockera:has(

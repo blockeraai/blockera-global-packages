@@ -20,7 +20,7 @@ import { ResizeHandle } from '../shared/ResizeHandle';
 import SecondarySidebar from './components/SecondarySidebar';
 import ToggleButton from './components/ToggleButton';
 import { useIsCanvasEditMode } from './hooks/useIsCanvasEditMode';
-import { DEFAULT_SIDEBAR_LAYOUT } from '../sidebar-layout/constants';
+import { DEFAULT_SIDEBAR_LAYOUT, SIDEBAR_CLIP_TRANSITION_MS } from '../sidebar-layout/constants';
 import { getVisibleDockSections } from '../sidebar-layout/layout';
 import { useSidebarDrag } from '../sidebar-layout/useSidebarDrag';
 import type { SidebarLayout } from '../sidebar-layout/types';
@@ -93,7 +93,6 @@ function SecondarySidebarContentUI() {
 		typeof setTimeout
 	> | null>(null);
 	const isInitialMountRef = useRef(true); // Track if this is the first render/page load
-	const wasContentRenderedRef = useRef(false); // Track if content was ever rendered
 
 	// Get sidebar visibility state from store
 	const isSecondaryOpen = useSelect((select) => {
@@ -143,10 +142,6 @@ function SecondarySidebarContentUI() {
 	const initialSidebarVisibleRef = useRef<boolean | null>(null);
 	if (initialSidebarVisibleRef.current === null) {
 		initialSidebarVisibleRef.current = isLeftDockActive;
-		// If sidebar is visible initially, content was rendered
-		if (isLeftDockActive) {
-			wasContentRenderedRef.current = true;
-		}
 	}
 
 	// Track if SecondarySidebar content should be rendered in DOM
@@ -157,6 +152,9 @@ function SecondarySidebarContentUI() {
 
 	// Track if content was just rendered (for toggle animation)
 	const [isContentJustRendered, setIsContentJustRendered] = useState(false);
+	const [isContentVisible, setIsContentVisible] = useState(
+		() => initialSidebarVisibleRef.current === true
+	);
 
 	// Monitor the state of default sidebars and keep them disabled
 	const { isInserterOpened, isListViewOpened } = useSelect((select) => {
@@ -197,38 +195,26 @@ function SecondarySidebarContentUI() {
 		);
 	}, [secondarySidebarWidth]);
 
-	// Apply visibility classes to SecondarySidebar content based on state
-	// Content animates margin-left: 0 (visible) or margin-left: -[width] (hidden)
-	// Note: Toggle open animation is handled by ref callback, not here
+	// Drive wrapper clip via React state so re-renders cannot reset is-visible.
 	useEffect(() => {
-		if (!sidebarContentRef.current) {
-			return;
-		}
-
 		if (isLeftDockActive) {
-			// Visible state
 			const isInitialMount = isInitialMountRef.current;
 
 			if (isInitialMount) {
-				// Initial mount: apply visible state immediately (no animation)
-				sidebarContentRef.current.classList.remove('is-hidden');
-				sidebarContentRef.current.classList.add('is-visible');
-				// Mark initial mount as done
 				isInitialMountRef.current = false;
-				setIsContentJustRendered(false);
+				if (initialSidebarVisibleRef.current) {
+					setIsContentVisible(true);
+					setIsContentJustRendered(false);
+				}
 			}
-			// Note: Toggle open animation is handled by ref callback, not here
 		} else {
-			// Hidden: set margin-left to negative width (slides off-screen)
-			sidebarContentRef.current.classList.remove('is-visible');
-			sidebarContentRef.current.classList.add('is-hidden');
-			// Mark initial mount as done if we're closing
+			setIsContentVisible(false);
 			if (isInitialMountRef.current) {
 				isInitialMountRef.current = false;
 			}
 			setIsContentJustRendered(false);
 		}
-	}, [isLeftDockActive, shouldRenderContent]);
+	}, [isLeftDockActive]);
 
 	// Initialize default sidebar reference and body class (runs once)
 	// Also set CSS variables early to ensure they're available for animations
@@ -267,7 +253,7 @@ function SecondarySidebarContentUI() {
 
 	// Handle SecondarySidebar content rendering and animation timing
 	// When opening: render immediately and animate in
-	// When closing: animate out, then remove from DOM after animation completes (1000ms)
+	// When closing: animate out, then remove from DOM after the clip transition
 	useEffect(() => {
 		// Clear any pending close animation timeout
 		if (closeAnimationTimeoutRef.current) {
@@ -287,21 +273,12 @@ function SecondarySidebarContentUI() {
 			if (!isInitialMount || !initialSidebarVisible) {
 				setIsContentJustRendered(true);
 			}
-
-			// Mark content as rendered after initial mount
-			if (!isInitialMount) {
-				wasContentRenderedRef.current = true;
-			}
-		} else if (sidebarContentRef.current) {
-			// Closing: start close animation, then remove content from DOM after animation completes
-			// Visibility classes are applied by the separate effect to trigger animation
-			// Wait for animation to complete (1000ms) before removing from DOM
+		} else if (shouldRenderContent) {
 			closeAnimationTimeoutRef.current = setTimeout(() => {
 				setShouldRenderContent(false);
 				closeAnimationTimeoutRef.current = null;
-			}, 350); // Match CSS transition duration
+			}, SIDEBAR_CLIP_TRANSITION_MS);
 		} else {
-			// If content not found, remove immediately
 			setShouldRenderContent(false);
 		}
 
@@ -312,7 +289,7 @@ function SecondarySidebarContentUI() {
 				closeAnimationTimeoutRef.current = null;
 			}
 		};
-	}, [isLeftDockActive]);
+	}, [isLeftDockActive, shouldRenderContent]);
 
 	// Handle resize callback - updates store width
 	const handleResize = (width: string) => {
@@ -330,9 +307,9 @@ function SecondarySidebarContentUI() {
 			</Fill>
 
 			<Fill name="blockera/slots/editor-secondary-sidebar">
-				{/* SecondarySidebar content - conditionally rendered, animates margin-left */}
+				{/* Wrapper width animates via :has(.is-visible); inner stays full width. */}
 				{/* On initial mount: render with is-visible if sidebar should be visible (no animation) */}
-				{/* On toggle open: render with is-hidden first, then effect changes to is-visible to trigger animation */}
+				{/* On toggle open: render with is-hidden first, then ref callback sets is-visible */}
 				{shouldRenderContent && (
 					<div
 						data-test="blockera-secondary-sidebar-content"
@@ -347,16 +324,10 @@ function SecondarySidebarContentUI() {
 									(isInitialMountRef.current &&
 										!initialSidebarVisibleRef.current));
 							if (el && isLeftDockActive && shouldAnimate) {
-								// Content was just rendered for toggle open - trigger animation
 								requestAnimationFrame(() => {
 									requestAnimationFrame(() => {
 										if (sidebarContentRef.current === el) {
-											sidebarContentRef.current.classList.remove(
-												'is-hidden'
-											);
-											sidebarContentRef.current.classList.add(
-												'is-visible'
-											);
+											setIsContentVisible(true);
 											setIsContentJustRendered(false);
 										}
 									});
@@ -364,25 +335,18 @@ function SecondarySidebarContentUI() {
 							}
 						}}
 						className={`blockera-secondary-sidebar-content ${
-							isInitialMountRef.current &&
-							isLeftDockActive &&
-							initialSidebarVisibleRef.current
-								? 'is-visible'
-								: 'is-hidden'
+							isContentVisible ? 'is-visible' : 'is-hidden'
 						}`}
 					>
-						{/* Resize handle - only show when sidebar is visible */}
-						{isLeftDockActive && (
-							<ResizeHandle
-								side="right"
-								isVisible={isLeftDockActive}
-								minWidth={280}
-								maxWidth={600}
-								defaultValue={defaultSecondarySidebarWidth}
-								onResize={handleResize}
-							/>
-						)}
-						<SecondarySidebar />
+						<ResizeHandle
+							side="right"
+							isVisible={isLeftDockActive}
+							minWidth={280}
+							maxWidth={600}
+							defaultValue={defaultSecondarySidebarWidth}
+							onResize={handleResize}
+						/>
+						<SecondarySidebar isDockOpen={shouldRenderContent} />
 					</div>
 				)}
 			</Fill>

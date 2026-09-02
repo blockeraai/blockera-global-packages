@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useEffect, useMemo, useRef } from '@wordpress/element';
+import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { useSelect, useDispatch, subscribe } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import {
@@ -21,7 +21,7 @@ import {
 } from './sidebar-shortcut-swap';
 import { toggleBothSidebars } from './toggle-both-sidebars';
 import SidebarDock from '../sidebar-layout/SidebarDock';
-import { DEFAULT_SIDEBAR_LAYOUT } from '../sidebar-layout/constants';
+import { DEFAULT_SIDEBAR_LAYOUT, SIDEBAR_CLIP_TRANSITION_MS } from '../sidebar-layout/constants';
 import { getVisibleDockSections } from '../sidebar-layout/layout';
 import { useSidebarDrag } from '../sidebar-layout/useSidebarDrag';
 import { useIsCanvasEditMode } from '../secondary-sidebar/hooks/useIsCanvasEditMode';
@@ -77,8 +77,14 @@ export default function PrimarySidebarController() {
 
 	// Cache DOM element reference to avoid repeated queries
 	const sidebarContainerRef = useRef<HTMLElement | null>(null);
-	// Track if this is the initial mount
+	const sidebarContentRef = useRef<HTMLDivElement | null>(null);
+	const closeAnimationTimeoutRef = useRef<ReturnType<
+		typeof setTimeout
+	> | null>(null);
 	const isInitialMountRef = useRef(true);
+	const initialSidebarVisibleRef = useRef<boolean | null>(null);
+	// Track if this is the initial mount for Gutenberg complementary width sync
+	const isComplementaryInitialMountRef = useRef(true);
 	// Track previous sidebar state to detect closing vs switching
 	const previousSidebarRef = useRef<string | null | undefined>(undefined);
 
@@ -131,6 +137,31 @@ export default function PrimarySidebarController() {
 		sidebarLayout,
 		'right',
 		!!activeComplementaryArea
+	);
+
+	const hasRightDockContent =
+		isCanvasEdit && (visibleRightSections.length > 0 || !!drag);
+	const hasRightDockContentRef = useRef(hasRightDockContent);
+	hasRightDockContentRef.current = hasRightDockContent;
+	const openAnimationFramesRef = useRef<number[]>([]);
+
+	const cancelOpenAnimation = () => {
+		openAnimationFramesRef.current.forEach((id) => {
+			cancelAnimationFrame(id);
+		});
+		openAnimationFramesRef.current = [];
+	};
+
+	if (initialSidebarVisibleRef.current === null) {
+		initialSidebarVisibleRef.current = hasRightDockContent;
+	}
+
+	const [shouldRenderContent, setShouldRenderContent] = useState(
+		hasRightDockContent
+	);
+	const [isContentJustRendered, setIsContentJustRendered] = useState(false);
+	const [isContentVisible, setIsContentVisible] = useState(
+		() => initialSidebarVisibleRef.current === true
 	);
 
 	// Update CSS variables on body whenever width changes
@@ -194,13 +225,13 @@ export default function PrimarySidebarController() {
 		}
 
 		// On mount: set --sidebar-width from store
-		if (isInitialMountRef.current) {
+		if (isComplementaryInitialMountRef.current) {
 			sidebarContainerRef.current.style.removeProperty('--sidebar-width');
 			sidebarContainerRef.current.style.removeProperty(
 				'--sidebar-width-raw'
 			);
 			previousSidebarRef.current = activeComplementaryArea;
-			isInitialMountRef.current = false;
+			isComplementaryInitialMountRef.current = false;
 			return;
 		}
 
@@ -214,21 +245,37 @@ export default function PrimarySidebarController() {
 			return;
 		}
 
-		// Case 2: Closing sidebar (no complementary area active) — animate width to 0.
+		// Case 2: Closing sidebar (no complementary area active).
+		// When the complementary overlay is active, close animation is driven by
+		// the Blockera dock wrapper clip; collapsing --sidebar-width here would
+		// hide the overlay instantly before the clip finishes.
 		if (wasAnySidebarOpen && !isAnySidebarOpen) {
-			sidebarContainerRef.current.style.setProperty(
-				'--sidebar-width',
-				'0'
-			);
-			sidebarContainerRef.current.style.removeProperty(
-				'--sidebar-width-raw'
-			);
+			if (
+				!document.body.classList.contains(
+					'has-blockera-complementary-overlay'
+				)
+			) {
+				sidebarContainerRef.current.style.setProperty(
+					'--sidebar-width',
+					'0'
+				);
+				sidebarContainerRef.current.style.removeProperty(
+					'--sidebar-width-raw'
+				);
+			}
 			previousSidebarRef.current = activeComplementaryArea;
 			return;
 		}
 
 		// Case 3: Opening any sidebar (core or third-party) — restore width from store.
+		// When settings lives in the Blockera right dock, wrapper clip + overlay sync
+		// drive the open animation; animating --sidebar-width here fights that.
 		if (!wasAnySidebarOpen && isAnySidebarOpen) {
+			if (sidebarLayout.complementary.dock === 'right') {
+				previousSidebarRef.current = activeComplementaryArea;
+				return;
+			}
+
 			// Ensure starting point is 0 for smooth animation
 			// Use requestAnimationFrame to ensure browser can animate the transition
 			const beforeComputed = window
@@ -335,28 +382,129 @@ export default function PrimarySidebarController() {
 
 		// Update previous sidebar state for next comparison
 		previousSidebarRef.current = activeComplementaryArea;
-	}, [activeComplementaryArea, isAnySidebarOpen, primarySidebarWidth]);
+	}, [activeComplementaryArea, isAnySidebarOpen, primarySidebarWidth, sidebarLayout]);
+
+	// Drive wrapper clip via React state so re-renders cannot reset is-visible.
+	useEffect(() => {
+		if (hasRightDockContent) {
+			const isInitialMount = isInitialMountRef.current;
+
+			if (isInitialMount) {
+				isInitialMountRef.current = false;
+				if (initialSidebarVisibleRef.current) {
+					setIsContentVisible(true);
+					setIsContentJustRendered(false);
+				}
+			}
+		} else {
+			cancelOpenAnimation();
+			setIsContentVisible(false);
+			if (isInitialMountRef.current) {
+				isInitialMountRef.current = false;
+			}
+			setIsContentJustRendered(false);
+		}
+	}, [hasRightDockContent]);
+
+	useEffect(() => () => cancelOpenAnimation(), []);
+
+	// Wrapper clip is only open when store says dock has content AND visibility allows it.
+	const wrapperVisible = hasRightDockContent && isContentVisible;
+
+	useEffect(() => {
+		if (closeAnimationTimeoutRef.current) {
+			clearTimeout(closeAnimationTimeoutRef.current);
+			closeAnimationTimeoutRef.current = null;
+		}
+
+		if (hasRightDockContent) {
+			const isInitialMount = isInitialMountRef.current;
+			const initialSidebarVisible = initialSidebarVisibleRef.current;
+
+			setShouldRenderContent(true);
+
+			if (!isInitialMount || !initialSidebarVisible) {
+				setIsContentJustRendered(true);
+			}
+		} else if (shouldRenderContent) {
+			closeAnimationTimeoutRef.current = setTimeout(() => {
+				setShouldRenderContent(false);
+				closeAnimationTimeoutRef.current = null;
+			}, SIDEBAR_CLIP_TRANSITION_MS);
+		} else {
+			setShouldRenderContent(false);
+		}
+
+		return () => {
+			if (closeAnimationTimeoutRef.current) {
+				clearTimeout(closeAnimationTimeoutRef.current);
+				closeAnimationTimeoutRef.current = null;
+			}
+		};
+	}, [hasRightDockContent, shouldRenderContent]);
 
 	// Handle resize callback - updates store width
 	const handleResize = (width: string) => {
 		setPrimarySidebarWidth(width);
 	};
 
-	const showRightDock =
-		isCanvasEdit && (visibleRightSections.length > 0 || !!drag);
-
 	return (
 		<>
 			{isCanvasEdit && (
 				<Fill name="blockera/slots/editor-primary-sidebar">
-					{showRightDock && (
+					{shouldRenderContent && (
 						<div
 							data-test="blockera-primary-sidebar-content"
-							className="blockera-primary-sidebar-content is-visible"
+							ref={(el) => {
+								sidebarContentRef.current = el;
+
+								const shouldAnimate =
+									isContentJustRendered &&
+									(!isInitialMountRef.current ||
+										(isInitialMountRef.current &&
+											!initialSidebarVisibleRef.current));
+								if (el && shouldAnimate) {
+									cancelOpenAnimation();
+									const outerFrame = requestAnimationFrame(() => {
+										const innerFrame = requestAnimationFrame(
+											() => {
+												openAnimationFramesRef.current =
+													openAnimationFramesRef.current.filter(
+														(id) =>
+															id !== innerFrame
+													);
+												if (
+													sidebarContentRef.current ===
+														el &&
+													hasRightDockContentRef.current
+												) {
+													setIsContentVisible(true);
+													setIsContentJustRendered(
+														false
+													);
+												}
+											}
+										);
+										openAnimationFramesRef.current.push(
+											innerFrame
+										);
+										openAnimationFramesRef.current =
+											openAnimationFramesRef.current.filter(
+												(id) => id !== outerFrame
+											);
+									});
+									openAnimationFramesRef.current.push(
+										outerFrame
+									);
+								}
+							}}
+							className={`blockera-primary-sidebar-content ${
+								wrapperVisible ? 'is-visible' : 'is-hidden'
+							}`}
 						>
 							<ResizeHandle
 								side="left"
-								isVisible={showRightDock}
+								isVisible={hasRightDockContent}
 								minWidth={280}
 								maxWidth={600}
 								defaultValue={defaultPrimarySidebarWidth}
@@ -364,7 +512,7 @@ export default function PrimarySidebarController() {
 							/>
 							<SidebarDock
 								dock="right"
-								isDockOpen={showRightDock}
+								isDockOpen={shouldRenderContent}
 							/>
 						</div>
 					)}

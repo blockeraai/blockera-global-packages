@@ -25,6 +25,8 @@
 
 ### Bug Fixes
 
+- Opening or closing the left or right sidebar now shifts the panel in and out
+  instead of popping it into place.
 - Settings no longer stay off-screen after a refresh when they are docked on
   the left; they follow the sidebar as it slides in.
 - Patterns and Media category columns now span the full sidebar height and
