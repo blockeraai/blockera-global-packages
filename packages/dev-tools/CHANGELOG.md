@@ -1,6 +1,9 @@
 ## Unreleased
 
 ### Development Notes
+- GP PHP unit on master: after a merge, if a check fails, open
+  `hotfix/php-unit-<sha>` and Slack the run plus PR (skip changelog-fold
+  pushes; feature PRs still run tests without a hotfix PR).
 - Agent GitHub CI: follow Cursor command `refactor-github-ci` when adding or
   changing workflows; glob rule `github-ci`. Shared `packages/dev-tools` must
   not hardcode the consumer path (`dev-tools-paths` workflow +
