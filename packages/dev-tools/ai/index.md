@@ -23,10 +23,14 @@ Platform-independent notes for agents working on shared Blockera packages. Curso
 
 ## Workflows
 
-- [changelog-and-readme.md](workflows/changelog-and-readme.md) — Unreleased inbox + README after a task
+- [changelog-and-readme.md](workflows/changelog-and-readme.md) — Unreleased inbox; heading by audience (`Development Notes` for internals)
 - [product-scripts-and-deps.md](workflows/product-scripts-and-deps.md) — installed deps; product npm/Composer scripts only
 - [php-performance.md](workflows/php-performance.md) — detailed PHP hot-path patterns (on demand)
 - [change-classification.md](workflows/change-classification.md) — LOCAL / CROSS-MODULE / CROSS-REPOSITORY / ARCHITECTURAL
+- [dev-tools-paths.md](workflows/dev-tools-paths.md) — origin vs consumer prefix; no hardcoded shared paths
+- [refactor-github-ci](../cursor/shared/commands/refactor-github-ci.md) — add or change GitHub workflows and shared CI
+- [commit](../cursor/shared/commands/commit.md) — local commits in one repo (no push)
+- [commit-and-sync](../cursor/shared/commands/commit-and-sync.md) — commit.md plus push; GP then consumer `submodule:bump` + push
 
 ## Packages
 

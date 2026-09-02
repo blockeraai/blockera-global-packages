@@ -16,10 +16,10 @@ Pick a class **before** a wide search. Depth must match blast radius. Cursor com
 - Touches only `extensions/libs/<one>/` + its tests → **LOCAL** (still check `compatibility/` and matching `StyleDefinitions` if CSS/attributes change — that upgrades to **CROSS-MODULE**).
 - Touches `packages/editor` JS **and** `php/StyleDefinitions` or `blocks-core` → **CROSS-MODULE**.
 - Changes a public export, attribute schema, or Pro `editor-pro/js/extensions/config/` → **CROSS-REPOSITORY** (ask for Pro).
-- Changes clone routing, autoloader, Unreleased fold, or submodule layout → **ARCHITECTURAL**.
+- Changes clone routing, autoloader, Unreleased fold, submodule layout, or GitHub CI (shared or consumer workflows) → **ARCHITECTURAL**. Follow Cursor command `refactor-github-ci` for workflow add/refactor. Shared path rule: [dev-tools-paths.md](dev-tools-paths.md).
 
 ## Evidence
 
 State the class in the plan (one line). Cite paths. If unsure between LOCAL and CROSS-MODULE, treat as CROSS-MODULE.
 
-Write-root: [../decisions/001-gp-write-root.md](../decisions/001-gp-write-root.md). Style work: [../domains/editor-style-pipeline.md](../domains/editor-style-pipeline.md). Inner blocks / states: [../domains/inner-blocks-and-block-states.md](../domains/inner-blocks-and-block-states.md). Free vs Pro: [../domains/free-vs-pro.md](../domains/free-vs-pro.md). Changelog fold: [../decisions/002-changelog-fold.md](../decisions/002-changelog-fold.md).
+Write-root: [../decisions/001-gp-write-root.md](../decisions/001-gp-write-root.md). Style work: [../domains/editor-style-pipeline.md](../domains/editor-style-pipeline.md). Inner blocks / states: [../domains/inner-blocks-and-block-states.md](../domains/inner-blocks-and-block-states.md). Free vs Pro: [../domains/free-vs-pro.md](../domains/free-vs-pro.md). Changelog fold: [../decisions/002-changelog-fold.md](../decisions/002-changelog-fold.md). GitHub CI: command `refactor-github-ci`. Shared paths: [dev-tools-paths.md](dev-tools-paths.md).

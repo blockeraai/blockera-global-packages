@@ -1,0 +1,15 @@
+---
+description: Follow refactor-github-ci when adding or changing GitHub workflows and shared CI under dev-tools
+globs: "**/.github/workflows/**,**/.github/actions/**,**/packages/dev-tools/github/**,**/packages/global-packages/packages/dev-tools/github/**"
+alwaysApply: false
+---
+
+# github-ci
+
+Glob-gated. When **adding** or **changing** GitHub workflows, composite actions, or shared job scripts, **open and follow** Cursor command `refactor-github-ci` (template `packages/dev-tools/cursor/shared/commands/refactor-github-ci.md`). Do not skip it because the workflow is new.
+
+Shared `packages/dev-tools/github/` is one implementation: knobs via `env:` / `with:` / flags — no product styles. Canonical: `packages/dev-tools/github/README.md` (consumers: prefix `packages/global-packages/`).
+
+Do **not** hardcode `packages/global-packages/packages/dev-tools/` inside shared github files. Resolve both layouts (`GITHUB_ACTION_PATH`, script dir, `resolve-dev-tools-root.sh`, `BLOCKERA_DEV_TOOLS_ROOT`). Paths: `packages/dev-tools/ai/workflows/dev-tools-paths.md`.
+
+Consumer product `.github/workflows/` **may** use the long consumer path. Do not edit another product’s workflow until the user agrees (`product-scope`).
