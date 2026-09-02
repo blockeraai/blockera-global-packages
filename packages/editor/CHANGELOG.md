@@ -34,6 +34,9 @@
 - Sidebar layout e2e waits for an active drop slot before releasing a panel,
   ends a leftover drag in afterEach, and re-enables settings from a closed
   complementary area so those cases do not flake.
+- Sidebar layout: e2e coverage that closing the left dock with the right dock
+  open does not collapse settings columns or flash Gutenberg’s empty settings
+  column.
 
 ### Bug Fixes
 - Closing the left sidebar no longer flashes Gutenberg's empty settings
