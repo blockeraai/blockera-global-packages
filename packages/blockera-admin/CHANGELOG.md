@@ -3,6 +3,8 @@
 ### Automated Tests
 - Fix block manager build e2e for dock-aware settings sidebar and text
   category enable/save flow.
+- Stabilize text category re-enable step: wait for category controls to load
+  and skip save when the category is already enabled (Cypress retries).
 
 ## [2.0.0] - 2026-08-31
 
