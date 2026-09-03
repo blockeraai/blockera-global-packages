@@ -4,6 +4,7 @@
 import {
 	findComplementaryHandleHost,
 	isSlideHostOpening,
+	shouldSyncOverlayFromHostResize,
 } from '../useComplementaryOverlay';
 
 describe('complementary overlay host', () => {
@@ -34,6 +35,27 @@ describe('complementary overlay host', () => {
 		expect(findComplementaryHandleHost()?.className).toBe(
 			'edit-widgets-sidebar__panel-tabs'
 		);
+	});
+});
+
+describe('shouldSyncOverlayFromHostResize', () => {
+	it('syncs while the dock clip is animating even if width is unchanged', () => {
+		expect(shouldSyncOverlayFromHostResize(300, 300, true)).toBe(true);
+	});
+
+	it('syncs the first observation before a width has been recorded', () => {
+		expect(shouldSyncOverlayFromHostResize(Number.NaN, 300, false)).toBe(
+			true
+		);
+	});
+
+	it('skips canvas height ticks that do not change dock width', () => {
+		expect(shouldSyncOverlayFromHostResize(300, 300, false)).toBe(false);
+		expect(shouldSyncOverlayFromHostResize(300, 300.2, false)).toBe(false);
+	});
+
+	it('syncs when the dock width changes for open/close or category columns', () => {
+		expect(shouldSyncOverlayFromHostResize(300, 580, false)).toBe(true);
 	});
 });
 

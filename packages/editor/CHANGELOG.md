@@ -41,6 +41,8 @@
 
 ### Automated Tests
 
+- Complementary overlay: unit coverage that height-only dock resizes do not
+  reposition settings while the sidebar is idle.
 - Sidebar docks: close buttons, header toggles, and Gutenberg show-inserter /
   show-settings APIs follow the panel’s current dock.
 - Sidebar layout e2e waits for an active drop slot before releasing a panel,
