@@ -1470,6 +1470,56 @@ async function setViewportSizeForScreenshot(page, viewport) {
 }
 
 /**
+ * Hide Blockera/Gutenberg sidebars for editor canvas screenshots.
+ *
+ * Keeps complementary settings mounted (Blockera styles stay in the canvas)
+ * while removing dock chrome and the 1px separator that appears when the
+ * iframe is narrower than `.is-root-container`.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {number} canvasWidth
+ * @return {Promise<void>}
+ */
+async function hideEditorSidebarsForScreenshot(page, canvasWidth = 1600) {
+	await page.evaluate((width) => {
+		document.body.classList.add('blockera-screenshot-prep');
+
+		let style = document.querySelector('style[data-blockera-screenshot-prep]');
+		if (!style) {
+			style = document.createElement('style');
+			style.setAttribute('data-blockera-screenshot-prep', 'true');
+			document.head.appendChild(style);
+		}
+
+		style.textContent = `
+			body.blockera-screenshot-prep .interface-interface-skeleton__primary-sidebar-blockera,
+			body.blockera-screenshot-prep .interface-interface-skeleton__secondary-sidebar-blockera,
+			body.blockera-screenshot-prep .interface-interface-skeleton__sidebar.blockera-complementary-overlay {
+				display: none !important;
+				width: 0 !important;
+				min-width: 0 !important;
+				max-width: 0 !important;
+				flex: 0 0 0 !important;
+				box-shadow: none !important;
+				visibility: hidden !important;
+				overflow: hidden !important;
+				pointer-events: none !important;
+			}
+
+			body.blockera-screenshot-prep iframe[name="editor-canvas"],
+			body.blockera-screenshot-prep iframe[name="editor-canvas"].blockera-in-breakpoint,
+			body.blockera-screenshot-prep iframe[name="editor-canvas"].is-zoomed-out {
+				width: ${width}px !important;
+				max-width: none !important;
+				border: none !important;
+				box-shadow: none !important;
+				outline: none !important;
+			}
+		`;
+	}, canvasWidth);
+}
+
+/**
  * Set editor viewport for screenshot.
  * Calculates the viewport height based on the editor container height.
  * Sets the viewport size to the calculated height.
@@ -1609,46 +1659,7 @@ async function setEditorViewportForScreenshot(
 		doc.head.appendChild(style);
 	}, finalWidth);
 
-	// Close settings panel when it is open. Do not wait on a stuck canvas
-	// navigation (WP e2e action timeout is 0).
-	// Keep Blockera's right dock open: closing it can unmount complementary
-	// settings and drop Blockera styles from the canvas before we screenshot
-	// `.is-root-container` (Gutenberg's pin is hidden, so legacy close never ran).
-	const settingsButton = page
-		.locator(
-			'.editor-header__settings button[aria-label="Settings"], button[aria-label="Settings"]'
-		)
-		.first();
-	try {
-		await settingsButton.waitFor({ state: 'visible', timeout: 5000 });
-		const isPressed = await settingsButton.getAttribute('aria-pressed', {
-			timeout: 2000,
-		});
-		if (isPressed === 'true') {
-			await settingsButton.click({ noWaitAfter: true, timeout: 5000 });
-		}
-	} catch {
-		// Header control missing — continue; sidebar is not required for snapshots.
-	}
-
-	// Close Secondary sidebar (if open)
-	const blockeraSecondaryToggle = page.locator(
-		'[data-test="blockera-secondary-sidebar-toggle"].is-pressed'
-	);
-	if ((await blockeraSecondaryToggle.count()) > 0) {
-		await page
-			.locator('[data-test="blockera-secondary-sidebar-toggle"]')
-			.click({ force: true });
-	} else {
-		// Check for buttons that would close the secondary sidebar
-		const hideSecondarySidebarButton = page.locator(
-			'.editor-header__toolbar button[aria-label="Hide secondary sidebar"]'
-		);
-		const hideButtonCount = await hideSecondarySidebarButton.count();
-		if (hideButtonCount > 0) {
-			await hideSecondarySidebarButton.first().click();
-		}
-	}
+	await hideEditorSidebarsForScreenshot(page, finalWidth);
 
 	await hideCanvasHeaderForScreenshot(page);
 
@@ -1822,15 +1833,22 @@ async function hideCanvasHeaderForScreenshot(page) {
 					parentDoc.head.appendChild(parentStyle);
 				}
 				parentStyle.textContent = `
-					iframe[name="editor-canvas"][data-blockera-screenshot-canvas] {
+					iframe[name="editor-canvas"][data-blockera-screenshot-canvas],
+					iframe[name="editor-canvas"][data-blockera-screenshot-canvas"].blockera-in-breakpoint,
+					iframe[name="editor-canvas"][data-blockera-screenshot-canvas"].is-zoomed-out {
 						transition: none !important;
 						overflow: visible !important;
+						border: none !important;
+						box-shadow: none !important;
+						outline: none !important;
 					}
 					.block-editor-iframe__scale-container:has(
 						> iframe[name="editor-canvas"][data-blockera-screenshot-canvas]
 					) {
 						overflow: visible !important;
 						height: auto !important;
+						border: none !important;
+						box-shadow: none !important;
 					}
 				`;
 			}
@@ -1872,6 +1890,8 @@ async function hideCanvasHeaderForScreenshot(page) {
 				min-height: 0 !important;
 				overflow: visible !important;
 				background-color: #fff !important;
+				border: none !important;
+				outline: none !important;
 			}
 
 			.is-root-container {
@@ -1879,6 +1899,9 @@ async function hideCanvasHeaderForScreenshot(page) {
 				min-height: 0 !important;
 				margin-bottom: 0 !important;
 				background-color: #fff !important;
+				border: none !important;
+				outline: none !important;
+				box-shadow: none !important;
 			}
 
 			body.blockera-zoom-active {
@@ -1979,5 +2002,6 @@ module.exports = {
 	applyDomSearchReplace,
 	setEditorViewportForScreenshot,
 	setFrontendViewportForScreenshot,
+	hideEditorSidebarsForScreenshot,
 	hideCanvasHeaderForScreenshot,
 };

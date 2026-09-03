@@ -3,6 +3,9 @@
 ### Development Notes
 - Open and close editor sidebars via Blockera dock toggles in Playwright
   helpers, with fallback to Gutenberg header controls.
+- Hide Blockera dock chrome (without unmounting settings) before editor
+  canvas screenshots so the sidebar separator line is not captured.
+- Strip breakpoint/zoom iframe borders during editor canvas screenshots.
 
 ## [3.0.0] - 2026-09-01
 
