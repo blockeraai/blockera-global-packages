@@ -5,6 +5,7 @@ import {
 import {
 	appendBlocks,
 	openBlockInserter,
+	openSettingsSidebar,
 } from '@blockera/dev-cypress/js/helpers/editor';
 import { resetPanelSettings } from '@blockera/dev-cypress/js/helpers';
 
@@ -64,6 +65,8 @@ describe('Block Manager Settings Testing ...', () => {
 
 			cy.getBlock('core/paragraph').click();
 
+			openSettingsSidebar('Block');
+
 			cy.getByAriaLabel('Add New Background').should('not.exist');
 		});
 	});
@@ -103,6 +106,8 @@ describe('Block Manager Settings Testing ...', () => {
 			});
 
 			cy.getBlock('core/paragraph').click();
+
+			openSettingsSidebar('Block');
 
 			cy.getByAriaLabel('Add New Background').should('exist');
 		});
@@ -158,9 +163,10 @@ describe('Block Manager Settings Testing ...', () => {
 
 		resetPanelSettings(false);
 
-		cy.getByDataTest('text-category=disable').click();
-
-		cy.getByDataTest('update-settings').as('update');
+		cy.getByDataTest('text-category=disable').click({ force: true });
+		cy.getByDataTest('update-settings')
+			.should('not.be.disabled')
+			.as('update');
 
 		cy.get('@update').then(() => {
 			cy.get('@update').click();
@@ -169,6 +175,8 @@ describe('Block Manager Settings Testing ...', () => {
 			createPost();
 
 			appendBlocks(textBlocksCode);
+
+			openSettingsSidebar('Block');
 
 			cy.getBlock('core/details').first().click();
 			cy.getByAriaLabel('Add New Background').should('not.exist');
@@ -210,47 +218,62 @@ describe('Block Manager Settings Testing ...', () => {
 	it('blockera should support all WordPress core blocks inside Text category', () => {
 		cy.get('.blockera-settings-active-panel').should('be.visible');
 
-		resetPanelSettings(false);
-
 		cy.getByDataTest('text-category=enable').click({ force: true });
+		cy.getByDataTest('update-settings')
+			.should('not.be.disabled')
+			.as('update');
 
-		cy.wait(2000);
+		cy.get('@update').then(() => {
+			cy.get('@update').click();
+			cy.wait(2000);
 
-		createPost();
+			createPost();
 
-		appendBlocks(textBlocksCode);
+			appendBlocks(textBlocksCode);
 
-		cy.getBlock('core/details').first().click();
-		cy.getByAriaLabel('Add New Background');
+			cy.getBlock('core/details').first().click();
+			openSettingsSidebar('Block');
+			cy.getByAriaLabel('Add New Background').should('exist');
 
-		cy.getBlock('core/code').first().click();
-		cy.getByAriaLabel('Add New Background');
+			cy.getBlock('core/code').first().click();
+			openSettingsSidebar('Block');
+			cy.getByAriaLabel('Add New Background').should('exist');
 
-		cy.getBlock('core/heading').first().click();
-		cy.getByAriaLabel('Add New Background');
+			cy.getBlock('core/heading').first().click();
+			openSettingsSidebar('Block');
+			cy.getByAriaLabel('Add New Background').should('exist');
 
-		cy.getBlock('core/list').first().click();
-		cy.getByAriaLabel('Add New Background');
+			cy.getBlock('core/list').first().click();
+			openSettingsSidebar('Block');
+			cy.getByAriaLabel('Add New Background').should('exist');
 
-		cy.getBlock('core/list-item').first().click();
-		cy.getByAriaLabel('Add New Background');
+			cy.getBlock('core/list-item').first().click();
+			openSettingsSidebar('Block');
+			cy.getByAriaLabel('Add New Background').should('exist');
 
-		cy.getBlock('core/paragraph').first().click();
-		cy.getByAriaLabel('Add New Background');
+			cy.getBlock('core/paragraph').first().click();
+			openSettingsSidebar('Block');
+			cy.getByAriaLabel('Add New Background').should('exist');
 
-		cy.getBlock('core/preformatted').first().click();
-		cy.getByAriaLabel('Add New Background');
+			cy.getBlock('core/preformatted').first().click();
+			openSettingsSidebar('Block');
+			cy.getByAriaLabel('Add New Background').should('exist');
 
-		cy.getBlock('core/pullquote').first().click();
-		cy.getByAriaLabel('Add New Background');
+			cy.getBlock('core/pullquote').first().click();
+			openSettingsSidebar('Block');
+			cy.getByAriaLabel('Add New Background').should('exist');
 
-		cy.getBlock('core/quote').first().click();
-		cy.getByAriaLabel('Add New Background');
+			cy.getBlock('core/quote').first().click();
+			openSettingsSidebar('Block');
+			cy.getByAriaLabel('Add New Background').should('exist');
 
-		cy.getBlock('core/table').first().click();
-		cy.getByAriaLabel('Add New Background');
+			cy.getBlock('core/table').first().click();
+			openSettingsSidebar('Block');
+			cy.getByAriaLabel('Add New Background').should('exist');
 
-		cy.getBlock('core/verse').first().click();
-		cy.getByAriaLabel('Add New Background');
+			cy.getBlock('core/verse').first().click();
+			openSettingsSidebar('Block');
+			cy.getByAriaLabel('Add New Background').should('exist');
+		});
 	});
 });

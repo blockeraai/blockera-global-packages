@@ -1,3 +1,9 @@
+## Unreleased
+
+### Automated Tests
+- Fix block manager build e2e for dock-aware settings sidebar and text
+  category enable/save flow.
+
 ## [2.0.0] - 2026-08-31
 
 ### Changed
