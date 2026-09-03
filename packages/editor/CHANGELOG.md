@@ -28,6 +28,9 @@
   still open the sidebar those panels currently live in.
 - Complementary overlay sync no longer runs on every inspector `style`
   mutation; dock API bridge listens only to interface and editor stores.
+- Settings overlay observers watch only the dock clip and inserter menu, not
+  the inspector tree. Idle overlays skip clip-path and isolate inspector
+  layout from the canvas.
 - Enabling the settings sidebar opens its dock even when the previous disable
   transition was missed by the interface store subscriber.
 

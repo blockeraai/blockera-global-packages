@@ -133,6 +133,10 @@ function clipPathFromIntersection(
 	const right = Math.max(0, anchorRect.right - clipRect.right);
 	const bottom = Math.max(0, anchorRect.bottom - clipRect.bottom);
 	const left = Math.max(0, clipRect.left - anchorRect.left);
+	if (top === 0 && right === 0 && bottom === 0 && left === 0) {
+		return '';
+	}
+
 	return `inset(${top}px ${right}px ${bottom}px ${left}px)`;
 }
 
@@ -282,7 +286,11 @@ export function useComplementaryOverlay(
 			node.style.setProperty('height', `${overlayBox.height}px`, 'important');
 			node.style.setProperty('--sidebar-width', `${overlayBox.width}px`);
 			node.style.setProperty('--sidebar-width-raw', `${overlayBox.width}px`);
-			node.style.setProperty('clip-path', clipPath, 'important');
+			if (clipPath) {
+				node.style.setProperty('clip-path', clipPath, 'important');
+			} else {
+				node.style.removeProperty('clip-path');
+			}
 		};
 
 		const syncOnFrame = () => {
@@ -339,9 +347,6 @@ export function useComplementaryOverlay(
 		sync();
 		maybeStartTrackingForOpen();
 
-		if (anchorRef.current) {
-			observer.observe(anchorRef.current);
-		}
 		if (slideHost) {
 			observer.observe(slideHost);
 		}
@@ -352,24 +357,47 @@ export function useComplementaryOverlay(
 			syncOnFrame();
 			maybeStartTrackingForOpen();
 		});
+		const slideContent = slideHost?.querySelector(SLIDE_CONTENT_SELECTOR);
 		if (slideHost) {
 			classObserver.observe(slideHost, {
 				attributes: true,
 				attributeFilter: ['class'],
-				subtree: true,
 			});
 		}
-		const dock = anchorRef.current?.closest('.blockera-sidebar-dock');
-		const showPanelObserver = new MutationObserver(syncOnFrame);
-		if (dock) {
-			showPanelObserver.observe(dock, {
-				subtree: true,
+		if (slideContent) {
+			classObserver.observe(slideContent, {
 				attributes: true,
 				attributeFilter: ['class'],
 			});
 		}
+		const dock = anchorRef.current?.closest('.blockera-sidebar-dock');
+		const showPanelObserver = new MutationObserver(syncOnFrame);
+		const attachInserterMenuObserver = () => {
+			const menu = dock?.querySelector('.block-editor-inserter__menu');
+			if (menu) {
+				showPanelObserver.observe(menu, {
+					attributes: true,
+					attributeFilter: ['class'],
+				});
+			}
+		};
+		attachInserterMenuObserver();
+		const inserterPane = dock?.querySelector(
+			'[data-test="blockera-sidebar-pane-inserter"]'
+		);
+		const inserterMountObserver = new MutationObserver(
+			attachInserterMenuObserver
+		);
+		if (inserterPane) {
+			inserterMountObserver.observe(inserterPane, { childList: true });
+		}
+		const onSlideScroll = () => {
+			if (trackingSlide) {
+				syncOnFrame();
+			}
+		};
 		window.addEventListener('resize', syncOnFrame);
-		window.addEventListener('scroll', syncOnFrame, true);
+		window.addEventListener('scroll', onSlideScroll, true);
 		const unsubscribePosition = subscribeSidebarDrag(
 			syncOnFrame,
 			'position'
@@ -384,11 +412,12 @@ export function useComplementaryOverlay(
 			observer.disconnect();
 			classObserver.disconnect();
 			showPanelObserver.disconnect();
+			inserterMountObserver.disconnect();
 			slideHost?.removeEventListener('transitionstart', onTransitionStart);
 			slideHost?.removeEventListener('transitionend', onTransitionEnd);
 			slideHost?.removeEventListener('transitioncancel', onTransitionEnd);
 			window.removeEventListener('resize', syncOnFrame);
-			window.removeEventListener('scroll', syncOnFrame, true);
+			window.removeEventListener('scroll', onSlideScroll, true);
 			unsubscribePosition();
 			unsubscribeLayout();
 			clearOverlay(findSidebar());
