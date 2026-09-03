@@ -1,3 +1,11 @@
+## Unreleased
+
+### Development Notes
+- Add `openSettingsSidebar` Cypress helper for Blockera's right-dock settings
+  toggle, with fallback to Gutenberg's document sidebar pin.
+- Close the block inserter via Blockera's secondary sidebar toggle when the
+  left dock is open.
+
 ## [4.0.0] - 2026-09-01
 
 ### Development Notes

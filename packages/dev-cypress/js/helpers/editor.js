@@ -431,6 +431,15 @@ export function openBlockInserter(selector = false) {
 
 export function closeBlockInserter() {
 	return cy.get('body').then(($body) => {
+		const blockeraToggle = $body.find(
+			'[data-test="blockera-secondary-sidebar-toggle"].is-pressed'
+		);
+		if (blockeraToggle.length > 0) {
+			return cy
+				.getByDataTest('blockera-secondary-sidebar-toggle')
+				.click({ force: true });
+		}
+
 		const secondarySidebar = $body.find(
 			'[aria-label="Hide secondary sidebar"]'
 		);
@@ -438,6 +447,45 @@ export function closeBlockInserter() {
 			return cy.get('[aria-label="Hide secondary sidebar"]').click();
 		}
 		return cy;
+	});
+}
+
+/**
+ * Open the document or block settings sidebar.
+ * Uses Blockera's right-dock toggle when present; falls back to Gutenberg's pin.
+ *
+ * @param {'Post'|'Block'} tab
+ */
+export function openSettingsSidebar(tab = 'Block') {
+	return cy.get('body').then(($body) => {
+		const blockeraToggle = $body.find(
+			'[data-test="blockera-primary-sidebar-toggle"]'
+		);
+
+		if (blockeraToggle.length > 0) {
+			if (!blockeraToggle.hasClass('is-pressed')) {
+				cy.getByDataTest('blockera-primary-sidebar-toggle').click({
+					force: true,
+				});
+			}
+
+			cy.window().then((win) => {
+				const area =
+					tab === 'Block' ? 'edit-post/block' : 'edit-post/document';
+				win.wp?.data
+					?.dispatch('core/interface')
+					?.enableComplementaryArea?.('core', area);
+			});
+
+			return cy
+				.get(
+					'.editor-sidebar__panel-tabs button, .edit-post-sidebar__panel-tabs button, .edit-widgets-sidebar__panel-tabs button'
+				)
+				.contains(tab)
+				.click({ force: true });
+		}
+
+		return cy.openDocumentSettingsSidebar(tab);
 	});
 }
 
@@ -535,7 +583,7 @@ export function addBlockToPost(
 			}
 		});
 
-	cy.openDocumentSettingsSidebar('Block');
+	openSettingsSidebar('Block');
 
 	if (blockType) {
 		cy.getBlock(`${blockCategory}/${blockType}`).last().click();
@@ -636,7 +684,7 @@ export function appendBlocks(blocksCode) {
 
 	cy.get('button').contains('Exit code editor').click();
 
-	cy.openDocumentSettingsSidebar('Block');
+	openSettingsSidebar('Block');
 }
 
 /**
@@ -676,14 +724,7 @@ export function checkForBlockErrors(blockName) {
  * View the currently edited page on the front of site
  */
 export function viewPage() {
-	cy.get('button[aria-label="Settings"]').then((settingsButton) => {
-		if (
-			!Cypress.$(settingsButton).hasClass('is-pressed') &&
-			!Cypress.$(settingsButton).hasClass('is-toggled')
-		) {
-			cy.get(settingsButton).click();
-		}
-	});
+	openSettingsSidebar('Post');
 
 	cy.get('button[data-label="Post"]');
 
