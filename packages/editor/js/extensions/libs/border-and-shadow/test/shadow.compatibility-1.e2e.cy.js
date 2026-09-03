@@ -43,6 +43,18 @@ const SHADOW_PRESETS = [
 	},
 ];
 
+/**
+ * Select a button and open Blockera Box Shadows on the Styles tab.
+ * Exiting the code editor can leave the inspector on Settings (same as
+ * border.compatibility-2).
+ */
+function selectButtonBlockForBoxShadows() {
+	cy.getBlock('core/button').click();
+	cy.getByAriaControls('styles-view').click();
+	cy.getParentContainer('Box Shadows').as('container');
+	cy.addNewTransition();
+}
+
 describe('Shadow → WP Compatibility', () => {
 	beforeEach(() => {
 		createPost();
@@ -60,9 +72,7 @@ describe('Shadow → WP Compatibility', () => {
 <!-- /wp:buttons -->`
 			);
 
-			cy.getBlock('core/button').click();
-			cy.getParentContainer('Box Shadows').as('container');
-			cy.addNewTransition();
+			selectButtonBlockForBoxShadows();
 
 			assertBlockData((data) => {
 				const blockeraBoxShadow = getSelectedBlock(
@@ -109,9 +119,7 @@ describe('Shadow → WP Compatibility', () => {
 <!-- /wp:buttons -->`
 			);
 
-			cy.getBlock('core/button').click();
-			cy.getParentContainer('Box Shadows').as('container');
-			cy.addNewTransition();
+			selectButtonBlockForBoxShadows();
 
 			assertBlockData((data) => {
 				const blockeraBoxShadow = getSelectedBlock(
@@ -133,9 +141,7 @@ describe('Shadow → WP Compatibility', () => {
 <!-- /wp:buttons -->`
 			);
 
-			cy.getBlock('core/button').click();
-			cy.getParentContainer('Box Shadows').as('container');
-			cy.addNewTransition();
+			selectButtonBlockForBoxShadows();
 
 			cy.get('@container').within(() => {
 				cy.getByDataCy('group-control-header').click();

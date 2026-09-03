@@ -51,6 +51,9 @@
 - Sidebar layout: e2e coverage that closing the left dock with the right dock
   open does not collapse settings columns or flash Gutenberg’s empty settings
   column.
+- Shadow WP compatibility: Button cases open the Styles tab before looking
+  for Box Shadows, matching Border compatibility (code editor exit can leave
+  Settings selected).
 
 ### Bug Fixes
 - Closing the left sidebar no longer flashes Gutenberg's empty settings
