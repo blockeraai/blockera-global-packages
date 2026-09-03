@@ -31,6 +31,9 @@
 - Settings overlay observers watch only the dock clip and inserter menu, not
   the inspector tree. Idle overlays skip clip-path and isolate inspector
   layout from the canvas.
+- Settings overlay no longer repositions when only the canvas height changes,
+  so inspector edits (for example a Global Styles color) do not restyle the
+  dock. Overlay size is contained so those edits stay off the canvas.
 - Settings drag handle attaches when the complementary area changes, without
   observing inspector DOM mutations.
 - Enabling the settings sidebar opens its dock even when the previous disable

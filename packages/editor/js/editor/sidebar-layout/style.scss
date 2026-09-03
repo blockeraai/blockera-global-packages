@@ -275,7 +275,7 @@ body.has-blockera-complementary-overlay
 	overflow: hidden !important;
 	display: flex !important;
 	transition: none !important;
-	contain: layout;
+	contain: strict;
 }
 
 .interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='right'] {

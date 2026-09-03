@@ -93,6 +93,29 @@ function parseTargetSlideWidth(host: HTMLElement): number {
 	);
 }
 
+/**
+ * Canvas / Global Styles updates often change dock height (iframe content).
+ * Repositioning the complementary overlay on those ticks restyles the whole
+ * settings panel during inspector edits. Width still tracks open/close and
+ * category columns.
+ */
+export function shouldSyncOverlayFromHostResize(
+	previousWidth: number,
+	nextWidth: number,
+	trackingSlide: boolean,
+	epsilon = 0.5
+): boolean {
+	if (trackingSlide) {
+		return true;
+	}
+
+	if (!Number.isFinite(previousWidth)) {
+		return true;
+	}
+
+	return Math.abs(previousWidth - nextWidth) >= epsilon;
+}
+
 /** True while the dock wrapper is opening (clip width still growing). */
 export function isSlideHostOpening(host: HTMLElement | null): boolean {
 	if (!host) {
@@ -229,6 +252,7 @@ export function useComplementaryOverlay(
 		let lastWidth = Number.NaN;
 		let lastHeight = Number.NaN;
 		let lastClipPath = '';
+		let lastHostWidth = Number.NaN;
 
 		const sync = () => {
 			const anchor = anchorRef.current;
@@ -240,6 +264,9 @@ export function useComplementaryOverlay(
 			const anchorRect = anchor.getBoundingClientRect();
 			const slideHost = findSlideHost(anchor);
 			const hostRect = slideHost?.getBoundingClientRect();
+			if (hostRect) {
+				lastHostWidth = hostRect.width;
+			}
 			const overlayLeft = hostRect ? hostRect.left : anchorRect.left;
 			const overlayBox = new DOMRect(
 				overlayLeft,
@@ -319,16 +346,44 @@ export function useComplementaryOverlay(
 			sync();
 		};
 
+		const slideHost = anchorRef.current
+			? findSlideHost(anchorRef.current)
+			: null;
+		lastHostWidth = slideHost?.getBoundingClientRect().width ?? Number.NaN;
+
 		const maybeStartTrackingForOpen = () => {
 			if (isSlideHostOpening(slideHost)) {
 				startSlideTracking();
 			}
 		};
 
-		const observer = new ResizeObserver(syncOnFrame);
-		const slideHost = anchorRef.current
-			? findSlideHost(anchorRef.current)
-			: null;
+		const observer = new ResizeObserver((entries) => {
+			const entry = entries[0];
+			if (!entry) {
+				syncOnFrame();
+				return;
+			}
+
+			const borderBox = Array.isArray(entry.borderBoxSize)
+				? entry.borderBoxSize[0]
+				: entry.borderBoxSize;
+			const nextWidth = Number.isFinite(borderBox?.inlineSize)
+				? borderBox.inlineSize
+				: entry.contentRect.width;
+
+			if (
+				!shouldSyncOverlayFromHostResize(
+					lastHostWidth,
+					nextWidth,
+					trackingSlide
+				)
+			) {
+				return;
+			}
+
+			lastHostWidth = nextWidth;
+			syncOnFrame();
+		});
 
 		const onTransitionStart = (event: TransitionEvent) => {
 			if (event.propertyName !== 'width') {
