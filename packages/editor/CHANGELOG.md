@@ -28,6 +28,8 @@
   still open the sidebar those panels currently live in.
 - Complementary overlay sync no longer runs on every inspector `style`
   mutation; dock API bridge listens only to interface and editor stores.
+- Enabling the settings sidebar opens its dock even when the previous disable
+  transition was missed by the interface store subscriber.
 
 ### Automated Tests
 

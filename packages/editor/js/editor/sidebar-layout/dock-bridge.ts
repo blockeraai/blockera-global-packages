@@ -86,6 +86,16 @@ function setDockOpen(dock: SidebarDockId, open: boolean): void {
 	storeDispatch.setPrimarySidebarOpen(open);
 }
 
+function shouldOpenComplementaryDock(
+	complementary: string | null | undefined
+): boolean {
+	if (!complementary || applyingComplementary || complementaryCloseTimeout) {
+		return false;
+	}
+
+	return !isDockOpen(getSectionDock(getLayout(), 'complementary'));
+}
+
 function applyComplementaryForDock(dock: SidebarDockId, open: boolean): void {
 	if (getSectionDock(getLayout(), 'complementary') !== dock) {
 		return;
@@ -211,20 +221,17 @@ export function subscribeEditorSidebarApis(): () => void {
 
 			if (!primedComplementary) {
 				primedComplementary = true;
-				if (complementary && !applyingComplementary) {
-					openSection('complementary');
-				}
-				prevComplementary = complementary;
-			} else if (!applyingComplementary) {
-				if (complementary && !prevComplementary) {
-					openSection('complementary');
-				} else if (!complementary && prevComplementary) {
-					closeSection('complementary');
-				}
-				prevComplementary = complementary;
-			} else {
-				prevComplementary = complementary;
 			}
+
+			if (!applyingComplementary) {
+				if (!complementary && prevComplementary) {
+					closeSection('complementary');
+				} else if (shouldOpenComplementaryDock(complementary)) {
+					openSection('complementary');
+				}
+			}
+
+			prevComplementary = complementary;
 		} catch {
 			// Editor stores may be unavailable outside canvas edit.
 		}
