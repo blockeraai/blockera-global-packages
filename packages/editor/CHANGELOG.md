@@ -26,6 +26,8 @@
   buttons and Cmd/Ctrl+Shift+, / . always open or close the left and right
   sidebars. Gutenberg APIs that show the inserter, list view, or settings
   still open the sidebar those panels currently live in.
+- Complementary overlay sync no longer runs on every inspector `style`
+  mutation; dock API bridge listens only to interface and editor stores.
 
 ### Automated Tests
 

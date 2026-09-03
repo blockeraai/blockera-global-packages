@@ -355,7 +355,7 @@ export function useComplementaryOverlay(
 		if (slideHost) {
 			classObserver.observe(slideHost, {
 				attributes: true,
-				attributeFilter: ['class', 'style'],
+				attributeFilter: ['class'],
 				subtree: true,
 			});
 		}

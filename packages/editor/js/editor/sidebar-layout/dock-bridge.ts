@@ -191,7 +191,7 @@ export function subscribeEditorSidebarApis(): () => void {
 		prevComplementary = null;
 	}
 
-	return subscribe(() => {
+	const sync = () => {
 		try {
 			const editorSelect = select(editorStore) as EditorSelect;
 			const editorDispatch = dispatch(editorStore) as EditorDispatch;
@@ -228,5 +228,16 @@ export function subscribeEditorSidebarApis(): () => void {
 		} catch {
 			// Editor stores may be unavailable outside canvas edit.
 		}
-	});
+	};
+
+	// Only interface + editor stores affect this bridge; avoid running on every
+	// blockera/editor or core-data dispatch (e.g. inspector control updates).
+	const unsubscribeInterface = subscribe(sync, 'core/interface');
+	const unsubscribeEditor = subscribe(sync, 'core/editor');
+	sync();
+
+	return () => {
+		unsubscribeInterface();
+		unsubscribeEditor();
+	};
 }
