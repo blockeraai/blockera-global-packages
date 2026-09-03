@@ -15,7 +15,6 @@ import type { CSSProperties } from 'react';
  */
 import {
 	findComplementaryHandleHost,
-	findSidebar,
 	useComplementaryOverlay,
 } from './useComplementaryOverlay';
 import { applyFloatingPaneFromDrag } from './drag-session';
@@ -23,6 +22,7 @@ import SidebarPaneDragHandle from './SidebarPaneDragHandle';
 
 type ComplementaryAnchorProps = {
 	isActive: boolean;
+	complementaryAreaId?: string | null;
 	canDrag: boolean;
 	height: string;
 	isFloating?: boolean;
@@ -35,6 +35,7 @@ type ComplementaryAnchorProps = {
  */
 export default function ComplementaryAnchor({
 	isActive,
+	complementaryAreaId,
 	canDrag,
 	height,
 	isFloating,
@@ -56,20 +57,36 @@ export default function ComplementaryAnchor({
 			return;
 		}
 
+		let cancelled = false;
+		let frame = 0;
+		let attempts = 0;
+
 		const syncHost = () => {
+			if (cancelled) {
+				return;
+			}
+
 			const next = findComplementaryHandleHost();
-			setHandleHost((current) => (current === next ? current : next));
+			if (next) {
+				setHandleHost((current) => (current === next ? current : next));
+				return;
+			}
+
+			attempts += 1;
+			if (attempts < 60) {
+				frame = window.requestAnimationFrame(syncHost);
+			}
 		};
 
 		syncHost();
-		const observer = new MutationObserver(syncHost);
-		const sidebar = findSidebar();
-		if (sidebar) {
-			observer.observe(sidebar, { childList: true, subtree: true });
-		}
 
-		return () => observer.disconnect();
-	}, [isActive]);
+		return () => {
+			cancelled = true;
+			if (frame) {
+				window.cancelAnimationFrame(frame);
+			}
+		};
+	}, [isActive, complementaryAreaId]);
 
 	const handle = (
 		<SidebarPaneDragHandle

@@ -70,7 +70,8 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 
 	const lastPlaceholder = useRef('');
 
-	const { layout, heights, isComplementaryOpen } = useSelect(
+	const { layout, heights, isComplementaryOpen, complementaryAreaId } =
+		useSelect(
 		(select) => {
 			const storeSelect = select(blockeraEditorStore) as {
 				getSidebarLayout: () => SidebarLayout;
@@ -85,6 +86,9 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 				  }
 				| undefined;
 
+			const complementaryAreaId =
+				interfaceSelect?.getActiveComplementaryArea?.('core') ?? null;
+
 			return {
 				layout:
 					storeSelect.getSidebarLayout?.() ?? DEFAULT_SIDEBAR_LAYOUT,
@@ -94,8 +98,8 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 							FALLBACK_LEFT_HEIGHTS
 						: storeSelect.getRightDockPaneHeights?.() ??
 							FALLBACK_RIGHT_HEIGHTS,
-				isComplementaryOpen:
-					!!interfaceSelect?.getActiveComplementaryArea?.('core'),
+				isComplementaryOpen: !!complementaryAreaId,
+				complementaryAreaId,
 			};
 		},
 		[dock]
@@ -312,6 +316,7 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 		return (
 			<ComplementaryAnchor
 				isActive={complementaryOverlayActive}
+				complementaryAreaId={complementaryAreaId}
 				canDrag={canDrag}
 				height={useFlexFill ? '100%' : height}
 				isFloating={isFloating}
