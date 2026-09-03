@@ -6,6 +6,8 @@
 - Hide Blockera dock chrome (without unmounting settings) before editor
   canvas screenshots so the sidebar separator line is not captured.
 - Strip breakpoint/zoom iframe borders during editor canvas screenshots.
+- Target visible color controls in Playwright helpers when duplicate
+  inspector nodes exist under the complementary overlay.
 
 ## [3.0.0] - 2026-09-01
 

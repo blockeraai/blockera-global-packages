@@ -623,6 +623,7 @@ async function setControlledInputValue(locator, value) {
 async function setColorControlValue(page, label, value) {
 	const container = page
 		.locator(`[data-cy="base-control"]:has([aria-label="${label}"])`)
+		.filter({ visible: true })
 		.last();
 
 	await container.locator('[data-cy="color-btn"]').click({ force: true });
