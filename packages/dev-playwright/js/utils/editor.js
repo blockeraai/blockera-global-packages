@@ -396,6 +396,17 @@ async function openBlockInserter(page, selector = false) {
 		return;
 	}
 
+	// Prefer Blockera's left-dock inserter toggle when present.
+	const blockeraInserterToggle = page.locator(
+		'[data-test="blockera-secondary-sidebar-toggle"]:not(.is-pressed)'
+	);
+	if ((await blockeraInserterToggle.count()) > 0) {
+		await page
+			.locator('[data-test="blockera-secondary-sidebar-toggle"]')
+			.click();
+		return;
+	}
+
 	// Check if secondary sidebar toggle exists and click it if present
 	const sidebarToggle = page.locator(
 		'.edit-post-header [aria-label="Show secondary sidebar"]'
@@ -674,11 +685,7 @@ async function checkForBlockErrors(page, blockName) {
  * @return {Promise<void>}
  */
 async function viewPage(page) {
-	const settingsButton = page.locator('button[aria-label="Settings"]');
-	const isPressed = await settingsButton.getAttribute('aria-pressed');
-	if (isPressed !== 'true') {
-		await settingsButton.click();
-	}
+	await openDocumentSettingsSidebar(page, 'Post');
 
 	await page.locator('button[data-label="Post"]').waitFor();
 
@@ -1005,12 +1012,40 @@ async function closeWelcomeGuide(page) {
 
 /**
  * Open document settings sidebar.
+ * Uses Blockera's right-dock toggle when present; falls back to Gutenberg's pin.
  *
  * @param {import('@playwright/test').Page} page - Playwright page object.
  * @param {string} tab - Tab name ('Block' or 'Post').
  * @return {Promise<void>}
  */
 async function openDocumentSettingsSidebar(page, tab = 'Block') {
+	const blockeraToggle = page.locator(
+		'[data-test="blockera-primary-sidebar-toggle"]'
+	);
+
+	if ((await blockeraToggle.count()) > 0) {
+		const isPressed = await blockeraToggle.getAttribute('aria-pressed');
+		if (isPressed !== 'true') {
+			await blockeraToggle.click({ force: true });
+		}
+
+		const area = tab === 'Block' ? 'edit-post/block' : 'edit-post/document';
+		await page.evaluate((complementaryArea) => {
+			window.wp?.data
+				?.dispatch('core/interface')
+				?.enableComplementaryArea?.('core', complementaryArea);
+		}, area);
+
+		const tabButton = page.getByRole('tab', { name: tab, exact: true });
+
+		await tabButton.waitFor({ state: 'attached', timeout: 20000 });
+		const selected = await tabButton.getAttribute('aria-selected');
+		if (selected !== 'true') {
+			await tabButton.click({ force: true });
+		}
+		return;
+	}
+
 	const settingsButton = page
 		.locator(
 			'.editor-header__settings button[aria-label="Settings"], button[aria-label="Settings"]'

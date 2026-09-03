@@ -8,7 +8,7 @@ const { test, expect } = require('@wordpress/e2e-test-utils-playwright');
 /**
  * Internal dependencies
  */
-const { evaluateInEditorCanvas } = require('../utils/editor');
+const { evaluateInEditorCanvas, openDocumentSettingsSidebar } = require('../utils/editor');
 const { loginToSite, goTo } = require('../utils/site-navigation');
 
 test.beforeEach(async ({ page }) => {
@@ -1146,32 +1146,11 @@ async function openGlobalStylesPanel(page) {
 /**
  * Open settings panel.
  *
- * Waits for the editor to be ready and the button to be visible before clicking.
- * Uses proper Playwright click (not dispatchEvent) for actionability checks.
- * Idempotent: skips click if panel is already open.
- *
  * @param {import('@playwright/test').Page} page - Playwright page object.
  * @return {Promise<void>}
  */
 async function openSettingsPanel(page) {
-	const button = page
-		.locator(
-			'.interface-interface-skeleton button[aria-controls="edit-post:document"]'
-		)
-		.first();
-
-	await button.waitFor({ state: 'visible', timeout: 10000 });
-
-	const isPressed = await button.getAttribute('aria-pressed');
-	if (isPressed === 'true') {
-		return;
-	}
-
-	await button.click();
-
-	await expect(button).toHaveAttribute('aria-pressed', 'true', {
-		timeout: 5000,
-	});
+	await openDocumentSettingsSidebar(page, 'Post');
 }
 
 /**
@@ -1632,6 +1611,9 @@ async function setEditorViewportForScreenshot(
 
 	// Close settings panel when it is open. Do not wait on a stuck canvas
 	// navigation (WP e2e action timeout is 0).
+	// Keep Blockera's right dock open: closing it can unmount complementary
+	// settings and drop Blockera styles from the canvas before we screenshot
+	// `.is-root-container` (Gutenberg's pin is hidden, so legacy close never ran).
 	const settingsButton = page
 		.locator(
 			'.editor-header__settings button[aria-label="Settings"], button[aria-label="Settings"]'
@@ -1650,13 +1632,22 @@ async function setEditorViewportForScreenshot(
 	}
 
 	// Close Secondary sidebar (if open)
-	// Check for buttons that would close the secondary sidebar
-	const hideSecondarySidebarButton = page.locator(
-		'.editor-header__toolbar button[aria-label="Hide secondary sidebar"]'
+	const blockeraSecondaryToggle = page.locator(
+		'[data-test="blockera-secondary-sidebar-toggle"].is-pressed'
 	);
-	const hideButtonCount = await hideSecondarySidebarButton.count();
-	if (hideButtonCount > 0) {
-		await hideSecondarySidebarButton.first().click();
+	if ((await blockeraSecondaryToggle.count()) > 0) {
+		await page
+			.locator('[data-test="blockera-secondary-sidebar-toggle"]')
+			.click({ force: true });
+	} else {
+		// Check for buttons that would close the secondary sidebar
+		const hideSecondarySidebarButton = page.locator(
+			'.editor-header__toolbar button[aria-label="Hide secondary sidebar"]'
+		);
+		const hideButtonCount = await hideSecondarySidebarButton.count();
+		if (hideButtonCount > 0) {
+			await hideSecondarySidebarButton.first().click();
+		}
 	}
 
 	await hideCanvasHeaderForScreenshot(page);

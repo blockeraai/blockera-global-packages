@@ -1,3 +1,9 @@
+## Unreleased
+
+### Development Notes
+- Open and close editor sidebars via Blockera dock toggles in Playwright
+  helpers, with fallback to Gutenberg header controls.
+
 ## [3.0.0] - 2026-09-01
 
 ### Fixed
