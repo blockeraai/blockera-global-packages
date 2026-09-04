@@ -1,6 +1,7 @@
 /**
  * WordPress dependencies
  */
+import { store as blockEditorStore } from '@wordpress/block-editor';
 import { dispatch, select, subscribe } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
 
@@ -9,6 +10,10 @@ import { store as editorStore } from '@wordpress/editor';
  */
 import { store as blockeraEditorStore } from '../store-persistence';
 import { DEFAULT_SIDEBAR_LAYOUT, SIDEBAR_CLIP_TRANSITION_MS } from './constants';
+import {
+	fallbackSettingsComplementaryArea,
+	isGlobalStylesPinDeactivateEvent,
+} from './global-styles-pin';
 import { getSectionDock } from './layout';
 import type { SidebarDockId, SidebarLayout, SidebarSectionId } from './types';
 
@@ -40,6 +45,10 @@ type EditorSelect = {
 type EditorDispatch = {
 	setIsInserterOpened?: (value: boolean) => void;
 	setIsListViewOpened?: (value: boolean) => void;
+};
+
+type BlockEditorSelect = {
+	getBlockSelectionStart?: () => string | undefined;
 };
 
 let applyingComplementary = false;
@@ -94,6 +103,44 @@ function shouldOpenComplementaryDock(
 	}
 
 	return !isDockOpen(getSectionDock(getLayout(), 'complementary'));
+}
+
+function restoreSettingsComplementaryArea(): void {
+	const hasBlockSelection = !!(
+		select(blockEditorStore) as BlockEditorSelect
+	).getBlockSelectionStart?.();
+	const interfaceDispatch = dispatch('core/interface') as InterfaceDispatch;
+
+	applyingComplementary = true;
+	try {
+		interfaceDispatch.enableComplementaryArea?.(
+			'core',
+			fallbackSettingsComplementaryArea(!!hasBlockSelection)
+		);
+	} finally {
+		applyingComplementary = false;
+	}
+}
+
+function onGlobalStylesPinClick(event: Event): void {
+	if (!isGlobalStylesPinDeactivateEvent(event)) {
+		return;
+	}
+
+	if (applyingComplementary || complementaryCloseTimeout) {
+		return;
+	}
+
+	if (!isDockOpen(getSectionDock(getLayout(), 'complementary'))) {
+		return;
+	}
+
+	event.preventDefault();
+	event.stopPropagation();
+	if ('stopImmediatePropagation' in event) {
+		event.stopImmediatePropagation();
+	}
+	restoreSettingsComplementaryArea();
 }
 
 function applyComplementaryForDock(dock: SidebarDockId, open: boolean): void {
@@ -201,6 +248,8 @@ export function subscribeEditorSidebarApis(): () => void {
 		prevComplementary = null;
 	}
 
+	document.addEventListener('click', onGlobalStylesPinClick, true);
+
 	const sync = () => {
 		try {
 			const editorSelect = select(editorStore) as EditorSelect;
@@ -237,14 +286,17 @@ export function subscribeEditorSidebarApis(): () => void {
 		}
 	};
 
-	// Only interface + editor stores affect this bridge; avoid running on every
-	// blockera/editor or core-data dispatch (e.g. inspector control updates).
+	// Interface + editor + preferences: complementary hide is a preferences
+	// write, not an interface reducer update. Skip blockera/editor and core-data.
 	const unsubscribeInterface = subscribe(sync, 'core/interface');
 	const unsubscribeEditor = subscribe(sync, 'core/editor');
+	const unsubscribePreferences = subscribe(sync, 'core/preferences');
 	sync();
 
 	return () => {
+		document.removeEventListener('click', onGlobalStylesPinClick, true);
 		unsubscribeInterface();
 		unsubscribeEditor();
+		unsubscribePreferences();
 	};
 }

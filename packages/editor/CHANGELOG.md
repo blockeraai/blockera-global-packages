@@ -27,7 +27,8 @@
   sidebars. Gutenberg APIs that show the inserter, list view, or settings
   still open the sidebar those panels currently live in.
 - Complementary overlay sync no longer runs on every inspector `style`
-  mutation; dock API bridge listens only to interface and editor stores.
+  mutation; dock API bridge listens to interface, editor, and preferences
+  stores (complementary hide is a preferences write).
 - Settings overlay observers watch only the dock clip and inserter menu, not
   the inspector tree. Idle overlays skip clip-path and isolate inspector
   layout from the canvas.
@@ -63,6 +64,8 @@
   Settings selected).
 
 ### Bug Fixes
+- Clicking the header Styles control while Styles is already open switches
+  back to Settings instead of leaving the right sidebar empty.
 - Resetting General Settings now restores breakpoint sizes instead of keeping
   the last saved customizations.
 - Closing the left sidebar no longer flashes Gutenberg's empty settings
