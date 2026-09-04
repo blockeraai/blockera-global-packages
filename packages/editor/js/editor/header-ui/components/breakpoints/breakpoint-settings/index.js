@@ -5,7 +5,14 @@
  */
 import { __ } from '@wordpress/i18n';
 import { applyFilters } from '@wordpress/hooks';
-import { useMemo, memo, useCallback, useRef } from '@wordpress/element';
+import { dispatch } from '@wordpress/data';
+import {
+	useMemo,
+	memo,
+	useCallback,
+	useRef,
+	useEffect,
+} from '@wordpress/element';
 import type { MixedElement, ComponentType } from 'react';
 
 /**
@@ -82,6 +89,18 @@ const isBreakpointDeletable = (item: Object, breakpointId: string): boolean => {
 	return true;
 };
 
+const getMaxCustomBreakpointId = (items: Object): number => {
+	return Object.keys(items).reduce((maxId, key) => {
+		const match = /^custom-(\d+)$/.exec(key);
+
+		if (!match) {
+			return maxId;
+		}
+
+		return Math.max(maxId, parseInt(match[1], 10));
+	}, 0);
+};
+
 const BreakpointsSettings: ComponentType<BreakpointSettingsComponentProps> =
 	memo(
 		({
@@ -90,17 +109,11 @@ const BreakpointsSettings: ComponentType<BreakpointSettingsComponentProps> =
 			defaultValue,
 		}: BreakpointSettingsComponentProps): MixedElement => {
 			const customBreakpointIdRef = useRef(
-				Object.keys(breakpoints).reduce((maxId, key) => {
-					const match = /^custom-(\d+)$/.exec(key);
-
-					if (!match) {
-						return maxId;
-					}
-
-					return Math.max(maxId, parseInt(match[1], 10));
-				}, 0)
+				getMaxCustomBreakpointId(breakpoints)
 			);
 			const stableContextRef = useRef(null);
+			const lastParentBreakpointsRef = useRef(breakpoints);
+			const skipParentSyncRef = useRef(false);
 
 			const stableMergedRef = useRef(null);
 
@@ -183,6 +196,36 @@ const BreakpointsSettings: ComponentType<BreakpointSettingsComponentProps> =
 				return `custom-${customBreakpointIdRef.current}`;
 			}, []);
 
+			const handleChange = useCallback(
+				(newValue: Object) => {
+					skipParentSyncRef.current = true;
+					lastParentBreakpointsRef.current = newValue;
+					onChange(newValue);
+				},
+				[onChange]
+			);
+
+			useEffect(() => {
+				if (skipParentSyncRef.current) {
+					skipParentSyncRef.current = false;
+					lastParentBreakpointsRef.current = breakpoints;
+					return;
+				}
+
+				if (isEquals(breakpoints, lastParentBreakpointsRef.current)) {
+					return;
+				}
+
+				lastParentBreakpointsRef.current = breakpoints;
+				customBreakpointIdRef.current =
+					getMaxCustomBreakpointId(breakpoints);
+
+				dispatch(REPEATER_STORE_NAME).modifyControlValue({
+					controlId: 'canvas-editor-breakpoints',
+					value: mergedBreakpoints,
+				});
+			}, [breakpoints, mergedBreakpoints]);
+
 			const popoverTitle = useCallback((itemId, item) => {
 				if (getBaseBreakpoint() === itemId) {
 					return item.label;
@@ -217,7 +260,7 @@ const BreakpointsSettings: ComponentType<BreakpointSettingsComponentProps> =
 							}
 							repeaterItemHeader={Header}
 							repeaterItemChildren={Fields}
-							onChange={onChange}
+							onChange={handleChange}
 							addNewButtonDataTest={'add-new-breakpoint'}
 							popoverClassName={controlClassNames(
 								'breakpoints-edit-popover'

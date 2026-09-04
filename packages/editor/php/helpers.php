@@ -2139,6 +2139,35 @@ if (! function_exists('blockera_sort_breakpoints')) {
 	}
 }
 
+if (! function_exists('blockera_get_default_breakpoints')) {
+
+	/**
+	 * Factory breakpoint definitions (config list), sorted and keyed by type.
+	 *
+	 * Use this for settings reset / defaultSettings. Do not use the runtime
+	 * breakpoints entity: that entity is the saved (possibly customized) list.
+	 *
+	 * @return array<string, array> Breakpoints keyed by type.
+	 */
+	function blockera_get_default_breakpoints(): array {
+
+		$breakpoints = blockera_core_config('breakpoints.list');
+
+		if (! is_array($breakpoints) || [] === $breakpoints) {
+			return [];
+		}
+
+		$sorted = blockera_sort_breakpoints($breakpoints);
+		$types  = array_column($sorted, 'type');
+
+		if ([] === $types || count($types) !== count($sorted)) {
+			return $breakpoints;
+		}
+
+		return array_combine($types, $sorted);
+	}
+}
+
 if (! function_exists('blockera_is_valid_block_type')) {
 
 	/**

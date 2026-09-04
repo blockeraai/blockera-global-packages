@@ -56,6 +56,8 @@
   Settings selected).
 
 ### Bug Fixes
+- Resetting General Settings now restores breakpoint sizes instead of keeping
+  the last saved customizations.
 - Closing the left sidebar no longer flashes Gutenberg's empty settings
   column beside the right dock.
 - Opening or closing the left or right sidebar now shifts the panel in and out
