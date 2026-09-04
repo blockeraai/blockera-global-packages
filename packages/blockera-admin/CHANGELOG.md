@@ -3,6 +3,7 @@
 ### Improvements
 - The dashboard shows snackbar confirmations after updating or resetting
   settings.
+- Purging cache and regenerating assets shows a snackbar confirmation.
 
 ### Bug Fixes
 - Resetting the General Settings tab now restores factory breakpoint sizes

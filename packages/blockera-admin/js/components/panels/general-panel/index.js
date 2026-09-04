@@ -18,6 +18,7 @@ import {
 	Button,
 	ToggleControl,
 	ControlContextProvider,
+	createSnackbarNotice,
 } from '@blockera/controls';
 import { Icon } from '@blockera/icons';
 import { BreakpointsSettings } from '@blockera/editor/js/editor/header-ui';
@@ -72,11 +73,23 @@ export const GeneralPanel = (): MixedElement => {
 						regenerated: true,
 						regenerating: false,
 					});
+					createSnackbarNotice({
+						id: 'blockera-settings-purge',
+						content: __('Cache purged.', 'blockera'),
+					});
 				} else {
 					setLoading({
 						regenerated: false,
 						regenerating: false,
 						error: true,
+					});
+					createSnackbarNotice({
+						id: 'blockera-settings-purge',
+						status: 'error',
+						content: __(
+							'An error occurred while purging the cache.',
+							'blockera'
+						),
 					});
 				}
 			})
@@ -85,6 +98,14 @@ export const GeneralPanel = (): MixedElement => {
 					regenerated: false,
 					regenerating: false,
 					error: true,
+				});
+				createSnackbarNotice({
+					id: 'blockera-settings-purge',
+					status: 'error',
+					content: __(
+						'An error occurred while purging the cache.',
+						'blockera'
+					),
 				});
 			});
 	};
@@ -212,6 +233,7 @@ export const GeneralPanel = (): MixedElement => {
 				<div className={'blockera-settings-general control-wrapper'}>
 					<Flex direction={'row'} gap={20} alignItems="center">
 						<Button
+							data-test="purge-cache"
 							disabled={loading.regenerating || loading.error}
 							onClick={regenerateAssets}
 							className={'blockera-settings-general control'}
