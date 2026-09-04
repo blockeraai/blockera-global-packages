@@ -13,6 +13,7 @@
 ### Automated Tests
 - Cover the default branded snackbar message and icon.
 - Assert the snackbar icon is vertically centered.
+- Assert a snackbar after deleting a variable from the picker.
 
 ## [4.0.0] - 2026-09-01
 

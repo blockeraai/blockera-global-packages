@@ -53,6 +53,10 @@ describe('Variable picker — delete active variable', () => {
 
 		deleteVariableFromVariablePicker(slug);
 
+		cy.getByDataTest('blockera-snackbar-list')
+			.contains(`Deleted "${presetName}" variable.`)
+			.should('be.visible');
+
 		cy.get('@container').within(() => {
 			cy.get('[data-test="value-addon-deleted"]').should('not.exist');
 			cy.get('[data-test="value-addon-normal"]').should('not.exist');
