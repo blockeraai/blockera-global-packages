@@ -4,6 +4,9 @@
 - Snackbar notices wrap the WordPress snackbar and show the Blockera icon
   by default.
 
+### Improvements
+- Confirming a variable delete shows a snackbar.
+
 ### Bug Fixes
 - Vertically center the snackbar icon with the message.
 

@@ -18,6 +18,7 @@ import { Icon } from '@blockera/icons';
  */
 import { Modal, Flex, Button, NoticeControl, CheckboxControl } from '../../';
 import { ControlContextProvider } from '../../../context';
+import { createSnackbarNotice } from '../../snackbar';
 
 type ConfirmDeleteModalCopyProps = $ReadOnly<{
 	headerTitle?: string,
@@ -114,6 +115,21 @@ function ConfirmDeleteModal({
 						}}
 						onClick={() => {
 							handleRemoveItem(item);
+							const variableName =
+								item?.label || item?.name || '';
+							createSnackbarNotice({
+								id: 'blockera-variable-delete',
+								content: variableName
+									? sprintf(
+											/* translators: %s: Variable name. */
+											__(
+												'Deleted "%s" variable.',
+												'blockera'
+											),
+											variableName
+										)
+									: __('Deleted variable.', 'blockera'),
+							});
 						}}
 					>
 						{deleteButtonLabel}
