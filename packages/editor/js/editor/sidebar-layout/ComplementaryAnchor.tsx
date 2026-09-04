@@ -88,6 +88,60 @@ export default function ComplementaryAnchor({
 		};
 	}, [isActive, complementaryAreaId]);
 
+	// Gutenberg paints the Settings tab underline from tablist CSS vars
+	// `--selected-width` and `--selected-left` (scaleX on ::before). Core
+	// sizes those from getComputedStyle width, which can omit the extra
+	// start padding we add for the dock drag handle. Copy offsetWidth /
+	// offsetLeft onto the vars so the line spans the full selected tab.
+	useLayoutEffect(() => {
+		if (!isActive || !handleHost) {
+			return;
+		}
+
+		const syncCoreTablistIndicator = () => {
+			const tablist = handleHost.querySelector(
+				'[role="tablist"][aria-orientation="horizontal"]'
+			) as HTMLElement | null;
+			const selected = tablist?.querySelector<HTMLElement>(
+				'[role="tab"][aria-selected="true"]'
+			);
+			if (!tablist || !selected) {
+				return;
+			}
+
+			tablist.style.setProperty(
+				'--selected-width',
+				String(selected.offsetWidth)
+			);
+			tablist.style.setProperty(
+				'--selected-left',
+				String(selected.offsetLeft)
+			);
+		};
+
+		syncCoreTablistIndicator();
+		const afterCore = window.requestAnimationFrame(syncCoreTablistIndicator);
+		const resizeObserver = new ResizeObserver(syncCoreTablistIndicator);
+		resizeObserver.observe(handleHost);
+		const selected = handleHost.querySelector(
+			'[role="tab"][aria-selected="true"]'
+		);
+		if (selected) {
+			resizeObserver.observe(selected);
+		}
+
+		const onTabListClick = () => {
+			window.requestAnimationFrame(syncCoreTablistIndicator);
+		};
+		handleHost.addEventListener('click', onTabListClick);
+
+		return () => {
+			window.cancelAnimationFrame(afterCore);
+			resizeObserver.disconnect();
+			handleHost.removeEventListener('click', onTabListClick);
+		};
+	}, [isActive, handleHost, complementaryAreaId]);
+
 	const handle = (
 		<SidebarPaneDragHandle
 			className="blockera-sidebar-pane__drag-handle is-overlay is-complementary"

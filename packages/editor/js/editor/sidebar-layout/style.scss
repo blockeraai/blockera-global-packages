@@ -527,16 +527,17 @@ body.has-blockera-complementary-overlay
 	}
 }
 
-.blockera-complementary-overlay
-	.components-panel__header.editor-sidebar__panel-tabs,
-.blockera-sidebar-dock {
-	[aria-orientation="horizontal"] {
-		button[role="tab"]:first-child {
-			padding-inline: 24px 16px !important;
-		}
-
-		.blockera-component-tabs__list__item:first-child {
-			padding-inline: 24px 16px !important;
-		}
-	}
+.editor-sidebar__panel-tabs
+	[role="tablist"][aria-orientation="horizontal"]
+	> [role="tab"]:first-of-type,
+.blockera-sidebar-dock
+	.block-editor-tabbed-sidebar__tablist
+	> button[role="tab"]:first-of-type,
+.blockera-sidebar-dock
+	[aria-orientation="horizontal"]
+	.blockera-component-tabs__list__item:first-child {
+	/* Extra start padding for the dock drag handle. Core tabs size the
+	   active ::before from computed width; JS syncs --selected-width to
+	   offsetWidth so this padding is included. */
+	padding-inline: 24px 16px !important;
 }
