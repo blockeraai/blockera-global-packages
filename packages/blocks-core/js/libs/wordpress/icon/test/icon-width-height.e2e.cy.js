@@ -20,7 +20,7 @@ describe('core/icon → width sets height auto', () => {
 
 		cy.getBlock('core/icon').first().click();
 
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 
 		cy.get('.blockera-extension-icon').should('be.visible');
 
@@ -57,7 +57,7 @@ describe('core/icon → width sets height auto', () => {
 
 		cy.getBlock('core/icon').first().click();
 
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Height').within(() => {
 			cy.get('select').select('px', { force: true });
@@ -79,7 +79,7 @@ describe('core/icon → width sets height auto', () => {
 			expect(getSelectedBlock(data, 'blockeraHeight')).to.equal('32px');
 		});
 
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 
 		cy.get('.blockera-extension-icon').should('be.visible');
 

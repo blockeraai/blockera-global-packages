@@ -17,7 +17,7 @@ describe('useBlockSideEffects Testing ...', () => {
 		appendBlocks(SOCIAL_LINKS_BLOCK);
 		cy.getBlock('core/social-link').click();
 		cy.getBlock('core/social-links').click();
-		cy.getByAriaControls('settings-view').click({ force: true });
+		cy.switchBlockTab('settings', { force: true });
 
 		cy.get('[aria-labelledby*="-settings"]').should(
 			'have.not.css',
@@ -33,7 +33,7 @@ describe('useBlockSideEffects Testing ...', () => {
 
 		setBlockState('Hover');
 
-		cy.getByAriaControls('settings-view').click({ force: true });
+		cy.switchBlockTab('settings', { force: true });
 
 		cy.getByDataTest('blockera-availability').should(
 			'have.css',
@@ -50,7 +50,7 @@ describe('useBlockSideEffects Testing ...', () => {
 
 		setBlockState('Hover');
 
-		cy.getByAriaControls('settings-view').click({ force: true });
+		cy.switchBlockTab('settings', { force: true });
 
 		cy.getByDataTest('blockera-availability').should(
 			'have.css',

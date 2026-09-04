@@ -89,7 +89,7 @@ describe('Term Template Block', () => {
 		// 2. Check settings tab
 		//
 		setParentBlock();
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 
 		cy.get('.block-editor-block-inspector').within(() => {
 			// Commented as in WP 7.1, Layout settings are moved to styles tab.

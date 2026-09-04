@@ -104,7 +104,7 @@ describe('Flex layout → legacy keys migrate on input', () => {
 		appendBlocks(LEGACY_COLUMN_GROUP);
 
 		cy.getBlock('core/group').click();
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 		cy.getParentContainer('Flex Layout').should('exist');
 
 		assertBlockData((data) => {
@@ -167,7 +167,7 @@ describe('Flex layout → legacy keys migrate on input', () => {
 		appendBlocks(LEGACY_COLUMN_STRETCH_GROUP);
 
 		cy.getBlock('core/group').click();
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 		cy.getParentContainer('Flex Layout').should('exist');
 
 		assertBlockData((data) => {
@@ -228,7 +228,7 @@ describe('Flex layout → legacy keys migrate on input', () => {
 		appendBlocks(LEGACY_COLUMN_SPACE_BETWEEN_GROUP);
 
 		cy.getBlock('core/group').click();
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 		cy.getParentContainer('Flex Layout').should('exist');
 
 		assertBlockData((data) => {

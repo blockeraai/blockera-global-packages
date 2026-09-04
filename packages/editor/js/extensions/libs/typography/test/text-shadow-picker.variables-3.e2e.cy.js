@@ -40,7 +40,7 @@ describe('Global Styles text-shadow preset → value addon (Text Shadows)', () =
 		cy.getBlock('default').type('Hover preview text shadow paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openMoreFeaturesControl('More typography settings');
 
@@ -62,7 +62,7 @@ describe('Global Styles text-shadow preset → value addon (Text Shadows)', () =
 		cy.getBlock('default').type('Text shadow preset paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openMoreFeaturesControl('More typography settings');
 
@@ -97,7 +97,7 @@ describe('Global Styles text-shadow preset → value addon (Text Shadows)', () =
 		cy.getBlock('default').type('Text shadow edit paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openMoreFeaturesControl('More typography settings');
 

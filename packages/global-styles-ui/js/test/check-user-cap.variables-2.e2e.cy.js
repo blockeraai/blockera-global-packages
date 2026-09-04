@@ -43,7 +43,7 @@ function openTransformVariablePicker() {
 		'Global styles read-only; transform variable picker.',
 		{ delay: 0 }
 	);
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 
 	openRepeaterHeaderVariablePicker('Transforms');
 }

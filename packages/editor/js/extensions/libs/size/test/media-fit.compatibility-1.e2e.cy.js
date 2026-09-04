@@ -25,7 +25,7 @@ describe('Media Fit → WP Compatibility', () => {
 			// Select target block
 			cy.getBlock('core/image').click();
 
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 
 			// add alias to the feature container
 			cy.getParentContainer('Media Fit').as('container');
@@ -81,7 +81,7 @@ describe('Media Fit → WP Compatibility', () => {
 			// Select target block
 			cy.getBlock('core/image').click();
 
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 
 			// add alias to the feature container
 			cy.getParentContainer('Media Fit').as('container');

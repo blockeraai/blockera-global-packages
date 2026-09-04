@@ -36,7 +36,7 @@ describe('Global Styles transform preset → value addon (Transforms)', () => {
 		createPost();
 
 		cy.getBlock('default').type('Transform seed paragraph.', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Transforms', 'blockera-repeater-control')
 			.should('exist')
@@ -92,7 +92,7 @@ describe('Global Styles transform preset → value addon (Transforms)', () => {
 		cy.getBlock('default').type('Hover preview transform paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker('Transforms');
 
@@ -112,7 +112,7 @@ describe('Global Styles transform preset → value addon (Transforms)', () => {
 		cy.getBlock('default').type('Transform preset paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker('Transforms');
 
@@ -143,7 +143,7 @@ describe('Global Styles transform preset → value addon (Transforms)', () => {
 		createPost();
 
 		cy.getBlock('default').type('Transform edit paragraph.', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker('Transforms');
 		cy.selectValueAddonItem(slug);

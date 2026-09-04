@@ -23,7 +23,7 @@ function openMinWidthPickerAfterSeedingValue(value) {
 	createPost();
 
 	cy.getBlock('default').type('Min width variable picker.', { delay: 0 });
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 	cy.activateMoreSettingsItem('More Size Settings', 'Min Width');
 
 	if (value !== undefined && value !== null && value !== '') {

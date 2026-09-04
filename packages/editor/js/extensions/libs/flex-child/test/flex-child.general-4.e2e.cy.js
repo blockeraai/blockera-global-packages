@@ -20,7 +20,7 @@ describe('Flex Child', () => {
 			appendBlocks(code);
 
 			cy.getBlock('core/paragraph').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 		});
 
 		it('should not have flex-child block section, if parents display is not flex', () => {
@@ -39,13 +39,13 @@ describe('Flex Child', () => {
 			appendBlocks(code);
 
 			cy.getBlock('core/paragraph').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 		});
 
 		it('should have flex-child block section - 1', () => {
 			// Group block should not have the flex child block section
 			cy.getBlock('core/group').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 			cy.contains('Flex Child').should('not.exist');
 
 			// Wait for the block to be updated
@@ -53,7 +53,7 @@ describe('Flex Child', () => {
 
 			// Paragraph block should have the flex child block section
 			cy.getBlock('core/paragraph').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 			cy.contains('Flex Child').should('exist');
 
 			// Wait for the block to be updated
@@ -70,7 +70,7 @@ describe('Flex Child', () => {
 			cy.wait(200);
 
 			cy.getBlock('core/paragraph').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 			cy.contains('Flex Child').should('not.exist');
 
 			// Wait for the block to be updated
@@ -88,7 +88,7 @@ describe('Flex Child', () => {
 			cy.wait(200);
 
 			cy.getBlock('core/paragraph').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 			cy.contains('Flex Child').should('exist');
 		});
 

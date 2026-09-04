@@ -148,7 +148,7 @@ describe('media-image', () => {
 
 				cy.getIframeBody().getBlock('core/paragraph').first().click();
 
-				cy.getByAriaControls('styles-view').click();
+				cy.switchBlockTab('styles');
 
 				cy.getParentContainer('Image & Gradient').within(() => {
 					cy.getByDataCy('repeater-item').should('exist');

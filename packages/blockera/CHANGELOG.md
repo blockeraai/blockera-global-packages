@@ -2,6 +2,8 @@
 
 ### Automated Tests
 - Factory breakpoint helper returns config tablet sizes, not saved customizations.
+- Switch the block inspector with `switchBlockTab` in the Blocksy compatibility
+  spec.
 
 ## [2.0.0] - 2026-08-31
 

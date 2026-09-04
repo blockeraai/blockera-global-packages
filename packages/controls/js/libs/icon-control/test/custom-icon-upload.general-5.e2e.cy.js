@@ -19,7 +19,7 @@ describe('icon-control → custom SVG upload', () => {
 
 		cy.getBlock('core/button').click();
 
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 	});
 
 	it('should be able to upload custom svg when there is selected icon', () => {

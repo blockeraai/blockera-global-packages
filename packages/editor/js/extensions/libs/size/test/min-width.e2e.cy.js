@@ -14,7 +14,7 @@ describe('Min Width → Functionality', () => {
 		createPost();
 
 		cy.getBlock('default').type('This is test paragraph', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 	});
 
 	it('simple value - should update min-width when adding value', () => {

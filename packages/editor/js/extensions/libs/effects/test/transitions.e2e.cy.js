@@ -16,7 +16,7 @@ describe('Transitions → Functionality', () => {
 		cy.getBlock('default').type('This is test paragraph', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Transitions Timing').as('transition');
 

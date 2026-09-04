@@ -54,7 +54,7 @@ describe('Line Height variable picker → header add custom preset', () => {
 		cy.getBlock('default').type('Variable picker section add.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Line Height').within(() => {
 			cy.openValueAddon();
@@ -191,7 +191,7 @@ describe('Line Height variable picker → header add custom preset', () => {
 		cy.getBlock('default').type('Variable picker header add.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Line Height').within(() => {
 			cy.get('input[type="text"]').clear();
@@ -327,7 +327,7 @@ describe('Line Height variable picker → hover canvas preview', () => {
 		cy.getBlock('default').type('Hover preview line height paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Line Height').within(() => {
 			cy.openValueAddon();

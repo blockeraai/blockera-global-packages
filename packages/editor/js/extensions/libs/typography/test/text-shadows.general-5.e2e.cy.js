@@ -18,7 +18,7 @@ describe('Text Shadows → Functionality', () => {
 		cy.getBlock('default').type('This is test paragraph', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		// Open more settings
 		openMoreFeaturesControl('More typography settings');

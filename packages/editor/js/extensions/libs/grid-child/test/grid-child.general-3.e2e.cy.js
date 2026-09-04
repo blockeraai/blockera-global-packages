@@ -58,7 +58,7 @@ describe('Grid Child', () => {
 			appendBlocks(code);
 
 			cy.getBlock('core/paragraph').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 		});
 
 		it('should not show Grid Child when parent display is not grid', () => {
@@ -77,19 +77,19 @@ describe('Grid Child', () => {
 			appendBlocks(code);
 
 			cy.getBlock('core/paragraph').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 		});
 
 		it('should show Grid Child for blocks inside a grid parent', () => {
 			cy.getBlock('core/group').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 			cy.contains('Grid Child').should('not.exist');
 
 			// Wait for the block to be updated
 			cy.wait(200);
 
 			cy.getBlock('core/paragraph').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 			cy.contains('Grid Child').should('exist');
 
 			// Wait for the block to be updated
@@ -105,7 +105,7 @@ describe('Grid Child', () => {
 			cy.wait(200);
 
 			cy.getBlock('core/paragraph').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 			cy.contains('Grid Child').should('not.exist');
 
 			// Wait for the block to be updated
@@ -122,7 +122,7 @@ describe('Grid Child', () => {
 			cy.wait(200);
 
 			cy.getBlock('core/paragraph').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 			cy.contains('Grid Child').should('exist');
 		});
 

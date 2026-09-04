@@ -38,7 +38,7 @@ describe('Categories Block', () => {
 		//
 		// 1.0. Check icon extension & inner block
 		//
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 
 		cy.getByAriaLabel('Choose Icon…').click();
 
@@ -58,7 +58,7 @@ describe('Categories Block', () => {
 		setParentBlock();
 
 		// switch back to style tab
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		//
 		// 1.1. Block Styles
@@ -132,7 +132,7 @@ describe('Categories Block', () => {
 		// 2. Check settings tab
 		//
 		setParentBlock();
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 
 		// layout settings should be hidden
 		cy.get('.block-editor-block-inspector').within(() => {

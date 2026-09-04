@@ -71,7 +71,7 @@ describe('BlockBase testing ...', () => {
 	});
 
 	it('should exists blockeraId, blockeraFontColor, and blockera classnames values on selected block when changed text-color control', () => {
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		// Set value.
 		cy.setColorControlValue('Text Color', 'aaaaaa');
@@ -103,7 +103,7 @@ describe('BlockBase testing ...', () => {
 			cy.spy(win.console, 'error').as('consoleError');
 		});
 
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Text Color').within(() => {
 			cy.openValueAddon();
@@ -192,7 +192,7 @@ describe('WordPress style empty-object cleanup', () => {
 	});
 
 	it('does not save leftover empty style.typography after font-size set and reset', () => {
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Font Size').within(() => {
 			cy.get('input[type="text"]').clear({ force: true });
@@ -228,7 +228,7 @@ describe('WordPress style empty-object cleanup', () => {
 	});
 
 	it('does not save leftover empty style.typography after text-color set and reset', () => {
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.setColorControlValue('Text Color', '666666');
 
@@ -273,7 +273,7 @@ describe('Load-from-content unused Blockera attributes', () => {
 
 		cy.getBlock('core/paragraph').click();
 
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Font Size').within(() => {
 			cy.get('input[type="text"]').clear({ force: true });
@@ -308,7 +308,7 @@ describe('Load-from-content unused Blockera attributes', () => {
 
 		cy.getBlock('core/paragraph').click();
 
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Font Size').within(() => {
 			cy.get('input[type="text"]').clear({ force: true });

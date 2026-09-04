@@ -1,3 +1,9 @@
+## Unreleased
+
+### Automated Tests
+- Switch the block inspector with `switchBlockTab` instead of clicking
+  `styles-view` directly.
+
 ## [2.0.0] - 2026-08-31
 
 ### Fixed

@@ -26,14 +26,6 @@ import {
 	seedCustomPresetAndOpenPostEditor,
 } from '@blockera/dev-cypress/js/helpers/missing-variable';
 
-function ensureStylesViewOpen() {
-	cy.getByAriaControls('styles-view', { timeout: 20000 }).then(($btn) => {
-		if ($btn.attr('aria-expanded') !== 'true') {
-			cy.wrap($btn).click();
-		}
-	});
-}
-
 function closeOverlayPopover() {
 	cy.realPress('Escape');
 }
@@ -53,7 +45,7 @@ function runMissingVariableCombinedTest(config) {
 			`${config.id} missing variable paragraph.`,
 			{ delay: 0 }
 		);
-		ensureStylesViewOpen();
+		cy.switchBlockTab('styles', { timeout: 20000 });
 		config.beforeApply?.();
 		config.setContainerAlias?.();
 		config.applyVariable();
@@ -558,7 +550,7 @@ describe('Missing variable → recreate + unlink (consolidated per type)', () =>
 			blockContent: 'Missing transform without cached value',
 		});
 		cy.getBlock('core/paragraph').last().click({ force: true });
-		ensureStylesViewOpen();
+		cy.switchBlockTab('styles', { timeout: 20000 });
 		cy.getParentContainer('Transforms').as('container');
 		cy.get('@container').within(() => {
 			cy.get('[data-test="value-addon-deleted"]').should('exist');
@@ -583,7 +575,7 @@ describe('Missing variable → recreate + unlink (consolidated per type)', () =>
 			blockContent: 'Missing shadow without cached value',
 		});
 		cy.getBlock('core/paragraph').last().click({ force: true });
-		ensureStylesViewOpen();
+		cy.switchBlockTab('styles', { timeout: 20000 });
 		cy.getParentContainer('Box Shadows').as('container');
 		cy.get('@container').within(() => {
 			cy.get('[data-test="value-addon-deleted"]').should('exist');

@@ -22,7 +22,7 @@ describe('core/icon Block', () => {
 
 		cy.get('.blockera-extension-block-card').should('be.visible');
 
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 
 		cy.get('.blockera-extension-icon').should('be.visible');
 
@@ -128,7 +128,7 @@ describe('core/icon Block', () => {
 
 		cy.get('.blockera-extension-block-card').should('be.visible');
 
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 
 		cy.getBlock('core/icon').within(() => {
 			cy.get('svg').should('exist');

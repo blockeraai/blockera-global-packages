@@ -26,6 +26,8 @@ describe('Button Block', () => {
 
 		cy.getBlock('core/button').first().click();
 
+		cy.switchBlockTab('styles');
+
 		// Block supported is active
 		cy.get('.blockera-extension-block-card').should('be.visible');
 
@@ -133,7 +135,7 @@ describe('Button Block', () => {
 		//
 		// 2. Check settings tab
 		//
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 
 		cy.get('.block-editor-block-inspector').within(() => {
 			// block settings panel body should not exist (WP 7.1 fix)

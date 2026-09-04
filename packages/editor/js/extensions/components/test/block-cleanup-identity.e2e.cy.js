@@ -10,7 +10,7 @@ import {
 } from '@blockera/dev-cypress/js/helpers';
 
 function openStylesPanel() {
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 }
 
 function setFontSize(value) {

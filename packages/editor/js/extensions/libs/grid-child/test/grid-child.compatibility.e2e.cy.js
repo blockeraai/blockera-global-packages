@@ -39,7 +39,7 @@ describe('Compatibility: Grid Child ↔ WordPress style.layout', () => {
 		appendBlocks(columnSpanHydrateMarkup);
 
 		cy.getBlock('core/paragraph').click();
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 		cy.contains('Grid Child').should('exist');
 
 		//
@@ -95,7 +95,7 @@ describe('Compatibility: Grid Child ↔ WordPress style.layout', () => {
 		appendBlocks(rowSpanHydrateMarkup);
 
 		cy.getBlock('core/paragraph').click();
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 		cy.contains('Grid Child').should('exist');
 
 		//

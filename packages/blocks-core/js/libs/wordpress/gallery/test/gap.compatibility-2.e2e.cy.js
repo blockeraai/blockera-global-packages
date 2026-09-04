@@ -33,7 +33,7 @@ describe('Gallery Block → Gap → Compatibility', () => {
 
 			cy.getByAriaLabel('Select parent block: Gallery').click();
 
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 
 			cy.addNewTransition();
 
@@ -230,7 +230,7 @@ describe('Gallery Block → Gap → Compatibility', () => {
 
 			cy.getByAriaLabel('Select parent block: Gallery').click();
 
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 
 			cy.addNewTransition();
 
@@ -458,7 +458,7 @@ describe('Gallery Block → Gap → Compatibility', () => {
 
 			cy.getByAriaLabel('Select parent block: Gallery').click();
 
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 
 			cy.addNewTransition();
 
@@ -794,7 +794,7 @@ describe('Gallery Block → Gap → Compatibility', () => {
 
 			cy.getByAriaLabel('Select parent block: Gallery').click();
 
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 
 			cy.addNewTransition();
 

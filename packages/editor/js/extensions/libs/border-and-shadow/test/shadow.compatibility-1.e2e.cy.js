@@ -50,7 +50,7 @@ const SHADOW_PRESETS = [
  */
 function selectButtonBlockForBoxShadows() {
 	cy.getBlock('core/button').click();
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 	cy.getParentContainer('Box Shadows').as('container');
 	cy.addNewTransition();
 }
@@ -175,7 +175,7 @@ describe('Shadow → WP Compatibility', () => {
 			);
 
 			cy.getBlock('core/image').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 			cy.getParentContainer('Box Shadows').as('container');
 			cy.addNewTransition();
 

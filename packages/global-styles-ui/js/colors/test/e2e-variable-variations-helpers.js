@@ -48,7 +48,7 @@ export function openParagraphTextColorVariablePickerPopover() {
 	createPost();
 
 	cy.getBlock('default').type('Color variable variations.', { delay: 0 });
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 
 	cy.getParentContainer('Text Color').within(() => {
 		cy.openValueAddon();
@@ -682,7 +682,7 @@ export function openColorVariablePickerSearchTestPopover() {
 	waitForColorVariablePickerSearchFixturesInEditorStore();
 
 	cy.getBlock('default').type('Color variable variations.', { delay: 0 });
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 
 	cy.getParentContainer('Text Color').within(() => {
 		cy.openValueAddon();

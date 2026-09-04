@@ -75,7 +75,7 @@ describe('Comments Pagination Block', () => {
 		// 2. Check settings tab
 		//
 		setParentBlock();
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 
 		// layout settings should be hidden
 		cy.get('.block-editor-block-inspector').within(() => {

@@ -27,7 +27,7 @@ describe('Social Links Block → Gap → Compatibility', () => {
 
 			selectBlockByListView('Social Icons');
 
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 
 			cy.addNewTransition();
 
@@ -216,7 +216,7 @@ describe('Social Links Block → Gap → Compatibility', () => {
 
 			selectBlockByListView('Social Icons');
 
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 
 			cy.addNewTransition();
 
@@ -436,7 +436,7 @@ describe('Social Links Block → Gap → Compatibility', () => {
 
 			selectBlockByListView('Social Icons');
 
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 
 			cy.addNewTransition();
 
@@ -764,7 +764,7 @@ describe('Social Links Block → Gap → Compatibility', () => {
 
 			selectBlockByListView('Social Icons');
 
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 
 			cy.addNewTransition();
 

@@ -11,7 +11,7 @@ describe('Blend Mode → Functionality', () => {
 		createPost();
 
 		cy.getBlock('default').type('This is test paragraph', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.activateMoreSettingsItem(
 			'More Background Settings',

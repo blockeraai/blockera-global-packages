@@ -1,3 +1,10 @@
+## Unreleased
+
+### Automated Tests
+- Switch the block inspector with `switchBlockTab` instead of clicking
+  `styles-view` / `settings-view` directly. After selecting `core/button`,
+  open the Styles tab before asserting Blockera styles.
+
 ## [4.0.0] - 2026-09-01
 
 ### Changed

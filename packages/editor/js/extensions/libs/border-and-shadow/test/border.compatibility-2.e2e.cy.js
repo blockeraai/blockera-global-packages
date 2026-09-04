@@ -19,7 +19,7 @@ function selectButtonBlockForBorder({ last = false } = {}) {
 
 	chain.click({ force: last });
 
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 
 	cy.getParentContainer('Border').as('container');
 }

@@ -64,7 +64,7 @@ describe('Group Block → Grid layout → WP data compatibility', () => {
 		cy.checkActiveBlockVariation('group-grid');
 		cy.addNewTransition();
 
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.typeInInputByDataTest('layout-grid-minimum-column-width', '20rem');
 		cy.waitForAssertValue();
@@ -131,7 +131,7 @@ describe('Group Block → Grid layout → WP data compatibility', () => {
 		cy.checkActiveBlockVariation('group-grid');
 		cy.addNewTransition();
 
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Display').within(() => {
 			cy.getByAriaLabel('Flex').click();
@@ -171,7 +171,7 @@ describe('Group Block → Grid layout → WP data compatibility', () => {
 		cy.checkActiveBlockVariation('group-grid');
 		cy.addNewTransition();
 
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 		cy.typeInInputByDataTest('layout-grid-column-count', '');
 		cy.waitForAssertValue();
 

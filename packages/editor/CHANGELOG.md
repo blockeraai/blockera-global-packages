@@ -44,6 +44,8 @@
 
 ### Automated Tests
 
+- Switch the block inspector with `switchBlockTab` instead of clicking
+  `styles-view` / `settings-view` directly.
 - General Settings: customize a default breakpoint, save, reset the current
   tab, and assert min/max widths return to factory values.
 - Assert snackbars after settings update, reset, and purging cache.

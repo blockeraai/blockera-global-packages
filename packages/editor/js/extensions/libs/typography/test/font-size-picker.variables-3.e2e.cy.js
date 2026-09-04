@@ -55,7 +55,7 @@ describe('Font Size variable picker → header add custom preset', () => {
 		cy.getBlock('default').type('Variable picker section add.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Font Size').within(() => {
 			cy.openValueAddon();
@@ -192,7 +192,7 @@ describe('Font Size variable picker → header add custom preset', () => {
 		cy.getBlock('default').type('Variable picker header add.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Font Size').within(() => {
 			cy.get('input[type="text"]').clear();
@@ -328,7 +328,7 @@ describe('Font Size variable picker → hover canvas preview', () => {
 		cy.getBlock('default').type('Hover preview font size paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Font Size').within(() => {
 			cy.openValueAddon();

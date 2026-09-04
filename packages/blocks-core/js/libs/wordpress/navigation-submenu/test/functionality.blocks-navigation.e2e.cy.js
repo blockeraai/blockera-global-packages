@@ -117,11 +117,11 @@ describe(
 			cy.getByDataTest('add-new-block-state').click();
 
 			// Icon extension is active
-			cy.getByAriaControls('settings-view').click({ force: true });
+			cy.switchBlockTab('settings', { force: true });
 			cy.getByAriaLabel('Choose Icon…').should('exist');
 
 			// switch back to style tab
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 
 			// switch to parent navigation block
 			cy.get('.blockera-extension-block-card.master-block-card').within(
@@ -245,7 +245,7 @@ describe(
 			// no other item
 			cy.getByDataTest('core/paragraph').should('not.exist');
 
-			cy.getByAriaControls('styles-view').click({ force: true });
+			cy.switchBlockTab('styles', { force: true });
 
 			//
 			// 1. Edit Block

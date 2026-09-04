@@ -40,7 +40,7 @@ describe('Global Styles transition preset → value addon (Transitions Timing)',
 		cy.getBlock('default').type('Hover preview transition paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker(['Transitions Timing', 'Transitions']);
 
@@ -60,7 +60,7 @@ describe('Global Styles transition preset → value addon (Transitions Timing)',
 		cy.getBlock('default').type('Transition preset paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker(['Transitions Timing', 'Transitions']);
 
@@ -91,7 +91,7 @@ describe('Global Styles transition preset → value addon (Transitions Timing)',
 		createPost();
 
 		cy.getBlock('default').type('Transition edit paragraph.', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker(['Transitions Timing', 'Transitions']);
 		cy.selectValueAddonItem(slug);

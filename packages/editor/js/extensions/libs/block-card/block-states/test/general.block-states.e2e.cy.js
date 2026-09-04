@@ -105,7 +105,7 @@ describe('Block State E2E Test', () => {
 
 			setBlockState('Hover');
 
-			cy.getByAriaControls('settings-view').click();
+			cy.switchBlockTab('settings');
 
 			//In this assertion not available data attribute for this selector، Please don't be sensitive.
 			cy.get('button')

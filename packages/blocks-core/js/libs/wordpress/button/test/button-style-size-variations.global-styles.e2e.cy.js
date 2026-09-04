@@ -60,7 +60,7 @@ describe('core/button → style & size variations (Global Styles → editor → 
 		saveSiteEditorDirtyEntities();
 
 		//
-		// 3. Post editor → settings tab → insert core/button → pick customized size
+		// 3. Post editor → insert core/button → Styles tab → pick customized size
 		//
 		createPostClearingZoomStorage();
 		closeWelcomeGuide();
@@ -76,7 +76,7 @@ describe('core/button → style & size variations (Global Styles → editor → 
 
 		cy.getBlock('core/button').first().click();
 
-		cy.getByAriaControls('settings-view', { timeout: 30000 }).click();
+		cy.switchBlockTab('styles');
 
 		cy.get('.blockera-extension-block-card').should('be.visible');
 

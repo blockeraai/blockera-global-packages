@@ -24,7 +24,7 @@ describe('Image Block → Selectors test', () => {
 		// Select target block
 		cy.getBlock('core/image').click();
 
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		//
 		// Width

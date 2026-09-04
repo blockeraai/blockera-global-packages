@@ -70,7 +70,7 @@ describe('Latest Posts Block', () => {
 		// 2. Check settings tab
 		//
 		setParentBlock();
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 
 		cy.get('.block-editor-block-inspector').within(() => {
 			[

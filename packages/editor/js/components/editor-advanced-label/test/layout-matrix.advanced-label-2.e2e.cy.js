@@ -11,7 +11,7 @@ describe('Layout Matrix Control label testing (Flex Layout)', () => {
 		createPost();
 
 		cy.getBlock('default').type('This is test paragraph', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		// Set display
 		cy.getByAriaLabel('Flex').click();

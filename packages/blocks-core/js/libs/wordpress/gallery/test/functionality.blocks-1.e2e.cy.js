@@ -62,7 +62,7 @@ describe('Gallery Block', () => {
 			'padding-box'
 		);
 
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Clipping').within(() => {
 			cy.customSelect('Clip to Padding');
@@ -140,7 +140,7 @@ describe('Gallery Block', () => {
 		// 2. Check settings tab
 		//
 		setParentBlock();
-		cy.getByAriaControls('settings-view').click({ force: true });
+		cy.switchBlockTab('settings', { force: true });
 
 		// layout settings should be hidden
 		cy.get('.block-editor-block-inspector').within(() => {

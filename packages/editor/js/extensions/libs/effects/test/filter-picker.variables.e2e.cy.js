@@ -38,7 +38,7 @@ describe('Global Styles filter preset → value addon (Filters)', () => {
 		cy.getBlock('default').type('Hover preview filter paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker('Filters');
 
@@ -56,7 +56,7 @@ describe('Global Styles filter preset → value addon (Filters)', () => {
 		createPost();
 
 		cy.getBlock('default').type('Filter preset paragraph.', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker('Filters');
 
@@ -87,7 +87,7 @@ describe('Global Styles filter preset → value addon (Filters)', () => {
 		createPost();
 
 		cy.getBlock('default').type('Filter edit paragraph.', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker('Filters');
 		cy.selectValueAddonItem(slug);

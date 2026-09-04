@@ -33,7 +33,7 @@ describe('Variable picker — delete active variable', () => {
 		cy.getBlock('default').type('Delete active variable from picker.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Font Size').as('container');
 		cy.get('@container').within(() => {
@@ -87,7 +87,7 @@ describe('Variable picker — delete active variable', () => {
 		cy.getBlock('default').type('Delete non-active variable from picker.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Font Size').as('container');
 		cy.get('@container').within(() => {

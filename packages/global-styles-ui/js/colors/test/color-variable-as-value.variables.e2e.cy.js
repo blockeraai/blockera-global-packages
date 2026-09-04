@@ -150,7 +150,7 @@ describe('Global Styles UI → color variable as value for another variable', ()
 		cy.getBlock('default').type('Variable-as-value paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		cy.getParentContainer('Text Color').within(() => {
 			cy.openValueAddon();

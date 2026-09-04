@@ -130,7 +130,7 @@ describe('Archives Block', () => {
 		//
 		setParentBlock();
 
-		cy.getByAriaControls('settings-view').click();
+		cy.switchBlockTab('settings');
 
 		cy.get('.block-editor-block-inspector').within(() => {
 			// block settings panel body should be visible

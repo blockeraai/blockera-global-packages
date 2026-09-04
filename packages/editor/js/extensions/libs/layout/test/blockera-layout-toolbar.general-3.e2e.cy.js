@@ -50,7 +50,7 @@ function selectParentBlockFromChild() {
 
 function openFlexDisplayInBlockera() {
 	cy.addNewTransition();
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 
 	cy.getParentContainer('Display').within(() => {
 		cy.getByAriaLabel('Flex').then(($flexButton) => {

@@ -41,7 +41,7 @@ describe('Global Styles spacing preset → value addon (margin-top)', () => {
 		cy.getBlock('default').type('Hover preview spacing paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openBoxSpacingSide('margin-top');
 
@@ -69,7 +69,7 @@ describe('Global Styles spacing preset → value addon (margin-top)', () => {
 		createPost();
 
 		cy.getBlock('default').type('Spacing preset paragraph.', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		setBoxSpacingSide('margin-top', slug, true);
 
@@ -101,7 +101,7 @@ describe('Global Styles spacing preset → value addon (margin-top)', () => {
 		cy.getBlock('default').type('Spacing preset edit paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		setBoxSpacingSide('margin-top', slug, true);
 

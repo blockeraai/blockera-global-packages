@@ -100,7 +100,7 @@ describe('BlockBase re-render performance', () => {
 		createPostWithBlockBaseRenderDebug();
 		appendBlocks(PARAGRAPH_MARKUP);
 		cy.getBlock('core/paragraph').first().click();
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 	});
 
 	it('does not keep re-rendering every BlockBase while the editor is idle', () => {

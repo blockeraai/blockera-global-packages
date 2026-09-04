@@ -38,7 +38,7 @@ describe('Global Styles box-shadow preset → value addon (Box Shadows)', () => 
 		cy.getBlock('default').type('Hover preview shadow paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker('Box Shadows');
 
@@ -58,7 +58,7 @@ describe('Global Styles box-shadow preset → value addon (Box Shadows)', () => 
 		createPost();
 
 		cy.getBlock('default').type('Shadow preset paragraph.', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker('Box Shadows');
 
@@ -91,7 +91,7 @@ describe('Global Styles box-shadow preset → value addon (Box Shadows)', () => 
 		cy.getBlock('default').type('Shadow preset edit paragraph.', {
 			delay: 0,
 		});
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		openRepeaterHeaderVariablePicker('Box Shadows');
 		cy.selectValueAddonItem(slug);

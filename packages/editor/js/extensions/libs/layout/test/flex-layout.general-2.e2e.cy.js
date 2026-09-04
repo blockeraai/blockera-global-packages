@@ -142,7 +142,7 @@ function assertCoreLayoutToolbarSupportsRegistered() {
 
 function openFlexDisplayInBlockera() {
 	cy.addNewTransition();
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 
 	cy.getParentContainer('Display').within(() => {
 		cy.getByAriaLabel('Flex').then(($flexButton) => {
@@ -180,14 +180,6 @@ function openFlexColumnInBlockera() {
 	cy.getBlock('core/paragraph').first().click();
 	selectParentBlockFromChild();
 	openFlexDisplayInBlockera();
-}
-
-function ensureStylesViewOpen() {
-	cy.getByAriaControls('styles-view', { timeout: 20000 }).then(($btn) => {
-		if ($btn.attr('aria-expanded') !== 'true') {
-			cy.wrap($btn).click();
-		}
-	});
 }
 
 function getDirectionSuffix(type) {
@@ -342,7 +334,7 @@ function configureBlockMatrixAlignment(blockIndex, type, point) {
 	);
 
 	cy.getBlock('core/paragraph').eq(blockIndex).click();
-	ensureStylesViewOpen();
+	cy.switchBlockTab('styles', { timeout: 20000 });
 
 	ensureBlockDisplayFlex(blockIndex);
 
@@ -417,7 +409,7 @@ function configureBlockSpecialUnit(blockIndex, type, unit) {
 			: getAlignAxisSelectIndex(type);
 
 	cy.getBlock('core/paragraph').eq(blockIndex).click();
-	ensureStylesViewOpen();
+	cy.switchBlockTab('styles', { timeout: 20000 });
 
 	ensureBlockDisplayFlex(blockIndex);
 
@@ -459,7 +451,7 @@ describe('Flex Layout → Functionality', () => {
 		createPost();
 
 		cy.getBlock('default').type('This is test paragraph', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 
 		// change to flex
 		cy.getParentContainer('Display').within(() => {

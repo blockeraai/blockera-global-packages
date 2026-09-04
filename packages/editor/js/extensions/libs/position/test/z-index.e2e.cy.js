@@ -11,7 +11,7 @@ describe('z-index → Functionality', () => {
 		createPost();
 
 		cy.getBlock('default').type('This is test paragraph', { delay: 0 });
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 	});
 
 	it('z-index rendering + css generators', () => {

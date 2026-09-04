@@ -133,14 +133,14 @@ describe('Inspector → Styles Visibility (Inner Blocks)', () => {
 		cy.getBlock('core/paragraph').first().click();
 		cy.getByAriaLabel('Select Group').click();
 
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 		assertCoreStyleExtensionsHidden();
 
 		setInnerBlock('core/button');
 		assertCoreStyleExtensionsHidden();
 
 		setParentBlock();
-		cy.getByAriaControls('styles-view').click();
+		cy.switchBlockTab('styles');
 		assertCoreStyleExtensionsHidden();
 		});
 	});

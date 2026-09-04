@@ -74,7 +74,7 @@ describe('Typography MoreFeatures → promote edited features', () => {
 			cy.getBlock('default').type('This is test paragraph', {
 				delay: 0,
 			});
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 		});
 
 		it('does not promote while MoreFeatures is still open', () => {
@@ -153,7 +153,7 @@ describe('Typography MoreFeatures → promote edited features', () => {
 			);
 
 			cy.getBlock('core/paragraph').click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 		});
 
 		it('promotes saved letter spacing on block select', () => {
@@ -188,7 +188,7 @@ describe('Typography MoreFeatures → promote edited features', () => {
 			cy.getBlock('default').type('This is test paragraph', {
 				delay: 0,
 			});
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 		});
 
 		it('promotes the whole spacing group when word spacing is edited', () => {
@@ -221,7 +221,7 @@ describe('Typography MoreFeatures → promote edited features', () => {
 			);
 
 			cy.getBlock('core/paragraph').first().click();
-			cy.getByAriaControls('styles-view').click();
+			cy.switchBlockTab('styles');
 		});
 
 		it('demotes a reset feature after switching blocks', () => {
