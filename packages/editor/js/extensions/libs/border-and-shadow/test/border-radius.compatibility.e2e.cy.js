@@ -25,6 +25,8 @@ describe('Border Radius → WP Compatibility', () => {
 			// Select target block
 			cy.getBlock('core/button').click();
 
+			cy.switchBlockTab('styles');
+
 			// add alias to the feature container
 			cy.getParentContainer('Radius').as('container');
 
@@ -106,6 +108,8 @@ describe('Border Radius → WP Compatibility', () => {
 
 			// Select target block
 			cy.getBlock('core/button').click();
+
+			cy.switchBlockTab('styles');
 
 			// add alias to the feature container
 			cy.getParentContainer('Radius').as('container');
@@ -234,6 +238,8 @@ describe('Border Radius → WP Compatibility', () => {
 			// Select target block
 			cy.getBlock('core/button').click();
 
+			cy.switchBlockTab('styles');
+
 			// add alias to the feature container
 			cy.getParentContainer('Radius').as('container');
 
@@ -348,6 +354,8 @@ describe('Border Radius → WP Compatibility', () => {
 
 			// Select target block
 			cy.getBlock('core/button').click();
+
+			cy.switchBlockTab('styles');
 
 			// add alias to the feature container
 			cy.getParentContainer('Radius').as('container');
