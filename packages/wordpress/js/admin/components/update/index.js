@@ -17,7 +17,7 @@ import {
 /**
  * Blockera dependencies
  */
-import { Modal, Button, Flex } from '@blockera/controls';
+import { Modal, Button, Flex, createSnackbarNotice } from '@blockera/controls';
 import { Icon } from '@blockera/icons';
 import { classNames } from '@blockera/classnames';
 
@@ -161,8 +161,34 @@ export const Update = ({
 			}
 
 			setHasUpdates(isResetAction ? false : !hasUpdate);
+
+			if (isResetAction) {
+				createSnackbarNotice({
+					id: 'blockera-settings-reset',
+					content:
+						'reset-all' === type
+							? __('All settings reset.', 'blockera')
+							: sprintf(
+									/* translators: %s: Settings tab title, e.g. "General Settings". */
+									__('%s reset.', 'blockera'),
+									tab.title
+								),
+				});
+			} else {
+				createSnackbarNotice({
+					id: 'blockera-settings-save',
+					content: __('Settings updated.', 'blockera'),
+				});
+			}
 		} else {
 			setStatus(statuses.error);
+			createSnackbarNotice({
+				id: ['reset', 'reset-all'].includes(type)
+					? 'blockera-settings-reset'
+					: 'blockera-settings-save',
+				status: 'error',
+				content: statuses.error.label,
+			});
 		}
 
 		return response;

@@ -1,5 +1,8 @@
 ## Unreleased
 
+### Improvements
+- Settings Update, Reset tab, and Reset all now show a snackbar confirmation.
+
 ### Bug Fixes
 - Resetting a settings tab now restores that tab’s saved values in the
   dashboard instead of leaving the previous customizations in memory.
