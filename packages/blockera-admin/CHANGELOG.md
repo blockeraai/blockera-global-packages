@@ -12,6 +12,8 @@
 ### Automated Tests
 - Default settings inline script keeps factory tablet sizes when saved
   breakpoints were customized.
+- Settings update and tab reset show snackbar confirmations.
+- Purging cache from General Settings shows a snackbar confirmation.
 - Fix block manager build e2e for dock-aware settings sidebar and text
   category enable/save flow.
 - Stabilize text category re-enable step: wait for category controls to load

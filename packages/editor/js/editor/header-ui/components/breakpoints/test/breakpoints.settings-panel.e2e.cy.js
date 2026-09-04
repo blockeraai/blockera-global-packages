@@ -152,7 +152,15 @@ describe('Breakpoints Functionalities', () => {
 			cy.wait(2000);
 		});
 
+		cy.getByDataTest('blockera-snackbar-list')
+			.contains('Settings updated.')
+			.should('be.visible');
+
 		resetPanelSettings(false);
+
+		cy.getByDataTest('blockera-snackbar-list')
+			.contains('General Settings reset.')
+			.should('be.visible');
 
 		cy.getByDataTest('tablet').should('be.visible');
 		cy.getByDataTest('tablet').click();
@@ -200,6 +208,14 @@ describe('Breakpoints Functionalities', () => {
 		cy.selectIconByName('add-card');
 
 		cy.get('.blockera-control-icon-picker-modal').should('not.exist');
+	});
+
+	it('should show a snackbar after purging cache', () => {
+		cy.getByDataTest('purge-cache').should('be.visible').click();
+
+		cy.getByDataTest('blockera-snackbar-list')
+			.contains('Cache purged.')
+			.should('be.visible');
 	});
 });
 

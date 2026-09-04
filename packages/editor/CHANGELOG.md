@@ -43,6 +43,7 @@
 
 - General Settings: customize a default breakpoint, save, reset the current
   tab, and assert min/max widths return to factory values.
+- Assert snackbars after settings update, reset, and purging cache.
 - Complementary overlay: unit coverage that height-only dock resizes do not
   reposition settings while the sidebar is idle.
 - Sidebar docks: close buttons, header toggles, and Gutenberg show-inserter /
