@@ -5,6 +5,8 @@
   instead of keeping saved customizations.
 
 ### Automated Tests
+- Default settings inline script keeps factory tablet sizes when saved
+  breakpoints were customized.
 - Fix block manager build e2e for dock-aware settings sidebar and text
   category enable/save flow.
 - Stabilize text category re-enable step: wait for category controls to load
