@@ -952,6 +952,8 @@ export const registerCommands = () => {
 	Cypress.Commands.add('openGlobalStylesPanel', () => {
 		return cy
 			.get('button[aria-controls="edit-site:global-styles"]')
+			.filter(':visible')
+			.first()
 			.click({ force: true });
 	});
 

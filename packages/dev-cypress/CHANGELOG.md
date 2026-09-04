@@ -1,6 +1,8 @@
 ## Unreleased
 
 ### Development Notes
+- `openGlobalStylesPanel` clicks the first visible Styles pin when more than
+  one `aria-controls="edit-site:global-styles"` button is in the DOM.
 - Add `openSettingsSidebar` Cypress helper for Blockera's right-dock settings
   toggle, with fallback to Gutenberg's document sidebar pin.
 - Close the block inserter via Blockera's secondary sidebar toggle when the
