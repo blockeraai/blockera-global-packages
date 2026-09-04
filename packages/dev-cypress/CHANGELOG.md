@@ -5,8 +5,9 @@
   inspector tabs. Skips the click when that tab is already active.
 - Variable picker and companion helpers use `switchBlockTab`. Drop
   `ensureBlockeraStylesViewOpen`.
-- `openGlobalStylesPanel` clicks the first visible Styles pin when more than
-  one `aria-controls="edit-site:global-styles"` button is in the DOM.
+- `openGlobalStylesPanel` force-clicks the header Styles pin
+  (`.interface-pinned-items`), not a complementary-area close toggle that
+  shares `aria-controls="edit-site:global-styles"`.
 - Add `openSettingsSidebar` Cypress helper for Blockera's right-dock settings
   toggle, with fallback to Gutenberg's document sidebar pin.
 - Close the block inserter via Blockera's secondary sidebar toggle when the

@@ -951,8 +951,10 @@ export const registerCommands = () => {
 
 	Cypress.Commands.add('openGlobalStylesPanel', () => {
 		return cy
-			.get('button[aria-controls="edit-site:global-styles"]')
-			.filter(':visible')
+			.get(
+				'.editor-header .interface-pinned-items button[aria-controls="edit-site:global-styles"]',
+				{ timeout: 20000 }
+			)
 			.first()
 			.click({ force: true });
 	});
