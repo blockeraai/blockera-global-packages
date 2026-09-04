@@ -18,7 +18,7 @@ import {
 	SettingsContext,
 	handleCurrentActiveMenuPage,
 } from '@blockera/wordpress';
-import { Button, Flex, Promoter } from '@blockera/controls';
+import { Button, Flex, Promoter, SnackbarNotices } from '@blockera/controls';
 import { Icon } from '@blockera/icons';
 import {
 	componentClassNames,
@@ -337,6 +337,7 @@ export const Dashboard = (): MixedElement => {
 					/>
 				</SettingsContext.Provider>
 			</div>
+			<SnackbarNotices />
 		</>
 	);
 };
