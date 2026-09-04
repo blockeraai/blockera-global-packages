@@ -461,6 +461,10 @@ describe('Style Variations Inside Global Styles Panel → Functionality (Global 
 			.check();
 		cy.getByDataTest('delete-button').click();
 
+		cy.getByDataTest('blockera-snackbar-list')
+			.contains('Deleted "New Name" style variation.')
+			.should('be.visible');
+
 		cy.getByDataTest('style-new-id').should('not.exist');
 
 		assertBlockData((data) => {

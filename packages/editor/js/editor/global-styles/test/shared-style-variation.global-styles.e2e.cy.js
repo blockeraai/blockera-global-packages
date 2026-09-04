@@ -101,6 +101,10 @@ describe('Shared style variation updates across block types (Global Styles)', ()
 			.first()
 			.click();
 
+		cy.getByDataTest('blockera-snackbar-list')
+			.contains(`"E2E Shared ${styleSlug}" is now used on 2 blocks.`)
+			.should('be.visible');
+
 		cy.getByDataTest('save-usage-for-multiple-blocks-button', {
 			timeout: 20000,
 		}).should('not.exist');
