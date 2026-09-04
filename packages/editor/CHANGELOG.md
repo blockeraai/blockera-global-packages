@@ -56,7 +56,9 @@
 - Sidebar docks: close buttons, header toggles, and Gutenberg show-inserter /
   show-settings APIs follow the panel’s current dock.
 - Site Editor: clicking Styles while Styles is open returns to Settings and
-  keeps the right dock filled.
+  keeps the right dock filled. The spec force-clicks the header pin (Gutenberg
+  also mounts a hidden complementary close toggle with the same
+  `aria-controls`) so CI does not wait on jQuery `:visible`.
 - Global Styles actions for blocks: open Settings before clicking the Styles
   pin so selected block style still clears (the pin no longer toggles Styles
   off while it is already open).

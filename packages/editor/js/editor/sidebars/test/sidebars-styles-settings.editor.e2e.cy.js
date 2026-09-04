@@ -26,11 +26,18 @@ function complementaryArea(win) {
 		.getActiveComplementaryArea('core');
 }
 
+/**
+ * Gutenberg also renders a Styles close toggle inside the complementary area
+ * (`aria-controls="edit-site:global-styles"`). That copy is often not
+ * `:visible` on CI once the overlay is clipped or animating from width 0.
+ * Blockera's deactivate-to-Settings handler listens on the header pin, so
+ * target that node and force-click (jQuery `:visible` is too strict here).
+ */
+const STYLES_HEADER_PIN =
+	'.editor-header .interface-pinned-items button[aria-controls="edit-site:global-styles"]';
+
 function stylesPin() {
-	return cy
-		.get('button[aria-controls="edit-site:global-styles"]')
-		.filter(':visible')
-		.first();
+	return cy.get(STYLES_HEADER_PIN, { timeout: 20000 });
 }
 
 describe('Site Editor Styles pin and Settings panel', () => {
@@ -53,6 +60,14 @@ describe('Site Editor Styles pin and Settings panel', () => {
 			win.wp.data
 				.dispatch('core/interface')
 				.enableComplementaryArea('core', 'edit-post/document');
+			// Keep PinnedItems.Slot mounted: Gutenberg hides it when icon
+			// labels are on and the viewport is not `large` (common in CI).
+			win.wp.data
+				.dispatch('core/preferences')
+				.set('core', 'showIconLabels', false);
+			win.wp.data
+				.dispatch('core/interface')
+				.pinItem('core', 'edit-site/global-styles');
 		});
 
 		cy.getByDataTest('blockera-primary-sidebar-content').should(
@@ -62,6 +77,7 @@ describe('Site Editor Styles pin and Settings panel', () => {
 		cy.get('.editor-sidebar__panel-tabs', { timeout: 20000 }).should(
 			'exist'
 		);
+		stylesPin().should('exist');
 	});
 
 	it('should switch back to Settings when Styles is clicked while Styles is already open', () => {
@@ -70,7 +86,7 @@ describe('Site Editor Styles pin and Settings panel', () => {
 			expect(persistenceSelect(win).isPrimarySidebarOpen()).to.eq(true);
 		});
 
-		stylesPin().should('be.visible').click();
+		stylesPin().click({ force: true });
 
 		cy.window().should((win) => {
 			expect(complementaryArea(win)).to.eq('edit-site/global-styles');
@@ -83,7 +99,7 @@ describe('Site Editor Styles pin and Settings panel', () => {
 			'is-visible'
 		);
 
-		stylesPin().should('have.class', 'is-pressed').click();
+		stylesPin().should('have.class', 'is-pressed').click({ force: true });
 
 		cy.window().should((win) => {
 			expect(complementaryArea(win)).to.be.oneOf([
