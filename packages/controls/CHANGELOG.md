@@ -7,6 +7,10 @@
 ### Bug Fixes
 - Vertically center the snackbar icon with the message.
 
+### Automated Tests
+- Cover the default branded snackbar message and icon.
+- Assert the snackbar icon is vertically centered.
+
 ## [4.0.0] - 2026-09-01
 
 ### Changed
