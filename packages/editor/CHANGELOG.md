@@ -73,6 +73,8 @@
 ### Bug Fixes
 - Turning settings back on while the sidebar is still finishing its close
   animation opens the dock that currently holds settings.
+- While moving a sidebar panel, drop placeholders follow the current dock
+  size, so the extra slot still appears if the sidebar finishes opening.
 - Clicking the header Styles control while Styles is already open switches
   back to Settings instead of leaving the right sidebar empty.
 - Resetting General Settings now restores breakpoint sizes instead of keeping

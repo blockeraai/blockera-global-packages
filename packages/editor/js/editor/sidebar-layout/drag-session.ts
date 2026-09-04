@@ -122,9 +122,7 @@ function hitTestDock(
 	slot: SidebarDropSlot;
 	revealThirdDock: SidebarDockId | null;
 } | null {
-	if (dockHitCache.length === 0) {
-		refreshDockHitCache();
-	}
+	refreshDockHitCache();
 
 	for (let i = 0; i < dockHitCache.length; i++) {
 		const cached = dockHitCache[i];
