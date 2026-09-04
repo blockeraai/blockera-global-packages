@@ -36,6 +36,8 @@ packages/dev-cypress/
 
 ```js
 import { createPost, addBlockToPost } from '@blockera/dev-cypress/js/helpers';
+
+cy.switchBlockTab('styles'); // or 'settings'
 ```
 
 Wire in the consumer Cypress config:

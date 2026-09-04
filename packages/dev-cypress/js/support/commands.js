@@ -963,6 +963,58 @@ export const registerCommands = () => {
 			.click({ force: true });
 	});
 
+	/**
+	 * Switch the selected block's inspector to the Styles or Settings tab.
+	 *
+	 * @param {'styles'|'settings'} tab Inspector tab.
+	 * @param {{ timeout?: number, force?: boolean }} [options]
+	 */
+	Cypress.Commands.add('switchBlockTab', (tab, options = {}) => {
+		const viewIds = {
+			styles: 'styles-view',
+			settings: 'settings-view',
+		};
+
+		if (!Object.prototype.hasOwnProperty.call(viewIds, tab)) {
+			throw new Error(
+				`switchBlockTab: expected "styles" or "settings", received "${tab}".`
+			);
+		}
+
+		const { timeout = 30000, force = false } = options;
+
+		return cy
+			.getByAriaControls(viewIds[tab], { timeout })
+			.then(($buttons) => {
+				const $visible = $buttons.filter(':visible');
+				const $button = $visible.length
+					? $visible.first()
+					: $buttons.first();
+				const el = $button[0];
+
+				if (!el) {
+					throw new Error(
+						`switchBlockTab: no "${tab}" tab button found.`
+					);
+				}
+
+				const alreadyActive =
+					el.getAttribute('aria-selected') === 'true' ||
+					el.getAttribute('aria-pressed') === 'true' ||
+					el.getAttribute('aria-expanded') === 'true';
+
+				if (alreadyActive) {
+					return;
+				}
+
+				if (force) {
+					cy.wrap($button).click({ force: true });
+				} else {
+					cy.wrap($button).click();
+				}
+			});
+	});
+
 	Cypress.Commands.add('addNewTransition', () => {
 		cy.getParentContainer(['Transitions Timing', 'Transitions']).as(
 			'transition'

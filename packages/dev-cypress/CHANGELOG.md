@@ -1,6 +1,8 @@
 ## Unreleased
 
 ### Development Notes
+- Add `switchBlockTab` Cypress command (`styles` | `settings`) for the block
+  inspector tabs. Skips the click when that tab is already active.
 - `openGlobalStylesPanel` clicks the first visible Styles pin when more than
   one `aria-controls="edit-site:global-styles"` button is in the DOM.
 - Add `openSettingsSidebar` Cypress helper for Blockera's right-dock settings
