@@ -36,22 +36,32 @@ describe('Global Styles Actions For Blocks Plugin → Functionality (Global Styl
 			}
 		});
 
-		cy.get('body').then(($body) => {
-			const globalStylesButton = $body.find(
-				'button[aria-controls="edit-site:global-styles"]'
-			);
+		// Clicking the Styles pin while Styles is already open is captured to
+		// restore Settings and never reaches this plugin's click listener.
+		cy.window().then((win) => {
+			win.wp.data
+				.dispatch('core/interface')
+				.enableComplementaryArea('core', 'edit-post/document');
+		});
+		cy.window().should((win) => {
+			expect(
+				win.wp.data
+					.select('core/interface')
+					.getActiveComplementaryArea('core')
+			).to.eq('edit-post/document');
+		});
+		cy.get('button[aria-controls="edit-site:global-styles"]')
+			.filter(':visible')
+			.first()
+			.should('not.have.class', 'is-pressed')
+			.and('have.attr', 'aria-expanded', 'false');
 
-			if (globalStylesButton.length) {
-				cy.get('button[aria-controls="edit-site:global-styles"]')
-					.first()
-					.click();
+		cy.openGlobalStylesPanel();
 
-				assertBlockData((data) => {
-					expect(
-						data.select('blockera/editor').getSelectedBlockStyle()
-					).to.equal('');
-				});
-			}
+		assertBlockData((data) => {
+			expect(
+				data.select('blockera/editor').getSelectedBlockStyle()
+			).to.equal('');
 		});
 	});
 
