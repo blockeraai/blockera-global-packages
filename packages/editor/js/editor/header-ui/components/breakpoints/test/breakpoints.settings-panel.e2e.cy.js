@@ -6,6 +6,7 @@ import {
 	createPost,
 	setDeviceType,
 	dismissOpenModals,
+	resetPanelSettings,
 } from '@blockera/dev-cypress/js/helpers';
 
 describe('Breakpoints Functionalities', () => {
@@ -124,6 +125,46 @@ describe('Breakpoints Functionalities', () => {
 			cy.get('@update').click();
 			// eslint-disable-next-line
 			cy.wait(2000);
+		});
+	});
+
+	it('should restore a customized default breakpoint after resetting the current tab', () => {
+		cy.getByDataTest('tablet').should('be.visible');
+		cy.getByDataTest('tablet').click();
+
+		cy.getParentContainer('Size').within(() => {
+			cy.getParentContainer('Min Width').within(() => {
+				cy.get('input').clear();
+				cy.get('input').type('768', { delay: 0 });
+				cy.get('input').should('have.value', '768');
+			});
+
+			cy.getParentContainer('Max Width').within(() => {
+				cy.get('input').clear();
+				cy.get('input').type('1024', { delay: 0 });
+				cy.get('input').should('have.value', '1024');
+			});
+		});
+
+		cy.get('@update').then(() => {
+			cy.get('@update').click();
+			// eslint-disable-next-line
+			cy.wait(2000);
+		});
+
+		resetPanelSettings(false);
+
+		cy.getByDataTest('tablet').should('be.visible');
+		cy.getByDataTest('tablet').click();
+
+		cy.getParentContainer('Size').within(() => {
+			cy.getParentContainer('Min Width').within(() => {
+				cy.get('input').should('have.value', '');
+			});
+
+			cy.getParentContainer('Max Width').within(() => {
+				cy.get('input').should('have.value', '991');
+			});
 		});
 	});
 
