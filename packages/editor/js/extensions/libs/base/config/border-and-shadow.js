@@ -17,7 +17,15 @@ const blockeraBoxShadow: FeatureConfig = {
 	onCompanion: true,
 	cssGenerators: {},
 	label: __('Box Shadows', 'blockera'),
-	keywords: ['shadow', 'box shadow', 'drop shadow', 'inset', 'outset'],
+	keywords: [
+		'shadow',
+		'box shadow',
+		'drop shadow',
+		'inset',
+		'outset',
+		'color',
+		'colour',
+	],
 };
 
 const blockeraOutline: FeatureConfig = {
@@ -28,7 +36,7 @@ const blockeraOutline: FeatureConfig = {
 	onCompanion: true,
 	cssGenerators: {},
 	label: __('Outline', 'blockera'),
-	keywords: ['outline', 'border', 'stroke'],
+	keywords: ['outline', 'border', 'stroke', 'color', 'colour'],
 };
 
 const blockeraBorder: FeatureConfig = {
@@ -48,6 +56,8 @@ const blockeraBorder: FeatureConfig = {
 		'border color',
 		'border style',
 		'border width',
+		'color',
+		'colour',
 	],
 };
 
