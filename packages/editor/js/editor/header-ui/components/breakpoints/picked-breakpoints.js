@@ -75,7 +75,7 @@ export default function ({
 			justifyContent={'center'}
 			alignItems="center"
 			aria-label={__('Breakpoints', 'blockera')}
-			gap="8px"
+			gap="2px"
 		>
 			{breakpoints}
 		</Flex>

@@ -4,18 +4,48 @@
 	border: 1px solid var(--blockera-controls-border-color-soft);
 	background: #ffffff;
 	border-radius: 2px;
-	padding: 0 12px;
+	padding: 0 2px;
 	width: 100%;
 	margin: 0;
 	overflow: hidden;
 
 	.blockera-component-breakpoint-icon {
 		cursor: pointer;
+		width: 30px;
+		height: 26px;
+		border-radius: 2px;
 
-		&:hover,
+		&:hover:not(.is-active-breakpoint) {
+			--icon-outline-color: var(--blockera-controls-primary-color);
+			--blockera-controls-primary-color: color-mix(
+				in srgb,
+				var(--blockera-controls-primary-color-bk) 20%,
+				#ffffff 100%
+			);
+			fill: var(--blockera-controls-primary-color-bk);
+			color: var(--blockera-controls-primary-color-bk);
+			background: var(--blockera-controls-primary-color);
+		}
+
 		&.is-active-breakpoint {
-			fill: var(--blockera-controls-primary-color);
-			color: var(--blockera-controls-primary-color);
+			background: var(--blockera-controls-primary-color);
+			fill: #ffffff;
+			color: #ffffff;
+			--icon-outline-color: var(--blockera-controls-primary-color);
+		}
+
+		&.breakpoint-icon-device-desktop
+			.blockera-component-base-breakpoint-icon {
+			left: 0;
+		}
+
+		.blockera-component-base-breakpoint-icon {
+			transition: var(--blockera-controls-transition);
+		}
+
+		.blockera-component-custom-breakpoint-item {
+			top: 0;
+			transition: var(--blockera-controls-transition);
 		}
 	}
 }
