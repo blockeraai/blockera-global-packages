@@ -1,3 +1,12 @@
+## Unreleased
+
+### Features
+- Snackbar notices wrap the WordPress snackbar and show the Blockera icon
+  by default.
+
+### Bug Fixes
+- Vertically center the snackbar icon with the message.
+
 ## [4.0.0] - 2026-09-01
 
 ### Changed

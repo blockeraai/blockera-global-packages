@@ -1,0 +1,34 @@
+.blockera-component-snackbar-list.components-snackbar-list {
+	position: fixed;
+	left: 50%;
+	bottom: 24px;
+	z-index: 100000;
+	width: auto;
+	max-width: min(600px, calc(100% - 32px));
+	transform: translateX(-50%);
+	pointer-events: none;
+	box-sizing: border-box;
+
+	.components-snackbar {
+		pointer-events: auto;
+	}
+}
+
+.blockera-component-snackbar-list .components-snackbar .components-snackbar__icon,
+.blockera-component-snackbar.components-snackbar .components-snackbar__icon {
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	line-height: 0;
+
+	svg {
+		display: block;
+	}
+}
+
+.blockera-component-snackbar__brand-icon {
+	display: block;
+	color: currentColor;
+	fill: currentColor;
+}

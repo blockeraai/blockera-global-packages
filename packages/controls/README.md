@@ -53,12 +53,15 @@ import {
 	BaseControl,
 	Flex,
 	Popover,
+	Snackbar,
+	SnackbarNotices,
+	createSnackbarNotice,
 } from '@blockera/controls';
 ```
 
 | Group | Examples |
 |-------|----------|
-| Foundation | `Flex`, `Grid`, `Button`, `Modal`, `Popover`, `Tooltip`, `Tabs`, `BaseControl` |
+| Foundation | `Flex`, `Grid`, `Button`, `Modal`, `Popover`, `Tooltip`, `Tabs`, `BaseControl`, `Snackbar`, `SnackbarNotices` |
 | Inputs | `InputControl`, `StepperControl`, `TextAreaControl`, `SelectControl`, `ToggleControl`, `RangeControl`, `ColorControl`, `MediaUploader` |
 | Style | `BackgroundControl`, `BorderControl`, `BoxBorderControl`, `BorderRadiusControl`, `BoxShadowControl`, `TextShadowControl`, `TransformControl`, `TransitionControl`, `FilterControl`, `MaskControl`, `LayoutMatrixControl` |
 | Composite | `RepeaterControl`, `ValueAddonControl`, `FeatureWrapper`, `UpgradePrompt`, `Promoter`, `RendererControl`, `CodeControl` |
@@ -66,6 +69,8 @@ import {
 | Bootstrap | `blockeraBootstrapControls()` |
 
 Root also exports `api`, `context`, value-addons, types, and text-shadow CSS compatibility helpers.
+
+Use `createSnackbarNotice({ content, id })` with `<SnackbarNotices />` (notices context `blockera`) for branded toasts. Pass `icon` to override the default Blockera mark.
 
 ---
 
