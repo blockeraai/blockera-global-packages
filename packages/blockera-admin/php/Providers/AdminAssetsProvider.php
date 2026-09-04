@@ -179,7 +179,7 @@ class AdminAssetsProvider extends AssetsProvider {
 
 		$blockera_settings                                   = blockera_get_admin_options();
 		$blockera_default_settings                           = blockera_core_config( 'panel.std' );
-		$blockera_default_settings['general']['breakpoints'] = $this->app->getEntity('breakpoints');
+		$blockera_default_settings['general']['breakpoints'] = blockera_get_default_breakpoints();
 
 		if (empty($blockera_settings['general']['breakpoints'])) {
 			$blockera_settings['general']['breakpoints'] = $blockera_default_settings['general']['breakpoints'];

@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Bug Fixes
+- Resetting the General Settings tab now restores factory breakpoint sizes
+  instead of keeping saved customizations.
+
 ### Automated Tests
 - Fix block manager build e2e for dock-aware settings sidebar and text
   category enable/save flow.
