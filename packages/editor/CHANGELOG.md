@@ -38,6 +38,8 @@
   observing inspector DOM mutations.
 - Enabling the settings sidebar opens its dock even when the previous disable
   transition was missed by the interface store subscriber.
+- Deleting a style or size variation, and sharing a variation with other
+  blocks, now show a snackbar.
 
 ### Automated Tests
 

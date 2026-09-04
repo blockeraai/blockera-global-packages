@@ -18,6 +18,7 @@ import GlobalStylesheet from './global-stylesheet';
 import PrimarySidebarController from './primary-sidebar';
 import SecondarySidebarInjector from './secondary-sidebar';
 import FooterToolbarInjector from './footer-toolbar';
+import BlockeraSnackbarNotices from './snackbar-notices';
 import GlobalStylesActionsForBlocks from './global-styles-actions-for-blocks';
 import AdditionalCssContextmenuObserver from './additional-css-contextmenu-observer';
 import AIExperimentalTools from './ai-experimental-tools';
@@ -102,6 +103,11 @@ const editorPlugins = [
 	{
 		name: 'blockera-footer-toolbar',
 		render: FooterToolbarInjector,
+		icon: null,
+	},
+	{
+		name: 'blockera-snackbar-notices',
+		render: BlockeraSnackbarNotices,
 		icon: null,
 	},
 	{

@@ -65,8 +65,15 @@ import {
 	applyBlockeraSetAttributesCompatibility,
 	getCompatibleAttributes,
 } from '../../../../../extensions/components/get-compatible-attributes';
-import { VARIATION_SURFACE_STYLE } from '../../variation-surfaces';
+import {
+	VARIATION_SURFACE_STYLE,
+	VARIATION_SURFACE_SIZE,
+} from '../../variation-surfaces';
 import { setBlockeraGlobalStylesMetaData } from '../../../helpers';
+import {
+	notifyVariationDeleted,
+	notifyVariationShared,
+} from './variation-snackbars';
 
 export const useBlockStyleItem = ({
 	style,
@@ -367,6 +374,10 @@ export const useBlockStyleItem = ({
 					});
 				}
 				setGlobalStyles(newGlobalStyles);
+				notifyVariationShared(
+					styleParam.label || styleParam.name,
+					enabledIn
+				);
 				return;
 			}
 
@@ -396,6 +407,10 @@ export const useBlockStyleItem = ({
 						});
 				}
 				setGlobalStyles(newGlobalStyles);
+				notifyVariationShared(
+					styleParam.label || styleParam.name,
+					enabledIn
+				);
 				return;
 			}
 
@@ -449,6 +464,10 @@ export const useBlockStyleItem = ({
 			}
 
 			setGlobalStyles(newGlobalStyles);
+			notifyVariationShared(
+				styleParam.label || styleParam.name,
+				enabledIn
+			);
 		},
 		[
 			setBlockeraGlobalStylesMetaData,
@@ -690,6 +709,11 @@ export const useBlockStyleItem = ({
 				},
 			});
 		}
+
+		notifyVariationDeleted(
+			currentStyle?.label || style?.label || currentStyleName,
+			VARIATION_SURFACE_SIZE === variationSurface
+		);
 	};
 
 	/** @see ./handleOnSaveCustomizations.md for Cursor IDE instructions */
