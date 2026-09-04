@@ -53,6 +53,8 @@
   reposition settings while the sidebar is idle.
 - Sidebar docks: close buttons, header toggles, and Gutenberg show-inserter /
   show-settings APIs follow the panel’s current dock.
+- Site Editor: clicking Styles while Styles is open returns to Settings and
+  keeps the right dock filled.
 - Sidebar layout e2e waits for an active drop slot before releasing a panel,
   ends a leftover drag in afterEach, and re-enables settings from a closed
   complementary area so those cases do not flake.
