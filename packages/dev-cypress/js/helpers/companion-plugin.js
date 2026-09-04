@@ -74,7 +74,7 @@ export function assertBlockeraOneCompanionFilterRegistered() {
  */
 export function openParagraphBlockStylesView() {
 	cy.getBlock('default').type('Blockera One e2e', { delay: 0 });
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 }
 
 const COMPANION_CLEAN_BLOCK_PROPS_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
@@ -202,17 +202,6 @@ export function selectDefaultParagraphBlockInEditor() {
 }
 
 /**
- * Open the Blockera styles tab only when it is not already expanded.
- */
-export function ensureBlockeraStylesViewOpen() {
-	cy.getByAriaControls('styles-view', { timeout: 20000 }).then(($btn) => {
-		if ($btn.attr('aria-expanded') !== 'true') {
-			cy.wrap($btn).click();
-		}
-	});
-}
-
-/**
  * Open the block editor styles panel without modifying block content.
  *
  * Seeds a saved, Blockera-hydrated default block, selects it via store APIs
@@ -223,7 +212,7 @@ export function ensureBlockeraStylesViewOpen() {
 export function openCleanParagraphBlockStylesView() {
 	ensureSavedHydratedDefaultParagraphBlock();
 	selectDefaultParagraphBlockInEditor();
-	ensureBlockeraStylesViewOpen();
+	cy.switchBlockTab('styles', { timeout: 20000 });
 	assertEditorHasNoUnsavedChanges();
 }
 
@@ -688,7 +677,7 @@ export const BUTTON_BLOCK_FOR_ICON_CONTROL = `<!-- wp:buttons -->
  */
 export function openButtonBlockIconSettings() {
 	cy.getBlock('core/button').click();
-	cy.getByAriaControls('settings-view').click();
+	cy.switchBlockTab('settings');
 }
 
 /**

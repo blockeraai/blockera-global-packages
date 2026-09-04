@@ -9,7 +9,7 @@ export function openParagraphLineHeightVariablePickerPopover() {
 	createPost();
 
 	cy.getBlock('default').type('Variable picker header add.', { delay: 0 });
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 
 	cy.getParentContainer('Line Height').within(() => {
 		cy.openValueAddon();
@@ -27,7 +27,7 @@ export function openParagraphFontSizeVariablePickerPopover() {
 	createPost();
 
 	cy.getBlock('default').type('Variable picker header add.', { delay: 0 });
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 
 	cy.getParentContainer('Font Size').within(() => {
 		cy.openValueAddon();
@@ -140,7 +140,7 @@ export function openMinWidthVariablePickerPopover() {
 	createPost();
 
 	cy.getBlock('default').type('Min width variable picker.', { delay: 0 });
-	cy.getByAriaControls('styles-view').click();
+	cy.switchBlockTab('styles');
 	cy.activateMoreSettingsItem('More Size Settings', 'Min Width');
 
 	cy.getParentContainer('Min Width').within(() => {
