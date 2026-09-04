@@ -232,7 +232,7 @@
 		background: transparent;
 
 		&:not(.no-border) {
-			border-color: var(--blockera-controls-border-color);
+			border: 1px solid var(--blockera-controls-border-color);
 			outline: 1px solid transparent;
 		}
 
