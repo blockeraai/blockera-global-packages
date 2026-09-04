@@ -139,21 +139,26 @@ export const Update = ({
 
 				if ('reset-all' === type) {
 					setSettings(defaultSettings);
+					window.blockeraSettings = { ...defaultSettings };
 				} else {
+					const nextTabSettings = defaultSettings[slug];
 					setSettings({
 						...settings,
-						[slug]: defaultSettings[slug],
+						[slug]: nextTabSettings,
 					});
+					window.blockeraSettings = {
+						...window.blockeraSettings,
+						[slug]: nextTabSettings,
+					};
 				}
 			} else {
 				setSettings(record);
 				setStatus(statuses.saved);
+				window.blockeraSettings = {
+					...window.blockeraSettings,
+					...record,
+				};
 			}
-
-			window.blockeraSettings = {
-				...window.blockeraSettings,
-				...record,
-			};
 
 			setHasUpdates(isResetAction ? false : !hasUpdate);
 		} else {
