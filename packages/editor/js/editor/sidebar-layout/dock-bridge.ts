@@ -96,9 +96,17 @@ function setDockOpen(dock: SidebarDockId, open: boolean): void {
 }
 
 function shouldOpenComplementaryDock(
-	complementary: string | null | undefined
+	complementary: string | null | undefined,
+	previous: string | null | undefined
 ): boolean {
-	if (!complementary || applyingComplementary || complementaryCloseTimeout) {
+	if (!complementary || applyingComplementary) {
+		return false;
+	}
+
+	// Close keeps settings mounted until the clip finishes. Do not reopen the
+	// dock from that leftover complementary id. A new enable (null → id) must
+	// still open, including while that timeout is pending.
+	if (complementaryCloseTimeout && previous) {
 		return false;
 	}
 
@@ -275,7 +283,12 @@ export function subscribeEditorSidebarApis(): () => void {
 			if (!applyingComplementary) {
 				if (!complementary && prevComplementary) {
 					closeSection('complementary');
-				} else if (shouldOpenComplementaryDock(complementary)) {
+				} else if (
+					shouldOpenComplementaryDock(
+						complementary,
+						prevComplementary
+					)
+				) {
 					openSection('complementary');
 				}
 			}
