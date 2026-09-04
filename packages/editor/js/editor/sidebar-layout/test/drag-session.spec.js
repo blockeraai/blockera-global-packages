@@ -108,6 +108,53 @@ describe('sidebar drag session', () => {
 		unsubscribePosition();
 	});
 
+	it('re-reads dock rects on move so a later reveal zone is hit', () => {
+		const left = document.querySelector(
+			'[data-test="blockera-sidebar-dock-left"]'
+		);
+		left.setAttribute('data-can-reveal-third', '1');
+		left.getBoundingClientRect = () => ({
+			left: 0,
+			right: 100,
+			top: 0,
+			bottom: 80,
+			width: 100,
+			height: 80,
+			x: 0,
+			y: 0,
+			toJSON() {},
+		});
+
+		startSidebarDrag({
+			sectionId: 'listView',
+			width: 100,
+			height: 80,
+			grabX: 10,
+			grabY: 10,
+			x: 10,
+			y: 10,
+			onDrop: () => {},
+		});
+
+		left.getBoundingClientRect = () => ({
+			left: 0,
+			right: 100,
+			top: 0,
+			bottom: 200,
+			width: 100,
+			height: 200,
+			x: 0,
+			y: 0,
+			toJSON() {},
+		});
+
+		dispatchPointer('pointermove', 50, 190);
+
+		expect(getSidebarDrag()?.hoverDock).toBe('left');
+		expect(getSidebarDrag()?.hoverSlot).toBe(2);
+		expect(getSidebarDrag()?.revealThirdDock).toBe('left');
+	});
+
 	it('does not drop and returns when released off a dock', () => {
 		const onDrop = jest.fn();
 		jest.useFakeTimers();

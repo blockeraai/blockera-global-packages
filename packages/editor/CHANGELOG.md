@@ -69,6 +69,8 @@
 - Shadow WP compatibility: Button cases open the Styles tab before looking
   for Box Shadows, matching Border compatibility (code editor exit can leave
   Settings selected).
+- Sidebar drag: unit coverage that drop hit-testing re-reads dock size after
+  the sidebar grows, so the third placeholder can still appear.
 
 ### Bug Fixes
 - Turning settings back on while the sidebar is still finishing its close
