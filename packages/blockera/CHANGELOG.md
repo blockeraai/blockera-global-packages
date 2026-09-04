@@ -1,3 +1,8 @@
+## Unreleased
+
+### Automated Tests
+- Factory breakpoint helper returns config tablet sizes, not saved customizations.
+
 ## [2.0.0] - 2026-08-31
 
 ### Fixed

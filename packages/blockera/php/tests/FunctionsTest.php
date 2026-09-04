@@ -341,4 +341,14 @@ class FunctionsTest extends \Blockera\Dev\PHPUnit\AppTestCase {
 			],
 		];
 	}
+
+	public function testItShouldReturnFactoryBreakpointsIndependentOfSavedSettings(): void {
+
+		$defaults = blockera_get_default_breakpoints();
+
+		$this->assertArrayHasKey('tablet', $defaults);
+		$this->assertSame('', $defaults['tablet']['settings']['min']);
+		$this->assertSame('991px', $defaults['tablet']['settings']['max']);
+		$this->assertTrue($defaults['tablet']['isDefault']);
+	}
 }
