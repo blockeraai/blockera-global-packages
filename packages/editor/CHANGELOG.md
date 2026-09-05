@@ -5,6 +5,9 @@
 - BlockStyle reads current block, state, and breakpoint from the owning BlockBase
   instead of the global extensions UI store, so unselected canvas blocks do not
   regenerate CSS when another block’s inner target or breakpoint changes.
+- Inspector typing path: BlockEditContext splits identity vs attributes,
+  style extensions skip re-render when their value slice is unchanged, and
+  feature search no longer deep-clones settings before filtering.
 
 ### Automated Tests
 
