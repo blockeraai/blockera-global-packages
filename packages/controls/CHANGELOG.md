@@ -16,6 +16,8 @@
 ### Automated Tests
 
 - retainIfEqual keeps the previous object identity when contents match.
+- InputControl unit catalogs stay cached and not-found units append without
+  mutating the shared catalog.
 
 ## [4.0.0] - 2026-09-01
 
