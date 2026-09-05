@@ -1,3 +1,9 @@
+## Unreleased
+
+### Automated Tests
+- Drop manual `-N` suffixes from Cypress e2e spec filenames; CI shards
+  categories by registered test count.
+
 ## [2.0.0] - 2026-08-31
 
 ### Fixed

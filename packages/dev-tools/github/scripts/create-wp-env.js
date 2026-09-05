@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Merge `.github/wp-env-configs/{category}.json` with optional `.pr-env.json`
- * and write `.wp-env.json`.
+ * and write `.wp-env.json`. Missing `{category}.json` tries `{base}.json`
+ * after stripping a trailing `-N` shard, then `BLOCKERA_WP_ENV_FALLBACK_CONFIG`.
  *
  * `.pr-env.json` overlays the category file: scalars replace, `config` /
  * `env` / `mappings` / `lifecycleScripts` shallow-merge (PR wins), arrays
@@ -120,6 +121,19 @@ function isPlainObject(value) {
 
 function uniqueList(items) {
 	return [...new Set((items || []).filter(Boolean))];
+}
+
+function stripShardSuffix(name) {
+	return String(name).replace(/-\d+$/, '');
+}
+
+function listIncludesCategory(list, name) {
+	if (list.includes('*') || list.includes('all') || list.includes(name)) {
+		return true;
+	}
+
+	const base = stripShardSuffix(name);
+	return base !== name && list.includes(base);
 }
 
 function isLocalOrDotSource(pluginSource) {
@@ -326,11 +340,7 @@ function resolvePluginSource(pluginSource) {
 }
 
 function shouldApplyPrPlugins() {
-	return (
-		prPluginCategories.includes('*') ||
-		prPluginCategories.includes('all') ||
-		prPluginCategories.includes(category)
-	);
+	return listIncludesCategory(prPluginCategories, category);
 }
 
 function mergeWpEnv(base, overlay) {
@@ -372,11 +382,7 @@ function hasNonDotPlugin(plugins) {
 }
 
 function shouldApplyDefaultPlugin() {
-	return (
-		defaultPluginCategories.includes('*') ||
-		defaultPluginCategories.includes('all') ||
-		defaultPluginCategories.includes(category)
-	);
+	return listIncludesCategory(defaultPluginCategories, category);
 }
 
 function ensureDependencyPlugin(plugins) {
@@ -401,6 +407,12 @@ if (fs.existsSync(prEnvFile)) {
 }
 
 let wpEnvFilePath = path.join(configDir, `${category}.json`);
+if (!fs.existsSync(wpEnvFilePath)) {
+	const baseCategory = stripShardSuffix(category);
+	if (baseCategory !== category) {
+		wpEnvFilePath = path.join(configDir, `${baseCategory}.json`);
+	}
+}
 if (!fs.existsSync(wpEnvFilePath)) {
 	wpEnvFilePath = path.join(configDir, `${fallbackName}.json`);
 }

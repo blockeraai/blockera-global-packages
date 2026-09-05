@@ -1,3 +1,21 @@
+## Unreleased
+
+### Development Notes
+- Cypress E2E CI: optional `SHARD_SIZE` packs each base spec category into
+  `base-1`…`N` by registered `it()` count when more than one shard is
+  needed (array `.forEach` around `it` is expanded). Shard count is
+  `ceil(total / size)`; files are then split evenly across those shards
+  instead of leaving a tiny leftover job. A category that fits in one
+  shard keeps the original id. `run.sh` passes an explicit spec list;
+  wp-env config lookup strips a trailing `-N` shard. Category detection
+  logs registered `it()` and file counts per matrix id.
+
+### Automated Tests
+- Cover category packing, `it.skip`, array-literal and const-array
+  `.forEach` expansion, inner `.forEach` inside `it`, a single shard
+  keeping the original category id, even file splits across shards, and
+  per-shard `it()` / file count summaries.
+
 ## [3.0.0] - 2026-09-05
 
 ### Development Notes
