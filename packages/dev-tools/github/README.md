@@ -113,6 +113,7 @@ github/
     ensure-*.sh / bump-*.sh / retry-*.sh   # used in-place from toolkit
     actions/ensure-global-packages/         # source for consumer bootstrap action
     setup-wp-env.js
+    run-wp-env-start.js / inject-wp-env-dockerfile.js / preload-wp-env-docker-patch.js
     download-artifact.sh / create-wp-env.js       # merge wp-env-configs + .pr-env.json
     list-test-categories.js / list-visual-snapshot-batches.js
     lib/                     # walk-files, list-test-categories, retry.sh, package-match
@@ -130,11 +131,24 @@ available until ensure runs). Everything else is invoked from
 Used by consumer `npm run env:start` (local only). Copies
 `.github/wp-env-configs/<name>.json` → `.wp-env.json`. No-op when `CI` is set.
 
+`env:start` then runs `run-wp-env-start.js`, which preloads
+`preload-wp-env-docker-patch.js` so wp-env's generated `WordPress.Dockerfile` /
+`Tests-WordPress.Dockerfile` refresh apt indexes in the same `RUN` as each
+`apt-get install`. Flags come from `.docker/Dockerfile.wordpress` (sync-config /
+`project:bootstrap` copy of `root-configs/.docker/Dockerfile.wordpress`), or
+that template in this package when the host copy is missing. wp-env still
+selects `FROM wordpress:php${phpVersion}` from `.wp-env.json`.
+
 | Env (host `.env`) | Default |
 | --- | --- |
 | `WP_ENV_CONFIG` | `development` (file: `.github/wp-env-configs/development.json`) |
 | `WP_ENV_PORT` | unset — wp-env default `8888`; set unique values when multiple local envs run on one machine |
 | `WP_ENV_TESTS_PORT` | unset — wp-env default `8889` |
+| `BLOCKERA_WP_ENV_DOCKERFILE` | unset — `.docker/Dockerfile.wordpress` then `root-configs/.docker/Dockerfile.wordpress` |
+| `BLOCKERA_WP_ENV_SKIP_DOCKER_PATCH` | unset (`true` leaves generated Dockerfiles unchanged) |
+
+CI jobs that use `retry-wp-env-start.sh` call `run-wp-env-start.js` directly
+(they already wrote `.wp-env.json`; `setup-wp-env.js` is a no-op when `CI` is set).
 
 Example (host `.env`, local only):
 

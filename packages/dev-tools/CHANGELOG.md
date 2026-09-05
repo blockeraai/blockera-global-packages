@@ -4,6 +4,9 @@
 - wp-env: add `root-configs/.docker/Dockerfile.wordpress` (PHP_VERSION ARG
   plus combined apt-get update/install flags) and copy `.docker/` via
   sync-config / `write-root-configs`.
+- wp-env: inject those apt flags into generated WordPress Dockerfiles so
+  stale Debian security indexes do not 404; `run-wp-env-start.js` resolves
+  `wp-env` via `@wordpress/env/package.json` (package `exports` hide `bin/`).
 
 - Sync global-packages: keep one bump PR with a stable title (no commit
   count or gitlink); later GP master pins commit on that branch instead of
