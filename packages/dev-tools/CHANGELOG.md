@@ -6,6 +6,10 @@
   expanded). `run.sh` passes an explicit spec list; wp-env config lookup
   strips a trailing `-N` shard.
 
+### Automated Tests
+- Cover category packing, `it.skip`, array-literal and const-array
+  `.forEach` expansion, and inner `.forEach` inside `it`.
+
 ## [3.0.0] - 2026-09-05
 
 ### Development Notes
