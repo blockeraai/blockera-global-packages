@@ -32,6 +32,10 @@
 - Agent knowledge: free+Pro features extend via WordPress `applyFilters` /
   `addFilter` rather than forking the feature in Pro.
 
+### Automated Tests
+- wp-env: cover apt-get inject prefixes and resolving the `wp-env` bin
+  through package.json exports.
+
 ## [2.3.0] - 2026-09-01
 
 ### Features

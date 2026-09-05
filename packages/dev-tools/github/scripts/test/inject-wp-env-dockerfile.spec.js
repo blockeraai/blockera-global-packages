@@ -1,0 +1,77 @@
+/**
+ * Internal dependencies
+ */
+const fs = require('fs');
+const {
+	bundledWordpressDockerfilePath,
+	getAptInstallPrefix,
+	isWordpressDockerfilePath,
+	patchWordPressDockerfile,
+} = require('../inject-wp-env-dockerfile');
+
+describe('inject-wp-env-dockerfile', () => {
+	const template = fs.readFileSync(bundledWordpressDockerfilePath(), 'utf8');
+	const prefix = getAptInstallPrefix(template);
+
+	it('parses the combined apt-get update && install prefix from the template', () => {
+		expect(prefix).toContain('apt-get update --allow-releaseinfo-change');
+		expect(prefix).toContain('--fix-missing');
+		expect(prefix).toContain('Apt::Get::AllowUnauthenticated=true');
+		expect(prefix).not.toContain('$PHPIZE_DEPS');
+	});
+
+	it('refreshes indexes in the same RUN as each apt-get install', () => {
+		const generated = `FROM wordpress:php7.4
+
+RUN apt-get clean
+RUN apt-get -qy update
+RUN apt-get -qy install $PHPIZE_DEPS && touch /usr/local/etc/php/php.ini
+RUN apt-get -qy install git
+RUN apt-get -qy install sudo
+RUN apt-get install -qy zlib1g-dev
+`;
+
+		const patched = patchWordPressDockerfile(generated, prefix);
+
+		expect(patched).toContain(
+			`RUN ${prefix} $PHPIZE_DEPS && touch /usr/local/etc/php/php.ini`
+		);
+		expect(patched).toContain(`RUN ${prefix} git`);
+		expect(patched).toContain(`RUN ${prefix} sudo`);
+		expect(patched).toContain(`RUN ${prefix} zlib1g-dev`);
+		expect(patched).toContain('RUN apt-get -qy update');
+	});
+
+	it('does not double-prefix a RUN that already updates then installs', () => {
+		const line = `RUN ${prefix} sudo`;
+
+		expect(patchWordPressDockerfile(line, prefix)).toBe(line);
+	});
+
+	it('only matches wp-env WordPress Dockerfiles', () => {
+		expect(isWordpressDockerfilePath('/tmp/WordPress.Dockerfile')).toBe(
+			true
+		);
+		expect(
+			isWordpressDockerfilePath('/tmp/Tests-WordPress.Dockerfile')
+		).toBe(true);
+		expect(isWordpressDockerfilePath('/tmp/CLI.Dockerfile')).toBe(false);
+	});
+
+	it('keeps ARG PHP_VERSION and wordpress:php in the synced template', () => {
+		expect(template).toMatch(/ARG PHP_VERSION=8\.2/);
+		expect(template).toMatch(/FROM wordpress:php\$\{PHP_VERSION\}/);
+	});
+});
+
+describe('resolveWpEnvBin', () => {
+	it('resolves bin/wp-env via package.json (exports block bin/)', () => {
+		const { resolveWpEnvBin } = require('../run-wp-env-start');
+		const bin = resolveWpEnvBin(process.cwd());
+
+		expect(bin.replace(/\\/g, '/')).toMatch(
+			/node_modules\/@wordpress\/env\/bin\/wp-env$/
+		);
+		expect(fs.existsSync(bin)).toBe(true);
+	});
+});
