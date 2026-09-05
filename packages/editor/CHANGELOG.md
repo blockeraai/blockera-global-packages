@@ -17,6 +17,8 @@
 - Style engine canvas isolation oracle: fingerprint and BlockStyle memo equality
   for pinned unselected current* vs sibling UI state.
 - Extension memo equality helper covers sliced values vs callback identity.
+- Style engine CPU: generator filter is invoked once per burst; fingerprint
+  cache keeps the same string for the same attributes object.
 
 ## [3.0.0] - 2026-09-01
 
