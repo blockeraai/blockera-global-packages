@@ -240,6 +240,10 @@ run `*.build.e2e.cy.js` against wp-env.
 
 Staging is one script (`prepare-build-env.sh`). Consumers pass dest/path/wp-env
 knobs — there are no `prepare-pro` / `prepare-theme` / `prepare-toolkit` recipes.
+It copies `retry-wp-env-start.sh` plus `run-wp-env-start.js`,
+`preload-wp-env-docker-patch.js`, `inject-wp-env-dockerfile.js`, and
+`lib/retry.sh` into the extract tree (START_CMD runs from `BUILD_DIR`), and
+stages `.docker/Dockerfile.wordpress` when present.
 
 ```yaml
 # Theme-style example

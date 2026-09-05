@@ -1,6 +1,9 @@
 ## Unreleased
 
 ### Development Notes
+- Build zip E2E: stage `run-wp-env-start.js` (and preload/inject + Dockerfile)
+  next to `retry-wp-env-start.sh` under the extract dir so wp-env start
+  does not MODULE_NOT_FOUND.
 - wp-env: add `root-configs/.docker/Dockerfile.wordpress` (PHP_VERSION ARG
   plus combined apt-get update/install flags) and copy `.docker/` via
   sync-config / `write-root-configs`.
