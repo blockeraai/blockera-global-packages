@@ -1,3 +1,8 @@
+## Unreleased
+
+### Automated Tests
+- Rename global-styles e2e specs to `.gs.e2e.cy.js`.
+
 ## [3.0.0] - 2026-09-05
 
 ### Automated Tests
