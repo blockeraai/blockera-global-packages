@@ -1,5 +1,10 @@
 ## Unreleased
 
+### Bug Fixes
+
+- Block editor no longer crashes on load when generating canvas CSS
+  (`Cannot read properties of undefined (reading 'SizeStyles')`).
+
 ### Development Notes
 
 - BlockStyle reads current block, state, and breakpoint from the owning BlockBase

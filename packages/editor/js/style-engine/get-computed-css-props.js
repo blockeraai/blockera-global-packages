@@ -84,7 +84,9 @@ const omitUnownedBlockeraDisplay = (
 	return mergedAttrs;
 };
 
-const DEFAULT_STYLE_GENERATORS = {
+// Call-time map: SizeStyles files import style-engine, which re-enters this
+// module. A top-level `{ SizeStyles }` reads the barrel before it exists.
+const getDefaultStyleGenerators = (): Object => ({
 	SizeStyles,
 	MouseStyles,
 	LayoutStyles,
@@ -97,7 +99,7 @@ const DEFAULT_STYLE_GENERATORS = {
 	BackgroundStyles,
 	BlockStatesStyles,
 	BorderAndShadowStyles,
-};
+});
 
 const SKIP_COMPUTED_STATES: { [string]: boolean } = {
 	'custom-class': true,
@@ -120,7 +122,7 @@ export const getComputedCssProps = ({
 }: Object): Array<CssRule> => {
 	const stylesStack = [];
 	const runGenerators = createAppendStylesRunner(
-		DEFAULT_STYLE_GENERATORS,
+		getDefaultStyleGenerators(),
 		disabledStyles
 	);
 	const appendStyles = ({
