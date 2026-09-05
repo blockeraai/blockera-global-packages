@@ -499,7 +499,7 @@ Update compatibility files when:
    - Add case in switch statement for writing (setAttributes filter)
 
 3. **Create tests**:
-   - Block-level test: `test/new-feature.compatibility-1.e2e.cy.js`
+   - Block-level test: `test/new-feature.compatibility.e2e.cy.js`
    - Global styles test: `test/global-styles/new-feature.compatibility-1.global-styles.ply.js`
    - Test fixtures: `test/global-styles/fixtures/new-feature-setup-*.php`
 

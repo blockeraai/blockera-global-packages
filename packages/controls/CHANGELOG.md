@@ -16,6 +16,12 @@
 - Assert a snackbar after deleting a variable from the picker.
 - Open the styles inspector tab with `switchBlockTab`.
 
+## [5.0.0] - 2026-09-05
+
+### Automated Tests
+- Drop manual `-N` suffixes from Cypress e2e spec filenames; CI shards
+  categories by registered test count.
+
 ## [4.0.0] - 2026-09-01
 
 ### Changed

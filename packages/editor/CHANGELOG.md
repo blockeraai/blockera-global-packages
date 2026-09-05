@@ -141,6 +141,18 @@
   a stacked panel is dragged.
 - Sidebar layout: drag session notifies layout only when the hovered slot
   changes, and e2e checks that layout updates stay below pointer-move count.
+- Rename global-styles compatibility e2e specs to `.gs-compatibility.e2e.cy.js`.
+- Rename global-styles e2e specs to `.gs.e2e.cy.js`.
+
+## [4.0.0] - 2026-09-05
+
+### Automated Tests
+- Drop manual `-N` suffixes from Cypress e2e spec filenames; CI shards
+  categories by registered test count.
+
+### Development Notes
+- Feature test recipe filenames use `{name}.{category}.e2e.cy.js` without
+  a shard number.
 
 ## [3.0.0] - 2026-09-01
 

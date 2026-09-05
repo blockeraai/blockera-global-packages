@@ -3,6 +3,13 @@
 ### Automated Tests
 - Switch the block inspector with `switchBlockTab` instead of clicking
   `styles-view` directly.
+- Rename global-styles e2e specs to `.gs.e2e.cy.js`.
+
+## [3.0.0] - 2026-09-05
+
+### Automated Tests
+- Drop manual `-N` suffixes from Cypress e2e spec filenames; CI shards
+  categories by registered test count.
 
 ## [2.0.0] - 2026-08-31
 
