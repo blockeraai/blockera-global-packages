@@ -11,12 +11,12 @@
 #   BLOCKERA_E2E_PREPARE_RETRIES / BLOCKERA_E2E_PREPARE_RETRY_DELAY_SEC
 #   BLOCKERA_E2E_WP_ENV_START_CMD
 #   BLOCKERA_E2E_BUILD_CMD / _TEST_CMD / _STOP_CMD
-#   BLOCKERA_E2E_PACKAGE_GLOB          Cypress glob prefix (empty = packages + tests)
 #   BLOCKERA_E2E_PREPARE_CMD           replaces prepare.sh
 #   BLOCKERA_E2E_PRE_TEST_CMD          after build, before category specs
 #   BLOCKERA_E2E_PR_ENV_FILE           default: .pr-cypress.env.json
 #   BLOCKERA_CYPRESS_IGNORE_PR_FILTER  set during PRE_TEST when PR filter file exists
-#   BLOCKERA_E2E_GENERAL_CATEGORY      default: general-1
+#   BLOCKERA_E2E_SHARD_SIZE            pack base-1..N by registered it() count
+#   BLOCKERA_E2E_LIST_CATEGORIES_CMD   default: node …/list-test-categories.js …
 set -euo pipefail
 
 CATEGORY="${BLOCKERA_E2E_CATEGORY:-}"
@@ -33,8 +33,6 @@ BUILD_CMD="${BLOCKERA_E2E_BUILD_CMD:-npm run build}"
 TEST_CMD="${BLOCKERA_E2E_TEST_CMD:-npm run test:e2e}"
 STOP_CMD="${BLOCKERA_E2E_STOP_CMD:-npm run env:stop}"
 PR_ENV_FILE="${BLOCKERA_E2E_PR_ENV_FILE:-.pr-cypress.env.json}"
-GENERAL_CATEGORY="${BLOCKERA_E2E_GENERAL_CATEGORY:-general-1}"
-PACKAGE_GLOB="${BLOCKERA_E2E_PACKAGE_GLOB:-}"
 LIST_CMD="${BLOCKERA_E2E_LIST_CATEGORIES_CMD:-node packages/global-packages/packages/dev-tools/github/scripts/list-test-categories.js --suffix e2e.cy.js --env-prefix BLOCKERA_E2E}"
 PREPARE_CMD="${BLOCKERA_E2E_PREPARE_CMD:-}"
 PRE_TEST_CMD="${BLOCKERA_E2E_PRE_TEST_CMD:-}"
@@ -90,46 +88,16 @@ eval "${BUILD_CMD}"
 
 npx wp-env run cli -- wp eval 'if (!file_exists(WPMU_PLUGIN_DIR)) { wp_mkdir_p(WPMU_PLUGIN_DIR); }'
 
-build_spec_pattern() {
-	local category="$1"
-
-	if [[ -n "${PACKAGE_GLOB}" ]]; then
-		if [[ "${category}" != "${GENERAL_CATEGORY}" ]]; then
-			echo "${PACKAGE_GLOB}/*.${category}.e2e.cy.js"
-		else
-			echo "${PACKAGE_GLOB}/!(*.*.e2e).cy.js"
-		fi
-		return
-	fi
-
-	if [[ "${category}" != "${GENERAL_CATEGORY}" ]]; then
-		local pattern="packages/**/*.${category}.e2e.cy.js"
-		if [[ -d "tests" ]]; then
-			pattern="${pattern},tests/**/*.${category}.e2e.cy.js"
-		fi
-		echo "${pattern}"
-		return
-	fi
-
-	local search_dirs="packages"
-	if [[ -d "tests" ]]; then
-		search_dirs="${search_dirs} tests"
-	fi
-	# shellcheck disable=SC2086
-	local pattern
-	pattern="$(find ${search_dirs} -type f -name "*.e2e.cy.js" ! -name "*.*.e2e.cy.js" | tr '\n' ',')"
-	echo "${pattern%,}"
-}
-
-spec_pattern="$(build_spec_pattern "${CATEGORY}")"
-
 if [[ -f "${PR_ENV_FILE}" ]]; then
 	spec_pattern="$(eval "${LIST_CMD} --pr-env \"${PR_ENV_FILE}\" --specs-for-category \"${CATEGORY}\"")"
 	echo "cypress-e2e/run: PR spec filter (${PR_ENV_FILE}) category=${CATEGORY}"
-	if [[ -z "${spec_pattern}" ]]; then
-		echo "cypress-e2e/run: no specs in ${PR_ENV_FILE} for category ${CATEGORY}" >&2
-		exit 1
-	fi
+else
+	spec_pattern="$(eval "${LIST_CMD} --specs-for-category \"${CATEGORY}\"")"
+fi
+
+if [[ -z "${spec_pattern}" ]]; then
+	echo "cypress-e2e/run: no specs for category ${CATEGORY}" >&2
+	exit 1
 fi
 
 if [[ -n "${PRE_TEST_CMD}" ]]; then

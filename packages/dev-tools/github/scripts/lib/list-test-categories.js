@@ -20,11 +20,14 @@
  *   EXCLUDE_FILES          comma-separated cwd-relative paths
  *   FILE_PATTERN           regex; when set, only matching files are scanned
  *   CATEGORY_MODE          dot-prefix (default) | last-segment
+ *   SHARD_SIZE             positive int; pack base categories into base-1..N by
+ *                          registered `it(` count (0 / unset disables)
  */
 const fs = require('fs');
 const path = require('path');
 const { walkFiles } = require('./walk-files');
 const { isMatchingPackage } = require('./package-match');
+const { countItsInFile } = require('./count-registered-tests');
 
 function envValue(...names) {
 	for (const name of names) {
@@ -175,6 +178,12 @@ function resolveOptions(overrides = {}) {
 	const excludeFilesRaw =
 		overrides.excludeFiles || readPrefixed(envPrefix, 'EXCLUDE_FILES', '');
 
+	const shardSizeRaw =
+		overrides.shardSize !== undefined
+			? overrides.shardSize
+			: readPrefixed(envPrefix, 'SHARD_SIZE', '0');
+	const shardSize = parseShardSize(shardSizeRaw);
+
 	return {
 		root: overrides.root || process.cwd(),
 		envPrefix,
@@ -197,7 +206,29 @@ function resolveOptions(overrides = {}) {
 		filePattern,
 		categoryMode,
 		generalCategory,
+		shardSize,
 	};
+}
+
+function parseShardSize(raw) {
+	if (raw === undefined || raw === null || raw === '') {
+		return 0;
+	}
+
+	const size = Number.parseInt(String(raw), 10);
+	if (!Number.isFinite(size) || size < 1) {
+		return 0;
+	}
+
+	return size;
+}
+
+function stripShardSuffix(category) {
+	if (!category) {
+		return category;
+	}
+
+	return String(category).replace(/-\d+$/, '');
 }
 
 function isExcludedFile(filePath, options) {
@@ -267,6 +298,184 @@ function categoryForSpecFile(filePath, options) {
 	return category;
 }
 
+function baseCategoryForSpecFile(filePath, options) {
+	const category = categoryForSpecFile(filePath, options);
+
+	if (!category) {
+		return null;
+	}
+
+	if (matchesExclude(stripShardSuffix(category), options.excludeCategories)) {
+		return null;
+	}
+
+	if (options.shardSize > 0) {
+		return stripShardSuffix(category);
+	}
+
+	return category;
+}
+
+function toRelativePosix(filePath, root) {
+	if (path.isAbsolute(filePath)) {
+		return toPosix(path.relative(root, filePath));
+	}
+
+	return toPosix(filePath);
+}
+
+function resolveSpecPath(filePath, root) {
+	if (path.isAbsolute(filePath)) {
+		return filePath;
+	}
+
+	return path.join(root, filePath);
+}
+
+function specEntry(filePath, options) {
+	const base = baseCategoryForSpecFile(filePath, options);
+
+	if (!base) {
+		return null;
+	}
+
+	const relative = toRelativePosix(filePath, options.root);
+	const absolute = resolveSpecPath(filePath, options.root);
+	const count =
+		options.shardSize > 0 ? countItsInFile(absolute) : 0;
+
+	return { relative, base, count };
+}
+
+function collectEntriesFromPaths(paths, options) {
+	const entries = [];
+
+	for (const spec of paths) {
+		const entry = specEntry(spec, options);
+		if (entry) {
+			entries.push(entry);
+		}
+	}
+
+	return entries;
+}
+
+function collectEntriesFromDisk(options) {
+	const seen = new Set();
+	const entries = [];
+
+	function addFile(filePath) {
+		const entry = specEntry(filePath, options);
+		if (!entry || seen.has(entry.relative)) {
+			return;
+		}
+		seen.add(entry.relative);
+		entries.push(entry);
+	}
+
+	for (const file of collectFiles(options, options.packageFilter)) {
+		addFile(file);
+	}
+
+	if (options.generalCategory) {
+		const generalFilter =
+			options.generalPackageFilter || options.packageFilter;
+		for (const file of collectFiles(options, generalFilter)) {
+			if (!isGeneralSpec(file, options.suffix)) {
+				continue;
+			}
+			addFile(file);
+		}
+	}
+
+	return entries;
+}
+
+function groupEntriesByBase(entries) {
+	const groups = new Map();
+
+	for (const entry of entries) {
+		const list = groups.get(entry.base) || [];
+		list.push(entry);
+		groups.set(entry.base, list);
+	}
+
+	for (const list of groups.values()) {
+		list.sort((a, b) => a.relative.localeCompare(b.relative));
+	}
+
+	return groups;
+}
+
+function packEntries(entries, shardSize) {
+	const shards = [];
+	let current = [];
+	let currentCount = 0;
+
+	for (const entry of entries) {
+		if (
+			current.length > 0 &&
+			currentCount + entry.count > shardSize
+		) {
+			shards.push(current);
+			current = [];
+			currentCount = 0;
+		}
+
+		current.push(entry);
+		currentCount += entry.count;
+	}
+
+	if (current.length > 0) {
+		shards.push(current);
+	}
+
+	return shards;
+}
+
+function shardName(base, index) {
+	return `${base}-${index + 1}`;
+}
+
+function shardedCategoryNames(entries, shardSize) {
+	if (shardSize < 1) {
+		return sortCategories([...new Set(entries.map((entry) => entry.base))]);
+	}
+
+	const names = [];
+	const groups = groupEntriesByBase(entries);
+
+	for (const base of sortCategories([...groups.keys()])) {
+		const shards = packEntries(groups.get(base), shardSize);
+		shards.forEach((_, index) => {
+			names.push(shardName(base, index));
+		});
+	}
+
+	return names;
+}
+
+function specsInShardedCategory(entries, category, shardSize) {
+	if (shardSize < 1) {
+		return entries
+			.filter((entry) => entry.base === category)
+			.map((entry) => entry.relative);
+	}
+
+	const base = stripShardSuffix(category);
+	const match = String(category).match(/-(\d+)$/);
+	const shardIndex = match ? Number.parseInt(match[1], 10) - 1 : 0;
+	const group = groupEntriesByBase(entries).get(base) || [];
+	const shards = packEntries(group, shardSize);
+	const shard = shards[shardIndex];
+
+	if (!shard) {
+		return [];
+	}
+
+	return shard.map((entry) => entry.relative);
+}
+
 function readPrCypressSpecs(prEnvFile, root) {
 	const abs = path.isAbsolute(prEnvFile)
 		? prEnvFile
@@ -285,23 +494,20 @@ function readPrCypressSpecs(prEnvFile, root) {
 
 function listCategoriesFromSpecPaths(paths, overrides = {}) {
 	const options = resolveOptions(overrides);
-	const categories = new Set();
-
-	for (const spec of paths) {
-		const category = categoryForSpecFile(spec, options);
-		if (category) {
-			categories.add(category);
-		}
-	}
-
-	return sortCategories(Array.from(categories));
+	const entries = collectEntriesFromPaths(paths, options);
+	return shardedCategoryNames(entries, options.shardSize);
 }
 
 function specsForCategory(paths, category, overrides = {}) {
 	const options = resolveOptions(overrides);
-	return paths.filter(
-		(spec) => categoryForSpecFile(spec, options) === category
-	);
+	const entries = collectEntriesFromPaths(paths, options);
+	return specsInShardedCategory(entries, category, options.shardSize);
+}
+
+function specsForCategoryFromDisk(category, overrides = {}) {
+	const options = resolveOptions(overrides);
+	const entries = collectEntriesFromDisk(options);
+	return specsInShardedCategory(entries, category, options.shardSize);
 }
 
 function collectFiles(options, filter) {
@@ -358,31 +564,8 @@ function sortCategories(categories) {
  */
 function listCategories(overrides = {}) {
 	const options = resolveOptions(overrides);
-	const categories = new Set();
-
-	for (const file of collectFiles(options, options.packageFilter)) {
-		const category = categorizedFrom(
-			file,
-			options.suffix,
-			options.categoryMode
-		);
-		if (category && !matchesExclude(category, options.excludeCategories)) {
-			categories.add(category);
-		}
-	}
-
-	if (options.generalCategory) {
-		const generalFilter =
-			options.generalPackageFilter || options.packageFilter;
-		const hasGeneral = collectFiles(options, generalFilter).some((file) =>
-			isGeneralSpec(file, options.suffix)
-		);
-		if (hasGeneral) {
-			categories.add(options.generalCategory);
-		}
-	}
-
-	return sortCategories(Array.from(categories));
+	const entries = collectEntriesFromDisk(options);
+	return shardedCategoryNames(entries, options.shardSize);
 }
 
 function parseArgs(argv) {
@@ -441,6 +624,10 @@ function parseArgs(argv) {
 			args.categoryMode = next();
 		} else if (arg.startsWith('--category-mode=')) {
 			args.categoryMode = arg.slice('--category-mode='.length);
+		} else if (arg === '--shard-size') {
+			args.shardSize = next();
+		} else if (arg.startsWith('--shard-size=')) {
+			args.shardSize = arg.slice('--shard-size='.length);
 		} else if (arg === '--env-prefix') {
 			args.envPrefix = next();
 		} else if (arg.startsWith('--env-prefix=')) {
@@ -481,9 +668,10 @@ Options / env (BLOCKERA_TEST_* or --env-prefix):
   --exclude-files / EXCLUDE_FILES
   --file-pattern / FILE_PATTERN
   --category-mode / CATEGORY_MODE         dot-prefix | last-segment
+  --shard-size / SHARD_SIZE               pack base-1..N by registered it() count
   --env-prefix                            e.g. BLOCKERA_E2E
   --pr-env FILE                           Cypress .pr-cypress.env.json
-  --specs-for-category CAT                with --pr-env, print matching spec paths
+  --specs-for-category CAT                print matching spec paths (comma list)
 `);
 }
 
@@ -494,12 +682,6 @@ function runCli() {
 		if (args.help) {
 			printHelp();
 			return;
-		}
-
-		if (args.specsForCategory && !args.prEnv) {
-			throw new Error(
-				'list-test-categories: --specs-for-category requires --pr-env'
-			);
 		}
 
 		if (args.prEnv) {
@@ -520,6 +702,13 @@ function runCli() {
 			return;
 		}
 
+		if (args.specsForCategory) {
+			process.stdout.write(
+				specsForCategoryFromDisk(args.specsForCategory, args).join(',')
+			);
+			return;
+		}
+
 		const categories = listCategories(args);
 		process.stdout.write(JSON.stringify(categories));
 	} catch (error) {
@@ -529,7 +718,9 @@ function runCli() {
 }
 
 module.exports = {
+	baseCategoryForSpecFile,
 	categoryForSpecFile,
+	countItsInFile,
 	listCategories,
 	listCategoriesFromSpecPaths,
 	parseArgs,
@@ -537,5 +728,7 @@ module.exports = {
 	resolveOptions,
 	runCli,
 	specsForCategory,
+	specsForCategoryFromDisk,
 	sortCategories,
+	stripShardSuffix,
 };

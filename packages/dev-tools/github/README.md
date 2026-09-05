@@ -700,6 +700,9 @@ Two-job flow: detect categories → matrix `run.sh` per category.
 
 Discovery uses `list-test-categories.js --suffix e2e.cy.js`. Consumers pass
 their own scan/package/pattern env — there is no product-style switch.
+Set `BLOCKERA_E2E_SHARD_SIZE` (e.g. `100`) to pack each base filename
+category into `base-1`…`base-N` by registered test count. `run.sh` always
+passes an explicit `--spec` list from `--specs-for-category`.
 
 ```yaml
 # Theme-style example
@@ -748,8 +751,9 @@ env:
 | Env | Default |
 | --- | --- |
 | `BLOCKERA_E2E_CATEGORY` | required on matrix job |
-| `BLOCKERA_E2E_PACKAGE_GLOB` | empty (`packages` + `tests`) |
+| `BLOCKERA_E2E_PACKAGE_GLOB` | unused by `run.sh` (spec lists come from `list-test-categories.js`) |
 | `BLOCKERA_E2E_GENERAL_CATEGORY` | `general-1` (`none` disables) |
+| `BLOCKERA_E2E_SHARD_SIZE` | unset / `0` (no packing). Positive int packs each base category into `base-1`…`base-N` by registered `it(` count (array `.forEach` around `it` is expanded). |
 | `BLOCKERA_E2E_LIST_CATEGORIES_CMD` | `list-test-categories.js --suffix e2e.cy.js --env-prefix BLOCKERA_E2E` |
 | `BLOCKERA_E2E_USE_CREATE_WP_ENV` | `false` (also runs when `.pr-env.json` exists) |
 | `BLOCKERA_E2E_WRITE_CYPRESS_ENV` | `false` |
@@ -763,10 +767,14 @@ env:
 
 Discovery env: `SCAN_ROOTS`, `PACKAGE_SUFFIX` / `PACKAGE_PREFIX`,
 `GENERAL_PACKAGES`, `EXCLUDE_CATEGORIES`, `EXCLUDE_FILES`, `FILE_PATTERN`,
-`CATEGORY_MODE` (`dot-prefix` \| `last-segment`).
+`CATEGORY_MODE` (`dot-prefix` \| `last-segment`), `SHARD_SIZE`.
 
-`.pr-env.json` (PR-only) is merged onto `.github/wp-env-configs/{category}.json`
-by `create-wp-env.js`. Scalars replace, `config` / `lifecycleScripts`
+`create-wp-env.js` / Cypress prepare load `.github/wp-env-configs/{category}.json`,
+then `{base}.json` after stripping a trailing `-N` shard (so `woocommerce-2`
+uses `woocommerce.json`), then the fallback config.
+
+`.pr-env.json` (PR-only) is merged onto that category file by `create-wp-env.js`.
+Scalars replace, `config` / `lifecycleScripts`
 shallow-merge, and `plugins` / `themes` concatenate. Restrict overlay plugins
 with `BLOCKERA_WP_ENV_PR_PLUGIN_CATEGORIES`. Add a companion plugin source with
 `BLOCKERA_WP_ENV_DEFAULT_PLUGIN`. Optional third CLI arg `pluginDownloadUrl`

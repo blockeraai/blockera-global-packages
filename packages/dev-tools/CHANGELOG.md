@@ -1,3 +1,11 @@
+## Unreleased
+
+### Development Notes
+- Cypress E2E CI: optional `SHARD_SIZE` packs each base spec category into
+  `base-1`…`N` by registered `it()` count (array `.forEach` around `it` is
+  expanded). `run.sh` passes an explicit spec list; wp-env config lookup
+  strips a trailing `-N` shard.
+
 ## [3.0.0] - 2026-09-05
 
 ### Development Notes
