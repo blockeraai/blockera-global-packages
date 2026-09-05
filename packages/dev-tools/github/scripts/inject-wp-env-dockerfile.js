@@ -1,7 +1,7 @@
 /**
- * Rewrite wp-env WordPress Dockerfiles so every `apt-get install` wipes
- * lists and refreshes indexes in the same RUN (avoids Hit: on stale
- * debian-security indexes from cached WordPress image layers).
+ * Rewrite wp-env WordPress Dockerfiles so every `apt-get install` retargets
+ * apt off deb.debian.org (Fastly POPs 404 debian-security pool files),
+ * wipes lists, and refreshes indexes in the same RUN.
  *
  * Flags come from this package's `root-configs/.docker/Dockerfile.wordpress`
  * unless BLOCKERA_WP_ENV_DOCKERFILE is set. Host `.docker/` is the bootstrap
@@ -44,13 +44,11 @@ function collapseDockerfileContinuations(contents) {
 
 function getAptInstallPrefix(dockerfileContents) {
 	const collapsed = collapseDockerfileContinuations(dockerfileContents);
-	const runMatch = collapsed.match(
-		/RUN ((?:rm -rf \/var\/lib\/apt\/lists\/\* && )?apt-get update\b(?: [^&]+)? && apt-get(?: -[^\s]+)* install(?:(?: -o \S+)|(?: --[^\s]+)|(?: -[^\s]+))*)/
-	);
+	const runMatch = collapsed.match(/RUN (.+)\s+\$PHPIZE_DEPS\b/);
 
 	if (!runMatch) {
 		throw new Error(
-			'inject-wp-env-dockerfile: Dockerfile.wordpress needs a RUN that wipes apt lists, apt-get update, and apt-get install'
+			'inject-wp-env-dockerfile: Dockerfile.wordpress needs a RUN … $PHPIZE_DEPS layer'
 		);
 	}
 
@@ -59,6 +57,13 @@ function getAptInstallPrefix(dockerfileContents) {
 
 function isWordpressDockerfilePath(filePath) {
 	return WORDPRESS_DOCKERFILE_NAMES.has(path.basename(String(filePath)));
+}
+
+function alreadyPatchedAptInstallRun(line) {
+	return (
+		/security\.debian\.org/.test(line) &&
+		/\/var\/lib\/apt\/lists/.test(line)
+	);
 }
 
 function patchAptGetInstallRun(line, prefix) {
@@ -70,13 +75,13 @@ function patchAptGetInstallRun(line, prefix) {
 		return line;
 	}
 
-	if (/\bapt-get\s+update\b/.test(line) && /&&/.test(line)) {
+	if (alreadyPatchedAptInstallRun(line)) {
 		return line;
 	}
 
 	return line.replace(
-		/apt-get(?:\s+\S+)*\s+install(?:\s+(?:-o\s+\S+|--\S+|-\S+))*/,
-		prefix
+		/^(\s*RUN\s+).*?\bapt-get(?:\s+\S+)*\s+install(?:\s+(?:-o\s+\S+|--\S+|-\S+))*/,
+		`$1${prefix}`
 	);
 }
 

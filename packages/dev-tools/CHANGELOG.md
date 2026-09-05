@@ -1,6 +1,9 @@
 ## Unreleased
 
 ### Development Notes
+- wp-env: rewrite apt sources from `deb.debian.org` to `security.debian.org`
+  / `ftp.debian.org` before install. GitHub Fastly POPs 404 bullseye
+  `sudo` on debian-security even after a fresh `apt-get update`.
 - wp-env: wipe `/var/lib/apt/lists` before each injected `apt-get update` so
   cached WordPress image layers do not `Hit:` a debian-security index whose
   pool files 404 (bullseye `sudo`). Inject reads this package's

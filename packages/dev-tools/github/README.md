@@ -133,14 +133,14 @@ Used by consumer `npm run env:start` (local only). Copies
 
 `env:start` then runs `run-wp-env-start.js`, which preloads
 `preload-wp-env-docker-patch.js` so wp-env's generated `WordPress.Dockerfile` /
-`Tests-WordPress.Dockerfile` wipe apt lists and refresh indexes in the same
-`RUN` as each `apt-get install` (avoids `Hit:` on stale debian-security indexes
-from cached `wordpress:php*` layers). Flags come from this package's
-`root-configs/.docker/Dockerfile.wordpress` unless `BLOCKERA_WP_ENV_DOCKERFILE`
-is set. Host `.docker/` is the sync-config / `project:bootstrap` copy for local
-docker builds; inject does not read it so a lagging host file cannot pin old
-apt flags. wp-env still selects `FROM wordpress:php${phpVersion}` from
-`.wp-env.json`.
+`Tests-WordPress.Dockerfile` retarget apt off `deb.debian.org` (Fastly POPs
+404 debian-security pool files such as bullseye `sudo`), wipe lists, and
+refresh indexes in the same `RUN` as each `apt-get install`. Flags come from
+this package's `root-configs/.docker/Dockerfile.wordpress` unless
+`BLOCKERA_WP_ENV_DOCKERFILE` is set. Host `.docker/` is the sync-config /
+`project:bootstrap` copy for local docker builds; inject does not read it so
+a lagging host file cannot pin old apt flags. wp-env still selects
+`FROM wordpress:php${phpVersion}` from `.wp-env.json`.
 
 | Env (host `.env`) | Default |
 | --- | --- |

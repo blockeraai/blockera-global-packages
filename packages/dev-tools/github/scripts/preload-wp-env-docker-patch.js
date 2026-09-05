@@ -36,7 +36,7 @@ fs.promises.writeFile = async function writeFileWithWpEnvDockerPatch(
 			if (!logged) {
 				logged = true;
 				console.log(
-					'👉 wp-env: injecting apt-get update into WordPress Dockerfiles'
+					'👉 wp-env: retargeting apt mirrors and refreshing indexes in WordPress Dockerfiles'
 				);
 			}
 		}
