@@ -11,8 +11,8 @@
 
 ### Automated Tests
 - Cover category packing, `it.skip`, array-literal and const-array
-  `.forEach` expansion, inner `.forEach` inside `it`, and a single shard
-  keeping the original category id.
+  `.forEach` expansion, inner `.forEach` inside `it`, a single shard
+  keeping the original category id, and even file splits across shards.
 
 ## [3.0.0] - 2026-09-05
 

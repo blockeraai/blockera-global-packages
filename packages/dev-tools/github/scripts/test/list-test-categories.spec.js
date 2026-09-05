@@ -234,6 +234,56 @@ describe('list-test-categories sharding', () => {
 		);
 	});
 
+	it('spreads files evenly across the shard count instead of leaving a tiny leftover', () => {
+		writeSpec(
+			root,
+			'packages/editor/test/a.compatibility.e2e.cy.js',
+			its(30)
+		);
+		writeSpec(
+			root,
+			'packages/editor/test/b.compatibility.e2e.cy.js',
+			its(30)
+		);
+		writeSpec(
+			root,
+			'packages/editor/test/c.compatibility.e2e.cy.js',
+			its(30)
+		);
+		writeSpec(
+			root,
+			'packages/editor/test/d.compatibility.e2e.cy.js',
+			its(30)
+		);
+		writeSpec(
+			root,
+			'packages/editor/test/e.compatibility.e2e.cy.js',
+			its(5)
+		);
+
+		const options = {
+			root,
+			suffix: 'e2e.cy.js',
+			scanRoots: ['packages'],
+			shardSize: 80,
+			generalCategory: 'none',
+		};
+
+		expect(listCategories(options)).toEqual([
+			'compatibility-1',
+			'compatibility-2',
+		]);
+		expect(specsForCategoryFromDisk('compatibility-1', options)).toEqual([
+			'packages/editor/test/a.compatibility.e2e.cy.js',
+			'packages/editor/test/b.compatibility.e2e.cy.js',
+			'packages/editor/test/c.compatibility.e2e.cy.js',
+		]);
+		expect(specsForCategoryFromDisk('compatibility-2', options)).toEqual([
+			'packages/editor/test/d.compatibility.e2e.cy.js',
+			'packages/editor/test/e.compatibility.e2e.cy.js',
+		]);
+	});
+
 	it('packs PR spec paths only', () => {
 		const paths = [
 			'packages/editor/test/a.compatibility.e2e.cy.js',
