@@ -12,6 +12,8 @@
 - InputControl reuses CSS unit catalogs, keeps unit option lookups indexed, and
   avoids rebuilding unit menus and handlers on unrelated parent renders. Numeric
   keystrokes still update the canvas immediately.
+- Annotate memoized NumberInput, OtherInput, and UnitInput exports so Flow can
+  verify their module signatures.
 
 ### Automated Tests
 

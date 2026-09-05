@@ -3,7 +3,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import type { MixedElement } from 'react';
+import type { ComponentType, MixedElement } from 'react';
 import {
 	useState,
 	Fragment,
@@ -36,7 +36,14 @@ import { RangeControl } from '../../index';
 import { isSpecialUnit, getUnitByValue, extractNumberAndUnit } from '../utils';
 import { InputArrows } from './input-arrows';
 
-export const UnitInput = memo(function UnitInput({
+type UnitInputProps = {
+	...InputControlProps,
+	inputValue: string,
+	unitValue: Object,
+	onVariableShortcut: () => void,
+};
+
+export const UnitInput: ComponentType<UnitInputProps> = memo(function UnitInput({
 	defaultValue,
 	range,
 	noBorder,
@@ -55,12 +62,7 @@ export const UnitInput = memo(function UnitInput({
 	isValidValue,
 	onVariableShortcut,
 	...props
-}: {
-	...InputControlProps,
-	inputValue: string,
-	unitValue: Object,
-	onVariableShortcut: () => void,
-}): MixedElement {
+}: UnitInputProps): MixedElement {
 	const [isMaximizeVisible, setIsMaximizeVisible] = useState(false);
 	const [typedValue, setTypedValue] = useState(inputValue);
 	const unitUpdateTimeout = useRef(null);

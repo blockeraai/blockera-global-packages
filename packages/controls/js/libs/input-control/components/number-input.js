@@ -2,7 +2,7 @@
 /**
  * External dependencies
  */
-import type { MixedElement } from 'react';
+import type { ComponentType, MixedElement } from 'react';
 import { memo, useCallback, useMemo } from '@wordpress/element';
 
 /**
@@ -32,7 +32,7 @@ const PASTE_NUMBER_REGEX = /^(-?\d+(\.\d+)?)$/;
 const FLOAT_STRIP_REGEX = /[^-\.0-9]/g;
 const INT_STRIP_REGEX = /[^-0-9]/g;
 
-export const NumberInput = memo(function NumberInput({
+export const NumberInput: ComponentType<InnerInputControlProps> = memo(function NumberInput({
 	value,
 	setValue,
 	noBorder,
