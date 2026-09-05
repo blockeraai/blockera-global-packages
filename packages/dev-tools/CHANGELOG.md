@@ -1,6 +1,10 @@
 ## Unreleased
 
 ### Development Notes
+- wp-env: add `root-configs/.docker/Dockerfile.wordpress` (PHP_VERSION ARG
+  plus combined apt-get update/install flags) and copy `.docker/` via
+  sync-config / `write-root-configs`.
+
 - Sync global-packages: keep one bump PR with a stable title (no commit
   count or gitlink); later GP master pins commit on that branch instead of
   closing the PR.
