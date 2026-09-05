@@ -16,6 +16,8 @@
 - Style engine: applyFilters for generators runs once per CSS burst, fingerprints
   reuse stringify when the attributes object identity is unchanged, and empty
   unsaved states skip the selector walk.
+- Extension memo equality compares own keys with a Set so Flow does not reject
+  unbound Object.prototype.hasOwnProperty.
 
 ### Automated Tests
 

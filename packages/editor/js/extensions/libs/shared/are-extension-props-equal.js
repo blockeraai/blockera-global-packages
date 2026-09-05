@@ -21,10 +21,12 @@ export function areExtensionPropsEqual(prev: Object, next: Object): boolean {
 		return false;
 	}
 
+	const nextKeySet = new Set(nextKeys);
+
 	for (let i = 0; i < prevKeys.length; i++) {
 		const key = prevKeys[i];
 
-		if (!Object.prototype.hasOwnProperty.call(next, key)) {
+		if (!nextKeySet.has(key)) {
 			return false;
 		}
 
