@@ -449,22 +449,50 @@ function shardName(base, index, shardCount) {
 	return `${base}-${index + 1}`;
 }
 
-function shardedCategoryNames(entries, shardSize) {
-	if (shardSize < 1) {
-		return sortCategories([...new Set(entries.map((entry) => entry.base))]);
+function shardedCategorySummaries(entries, shardSize) {
+	if (!entries.length) {
+		return [];
 	}
 
-	const names = [];
+	const summaries = [];
 	const groups = groupEntriesByBase(entries);
 
 	for (const base of sortCategories([...groups.keys()])) {
-		const shards = packEntries(groups.get(base), shardSize);
-		shards.forEach((_, index) => {
-			names.push(shardName(base, index, shards.length));
+		const group = groups.get(base);
+		const shards = shardSize < 1 ? [group] : packEntries(group, shardSize);
+
+		shards.forEach((shard, index) => {
+			summaries.push({
+				category:
+					shardSize < 1
+						? base
+						: shardName(base, index, shards.length),
+				files: shard.length,
+				its: shard.reduce((sum, entry) => sum + entry.count, 0),
+			});
 		});
 	}
 
-	return names;
+	return summaries;
+}
+
+function formatCategorySummaries(summaries) {
+	const width = Math.max(
+		8,
+		...summaries.map((row) => row.category.length)
+	);
+	const lines = summaries.map(
+		(row) =>
+			`${row.category.padEnd(width)}  ${String(row.its).padStart(4)} its  ${String(row.files).padStart(3)} files`
+	);
+	const totalIts = summaries.reduce((sum, row) => sum + row.its, 0);
+	const totalFiles = summaries.reduce((sum, row) => sum + row.files, 0);
+
+	lines.push(
+		`${'total'.padEnd(width)}  ${String(totalIts).padStart(4)} its  ${String(totalFiles).padStart(3)} files  ${summaries.length} categories`
+	);
+
+	return lines.join('\n');
 }
 
 function specsInShardedCategory(entries, category, shardSize) {
@@ -514,10 +542,16 @@ function readPrCypressSpecs(prEnvFile, root) {
 	return specs.filter((spec) => typeof spec === 'string' && spec.trim());
 }
 
-function listCategoriesFromSpecPaths(paths, overrides = {}) {
+function listCategorySummariesFromSpecPaths(paths, overrides = {}) {
 	const options = resolveOptions(overrides);
 	const entries = collectEntriesFromPaths(paths, options);
-	return shardedCategoryNames(entries, options.shardSize);
+	return shardedCategorySummaries(entries, options.shardSize);
+}
+
+function listCategoriesFromSpecPaths(paths, overrides = {}) {
+	return listCategorySummariesFromSpecPaths(paths, overrides).map(
+		(row) => row.category
+	);
 }
 
 function specsForCategory(paths, category, overrides = {}) {
@@ -582,12 +616,27 @@ function sortCategories(categories) {
 
 /**
  * @param {Object} [overrides]
+ * @return {{ category: string, files: number, its: number }[]}
+ */
+function listCategorySummaries(overrides = {}) {
+	const options = resolveOptions(overrides);
+	const entries = collectEntriesFromDisk(options);
+	return shardedCategorySummaries(entries, options.shardSize);
+}
+
+/**
+ * @param {Object} [overrides]
  * @return {string[]} Sorted category names.
  */
 function listCategories(overrides = {}) {
-	const options = resolveOptions(overrides);
-	const entries = collectEntriesFromDisk(options);
-	return shardedCategoryNames(entries, options.shardSize);
+	return listCategorySummaries(overrides).map((row) => row.category);
+}
+
+function writeCategoryList(summaries) {
+	process.stderr.write(`${formatCategorySummaries(summaries)}\n`);
+	process.stdout.write(
+		JSON.stringify(summaries.map((row) => row.category))
+	);
 }
 
 function parseArgs(argv) {
@@ -694,6 +743,9 @@ Options / env (BLOCKERA_TEST_* or --env-prefix):
   --env-prefix                            e.g. BLOCKERA_E2E
   --pr-env FILE                           Cypress .pr-cypress.env.json
   --specs-for-category CAT                print matching spec paths (comma list)
+
+Listing categories prints a JSON array on stdout (matrix input) and
+registered it() / file counts per id on stderr.
 `);
 }
 
@@ -718,9 +770,7 @@ function runCli() {
 				return;
 			}
 
-			process.stdout.write(
-				JSON.stringify(listCategoriesFromSpecPaths(specs, args))
-			);
+			writeCategoryList(listCategorySummariesFromSpecPaths(specs, args));
 			return;
 		}
 
@@ -731,8 +781,7 @@ function runCli() {
 			return;
 		}
 
-		const categories = listCategories(args);
-		process.stdout.write(JSON.stringify(categories));
+		writeCategoryList(listCategorySummaries(args));
 	} catch (error) {
 		console.error(error.message || error);
 		process.exit(1);
@@ -743,8 +792,11 @@ module.exports = {
 	baseCategoryForSpecFile,
 	categoryForSpecFile,
 	countItsInFile,
+	formatCategorySummaries,
 	listCategories,
 	listCategoriesFromSpecPaths,
+	listCategorySummaries,
+	listCategorySummariesFromSpecPaths,
 	parseArgs,
 	readPrCypressSpecs,
 	resolveOptions,

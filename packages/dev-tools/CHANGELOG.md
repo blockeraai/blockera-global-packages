@@ -7,7 +7,8 @@
   `ceil(total / size)`; files are then split evenly across those shards
   instead of leaving a tiny leftover job. A category that fits in one
   shard keeps the original id. `run.sh` passes an explicit spec list;
-  wp-env config lookup strips a trailing `-N` shard.
+  wp-env config lookup strips a trailing `-N` shard. Category detection
+  logs registered `it()` and file counts per matrix id.
 
 ### Automated Tests
 - Cover category packing, `it.skip`, array-literal and const-array

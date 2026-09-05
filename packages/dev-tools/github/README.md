@@ -703,8 +703,9 @@ their own scan/package/pattern env — there is no product-style switch.
 Set `BLOCKERA_E2E_SHARD_SIZE` (e.g. `100`) to pack each base filename
 category by registered test count. Shard count is `ceil(total / size)`;
 files are split evenly across those shards (one shard keeps the original
-id). `run.sh` always
-passes an explicit `--spec` list from `--specs-for-category`.
+id). `detect-categories.sh` logs each matrix id with its registered `it()`
+count and file count (stdout stays a JSON array for the matrix). `run.sh`
+always passes an explicit `--spec` list from `--specs-for-category`.
 
 ```yaml
 # Theme-style example
