@@ -8,13 +8,16 @@ export const SLOTS_CONFIG: SlotConfig[] = [
 	{
 		id: 'blockera/slots/editor-header-settings',
 		selectors: ['.editor-header__settings', '.edit-post-header__settings'],
-		placement: 'before',
+		placement: 'after',
 		placementSelector: '.editor-header__post-preview-button',
 	},
 	{
 		id: 'blockera/slots/editor-header-primary-sidebar',
-		selectors: ['.editor-header__settings', '.edit-post-header__settings'],
-		placement: 'after',
+		selectors: [
+			'.editor-header__settings .interface-pinned-items',
+			'.edit-post-header__settings .interface-pinned-items',
+		],
+		placement: 'end',
 		placementSelector: '.interface-pinned-items',
 	},
 	{

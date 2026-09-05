@@ -15,9 +15,7 @@
 .interface-pinned-items
 	.components-button[aria-controls="cbt-plugin-sidebar:create-block-theme-sidebar"]:not(
 		.is-pressed
-	),
-.components-button.editor-post-save-draft.is-tertiary,
-.components-button.editor-post-saved-state.is-tertiary:not(.is-saved) {
+	) {
 	border: 1px solid var(--blockera-controls-border-color-soft);
 }
 
@@ -70,23 +68,76 @@
 	border-color: var(--blockera-controls-primary-color);
 }
 
-/* Order of elements in the blockera editor header settings */
-
-.blockera-elements-editor-header-settings .blockera-preview-button-wrapper {
-	order: 1;
-}
-
-.blockera-elements-editor-header-settings .blockera-zoom-control-wrapper {
-	order: 2;
-}
-
-.blockera-elements-editor-header-settings .blockera-canvas-breakpoints {
-	order: 100;
-}
-
 /* Editor header toolbar */
 .blockera-elements-editor-header-toolbar:not(:empty) {
 	margin-right: 16px !important;
 	display: flex;
 	gap: 8px;
+}
+
+/* Order of elements in the editor header toolbar */
+.editor-header__settings {
+	.editor-header__post-preview-button {
+		order: -200;
+	}
+
+	.blockera-elements-editor-header-settings {
+		order: -100; // almost first (the save draft is exception)
+
+		.blockera-zoom-control-wrapper {
+			order: 1;
+		}
+
+		.blockera-preview-button-wrapper {
+			order: 2;
+		}
+
+		.blockera-canvas-breakpoints {
+			order: 100;
+		}
+	}
+
+	// primary sidebar should be second to save/publish buttons
+	.blockera-elements-editor-header-primary-sidebar {
+		order: 100;
+	}
+
+	// save draft and saved state buttons should be first
+	.components-button.editor-post-save-draft,
+	.components-button.editor-post-saved-state {
+		order: 109;
+		border: 1px solid var(--blockera-controls-border-color-soft);
+
+		&:has(svg) {
+			padding: 8px 12px 8px 4px;
+		}
+	}
+
+	// if the preview button is present without specific class, move the save draft button to the third position
+	&:has(
+			button[class="components-button is-compact is-tertiary"]:first-child
+				+ .editor-preview-dropdown
+		)
+		> button[class="components-button is-compact is-tertiary"]:first-child {
+		order: 109;
+		border: 1px solid var(--blockera-controls-border-color-soft);
+
+		&:has(svg) {
+			padding: 8px 12px 8px 4px;
+		}
+	}
+
+	// publish button should be second to last
+	.components-button.editor-post-publish-button {
+		order: 110;
+	}
+
+	// block editor settings dropdown should be last
+	> .components-dropdown.components-dropdown-menu:last-child {
+		order: 120;
+	}
+
+	.interface-pinned-items {
+		padding: 0 8px;
+	}
 }
