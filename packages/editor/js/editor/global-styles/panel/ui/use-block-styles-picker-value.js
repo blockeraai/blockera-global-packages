@@ -16,7 +16,7 @@ import {
  * Internal dependencies
  */
 import { useBlockStylesCounter } from './use-block-styles-counter';
-import { useBlockContext } from '../../../../extensions/components';
+import { useBlockIdentityContext } from '../../../../extensions/components';
 import { useGlobalStylesPanelContext } from '../context';
 import { VARIATION_SURFACE_STYLE } from '../variation-surfaces';
 import { type T_BLOCK_STYLES_PROPS } from './types';
@@ -62,7 +62,7 @@ export const useBlockStylesPickerValue = ({
 			? pickerVariationSurface
 			: panelVariationSurface;
 
-	const { isNormalState: isNormalStateFn } = useBlockContext() || {};
+	const { isNormalState: isNormalStateFn } = useBlockIdentityContext() || {};
 	const isNormalState =
 		typeof isNormalStateFn === 'function' ? isNormalStateFn : () => true;
 	const [counter, setCounter] = useBlockStylesCounter({

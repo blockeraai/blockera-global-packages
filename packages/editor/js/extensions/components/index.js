@@ -11,6 +11,7 @@ export * from './state-container';
 export * from './block-fill-partials';
 export {
 	useBlockContext,
+	useBlockIdentityContext,
 	BlockEditContext,
 	BlockEditContextProvider,
 } from './block-context';

@@ -3,7 +3,7 @@
  * External dependencies
  */
 import { __, sprintf } from '@wordpress/i18n';
-import { useMemo } from '@wordpress/element';
+import { useMemo, memo } from '@wordpress/element';
 import { Fragment, type MixedElement } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Slot, SlotFillProvider } from '@wordpress/components';
@@ -26,23 +26,23 @@ import { ExtensionSlotFill } from '@blockera/features-core';
  */
 import { isInnerBlock } from '../../components/utils';
 import { ErrorBoundaryFallback } from '../../hooks/block-settings';
-import { BackgroundExtension } from '../background';
-import { BorderAndShadowExtension } from '../border-and-shadow';
-import { EffectsExtension } from '../effects';
-import { TypographyExtension } from '../typography';
-import { PositionExtension } from '../position';
-import { SizeExtension } from '../size';
-import { LayoutExtension } from '../layout';
-import { FlexChildExtension } from '../flex-child';
-import { GridChildExtension } from '../grid-child';
-import { CustomStyleExtension } from '../custom-style';
-import { MouseExtension } from '../mouse';
-import { StateOptionsExtension } from '../block-card/block-states/extension';
+import { BackgroundExtension as BackgroundExtensionView } from '../background';
+import { BorderAndShadowExtension as BorderAndShadowExtensionView } from '../border-and-shadow';
+import { EffectsExtension as EffectsExtensionView } from '../effects';
+import { TypographyExtension as TypographyExtensionView } from '../typography';
+import { PositionExtension as PositionExtensionView } from '../position';
+import { SizeExtension as SizeExtensionView } from '../size';
+import { LayoutExtension as LayoutExtensionView } from '../layout';
+import { FlexChildExtension as FlexChildExtensionView } from '../flex-child';
+import { GridChildExtension as GridChildExtensionView } from '../grid-child';
+import { CustomStyleExtension as CustomStyleExtensionView } from '../custom-style';
+import { MouseExtension as MouseExtensionView } from '../mouse';
+import { StateOptionsExtension as StateOptionsExtensionView } from '../block-card/block-states/extension';
 // import { EntranceAnimationExtension } from '../entrance-animation';
 // import { ScrollAnimationExtension } from '../scroll-animation';
-import { ClickAnimationExtension } from '../click-animation';
+import { ClickAnimationExtension as ClickAnimationExtensionView } from '../click-animation';
 // import { ConditionsExtension } from '../conditions';
-import { AdvancedSettingsExtension } from '../advanced-settings';
+import { AdvancedSettingsExtension as AdvancedSettingsExtensionView } from '../advanced-settings';
 import { useBlockSection } from '../../components';
 import { useParentLayoutContext } from './utils';
 import { generateExtensionId } from '../utils';
@@ -52,6 +52,43 @@ import {
 	filterSettingsBySearch,
 } from '../base/utils/search-features';
 import { gridChildConfig as defaultGridChildConfig } from '../base/config/grid-child';
+import { areExtensionPropsEqual } from './are-extension-props-equal';
+
+const BackgroundExtension = memo(
+	BackgroundExtensionView,
+	areExtensionPropsEqual
+);
+const BorderAndShadowExtension = memo(
+	BorderAndShadowExtensionView,
+	areExtensionPropsEqual
+);
+const EffectsExtension = memo(EffectsExtensionView, areExtensionPropsEqual);
+const TypographyExtension = memo(
+	TypographyExtensionView,
+	areExtensionPropsEqual
+);
+const PositionExtension = memo(PositionExtensionView, areExtensionPropsEqual);
+const SizeExtension = memo(SizeExtensionView, areExtensionPropsEqual);
+const LayoutExtension = memo(LayoutExtensionView, areExtensionPropsEqual);
+const FlexChildExtension = memo(FlexChildExtensionView, areExtensionPropsEqual);
+const GridChildExtension = memo(GridChildExtensionView, areExtensionPropsEqual);
+const CustomStyleExtension = memo(
+	CustomStyleExtensionView,
+	areExtensionPropsEqual
+);
+const MouseExtension = memo(MouseExtensionView, areExtensionPropsEqual);
+const StateOptionsExtension = memo(
+	StateOptionsExtensionView,
+	areExtensionPropsEqual
+);
+const ClickAnimationExtension = memo(
+	ClickAnimationExtensionView,
+	areExtensionPropsEqual
+);
+const AdvancedSettingsExtension = memo(
+	AdvancedSettingsExtensionView,
+	areExtensionPropsEqual
+);
 
 /** Settings keys for the Style tab (MappedExtensions case 'style'). */
 const STYLE_TAB_CONFIG_KEYS: Array<string> = [
