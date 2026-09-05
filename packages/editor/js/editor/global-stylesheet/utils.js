@@ -14,6 +14,55 @@ import { omit, isEquals } from '@blockera/utils';
 const EMPTY_OBJECT: Object = {};
 
 /**
+ * Cheap iframe cache key: block name, attribute keys, variation names.
+ * Avoids JSON.stringify of every attribute schema on each core/blocks tick.
+ *
+ * @param {Object} blockType Registered block type.
+ * @return {string} Schema signature.
+ */
+export function getIframeBlockTypeSchemaSignature(blockType: Object): string {
+	const attrs = blockType?.attributes;
+	const attrPart =
+		attrs && typeof attrs === 'object'
+			? Object.keys(attrs).sort().join(',')
+			: '';
+	let varPart = '';
+	if (Array.isArray(blockType?.variations)) {
+		varPart = [...blockType.variations]
+			.map((v) => (v && typeof v.name === 'string' ? v.name : ''))
+			.sort()
+			.join(',');
+	}
+	return `${blockType?.name ?? ''}:${attrPart}::${varPart}`;
+}
+
+/**
+ * @param {Array<Object>} blockTypes Blockera-enabled block types.
+ * @return {string} Combined schema fingerprint.
+ */
+export function iframeBlockTypesSchemaFingerprint(
+	blockTypes: Array<Object>
+): string {
+	return blockTypes
+		.map((b) => getIframeBlockTypeSchemaSignature(b))
+		.sort()
+		.join(';');
+}
+
+/**
+ * @param {mixed} slice Theme.json block or variation style slice.
+ * @return {boolean} True when there is nothing to WP-hydrate.
+ */
+export function isEmptyGlobalStylesSlice(slice: mixed): boolean {
+	return (
+		!slice ||
+		typeof slice !== 'object' ||
+		Array.isArray(slice) ||
+		Object.keys(slice).length === 0
+	);
+}
+
+/**
  * Returns the previous snapshot when deep-equal, keeping referential stability for memo children.
  *
  * @param {{ current: any }} cacheRef Mutable ref holding the last retained value.

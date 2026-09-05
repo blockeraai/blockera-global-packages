@@ -1,5 +1,12 @@
 ## Unreleased
 
+### Improvements
+
+- Switching the editor between Desktop, Tablet, and Mobile no longer makes
+  Global Styles feel slow.
+- Blocks you have not customized in Global Styles no longer add extra lag in
+  the background while you work.
+
 ### Bug Fixes
 
 - Block editor no longer crashes on load when generating canvas CSS
