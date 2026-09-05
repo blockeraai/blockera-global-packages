@@ -75,6 +75,9 @@
   the sidebar grows, so the third placeholder can still appear.
 
 ### Bug Fixes
+- Dragging the settings sidebar now moves the panel with the pointer. The
+  empty placeholder no longer travels alone while settings stay stuck to
+  the dock and only follow vertically.
 - Turning settings back on while the sidebar is still finishing its close
   animation opens the dock that currently holds settings.
 - While moving a sidebar panel, drop placeholders follow the current dock

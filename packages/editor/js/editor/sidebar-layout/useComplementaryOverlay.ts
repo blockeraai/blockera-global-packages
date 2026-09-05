@@ -183,6 +183,45 @@ function overlayClipRectFromSlideHost(
 	return overlayRectForCategoryPanel(anchor, clipRect);
 }
 
+/**
+ * While the complementary placeholder is docked, overlay left follows the
+ * slide host so open/close clip stays correct. While it is floating, follow
+ * the placeholder on both axes — host left would pin settings to the dock.
+ */
+export function complementaryOverlayGeometry(
+	anchor: HTMLElement,
+	anchorRect: DOMRect,
+	hostRect: DOMRect | null | undefined
+): { overlayBox: DOMRect; clipPath: string } {
+	if (anchor.classList.contains('is-floating')) {
+		return {
+			overlayBox: new DOMRect(
+				anchorRect.left,
+				anchorRect.top,
+				anchorRect.width,
+				anchorRect.height
+			),
+			clipPath: '',
+		};
+	}
+
+	const overlayLeft = hostRect ? hostRect.left : anchorRect.left;
+	const overlayBox = new DOMRect(
+		overlayLeft,
+		anchorRect.top,
+		anchorRect.width,
+		anchorRect.height
+	);
+
+	return {
+		overlayBox,
+		clipPath: clipPathFromIntersection(
+			overlayBox,
+			overlayClipRectFromSlideHost(anchor, overlayBox)
+		),
+	};
+}
+
 export function findSidebar(): HTMLElement | null {
 	return document.querySelector(SIDEBAR_SELECTOR) as HTMLElement | null;
 }
@@ -267,15 +306,11 @@ export function useComplementaryOverlay(
 			if (hostRect) {
 				lastHostWidth = hostRect.width;
 			}
-			const overlayLeft = hostRect ? hostRect.left : anchorRect.left;
-			const overlayBox = new DOMRect(
-				overlayLeft,
-				anchorRect.top,
-				anchorRect.width,
-				anchorRect.height
+			const { overlayBox, clipPath } = complementaryOverlayGeometry(
+				anchor,
+				anchorRect,
+				hostRect
 			);
-			const clipRect = overlayClipRectFromSlideHost(anchor, overlayBox);
-			const clipPath = clipPathFromIntersection(overlayBox, clipRect);
 			if (
 				overlayBox.top === lastTop &&
 				overlayBox.left === lastLeft &&
