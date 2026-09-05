@@ -207,7 +207,31 @@ describe('list-test-categories sharding', () => {
 				shardSize: 100,
 				generalCategory: 'none',
 			})
-		).toEqual(['compatibility-1']);
+		).toEqual(['compatibility']);
+	});
+
+	it('keeps the base category id when packing yields a single shard', () => {
+		writeSpec(
+			root,
+			'packages/editor/test/a.compatibility.e2e.cy.js',
+			its(40)
+		);
+
+		const options = {
+			root,
+			suffix: 'e2e.cy.js',
+			scanRoots: ['packages'],
+			shardSize: 100,
+			generalCategory: 'none',
+		};
+
+		expect(listCategories(options)).toEqual(['compatibility']);
+		expect(specsForCategoryFromDisk('compatibility', options)).toEqual([
+			'packages/editor/test/a.compatibility.e2e.cy.js',
+		]);
+		expect(specsForCategoryFromDisk('compatibility-1', options)).toEqual(
+			[]
+		);
 	});
 
 	it('packs PR spec paths only', () => {
