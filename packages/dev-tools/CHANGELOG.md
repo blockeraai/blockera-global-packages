@@ -42,6 +42,8 @@
 ### Automated Tests
 - wp-env: cover apt-get inject prefixes and resolving the `wp-env` bin
   through package.json exports.
+- wp-env: cover wiping apt lists in the inject prefix and reading flags
+  from the bundled template.
 - Build zip E2E prepare: assert wp-env start JS helpers are copied into
   the extract tree.
 

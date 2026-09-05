@@ -8,20 +8,23 @@ const {
 	getAptInstallPrefix,
 	isWordpressDockerfilePath,
 	patchWordPressDockerfile,
+	resolveWordpressDockerfilePath,
 } = require('../inject-wp-env-dockerfile');
 
 describe('inject-wp-env-dockerfile', () => {
 	const template = fs.readFileSync(bundledWordpressDockerfilePath(), 'utf8');
 	const prefix = getAptInstallPrefix(template);
 
-	it('parses the combined apt-get update && install prefix from the template', () => {
+	it('parses wipe-lists, update, and install flags from the template', () => {
+		expect(prefix).toContain('rm -rf /var/lib/apt/lists/*');
 		expect(prefix).toContain('apt-get update --allow-releaseinfo-change');
-		expect(prefix).toContain('--fix-missing');
 		expect(prefix).toContain('Apt::Get::AllowUnauthenticated=true');
+		expect(prefix).toContain('Acquire::Retries=5');
+		expect(prefix).not.toContain('--fix-missing');
 		expect(prefix).not.toContain('$PHPIZE_DEPS');
 	});
 
-	it('refreshes indexes in the same RUN as each apt-get install', () => {
+	it('wipes lists and refreshes indexes in the same RUN as each apt-get install', () => {
 		const generated = `FROM wordpress:php7.4
 
 RUN apt-get clean
@@ -41,6 +44,9 @@ RUN apt-get install -qy zlib1g-dev
 		expect(patched).toContain(`RUN ${prefix} sudo`);
 		expect(patched).toContain(`RUN ${prefix} zlib1g-dev`);
 		expect(patched).toContain('RUN apt-get -qy update');
+		expect(patched).toMatch(
+			/RUN rm -rf \/var\/lib\/apt\/lists\/\* && apt-get update/
+		);
 	});
 
 	it('does not double-prefix a RUN that already updates then installs', () => {
@@ -62,6 +68,27 @@ RUN apt-get install -qy zlib1g-dev
 	it('keeps ARG PHP_VERSION and wordpress:php in the synced template', () => {
 		expect(template).toMatch(/ARG PHP_VERSION=8\.2/);
 		expect(template).toMatch(/FROM wordpress:php\$\{PHP_VERSION\}/);
+		expect(template).toContain('rm -rf /var/lib/apt/lists/*');
+	});
+});
+
+describe('resolveWordpressDockerfilePath', () => {
+	afterEach(() => {
+		delete process.env.BLOCKERA_WP_ENV_DOCKERFILE;
+	});
+
+	it('uses this package root-configs template, not a lagging host .docker copy', () => {
+		delete process.env.BLOCKERA_WP_ENV_DOCKERFILE;
+
+		expect(resolveWordpressDockerfilePath()).toBe(
+			bundledWordpressDockerfilePath()
+		);
+	});
+
+	it('honors BLOCKERA_WP_ENV_DOCKERFILE', () => {
+		process.env.BLOCKERA_WP_ENV_DOCKERFILE = '/tmp/custom.Dockerfile';
+
+		expect(resolveWordpressDockerfilePath()).toBe('/tmp/custom.Dockerfile');
 	});
 });
 
