@@ -1,6 +1,8 @@
 ## Unreleased
 
 ### Development Notes
+- wp-env start: put `wp-env` on `PATH` so `.wp-env.json` `afterStart` hooks
+  that run `wp-env run cli` succeed (`node bin/wp-env` is not on PATH).
 - wp-env: rewrite apt sources from `deb.debian.org` to `security.debian.org`
   / `ftp.debian.org` before install. GitHub Fastly POPs 404 bullseye
   `sudo` on debian-security even after a fresh `apt-get update`.

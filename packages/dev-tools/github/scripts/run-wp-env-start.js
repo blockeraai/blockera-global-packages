@@ -3,6 +3,8 @@
  * `wp-env start` with the WordPress Dockerfile apt-get patch preloaded.
  *
  * Extra argv is forwarded to `wp-env start` (`--spx`, `--xdebug=profile`, …).
+ * Puts `node_modules/.bin` and `@wordpress/env/bin` on PATH so afterStart
+ * hooks that shell out to `wp-env run cli` resolve (not only `node bin/wp-env`).
  *
  * Env:
  *   BLOCKERA_WP_ENV_DOCKERFILE
@@ -34,13 +36,29 @@ function resolveWpEnvBin(fromDir = process.cwd()) {
 	return bin;
 }
 
-function startWpEnv(args = process.argv.slice(2)) {
+function wpEnvStartChildEnv(wpEnvBin, fromDir = process.cwd()) {
 	const preload = path.join(__dirname, 'preload-wp-env-docker-patch.js');
 	const requireFlag = `--require=${preload}`;
 	const nodeOptions = process.env.NODE_OPTIONS
 		? `${process.env.NODE_OPTIONS} ${requireFlag}`
 		: requireFlag;
+	const npmBin = path.join(fromDir, 'node_modules', '.bin');
+	const pkgBin = path.dirname(wpEnvBin);
+	const pathParts = [npmBin, pkgBin];
+	const existingPath = process.env.PATH || '';
 
+	if (existingPath) {
+		pathParts.push(existingPath);
+	}
+
+	return {
+		...process.env,
+		NODE_OPTIONS: nodeOptions,
+		PATH: pathParts.join(path.delimiter),
+	};
+}
+
+function startWpEnv(args = process.argv.slice(2)) {
 	let wpEnv;
 
 	try {
@@ -52,10 +70,7 @@ function startWpEnv(args = process.argv.slice(2)) {
 
 	const child = spawn(process.execPath, [wpEnv, 'start', ...args], {
 		stdio: 'inherit',
-		env: {
-			...process.env,
-			NODE_OPTIONS: nodeOptions,
-		},
+		env: wpEnvStartChildEnv(wpEnv),
 	});
 
 	child.on('exit', (code, signal) => {
@@ -74,4 +89,5 @@ if (require.main === module) {
 
 module.exports = {
 	resolveWpEnvBin,
+	wpEnvStartChildEnv,
 };
