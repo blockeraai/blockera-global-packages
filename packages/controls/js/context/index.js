@@ -5,7 +5,7 @@
  */
 import type { MixedElement } from 'react';
 import { useDispatch, useSelect, select as dataSelect } from '@wordpress/data';
-import { createContext } from '@wordpress/element';
+import { createContext, useMemo, useRef } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -18,6 +18,7 @@ import { isEquals, isUndefined } from '@blockera/utils';
 import { registerControl } from '../api';
 import { STORE_NAME } from '../store/constants';
 import type { ControlContextProviderProps } from './types';
+import { retainIfEqual } from './retain-if-equal';
 
 export const ControlContext: Object = createContext({
 	controlInfo: {
@@ -46,16 +47,24 @@ export const ControlContextProvider = ({
 		});
 	}
 
+	const controlInfoRef = useRef(controlInfo);
+	const stableControlInfo = retainIfEqual(
+		controlInfoRef.current,
+		controlInfo,
+		isEquals
+	);
+	controlInfoRef.current = stableControlInfo;
+
 	//Prepare control status and value!
 	const { status, value } = useSelect(
 		(select) => {
 			const { getControl } = select(storeName);
 
-			const control = getControl(controlInfo.name);
+			const control = getControl(stableControlInfo.name);
 
 			const skipSyncValue =
-				controlInfo.hasOwnProperty('skipSyncValue') &&
-				true === controlInfo.skipSyncValue;
+				stableControlInfo.hasOwnProperty('skipSyncValue') &&
+				true === stableControlInfo.skipSyncValue;
 
 			/**
 			 * If the control skipSyncValue is defined and true, we skip the value update based on control name.
@@ -65,22 +74,32 @@ export const ControlContextProvider = ({
 			}
 
 			if (
-				!isUndefined(controlInfo.value) &&
-				!isEquals(control?.value, controlInfo.value)
+				!isUndefined(stableControlInfo.value) &&
+				!isEquals(control?.value, stableControlInfo.value)
 			) {
 				return {
 					...control,
-					value: controlInfo.value,
+					value: stableControlInfo.value,
 				};
 			}
 
 			return control;
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[controlInfo]
+		[stableControlInfo]
 	);
 	//control dispatch for available actions
 	const dispatch = useDispatch(storeName);
+
+	const providerValue = useMemo(
+		() => ({
+			controlInfo: stableControlInfo,
+			value,
+			dispatch,
+			STORE_NAME,
+		}),
+		[stableControlInfo, value, dispatch]
+	);
 
 	//You can to enable||disable current control with status column!
 	if (!status) {
@@ -88,10 +107,7 @@ export const ControlContextProvider = ({
 	}
 
 	return (
-		<ControlContext.Provider
-			{...props}
-			value={{ controlInfo, value, dispatch, STORE_NAME }}
-		>
+		<ControlContext.Provider {...props} value={providerValue}>
 			{children}
 		</ControlContext.Provider>
 	);

@@ -1,3 +1,14 @@
+## Unreleased
+
+### Development Notes
+
+- ControlContextProvider keeps a stable context value when control info contents
+  are unchanged so inspector controls do not re-render on unrelated parent updates.
+
+### Automated Tests
+
+- retainIfEqual keeps the previous object identity when contents match.
+
 ## [4.0.0] - 2026-09-01
 
 ### Changed
