@@ -8,6 +8,9 @@
 - Inspector typing path: BlockEditContext splits identity vs attributes,
   style extensions skip re-render when their value slice is unchanged, and
   feature search no longer deep-clones settings before filtering.
+- Style engine: applyFilters for generators runs once per CSS burst, fingerprints
+  reuse stringify when the attributes object identity is unchanged, and empty
+  unsaved states skip the selector walk.
 
 ### Automated Tests
 
