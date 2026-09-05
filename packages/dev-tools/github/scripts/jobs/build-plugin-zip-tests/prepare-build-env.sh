@@ -17,7 +17,9 @@
 #   BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD         optional extra hook after default staging
 #
 # Stages wp-env start helpers into BUILD_DIR (retry-wp-env-start.sh +
-# run-wp-env-start.js + preload/inject + lib/retry.sh). START_CMD runs after cd.
+# run-wp-env-start.js + preload/inject + lib/retry.sh + root-configs
+# Dockerfile.wordpress). START_CMD runs after cd. Inject resolves the
+# Dockerfile relative to the copied script, not host `.docker/`.
 set -euo pipefail
 
 ZIP_FILE="${BLOCKERA_BUILD_ZIP_TESTS_ZIP:-blockera.zip}"
@@ -98,13 +100,17 @@ chmod +x "${WP_ENV_SCRIPTS_DEST}/retry-wp-env-start.sh"
 cp "${TOOLKIT_SCRIPTS}/lib/retry.sh" "${WP_ENV_SCRIPTS_DEST}/lib/"
 chmod +x "${WP_ENV_SCRIPTS_DEST}/lib/retry.sh"
 
-HOST_DOCKERFILE="${WORKSPACE}/.docker/Dockerfile.wordpress"
 BUNDLED_DOCKERFILE="${TOOLKIT_SCRIPTS}/../../root-configs/.docker/Dockerfile.wordpress"
-if [[ -f "${HOST_DOCKERFILE}" ]]; then
-	copy_if "${HOST_DOCKERFILE}" "${BUILD_DIR}/.docker/Dockerfile.wordpress"
-elif [[ -f "${BUNDLED_DOCKERFILE}" ]]; then
-	copy_if "${BUNDLED_DOCKERFILE}" "${BUILD_DIR}/.docker/Dockerfile.wordpress"
+if [[ ! -f "${BUNDLED_DOCKERFILE}" ]]; then
+	echo "build-zip-tests/prepare: missing ${BUNDLED_DOCKERFILE}" >&2
+	exit 1
 fi
+# inject-wp-env-dockerfile.js reads root-configs next to this package, not
+# host .docker/ (that copy can lag the pin).
+DEV_TOOLS_ROOT="$(cd "${WP_ENV_SCRIPTS_DEST}/../.." && pwd)"
+mkdir -p "${DEV_TOOLS_ROOT}/root-configs/.docker"
+cp "${BUNDLED_DOCKERFILE}" \
+	"${DEV_TOOLS_ROOT}/root-configs/.docker/Dockerfile.wordpress"
 
 if [[ "${USE_CREATE_WP_ENV}" == "true" ]]; then
 	if [[ -f "${WORKSPACE}/.github/wp-env-configs/${WP_ENV_CATEGORY}.json" ]]; then

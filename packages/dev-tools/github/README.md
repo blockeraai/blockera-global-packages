@@ -246,7 +246,8 @@ knobs — there are no `prepare-pro` / `prepare-theme` / `prepare-toolkit` recip
 It copies `retry-wp-env-start.sh` plus `run-wp-env-start.js`,
 `preload-wp-env-docker-patch.js`, `inject-wp-env-dockerfile.js`, and
 `lib/retry.sh` into the extract tree (START_CMD runs from `BUILD_DIR`), and
-stages `.docker/Dockerfile.wordpress` when present.
+copies `root-configs/.docker/Dockerfile.wordpress` next to that tree so inject
+can resolve it from `__dirname` (not host `.docker/`).
 
 ```yaml
 # Theme-style example
