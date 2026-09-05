@@ -16,6 +16,10 @@ import {
 	BLOCKERA_RESOLVED_IFRAME_VARIABLES_STYLE_ID,
 	BLOCKERA_SUPPLEMENTAL_PRESET_VARIABLES_STYLE_KEY,
 } from './blockera-supplemental-preset-variables-constants';
+import {
+	resolveIframeMountObserverRoot,
+	shouldSkipGlobalStylesEditorSettingsUpdate,
+} from './should-skip-editor-settings-sync';
 
 export {
 	BLOCKERA_RESOLVED_IFRAME_VARIABLES_STYLE_ID,
@@ -32,14 +36,6 @@ type EditorStyle = {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function stableFingerprint(value: unknown): string {
-	try {
-		return JSON.stringify(value);
-	} catch {
-		return '';
-	}
 }
 
 function mergeBlockeraPresetVariablesIntoEditorStyles(
@@ -118,8 +114,9 @@ export function BlockEditorExperimentalFeaturesSync() {
 		lastIframeCssApplied.current = supplementalCss;
 	}, [supplementalCss]);
 
-	const lastAppliedFingerprint = useRef('');
 	const lastIframeCssApplied = useRef('');
+	const lastNextFeatures = useRef<unknown>(null);
+	const lastSupplementalCssForSettings = useRef('');
 
 	useEffect(() => {
 		const { mutated, synced } = applyIframeCss();
@@ -165,7 +162,7 @@ export function BlockEditorExperimentalFeaturesSync() {
 
 		const observer = new MutationObserver(scheduleApply);
 
-		observer.observe(document.body, {
+		observer.observe(resolveIframeMountObserverRoot(), {
 			childList: true,
 			subtree: true,
 		});
@@ -208,13 +205,14 @@ export function BlockEditorExperimentalFeaturesSync() {
 			blockeraSettings
 		);
 
-		const nextFingerprint = [
-			stableFingerprint(nextFeatures),
-			stableFingerprint(blockeraSettings),
-			supplementalCss,
-		].join('|');
-
-		if (nextFingerprint === lastAppliedFingerprint.current) {
+		if (
+			shouldSkipGlobalStylesEditorSettingsUpdate(
+				lastNextFeatures.current,
+				nextFeatures,
+				lastSupplementalCssForSettings.current,
+				supplementalCss
+			)
+		) {
 			return;
 		}
 
@@ -229,7 +227,8 @@ export function BlockEditorExperimentalFeaturesSync() {
 			__experimentalFeatures: nextFeatures,
 		});
 
-		lastAppliedFingerprint.current = nextFingerprint;
+		lastNextFeatures.current = nextFeatures;
+		lastSupplementalCssForSettings.current = supplementalCss;
 
 		const applyAfterSettings = () => {
 			const { mutated, synced } = applyIframeCss();

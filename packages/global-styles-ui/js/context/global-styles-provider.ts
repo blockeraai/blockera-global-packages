@@ -1,8 +1,6 @@
 /**
  * External dependencies
  */
-import deepmerge from 'deepmerge';
-import { isPlainObject } from 'is-plain-object';
 import { useSelect, useDispatch } from '@wordpress/data';
 import { useMemo, useCallback } from '@wordpress/element';
 import { store as coreStore } from '@wordpress/core-data';
@@ -16,6 +14,12 @@ import { prepare } from '@blockera/data-editor';
  * Internal dependencies
  */
 import { cleanEmptyObject } from '../theme-json-utils';
+import {
+	retainMergedBaseAndUserConfigs,
+	retainUserGlobalStylesRecord,
+} from './global-styles-config';
+
+export { mergeBaseAndUserConfigs } from './global-styles-config';
 
 export type GlobalStylesUserConfigSetter = (
 	callbackOrObject:
@@ -33,21 +37,6 @@ export type GlobalStylesContextValue = {
 	isReady: boolean;
 	canEditGlobalStyles: boolean;
 };
-
-export function mergeBaseAndUserConfigs(
-	base: Record<string, unknown>,
-	user: Record<string, unknown>
-): Record<string, unknown> {
-	return deepmerge(base, user, {
-		isMergeableObject: isPlainObject,
-		customMerge: (key) => {
-			if (key === 'backgroundImage') {
-				return (baseConfig: unknown, userConfig: unknown) => userConfig;
-			}
-			return undefined;
-		},
-	}) as Record<string, unknown>;
-}
 
 function useGlobalStylesUserConfig(): [
 	boolean,
@@ -131,13 +120,10 @@ function useGlobalStylesUserConfig(): [
 
 	const { getEditedEntityRecord } = useSelect(coreStore);
 	const { editEntityRecord } = useDispatch(coreStore);
-	const config = useMemo(() => {
-		return {
-			settings: (settings as Record<string, unknown>) ?? {},
-			styles: (styles as Record<string, unknown>) ?? {},
-			_links: (_links as Record<string, unknown>) ?? {},
-		};
-	}, [settings, styles, _links]);
+	const config = useMemo(
+		() => retainUserGlobalStylesRecord(settings, styles, _links),
+		[settings, styles, _links]
+	);
 
 	const setConfig = useCallback(
 		(
@@ -244,7 +230,7 @@ export function useGlobalStylesContext({
 			return {};
 		}
 
-		return mergeBaseAndUserConfigs(baseConfig, userConfig);
+		return retainMergedBaseAndUserConfigs(baseConfig, userConfig);
 	}, [userConfig, baseConfig]);
 
 	const context = useMemo(() => {

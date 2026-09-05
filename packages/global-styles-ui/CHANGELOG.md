@@ -1,3 +1,19 @@
+## Unreleased
+
+### Improvements
+
+- Global Styles variable screens stay smoother while you edit colors, fonts,
+  and other presets.
+
+### Development Notes
+
+- Shared retainers keep one merged theme.json per user/base identity across
+  preset hooks; setting/style memos no longer depend on a rest-spread context
+  object or a fresh default `{}`.
+- Editor experimental-features sync skips `JSON.stringify` of the full features
+  tree and watches the interface skeleton for iframe mounts instead of
+  `document.body`.
+
 ## [2.0.0] - 2026-08-31
 
 ### Fixed
