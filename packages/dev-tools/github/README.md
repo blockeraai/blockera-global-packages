@@ -133,18 +133,21 @@ Used by consumer `npm run env:start` (local only). Copies
 
 `env:start` then runs `run-wp-env-start.js`, which preloads
 `preload-wp-env-docker-patch.js` so wp-env's generated `WordPress.Dockerfile` /
-`Tests-WordPress.Dockerfile` refresh apt indexes in the same `RUN` as each
-`apt-get install`. Flags come from `.docker/Dockerfile.wordpress` (sync-config /
-`project:bootstrap` copy of `root-configs/.docker/Dockerfile.wordpress`), or
-that template in this package when the host copy is missing. wp-env still
-selects `FROM wordpress:php${phpVersion}` from `.wp-env.json`.
+`Tests-WordPress.Dockerfile` wipe apt lists and refresh indexes in the same
+`RUN` as each `apt-get install` (avoids `Hit:` on stale debian-security indexes
+from cached `wordpress:php*` layers). Flags come from this package's
+`root-configs/.docker/Dockerfile.wordpress` unless `BLOCKERA_WP_ENV_DOCKERFILE`
+is set. Host `.docker/` is the sync-config / `project:bootstrap` copy for local
+docker builds; inject does not read it so a lagging host file cannot pin old
+apt flags. wp-env still selects `FROM wordpress:php${phpVersion}` from
+`.wp-env.json`.
 
 | Env (host `.env`) | Default |
 | --- | --- |
 | `WP_ENV_CONFIG` | `development` (file: `.github/wp-env-configs/development.json`) |
 | `WP_ENV_PORT` | unset — wp-env default `8888`; set unique values when multiple local envs run on one machine |
 | `WP_ENV_TESTS_PORT` | unset — wp-env default `8889` |
-| `BLOCKERA_WP_ENV_DOCKERFILE` | unset — `.docker/Dockerfile.wordpress` then `root-configs/.docker/Dockerfile.wordpress` |
+| `BLOCKERA_WP_ENV_DOCKERFILE` | unset — this package `root-configs/.docker/Dockerfile.wordpress` |
 | `BLOCKERA_WP_ENV_SKIP_DOCKER_PATCH` | unset (`true` leaves generated Dockerfiles unchanged) |
 
 CI jobs that use `retry-wp-env-start.sh` call `run-wp-env-start.js` directly

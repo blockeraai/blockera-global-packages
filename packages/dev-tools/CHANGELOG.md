@@ -1,6 +1,10 @@
 ## Unreleased
 
 ### Development Notes
+- wp-env: wipe `/var/lib/apt/lists` before each injected `apt-get update` so
+  cached WordPress image layers do not `Hit:` a debian-security index whose
+  pool files 404 (bullseye `sudo`). Inject reads this package's
+  `root-configs` template, not a lagging host `.docker/` copy.
 - Build zip E2E: stage `run-wp-env-start.js` (and preload/inject + Dockerfile)
   next to `retry-wp-env-start.sh` under the extract dir so wp-env start
   does not MODULE_NOT_FOUND.

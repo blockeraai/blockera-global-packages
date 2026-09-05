@@ -1,9 +1,11 @@
 /**
- * Rewrite wp-env WordPress Dockerfiles so every `apt-get install` refreshes
- * indexes in the same RUN (avoids stale Docker-layer 404s on debian-security).
+ * Rewrite wp-env WordPress Dockerfiles so every `apt-get install` wipes
+ * lists and refreshes indexes in the same RUN (avoids Hit: on stale
+ * debian-security indexes from cached WordPress image layers).
  *
- * Flags come from `.docker/Dockerfile.wordpress` (host copy after
- * project:bootstrap) or `packages/dev-tools/root-configs/.docker/`.
+ * Flags come from this package's `root-configs/.docker/Dockerfile.wordpress`
+ * unless BLOCKERA_WP_ENV_DOCKERFILE is set. Host `.docker/` is the bootstrap
+ * copy for local docker builds, not the inject source (it can lag the pin).
  *
  * Env:
  *   BLOCKERA_WP_ENV_DOCKERFILE        optional path to Dockerfile.wordpress
@@ -33,12 +35,6 @@ function resolveWordpressDockerfilePath() {
 		return process.env.BLOCKERA_WP_ENV_DOCKERFILE;
 	}
 
-	const hostCopy = path.join(process.cwd(), '.docker', 'Dockerfile.wordpress');
-
-	if (fs.existsSync(hostCopy)) {
-		return hostCopy;
-	}
-
 	return bundledWordpressDockerfilePath();
 }
 
@@ -49,12 +45,12 @@ function collapseDockerfileContinuations(contents) {
 function getAptInstallPrefix(dockerfileContents) {
 	const collapsed = collapseDockerfileContinuations(dockerfileContents);
 	const runMatch = collapsed.match(
-		/RUN (apt-get update\b(?: [^&]+)? && apt-get(?: -[^\s]+)* install(?:(?: -o \S+)|(?: --[^\s]+)|(?: -[^\s]+))*)/
+		/RUN ((?:rm -rf \/var\/lib\/apt\/lists\/\* && )?apt-get update\b(?: [^&]+)? && apt-get(?: -[^\s]+)* install(?:(?: -o \S+)|(?: --[^\s]+)|(?: -[^\s]+))*)/
 	);
 
 	if (!runMatch) {
 		throw new Error(
-			'inject-wp-env-dockerfile: Dockerfile.wordpress needs a RUN apt-get update && apt-get install … layer'
+			'inject-wp-env-dockerfile: Dockerfile.wordpress needs a RUN that wipes apt lists, apt-get update, and apt-get install'
 		);
 	}
 
