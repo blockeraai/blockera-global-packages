@@ -3,6 +3,7 @@
  * External dependencies
  */
 import type { MixedElement } from 'react';
+import { memo } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -17,7 +18,7 @@ import {
  */
 import type { InnerInputControlProps } from '../types';
 
-export function OtherInput({
+export const OtherInput = memo(function OtherInput({
 	value,
 	setValue,
 	type,
@@ -51,4 +52,4 @@ export function OtherInput({
 			{children}
 		</>
 	);
-}
+});

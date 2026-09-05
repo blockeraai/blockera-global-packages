@@ -5,7 +5,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import type { MixedElement } from 'react';
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useMemo, useCallback } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -22,8 +22,19 @@ import { UnitInput } from './components/unit-input';
 import { OtherInput } from './components/other-input';
 import { NumberInput } from './components/number-input';
 import { setValueAddon, useValueAddon } from '../../value-addons';
-import { BaseControl, getFirstUnit, getUnitByValue } from './../index';
-import { extractNumberAndUnit, getCSSUnits, isSpecialUnit } from './utils';
+import { BaseControl } from './../index';
+import {
+	appendNotFoundUnitOption,
+	extractNumberAndUnit,
+	getCSSUnits,
+	getFirstUnit,
+	getUnitByValue,
+	isSpecialUnit,
+} from './utils';
+
+const noopOnChange = () => {};
+const EMPTY_UNITS_PROP: Array<any> = [];
+const EMPTY_LABEL_PROPS: Object = {};
 
 export type ContextUnitInput = {
 	unitValue: Object,
@@ -32,15 +43,15 @@ export type ContextUnitInput = {
 
 export default function InputControl({
 	unitType = '',
-	units: _units = [],
+	units: _units = EMPTY_UNITS_PROP,
 	noBorder = false,
 	id,
 	range = false,
 	label,
-	labelProps: propsForLabelControl = {},
+	labelProps: propsForLabelControl = EMPTY_LABEL_PROPS,
 	columns,
 	defaultValue = '',
-	onChange = () => {},
+	onChange = noopOnChange,
 	field = 'input',
 	className = '',
 	type = 'text',
@@ -86,10 +97,49 @@ export default function InputControl({
 		isValidValue = validator(value);
 	}
 
-	const normalizedVariableTypes =
-		typeof variableTypes === 'string' ? [variableTypes] : variableTypes;
+	const normalizedVariableTypes = useMemo(() => {
+		if (typeof variableTypes === 'string') {
+			return [variableTypes];
+		}
+
+		return variableTypes;
+	}, [variableTypes]);
 
 	const controlFieldId = propsForLabelControl.controlFieldId ?? id;
+
+	const setValueFromAddon = useCallback(
+		(newValue: any): void =>
+			setValueAddon(newValue, setValue, defaultValue),
+		[setValue, defaultValue]
+	);
+
+	const presetInterface = useMemo(() => {
+		if (
+			!Array.isArray(normalizedVariableTypes) ||
+			!(
+				normalizedVariableTypes.includes('spacing') ||
+				normalizedVariableTypes.includes('border-radius')
+			)
+		) {
+			return undefined;
+		}
+
+		return {
+			variableTypes: normalizedVariableTypes,
+			unitType,
+			id,
+			singularId,
+			attribute,
+			controlFieldId,
+		};
+	}, [
+		normalizedVariableTypes,
+		unitType,
+		id,
+		singularId,
+		attribute,
+		controlFieldId,
+	]);
 
 	const {
 		valueAddonClassNames,
@@ -100,64 +150,80 @@ export default function InputControl({
 	} = useValueAddon({
 		types: controlAddonTypes,
 		value,
-		setValue: (newValue: any): void =>
-			setValueAddon(newValue, setValue, defaultValue),
+		setValue: setValueFromAddon,
 		variableTypes,
 		onChange: setValue,
 		size,
-		presetInterface:
-			Array.isArray(normalizedVariableTypes) &&
-			(normalizedVariableTypes.includes('spacing') ||
-				normalizedVariableTypes.includes('border-radius'))
-				? {
-						variableTypes: normalizedVariableTypes,
-						unitType,
-						id,
-						singularId,
-						attribute,
-						controlFieldId,
-					}
-				: undefined,
+		presetInterface,
 	});
 
-	const labelProps = {
-		value,
-		singularId,
-		attribute,
-		blockName,
-		label,
-		labelDescription,
-		labelPopoverTitle,
-		repeaterItem,
-		defaultValue,
-		resetToDefault,
-		mode: 'advanced',
-		path: getControlPath(attribute, id),
-		...propsForLabelControl,
-		controlFieldId,
-	};
+	const controlPath = getControlPath(attribute, id);
+	const labelProps = useMemo(
+		() => ({
+			value,
+			singularId,
+			attribute,
+			blockName,
+			label,
+			labelDescription,
+			labelPopoverTitle,
+			repeaterItem,
+			defaultValue,
+			resetToDefault,
+			mode: 'advanced',
+			path: controlPath,
+			...propsForLabelControl,
+			controlFieldId,
+		}),
+		[
+			value,
+			singularId,
+			attribute,
+			blockName,
+			label,
+			labelDescription,
+			labelPopoverTitle,
+			repeaterItem,
+			defaultValue,
+			resetToDefault,
+			controlPath,
+			propsForLabelControl,
+			controlFieldId,
+		]
+	);
 
-	const extractedValue = extractNumberAndUnit(value);
+	const extractedValue = useMemo(() => {
+		const extracted = extractNumberAndUnit(value);
 
-	// Unit is not provided and there is a unit with empty value
-	// clear unit to let the empty unit be selected
-	if (extractedValue?.unitSimulated && pickedUnit.value === '') {
-		extractedValue.unit = '';
-	}
+		if (extracted?.unitSimulated && pickedUnit.value === '') {
+			return {
+				...extracted,
+				unit: '',
+			};
+		}
+
+		return extracted;
+	}, [value, pickedUnit.value]);
 
 	const extractedNoUnit =
 		isUndefined(extractedValue.unit) || extractedValue.unit === '';
-	const resolvedUnitValue = extractedNoUnit
-		? pickedUnit
-		: getUnitByValue(extractedValue.unit, units);
-	const fallbackUnit = getFirstUnit(units);
-	let unitValue: Object = { value: '', label: '', format: 'number' };
+	const unitValue = useMemo(() => {
+		const resolvedUnitValue = extractedNoUnit
+			? pickedUnit
+			: getUnitByValue(extractedValue.unit, units);
+		const fallbackUnit = getFirstUnit(units);
+		const emptyUnit = { value: '', label: '', format: 'number' };
 
-	if (typeof resolvedUnitValue?.value === 'string') {
-		unitValue = resolvedUnitValue;
-	} else if (typeof fallbackUnit?.value === 'string') {
-		unitValue = fallbackUnit;
-	}
+		if (typeof resolvedUnitValue?.value === 'string') {
+			return resolvedUnitValue;
+		}
+
+		if (typeof fallbackUnit?.value === 'string') {
+			return fallbackUnit;
+		}
+
+		return emptyUnit;
+	}, [extractedNoUnit, pickedUnit, extractedValue.unit, units]);
 
 	useEffect(() => {
 		// add css units
@@ -180,6 +246,66 @@ export default function InputControl({
 		}
 		// eslint-disable-next-line
 	}, []);
+
+	const openVarPicker = valueAddonControlProps.setOpen;
+	const onVariableShortcut = useCallback((): void => {
+		if (variableTypes && variableTypes.length > 0) {
+			openVarPicker('var-picker');
+		}
+	}, [variableTypes, openVarPicker]);
+
+	const onUnitChange = useCallback(
+		(newValue: ContextUnitInput): void => {
+			const { inputValue, unitValue: nextUnitValue } = newValue;
+
+			if (nextUnitValue?.notFound) {
+				const nextUnits = appendNotFoundUnitOption(
+					units,
+					nextUnitValue
+				);
+
+				if (nextUnits !== units) {
+					setUnits(nextUnits);
+				}
+
+				if (!isEmpty(value) && !inputValue) {
+					setPickedUnit(nextUnitValue);
+				}
+			}
+
+			if (
+				isSpecialUnit(nextUnitValue.value) &&
+				value !== nextUnitValue.value
+			) {
+				setValue(nextUnitValue.value);
+			} else if (
+				(extractedNoUnit || !value) &&
+				'' !== inputValue &&
+				(nextUnitValue.value || extractedValue.unit === '')
+			) {
+				setValue(inputValue + nextUnitValue.value);
+			} else if (
+				!extractedNoUnit &&
+				value &&
+				value !== nextUnitValue.value &&
+				!isEmpty(inputValue)
+			) {
+				setValue(inputValue + nextUnitValue.value);
+			} else if (
+				(isEmpty(inputValue) && value) ||
+				(isEmpty(inputValue) && '' === value)
+			) {
+				setPickedUnit(nextUnitValue);
+				setValue(inputValue);
+			}
+		},
+		[units, value, extractedNoUnit, extractedValue.unit, setValue]
+	);
+
+	const valueAddonPointer = useMemo(
+		() => <ValueAddonPointer />,
+		[ValueAddonPointer]
+	);
 
 	if (isSetValueAddon()) {
 		return (
@@ -234,67 +360,11 @@ export default function InputControl({
 					drag={drag}
 					arrows={arrows}
 					size={size}
-					onVariableShortcut={
-						variableTypes && variableTypes.length > 0
-							? (): void => {
-									valueAddonControlProps.setOpen(
-										'var-picker'
-									);
-								}
-							: (): void => {}
-					}
-					onChange={(newValue: ContextUnitInput): void => {
-						const { inputValue, unitValue } = newValue;
-
-						// to append founded not listed units by defaults in units from user input values.
-						if (unitValue?.notFound) {
-							units.forEach((unitPackage, index): void => {
-								if (
-									'founded_from_inputs' === unitPackage?.id &&
-									!unitPackage?.options.includes(unitValue)
-								) {
-									const newUnits = [...units];
-
-									newUnits[index].options.push(unitValue);
-
-									setUnits(newUnits);
-								}
-							});
-
-							if (!isEmpty(value) && !inputValue) {
-								setPickedUnit(unitValue);
-							}
-						}
-
-						if (
-							isSpecialUnit(unitValue.value) &&
-							value !== unitValue.value
-						) {
-							setValue(unitValue.value);
-						} else if (
-							(extractedNoUnit || !value) &&
-							'' !== inputValue &&
-							(unitValue.value || extractedValue.unit === '')
-						) {
-							setValue(inputValue + unitValue.value);
-						} else if (
-							!extractedNoUnit &&
-							value &&
-							value !== unitValue.value &&
-							!isEmpty(inputValue)
-						) {
-							setValue(inputValue + unitValue.value);
-						} else if (
-							(isEmpty(inputValue) && value) ||
-							(isEmpty(inputValue) && '' === value)
-						) {
-							setPickedUnit(unitValue);
-							setValue(inputValue);
-						}
-					}}
+					onVariableShortcut={onVariableShortcut}
+					onChange={onUnitChange}
 					{...props}
 				>
-					<ValueAddonPointer />
+					{valueAddonPointer}
 				</UnitInput>
 			) : (
 				<>
@@ -326,7 +396,7 @@ export default function InputControl({
 								size={size}
 								{...props}
 							>
-								<ValueAddonPointer />
+								{valueAddonPointer}
 							</NumberInput>
 						</div>
 					) : (
@@ -348,7 +418,7 @@ export default function InputControl({
 								validator={validator}
 								{...props}
 							>
-								<ValueAddonPointer />
+								{valueAddonPointer}
 							</OtherInput>
 						</div>
 					)}

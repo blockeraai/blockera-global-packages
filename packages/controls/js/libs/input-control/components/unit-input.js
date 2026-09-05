@@ -4,7 +4,14 @@
  */
 import { __ } from '@wordpress/i18n';
 import type { MixedElement } from 'react';
-import { useState, Fragment, useRef, useEffect } from '@wordpress/element';
+import {
+	useState,
+	Fragment,
+	useRef,
+	useEffect,
+	useMemo,
+	memo,
+} from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -29,7 +36,7 @@ import { RangeControl } from '../../index';
 import { isSpecialUnit, getUnitByValue, extractNumberAndUnit } from '../utils';
 import { InputArrows } from './input-arrows';
 
-export function UnitInput({
+export const UnitInput = memo(function UnitInput({
 	defaultValue,
 	range,
 	noBorder,
@@ -61,7 +68,7 @@ export function UnitInput({
 
 	useEffect(() => {
 		setTypedValue(inputValue);
-	}, [inputValue, unitValue]);
+	}, [inputValue]);
 
 	const handleInputChange = (e: { target: { value: string } }) => {
 		const value = e.target.value;
@@ -236,6 +243,26 @@ export function UnitInput({
 
 	const unitSelectValue =
 		typeof unitValue?.value === 'string' ? unitValue.value : '';
+
+	const unitSelectOptions = useMemo(
+		() =>
+			units.map((unit, key) => (
+				<Fragment key={`${unit.label}-${key}`}>
+					{!isUndefined(unit?.options) ? (
+						<optgroup label={unit.label}>
+							{unit?.options.map((_unit, _key) => (
+								<option key={_key} value={_unit?.value}>
+									{_unit?.label}
+								</option>
+							))}
+						</optgroup>
+					) : (
+						<option value={unit?.value}>{unit?.label}</option>
+					)}
+				</Fragment>
+			)),
+		[units]
+	);
 
 	const evaluateCalculation = (value: string) => {
 		if (!isSpecialUnit(unitValue?.value) && unitValue.value !== 'func') {
@@ -652,26 +679,7 @@ export function UnitInput({
 						)}
 						aria-label={__('Select Unit', 'blockera')}
 					>
-						{units.map((unit, key) => (
-							<Fragment key={`${unit.label}-${key}`}>
-								{!isUndefined(unit?.options) ? (
-									<optgroup label={unit.label}>
-										{unit?.options.map((_unit, _key) => (
-											<option
-												key={_key}
-												value={_unit?.value}
-											>
-												{_unit?.label}
-											</option>
-										))}
-									</optgroup>
-								) : (
-									<option value={unit?.value}>
-										{unit?.label}
-									</option>
-								)}
-							</Fragment>
-						))}
+						{unitSelectOptions}
 					</select>
 				</ConditionalWrapper>
 
@@ -934,4 +942,4 @@ export function UnitInput({
 			{children}
 		</div>
 	);
-}
+});

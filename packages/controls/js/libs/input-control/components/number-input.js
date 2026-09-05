@@ -3,6 +3,7 @@
  * External dependencies
  */
 import type { MixedElement } from 'react';
+import { memo, useCallback, useMemo } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -26,7 +27,12 @@ import { RangeControl } from '../../index';
 import type { InnerInputControlProps } from '../types';
 import { InputArrows } from './input-arrows';
 
-export function NumberInput({
+const EMPTY_CONSTRAINTS: Object = {};
+const PASTE_NUMBER_REGEX = /^(-?\d+(\.\d+)?)$/;
+const FLOAT_STRIP_REGEX = /[^-\.0-9]/g;
+const INT_STRIP_REGEX = /[^-0-9]/g;
+
+export const NumberInput = memo(function NumberInput({
 	value,
 	setValue,
 	noBorder,
@@ -45,133 +51,119 @@ export function NumberInput({
 	isValidValue,
 	...props
 }: InnerInputControlProps): MixedElement {
-	// get the minimum value in number type
-	const getMinValue: Object = () => {
+	const minValue = useMemo(() => {
 		if (!isUndefined(min) && isNumber(+min)) {
 			return { min: +min };
 		}
-		return {};
-	};
 
-	// get the maximum value in number type
-	const getMaxValue: Object = () => {
+		return EMPTY_CONSTRAINTS;
+	}, [min]);
+
+	const maxValue = useMemo(() => {
 		if (!isUndefined(max) && isNumber(+max)) {
 			return { max: +max };
 		}
 
-		return {};
-	};
+		return EMPTY_CONSTRAINTS;
+	}, [max]);
 
-	const minValue = getMinValue();
-	const maxValue = getMaxValue();
+	const handleKeyDown = useCallback(
+		(event: Object) => {
+			const regex = new RegExp(
+				`${
+					value === '' ? '(^-?\\d*$)' : '(^\\d*$)'
+				}|(Backspace|Tab|Delete|ArrowLeft|ArrowRight|ArrowUp|ArrowDown${
+					float ? '|\\.' : ''
+				})`
+			);
 
-	const handleKeyDown = (event: Object) => {
-		const regex = new RegExp(
-			// accept 0 as a valid input and allow `-` at the beginning only
-			`${
-				value === '' ? '(^-?\\d*$)' : '(^\\d*$)'
-			}|(Backspace|Tab|Delete|ArrowLeft|ArrowRight|ArrowUp|ArrowDown${
-				float ? '|\\.' : ''
-			})`
-		);
+			if (
+				!(
+					(event.ctrlKey || event.metaKey) &&
+					(event.key.toLowerCase() === 'a' ||
+						event.key.toLowerCase() === 'v' ||
+						event.key.toLowerCase() === 'c' ||
+						event.key.toLowerCase() === 'r')
+				) &&
+				!event.key.match(regex)
+			) {
+				event.preventDefault();
+			}
+		},
+		[value, float]
+	);
 
-		// Allow Ctrl+A (Windows) or Command+A (Mac) to select all text
-		// Allow Ctrl+C (Windows) or Command+C (Mac) to copy text
-		// Allow Ctrl+V (Windows) or Command+V (Mac) to paste text
-		// Allow Ctrl+R (Windows) or Command+R (Mac) to refresh page
-		if (
-			!(
-				(event.ctrlKey || event.metaKey) &&
-				(event.key.toLowerCase() === 'a' ||
-					event.key.toLowerCase() === 'v' ||
-					event.key.toLowerCase() === 'c' ||
-					event.key.toLowerCase() === 'r')
-			) &&
-			!event.key.match(regex)
-		) {
-			event.preventDefault();
-		}
-	};
+	const handlePaste = useCallback(
+		(event: Object) => {
+			const clipboardData = event.clipboardData || window.clipboardData;
+			const pastedText: string = clipboardData.getData('text');
 
-	// Handle paste event to allow only numeric content
-	const handlePaste = (event: Object) => {
-		const clipboardData = event.clipboardData || window.clipboardData;
-
-		const pastedText: string = clipboardData.getData('text');
-
-		// if (value !== '' && /^(-?)$/.test(pastedText)) {
-		// 	event.preventDefault();
-		// 	return;
-		// }
-
-		if (!/^(-?\d+(\.\d+)?)$/.test(pastedText)) {
-			event.preventDefault();
-			return;
-		}
-
-		// const minValue = getMinValue();
-
-		// don't let user to paste value smaller than min value
-		if (!isEmpty(minValue?.min) && +pastedText < minValue.min) {
-			event.preventDefault();
-			return;
-		}
-
-		// const maxValue = getMaxValue();
-
-		// don't let user to paste value bigger than max value
-		if (!isEmpty(maxValue?.max) && +pastedText > +maxValue.max) {
-			event.preventDefault();
-		}
-	};
-
-	const handleInputChange = (event: Object) => {
-		let value = event.target.value.replace(
-			float ? /[^-\.0-9]/g : /[^-0-9]/g,
-			''
-		);
-
-		if (!isEmpty(value)) {
-			// const minValue = getMinValue();
-			// const maxValue = getMaxValue();
-
-			if (!isEmpty(minValue?.min) && value < minValue.min) {
-				value = getMinValue().min;
-			} else if (!isEmpty(maxValue?.max) && value > maxValue.max) {
-				value = maxValue.max;
+			if (!PASTE_NUMBER_REGEX.test(pastedText)) {
+				event.preventDefault();
+				return;
 			}
 
-			setValue(+value);
-		} else {
-			setValue(value);
-		}
+			if (!isEmpty(minValue?.min) && +pastedText < minValue.min) {
+				event.preventDefault();
+				return;
+			}
 
-		// setValue(!isEmpty(value) ? +value : value);
-	};
+			if (!isEmpty(maxValue?.max) && +pastedText > +maxValue.max) {
+				event.preventDefault();
+			}
+		},
+		[minValue, maxValue]
+	);
+
+	const handleInputChange = useCallback(
+		(event: Object) => {
+			let nextValue = event.target.value.replace(
+				float ? FLOAT_STRIP_REGEX : INT_STRIP_REGEX,
+				''
+			);
+
+			if (!isEmpty(nextValue)) {
+				if (!isEmpty(minValue?.min) && nextValue < minValue.min) {
+					nextValue = minValue.min;
+				} else if (
+					!isEmpty(maxValue?.max) &&
+					nextValue > maxValue.max
+				) {
+					nextValue = maxValue.max;
+				}
+
+				setValue(+nextValue);
+			} else {
+				setValue(nextValue);
+			}
+		},
+		[float, minValue, maxValue, setValue]
+	);
 
 	const { onDragStart, onDragEnd } = useDragValue({
 		value: isString(value)
 			? //$FlowFixMe
-				value.replace(float ? /[^-\.0-9]/g : /[^-0-9]/g, '')
+				value.replace(float ? FLOAT_STRIP_REGEX : INT_STRIP_REGEX, '')
 			: +value,
-		setValue: (newValue) => {
-			setValue(newValue);
-		},
+		setValue,
 		movement: 'vertical',
 		...minValue,
 		...maxValue,
 	});
 
-	const getDragEvent: Object = () => {
-		return drag
-			? {
-					onMouseDown: (event) => {
-						onDragStart(event);
-					},
-					onMouseUp: onDragEnd,
-				}
-			: {};
-	};
+	const dragEvent = drag
+		? {
+				onMouseDown: onDragStart,
+				onMouseUp: onDragEnd,
+			}
+		: EMPTY_CONSTRAINTS;
+
+	const onRangeChange = useCallback(
+		(newValue: number) => {
+			setValue(newValue);
+		},
+		[setValue]
+	);
 
 	return (
 		<>
@@ -179,9 +171,7 @@ export function NumberInput({
 				<RangeControl
 					withInputField={false}
 					sideEffect={false}
-					onChange={(newValue: number) => {
-						setValue(newValue);
-					}}
+					onChange={onRangeChange}
 					disabled={disabled}
 					{...minValue}
 					{...maxValue}
@@ -208,7 +198,7 @@ export function NumberInput({
 				{...props}
 				onChange={handleInputChange}
 				type="number"
-				{...getDragEvent()}
+				{...dragEvent}
 			/>
 
 			<div className={controlInnerClassNames('input-actions')}>
@@ -229,4 +219,4 @@ export function NumberInput({
 			{children}
 		</>
 	);
-}
+});

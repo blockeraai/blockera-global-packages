@@ -1,9 +1,17 @@
 ## Unreleased
 
+### Improvements
+
+- Number and unit fields in the inspector update more smoothly while you type
+  and when other settings change.
+
 ### Development Notes
 
 - ControlContextProvider keeps a stable context value when control info contents
   are unchanged so inspector controls do not re-render on unrelated parent updates.
+- InputControl reuses CSS unit catalogs, keeps unit option lookups indexed, and
+  avoids rebuilding unit menus and handlers on unrelated parent renders. Numeric
+  keystrokes still update the canvas immediately.
 
 ### Automated Tests
 

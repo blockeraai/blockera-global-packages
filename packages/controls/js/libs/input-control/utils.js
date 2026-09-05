@@ -7,7 +7,6 @@ import { isString, isArray, isObject, isUndefined } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { getSelectedSelectOption } from '../select-control/utils';
 import type { InputUnitTypes } from './types';
 
 const specialUnits = [
@@ -27,14 +26,49 @@ const specialUnits = [
 	'normal',
 ];
 
+const EMPTY_UNIT: Object = {};
+const EMPTY_CSS_UNITS: Array<any> = [];
+const cssUnitsByType: { [string]: Array<any> } = {};
+const unitOptionIndexByList: WeakMap<Array<any>, Map<mixed, Object>> =
+	new WeakMap();
+
+function indexUnitOptions(
+	options: Array<any>,
+	index: Map<mixed, Object>
+): void {
+	for (let i = 0, n = options.length; i < n; i++) {
+		const item = options[i];
+
+		if (item && !isUndefined(item.value) && !index.has(item.value)) {
+			index.set(item.value, item);
+		}
+
+		if (item?.options && isArray(item.options)) {
+			indexUnitOptions(item.options, index);
+		}
+	}
+}
+
+function getUnitOptionIndex(units: Array<any>): Map<mixed, Object> {
+	let index = unitOptionIndexByList.get(units);
+
+	if (!index) {
+		index = new Map();
+		indexUnitOptions(units, index);
+		unitOptionIndexByList.set(units, index);
+	}
+
+	return index;
+}
+
 // Function to get a unit object based on a specific value
 export const getUnitByValue = (value: string, units: Array<any>): Object => {
 	if (isUndefined(value)) {
-		return {};
+		return EMPTY_UNIT;
 	}
 
 	if (isArray(units)) {
-		const found = getSelectedSelectOption(value, units);
+		const found = getUnitOptionIndex(units).get(value);
 
 		if (found) {
 			return found;
@@ -42,7 +76,7 @@ export const getUnitByValue = (value: string, units: Array<any>): Object => {
 	}
 
 	if (value === '') {
-		return {};
+		return EMPTY_UNIT;
 	}
 
 	// Return a new custom option for exact founded unit
@@ -53,6 +87,38 @@ export const getUnitByValue = (value: string, units: Array<any>): Object => {
 		notFound: true,
 	};
 };
+
+/**
+ * Append a typed-in unit without mutating cached CSS unit catalogs.
+ */
+export function appendNotFoundUnitOption(
+	units: Array<any>,
+	unitValue: Object
+): Array<any> {
+	if (!unitValue?.notFound || !isArray(units)) {
+		return units;
+	}
+
+	let changed = false;
+	const nextUnits = units.map((unitPackage) => {
+		if (
+			'founded_from_inputs' === unitPackage?.id &&
+			isArray(unitPackage?.options) &&
+			!unitPackage.options.includes(unitValue)
+		) {
+			changed = true;
+
+			return {
+				...unitPackage,
+				options: [...unitPackage.options, unitValue],
+			};
+		}
+
+		return unitPackage;
+	});
+
+	return changed ? nextUnits : units;
+}
 
 // Validates the value is with a special CSS units or not
 export function isSpecialUnit(value: string): boolean {
@@ -67,7 +133,11 @@ export function isSpecialUnit(value: string): boolean {
 
 export function getCSSUnits(unitType: InputUnitTypes): Array<any> {
 	if (isUndefined(unitType) || !isString(unitType)) {
-		return [];
+		return EMPTY_CSS_UNITS;
+	}
+
+	if (cssUnitsByType[unitType]) {
+		return cssUnitsByType[unitType];
 	}
 
 	let cssUnits: Array<any> = [];
@@ -1436,6 +1506,8 @@ export function getCSSUnits(unitType: InputUnitTypes): Array<any> {
 			];
 			break;
 	}
+
+	cssUnitsByType[unitType] = cssUnits;
 
 	return cssUnits;
 }
