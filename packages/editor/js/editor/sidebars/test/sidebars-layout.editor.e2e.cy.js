@@ -258,6 +258,33 @@ describe('Movable sidebar docks', () => {
 		pointerUp();
 	});
 
+	it('should move settings with the pointer, not only vertically', () => {
+		startPaneDrag('complementary');
+
+		cy.get(
+			'[data-test="blockera-sidebar-pane-complementary"].is-floating'
+		).then(($pane) => {
+			const start = $pane[0].getBoundingClientRect();
+			pointerMove(start.left - 220, start.top + 36);
+		});
+
+		cy.get(
+			'[data-test="blockera-sidebar-pane-complementary"].is-floating'
+		).should(($pane) => {
+			const paneRect = $pane[0].getBoundingClientRect();
+			const overlay = Cypress.$(
+				'.interface-interface-skeleton__sidebar.blockera-complementary-overlay'
+			)[0];
+
+			expect(overlay, 'settings overlay').to.exist;
+			const overlayRect = overlay.getBoundingClientRect();
+			expect(overlayRect.left).to.be.closeTo(paneRect.left, 8);
+			expect(overlayRect.top).to.be.closeTo(paneRect.top, 8);
+		});
+
+		pointerUp();
+	});
+
 	it('should keep settings content visible while dragging another panel', () => {
 		startPaneDrag('listView');
 

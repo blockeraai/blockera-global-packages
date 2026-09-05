@@ -53,6 +53,10 @@
   with two blocks.
 - Complementary overlay: unit coverage that height-only dock resizes do not
   reposition settings while the sidebar is idle.
+- Complementary overlay: unit coverage that a floating settings pane updates
+  overlay left and top together.
+- Sidebar layout: e2e coverage that dragging settings keeps the Gutenberg
+  overlay under the pointer, not only moving it up and down.
 - Sidebar docks: close buttons, header toggles, and Gutenberg show-inserter /
   show-settings APIs follow the panel’s current dock.
 - Site Editor: clicking Styles while Styles is open returns to Settings and

@@ -2,6 +2,7 @@
  * Internal dependencies
  */
 import {
+	complementaryOverlayGeometry,
 	findComplementaryHandleHost,
 	isSlideHostOpening,
 	shouldSyncOverlayFromHostResize,
@@ -131,5 +132,37 @@ describe('isSlideHostOpening', () => {
 		});
 
 		expect(isSlideHostOpening(host)).toBe(false);
+	});
+});
+
+describe('complementary overlay geometry', () => {
+	it('pins overlay left to the slide host while the pane is docked', () => {
+		const anchor = document.createElement('div');
+		const overlay = complementaryOverlayGeometry(
+			anchor,
+			new DOMRect(400, 80, 300, 500),
+			new DOMRect(900, 0, 300, 800)
+		);
+
+		expect(overlay.overlayBox.left).toBe(900);
+		expect(overlay.overlayBox.top).toBe(80);
+		expect(overlay.overlayBox.width).toBe(300);
+		expect(overlay.overlayBox.height).toBe(500);
+	});
+
+	it('follows the floating pane on both axes and drops dock clip', () => {
+		const anchor = document.createElement('div');
+		anchor.classList.add('is-floating');
+		const overlay = complementaryOverlayGeometry(
+			anchor,
+			new DOMRect(240, 120, 300, 480),
+			new DOMRect(900, 0, 300, 800)
+		);
+
+		expect(overlay.overlayBox.left).toBe(240);
+		expect(overlay.overlayBox.top).toBe(120);
+		expect(overlay.overlayBox.width).toBe(300);
+		expect(overlay.overlayBox.height).toBe(480);
+		expect(overlay.clipPath).toBe('');
 	});
 });
