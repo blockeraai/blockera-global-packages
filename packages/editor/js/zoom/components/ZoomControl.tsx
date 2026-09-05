@@ -188,7 +188,7 @@ export default function ZoomControl({
 						children: (
 							<>
 								<span>{Math.round(zoomPercent)}%</span>
-								<Icon icon={chevronDown} size={16} />
+								<Icon icon={chevronDown} size={18} />
 							</>
 						),
 					}}
