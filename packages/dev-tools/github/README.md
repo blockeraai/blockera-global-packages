@@ -701,8 +701,9 @@ Two-job flow: detect categories → matrix `run.sh` per category.
 Discovery uses `list-test-categories.js --suffix e2e.cy.js`. Consumers pass
 their own scan/package/pattern env — there is no product-style switch.
 Set `BLOCKERA_E2E_SHARD_SIZE` (e.g. `100`) to pack each base filename
-category by registered test count. One shard keeps the original id;
-two or more become `base-1`…`base-N`. `run.sh` always
+category by registered test count. Shard count is `ceil(total / size)`;
+files are split evenly across those shards (one shard keeps the original
+id). `run.sh` always
 passes an explicit `--spec` list from `--specs-for-category`.
 
 ```yaml
@@ -754,7 +755,7 @@ env:
 | `BLOCKERA_E2E_CATEGORY` | required on matrix job |
 | `BLOCKERA_E2E_PACKAGE_GLOB` | unused by `run.sh` (spec lists come from `list-test-categories.js`) |
 | `BLOCKERA_E2E_GENERAL_CATEGORY` | `general-1` (`none` disables) |
-| `BLOCKERA_E2E_SHARD_SIZE` | unset / `0` (no packing). Positive int packs a base category into `base-1`…`base-N` when it needs more than one shard; a single shard keeps the original id. Count is registered `it(` (array `.forEach` around `it` is expanded). |
+| `BLOCKERA_E2E_SHARD_SIZE` | unset / `0` (no packing). Positive int uses `ceil(total its / size)` shards and splits files evenly across them; a single shard keeps the original id. Count is registered `it(` (array `.forEach` around `it` is expanded). |
 | `BLOCKERA_E2E_LIST_CATEGORIES_CMD` | `list-test-categories.js --suffix e2e.cy.js --env-prefix BLOCKERA_E2E` |
 | `BLOCKERA_E2E_USE_CREATE_WP_ENV` | `false` (also runs when `.pr-env.json` exists) |
 | `BLOCKERA_E2E_WRITE_CYPRESS_ENV` | `false` |

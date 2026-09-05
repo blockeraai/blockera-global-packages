@@ -410,29 +410,35 @@ function groupEntriesByBase(entries) {
 }
 
 function packEntries(entries, shardSize) {
+	if (!entries.length) {
+		return [];
+	}
+
+	const total = entries.reduce((sum, entry) => sum + entry.count, 0);
+	const oversized = entries.filter(
+		(entry) => entry.count > shardSize
+	).length;
+	const shardCount = Math.min(
+		entries.length,
+		Math.max(1, Math.ceil(total / shardSize), oversized)
+	);
+
+	if (shardCount <= 1) {
+		return [entries];
+	}
+
+	const baseSize = Math.floor(entries.length / shardCount);
+	const extra = entries.length % shardCount;
 	const shards = [];
-	let current = [];
-	let currentCount = 0;
+	let index = 0;
 
-	for (const entry of entries) {
-		if (
-			current.length > 0 &&
-			currentCount + entry.count > shardSize
-		) {
-			shards.push(current);
-			current = [];
-			currentCount = 0;
-		}
-
-		current.push(entry);
-		currentCount += entry.count;
+	for (let shard = 0; shard < shardCount; shard++) {
+		const size = baseSize + (shard < extra ? 1 : 0);
+		shards.push(entries.slice(index, index + size));
+		index += size;
 	}
 
-	if (current.length > 0) {
-		shards.push(current);
-	}
-
-	return shards;
+	return shards.filter((shard) => shard.length > 0);
 }
 
 function shardName(base, index, shardCount) {
