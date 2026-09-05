@@ -15,6 +15,11 @@
 #   BLOCKERA_BUILD_ZIP_TESTS_SPECS_DEST          default: packages/global-packages/packages/blockera/tests
 #   BLOCKERA_BUILD_ZIP_TESTS_CYPRESS_SPEC_PATTERN  comma list; default: packages/**/*.build.e2e.cy.js
 #   BLOCKERA_BUILD_ZIP_TESTS_PREPARE_CMD         optional extra hook after default staging
+#
+# Stages wp-env start helpers into BUILD_DIR (retry-wp-env-start.sh +
+# run-wp-env-start.js + preload/inject + lib/retry.sh + root-configs
+# Dockerfile.wordpress). START_CMD runs after cd. Inject resolves the
+# Dockerfile relative to the copied script, not host `.docker/`.
 set -euo pipefail
 
 ZIP_FILE="${BLOCKERA_BUILD_ZIP_TESTS_ZIP:-blockera.zip}"
@@ -76,19 +81,36 @@ rm -f "${ZIP_FILE}"
 echo "build-zip-tests/prepare: staging fixtures (php=${PHP_VERSION})"
 
 mkdir -p "${BUILD_DIR}/.github/wp-env-configs"
-mkdir -p "${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts"
 mkdir -p "${BUILD_DIR}/${SPECS_DEST}"
 
-cp "${TOOLKIT_SCRIPTS}/setup-wp-env.js" \
-	"${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts/"
-cp "${TOOLKIT_SCRIPTS}/retry-wp-env-start.sh" \
-	"${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts/"
-chmod +x "${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts/retry-wp-env-start.sh"
-# retry-wp-env-start.sh runs lib/retry.sh relative to its own directory.
-mkdir -p "${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts/lib"
-cp "${TOOLKIT_SCRIPTS}/lib/retry.sh" \
-	"${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts/lib/"
-chmod +x "${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts/lib/retry.sh"
+# START_CMD runs retry-wp-env-start.sh from BUILD_DIR; that script nodes
+# run-wp-env-start.js next to itself (preload + inject). Copy the set, not
+# only the shell wrapper.
+WP_ENV_SCRIPTS_DEST="${BUILD_DIR}/packages/global-packages/packages/dev-tools/github/scripts"
+mkdir -p "${WP_ENV_SCRIPTS_DEST}/lib"
+for f in \
+	setup-wp-env.js \
+	retry-wp-env-start.sh \
+	run-wp-env-start.js \
+	preload-wp-env-docker-patch.js \
+	inject-wp-env-dockerfile.js; do
+	cp "${TOOLKIT_SCRIPTS}/${f}" "${WP_ENV_SCRIPTS_DEST}/"
+done
+chmod +x "${WP_ENV_SCRIPTS_DEST}/retry-wp-env-start.sh"
+cp "${TOOLKIT_SCRIPTS}/lib/retry.sh" "${WP_ENV_SCRIPTS_DEST}/lib/"
+chmod +x "${WP_ENV_SCRIPTS_DEST}/lib/retry.sh"
+
+BUNDLED_DOCKERFILE="${TOOLKIT_SCRIPTS}/../../root-configs/.docker/Dockerfile.wordpress"
+if [[ ! -f "${BUNDLED_DOCKERFILE}" ]]; then
+	echo "build-zip-tests/prepare: missing ${BUNDLED_DOCKERFILE}" >&2
+	exit 1
+fi
+# inject-wp-env-dockerfile.js reads root-configs next to this package, not
+# host .docker/ (that copy can lag the pin).
+DEV_TOOLS_ROOT="$(cd "${WP_ENV_SCRIPTS_DEST}/../.." && pwd)"
+mkdir -p "${DEV_TOOLS_ROOT}/root-configs/.docker"
+cp "${BUNDLED_DOCKERFILE}" \
+	"${DEV_TOOLS_ROOT}/root-configs/.docker/Dockerfile.wordpress"
 
 if [[ "${USE_CREATE_WP_ENV}" == "true" ]]; then
 	if [[ -f "${WORKSPACE}/.github/wp-env-configs/${WP_ENV_CATEGORY}.json" ]]; then

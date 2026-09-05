@@ -17,6 +17,7 @@ const HOOK_MODE = 0o755;
 const ROOT_CONFIGS = [
 	{ dest: '.browserslistrc' },
 	{ dest: '.cspell', kind: 'dir' },
+	{ dest: '.docker', kind: 'dir' },
 	{ dest: '.editorconfig' },
 	{ dest: '.env.example' },
 	{
