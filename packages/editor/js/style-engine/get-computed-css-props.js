@@ -4,7 +4,6 @@
  * External dependencies
  */
 import { select } from '@wordpress/data';
-import { applyFilters } from '@wordpress/hooks';
 
 /**
  * Internal dependencies
@@ -33,6 +32,7 @@ import type {
 	TStates,
 } from '../extensions/libs/block-card/block-states/types';
 import { appendBlockeraPrefix } from './utils';
+import { createAppendStylesRunner } from './create-append-styles-runner';
 import { getBaseBreakpoint, isBaseBreakpoint } from '../editor/header-ui';
 import { isBlock } from '../extensions/libs/block-card/inner-blocks/utils';
 import type { InnerBlockType } from '../extensions/libs/block-card/inner-blocks/types';
@@ -84,38 +84,29 @@ const omitUnownedBlockeraDisplay = (
 	return mergedAttrs;
 };
 
-const appendStyles = ({
-	settings,
-	disabledStyles,
-}: {
-	settings: Object,
-	disabledStyles: Array<string>,
-}): Array<CssRule> => {
-	// Extendable style generators by other developers.
-	const styleGenerators = applyFilters(
-		'blockera.editor.styleEngine.generators',
-		{
-			SizeStyles,
-			MouseStyles,
-			LayoutStyles,
-			SpacingStyles,
-			EffectsStyles,
-			PositionStyles,
-			FlexChildStyles,
-			GridChildStyles,
-			TypographyStyles,
-			BackgroundStyles,
-			BlockStatesStyles,
-			BorderAndShadowStyles,
-		}
-	);
-
-	const enabledStyles = Object.entries(styleGenerators)
-		.filter(([name]) => !disabledStyles?.includes(name))
-		.map(([, generator]: [any, Function]) => generator(settings));
-
-	return enabledStyles.flat();
+const DEFAULT_STYLE_GENERATORS = {
+	SizeStyles,
+	MouseStyles,
+	LayoutStyles,
+	SpacingStyles,
+	EffectsStyles,
+	PositionStyles,
+	FlexChildStyles,
+	GridChildStyles,
+	TypographyStyles,
+	BackgroundStyles,
+	BlockStatesStyles,
+	BorderAndShadowStyles,
 };
+
+const SKIP_COMPUTED_STATES: { [string]: boolean } = {
+	'custom-class': true,
+	'parent-class': true,
+	'parent-hover': true,
+};
+
+const isVisibleBlockState = (state: ?Object): boolean =>
+	Boolean(state?.isVisible && state?.breakpoints);
 
 export const getComputedCssProps = ({
 	states,
@@ -128,6 +119,16 @@ export const getComputedCssProps = ({
 	...params
 }: Object): Array<CssRule> => {
 	const stylesStack = [];
+	const runGenerators = createAppendStylesRunner(
+		DEFAULT_STYLE_GENERATORS,
+		disabledStyles
+	);
+	const appendStyles = ({
+		settings,
+	}: {
+		settings: Object,
+		disabledStyles?: Array<string>,
+	}): Array<CssRule> => runGenerators(settings);
 	const { getState, getInnerState } = select('blockera/editor');
 	const defaultAttributes = prepareBlockeraDefaultAttributesValues(
 		params.defaultAttributes
@@ -186,6 +187,10 @@ export const getComputedCssProps = ({
 	};
 
 	states.forEach((state: TStates | string): void => {
+		if (SKIP_COMPUTED_STATES[state]) {
+			return;
+		}
+
 		const calculatedProps = {
 			...params,
 			state,
@@ -195,10 +200,6 @@ export const getComputedCssProps = ({
 			},
 			selectors,
 			blockName,
-		};
-
-		const validateBlockStates = (state: Object): boolean => {
-			return state?.isVisible && !!state?.breakpoints;
 		};
 
 		const generateCssStyleForInnerBlocksInPseudoStates = ({
@@ -211,7 +212,7 @@ export const getComputedCssProps = ({
 			for (const stateType in blockeraBlockStates) {
 				const stateItem = blockeraBlockStates[stateType];
 
-				if (!validateBlockStates(stateItem)) {
+				if (!isVisibleBlockState(stateItem)) {
 					continue;
 				}
 
@@ -428,12 +429,16 @@ export const getComputedCssProps = ({
 			);
 		};
 
-		// TODO: please implemented custom special pseudo-states for all blocks.
-		if (['custom-class', 'parent-class', 'parent-hover'].includes(state)) {
+		const savedStates = params?.attributes?.blockeraBlockStates || {};
+		const stateItem = savedStates[state];
+		const isBaseNormal =
+			isBaseBreakpoint(currentBreakpoint) && isNormalState(state);
+
+		if (!isBaseNormal && !isVisibleBlockState(stateItem)) {
 			return;
 		}
 
-		if (isBaseBreakpoint(currentBreakpoint) && isNormalState(state)) {
+		if (isBaseNormal) {
 			// 1- create css styles for master blocks with root attributes.
 			stylesStack.push(
 				appendStyles({
@@ -461,8 +466,6 @@ export const getComputedCssProps = ({
 		}
 
 		// 3- validate saved block-states to creating css styles for all states of blocks.
-		const states = params?.attributes?.blockeraBlockStates || {};
-		const stateItem = states[state];
 		let calculatedSelectors = calculatedProps.selectors;
 		let currentStateHasSelectors = false;
 
@@ -498,7 +501,7 @@ export const getComputedCssProps = ({
 			currentStateHasSelectors = true;
 		}
 
-		if (validateBlockStates(stateItem)) {
+		if (isVisibleBlockState(stateItem)) {
 			if (
 				hasContent &&
 				!Object.keys(stateItem?.breakpoints || {})?.length &&

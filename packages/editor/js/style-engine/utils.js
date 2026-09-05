@@ -64,6 +64,12 @@ export const computedCssDeclarations = (
 	pickedSelector: string
 ): Array<string> => {
 	const output = [];
+	const cssGenerator = new CssGenerator(
+		'',
+		{ type: 'static', properties: {}, function: (): void => {} },
+		blockProps,
+		pickedSelector
+	);
 
 	for (const styleKey in styleDefinitions) {
 		const generatorDetails: Array<StaticStyle | DynamicStyle> =
@@ -81,7 +87,7 @@ export const computedCssDeclarations = (
 					return;
 				}
 
-				const cssGenerator = new CssGenerator(
+				cssGenerator.configure(
 					styleKey,
 					definition,
 					blockProps,

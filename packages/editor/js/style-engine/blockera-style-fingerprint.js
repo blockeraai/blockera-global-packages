@@ -2,7 +2,15 @@
 
 /**
  * Stable fingerprint of Blockera-controlled attributes for style-engine memoization.
- *
+ * Stringify is skipped when the same attributes object (and inlineStyles ref) is reused.
+ */
+
+const fingerprintByAttributes: WeakMap<
+	Object,
+	{ inline: Object | null | void, fingerprint: string }
+> = new WeakMap();
+
+/**
  * @param {Object|null|void} attributes Block attributes.
  * @param {Object|null|void} inlineStyles Optional inline style overrides.
  * @return {string} Fingerprint string.
@@ -13,6 +21,11 @@ export function getBlockeraStyleFingerprint(
 ): string {
 	if (!attributes) {
 		return '';
+	}
+
+	const cached = fingerprintByAttributes.get(attributes);
+	if (cached && cached.inline === inlineStyles) {
+		return cached.fingerprint;
 	}
 
 	const parts: Array<string> = [];
@@ -27,7 +40,13 @@ export function getBlockeraStyleFingerprint(
 		parts.push(`inline:${JSON.stringify(inlineStyles)}`);
 	}
 
-	return parts.join('|');
+	const fingerprint = parts.join('|');
+	fingerprintByAttributes.set(attributes, {
+		inline: inlineStyles,
+		fingerprint,
+	});
+
+	return fingerprint;
 }
 
 /**

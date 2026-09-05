@@ -13,6 +13,7 @@
 
 - Style engine canvas isolation oracle: fingerprint and BlockStyle memo equality
   for pinned unselected current* vs sibling UI state.
+- Extension memo equality helper covers sliced values vs callback identity.
 
 ## [3.0.0] - 2026-09-01
 
