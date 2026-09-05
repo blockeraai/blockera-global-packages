@@ -53,6 +53,8 @@
   `update && install` RUNs that lack that rewrite.
 - Build zip E2E prepare: assert wp-env start JS helpers are copied into
   the extract tree.
+- Build zip E2E prepare: assert `root-configs/.docker/Dockerfile.wordpress`
+  is staged for inject.
 
 ## [2.3.0] - 2026-09-01
 

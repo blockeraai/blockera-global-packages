@@ -128,5 +128,6 @@ describe('prepare-build-env wp-env start staging', () => {
 		expect(prepare).toContain('preload-wp-env-docker-patch.js');
 		expect(prepare).toContain('inject-wp-env-dockerfile.js');
 		expect(prepare).toContain('retry-wp-env-start.sh');
+		expect(prepare).toContain('root-configs/.docker/Dockerfile.wordpress');
 	});
 });
