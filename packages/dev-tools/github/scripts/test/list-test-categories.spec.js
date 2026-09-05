@@ -5,8 +5,10 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const {
+	formatCategorySummaries,
 	listCategories,
 	listCategoriesFromSpecPaths,
+	listCategorySummaries,
 	specsForCategory,
 	specsForCategoryFromDisk,
 	stripShardSuffix,
@@ -306,5 +308,52 @@ describe('list-test-categories sharding', () => {
 		expect(specsForCategory(paths, 'compatibility-1', options)).toEqual([
 			paths[0],
 		]);
+	});
+
+	it('summarizes registered it() and file counts per shard', () => {
+		writeSpec(
+			root,
+			'packages/editor/test/a.compatibility.e2e.cy.js',
+			its(30)
+		);
+		writeSpec(
+			root,
+			'packages/editor/test/b.compatibility.e2e.cy.js',
+			its(30)
+		);
+		writeSpec(
+			root,
+			'packages/editor/test/c.compatibility.e2e.cy.js',
+			its(30)
+		);
+		writeSpec(
+			root,
+			'packages/editor/test/d.compatibility.e2e.cy.js',
+			its(30)
+		);
+		writeSpec(
+			root,
+			'packages/editor/test/e.compatibility.e2e.cy.js',
+			its(5)
+		);
+
+		const options = {
+			root,
+			suffix: 'e2e.cy.js',
+			scanRoots: ['packages'],
+			shardSize: 80,
+			generalCategory: 'none',
+		};
+
+		expect(listCategorySummaries(options)).toEqual([
+			{ category: 'compatibility-1', files: 3, its: 90 },
+			{ category: 'compatibility-2', files: 2, its: 35 },
+		]);
+		expect(
+			formatCategorySummaries(listCategorySummaries(options))
+		).toContain('compatibility-1');
+		expect(
+			formatCategorySummaries(listCategorySummaries(options))
+		).toMatch(/total\s+125 its/);
 	});
 });
