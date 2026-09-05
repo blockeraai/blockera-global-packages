@@ -1,4 +1,4 @@
-## Unreleased
+## [3.0.0] - 2026-09-05
 
 ### Development Notes
 - wp-env start: put `wp-env` on `PATH` so `.wp-env.json` `afterStart` hooks
