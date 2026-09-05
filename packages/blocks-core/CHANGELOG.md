@@ -1,3 +1,8 @@
+## Unreleased
+
+### Automated Tests
+- Rename global-styles compatibility e2e specs to `.gs-compatibility.e2e.cy.js`.
+
 ## [5.0.0] - 2026-09-05
 
 ### Automated Tests
