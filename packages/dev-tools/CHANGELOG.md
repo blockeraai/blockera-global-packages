@@ -9,7 +9,8 @@
 
 ### Automated Tests
 - Cover category packing, `it.skip`, array-literal and const-array
-  `.forEach` expansion, and inner `.forEach` inside `it`.
+  `.forEach` expansion, inner `.forEach` inside `it`, and a single shard
+  keeping the original category id.
 
 ## [3.0.0] - 2026-09-05
 
