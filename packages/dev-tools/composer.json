@@ -1,6 +1,6 @@
 {
 	"name": "blockera/dev-tools",
-	"version": "3.0.0",
+	"version": "4.0.0",
 	"description": "Blockera DevTools for developers",
 	"autoload": {
 		"psr-4": {

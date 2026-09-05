@@ -1,4 +1,4 @@
-## Unreleased
+## [4.0.0] - 2026-09-05
 
 ### Automated Tests
 - Drop manual `-N` suffixes from Cypress e2e spec filenames; CI shards

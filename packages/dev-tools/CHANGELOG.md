@@ -1,4 +1,4 @@
-## Unreleased
+## [4.0.0] - 2026-09-05
 
 ### Development Notes
 - Cypress E2E CI: optional `SHARD_SIZE` packs each base spec category into
