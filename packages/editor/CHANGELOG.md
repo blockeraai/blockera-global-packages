@@ -28,6 +28,8 @@
 
 ### Automated Tests
 
+- Rename global-styles compatibility e2e specs to `.gs-compatibility.e2e.cy.js`.
+- Rename global-styles e2e specs to `.gs.e2e.cy.js`.
 - Style engine canvas isolation oracle: fingerprint and BlockStyle memo equality
   for pinned unselected current* vs sibling UI state.
 - Extension memo equality helper covers sliced values vs callback identity.
@@ -35,6 +37,16 @@
   cache keeps the same string for the same attributes object.
 - Confirms Global Styles skip extra work for blocks with no custom styles, and
   still update when block types or style variations change.
+
+## [4.0.0] - 2026-09-05
+
+### Automated Tests
+- Drop manual `-N` suffixes from Cypress e2e spec filenames; CI shards
+  categories by registered test count.
+
+### Development Notes
+- Feature test recipe filenames use `{name}.{category}.e2e.cy.js` without
+  a shard number.
 
 ## [3.0.0] - 2026-09-01
 

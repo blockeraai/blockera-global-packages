@@ -19,6 +19,12 @@
 - InputControl unit catalogs stay cached and not-found units append without
   mutating the shared catalog.
 
+## [5.0.0] - 2026-09-05
+
+### Automated Tests
+- Drop manual `-N` suffixes from Cypress e2e spec filenames; CI shards
+  categories by registered test count.
+
 ## [4.0.0] - 2026-09-01
 
 ### Changed

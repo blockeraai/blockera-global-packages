@@ -20,11 +20,16 @@
  *   EXCLUDE_FILES          comma-separated cwd-relative paths
  *   FILE_PATTERN           regex; when set, only matching files are scanned
  *   CATEGORY_MODE          dot-prefix (default) | last-segment
+ *   SHARD_SIZE             positive int; pack base categories into base-1..N by
+ *                          registered `it(` count when more than one shard is
+ *                          needed (a single shard keeps the original id; 0 / unset
+ *                          disables)
  */
 const fs = require('fs');
 const path = require('path');
 const { walkFiles } = require('./walk-files');
 const { isMatchingPackage } = require('./package-match');
+const { countItsInFile } = require('./count-registered-tests');
 
 function envValue(...names) {
 	for (const name of names) {
@@ -175,6 +180,12 @@ function resolveOptions(overrides = {}) {
 	const excludeFilesRaw =
 		overrides.excludeFiles || readPrefixed(envPrefix, 'EXCLUDE_FILES', '');
 
+	const shardSizeRaw =
+		overrides.shardSize !== undefined
+			? overrides.shardSize
+			: readPrefixed(envPrefix, 'SHARD_SIZE', '0');
+	const shardSize = parseShardSize(shardSizeRaw);
+
 	return {
 		root: overrides.root || process.cwd(),
 		envPrefix,
@@ -197,7 +208,29 @@ function resolveOptions(overrides = {}) {
 		filePattern,
 		categoryMode,
 		generalCategory,
+		shardSize,
 	};
+}
+
+function parseShardSize(raw) {
+	if (raw === undefined || raw === null || raw === '') {
+		return 0;
+	}
+
+	const size = Number.parseInt(String(raw), 10);
+	if (!Number.isFinite(size) || size < 1) {
+		return 0;
+	}
+
+	return size;
+}
+
+function stripShardSuffix(category) {
+	if (!category) {
+		return category;
+	}
+
+	return String(category).replace(/-\d+$/, '');
 }
 
 function isExcludedFile(filePath, options) {
@@ -267,6 +300,232 @@ function categoryForSpecFile(filePath, options) {
 	return category;
 }
 
+function baseCategoryForSpecFile(filePath, options) {
+	const category = categoryForSpecFile(filePath, options);
+
+	if (!category) {
+		return null;
+	}
+
+	if (matchesExclude(stripShardSuffix(category), options.excludeCategories)) {
+		return null;
+	}
+
+	if (options.shardSize > 0) {
+		return stripShardSuffix(category);
+	}
+
+	return category;
+}
+
+function toRelativePosix(filePath, root) {
+	if (path.isAbsolute(filePath)) {
+		return toPosix(path.relative(root, filePath));
+	}
+
+	return toPosix(filePath);
+}
+
+function resolveSpecPath(filePath, root) {
+	if (path.isAbsolute(filePath)) {
+		return filePath;
+	}
+
+	return path.join(root, filePath);
+}
+
+function specEntry(filePath, options) {
+	const base = baseCategoryForSpecFile(filePath, options);
+
+	if (!base) {
+		return null;
+	}
+
+	const relative = toRelativePosix(filePath, options.root);
+	const absolute = resolveSpecPath(filePath, options.root);
+	const count =
+		options.shardSize > 0 ? countItsInFile(absolute) : 0;
+
+	return { relative, base, count };
+}
+
+function collectEntriesFromPaths(paths, options) {
+	const entries = [];
+
+	for (const spec of paths) {
+		const entry = specEntry(spec, options);
+		if (entry) {
+			entries.push(entry);
+		}
+	}
+
+	return entries;
+}
+
+function collectEntriesFromDisk(options) {
+	const seen = new Set();
+	const entries = [];
+
+	function addFile(filePath) {
+		const entry = specEntry(filePath, options);
+		if (!entry || seen.has(entry.relative)) {
+			return;
+		}
+		seen.add(entry.relative);
+		entries.push(entry);
+	}
+
+	for (const file of collectFiles(options, options.packageFilter)) {
+		addFile(file);
+	}
+
+	if (options.generalCategory) {
+		const generalFilter =
+			options.generalPackageFilter || options.packageFilter;
+		for (const file of collectFiles(options, generalFilter)) {
+			if (!isGeneralSpec(file, options.suffix)) {
+				continue;
+			}
+			addFile(file);
+		}
+	}
+
+	return entries;
+}
+
+function groupEntriesByBase(entries) {
+	const groups = new Map();
+
+	for (const entry of entries) {
+		const list = groups.get(entry.base) || [];
+		list.push(entry);
+		groups.set(entry.base, list);
+	}
+
+	for (const list of groups.values()) {
+		list.sort((a, b) => a.relative.localeCompare(b.relative));
+	}
+
+	return groups;
+}
+
+function packEntries(entries, shardSize) {
+	if (!entries.length) {
+		return [];
+	}
+
+	const total = entries.reduce((sum, entry) => sum + entry.count, 0);
+	const oversized = entries.filter(
+		(entry) => entry.count > shardSize
+	).length;
+	const shardCount = Math.min(
+		entries.length,
+		Math.max(1, Math.ceil(total / shardSize), oversized)
+	);
+
+	if (shardCount <= 1) {
+		return [entries];
+	}
+
+	const baseSize = Math.floor(entries.length / shardCount);
+	const extra = entries.length % shardCount;
+	const shards = [];
+	let index = 0;
+
+	for (let shard = 0; shard < shardCount; shard++) {
+		const size = baseSize + (shard < extra ? 1 : 0);
+		shards.push(entries.slice(index, index + size));
+		index += size;
+	}
+
+	return shards.filter((shard) => shard.length > 0);
+}
+
+function shardName(base, index, shardCount) {
+	if (shardCount <= 1) {
+		return base;
+	}
+
+	return `${base}-${index + 1}`;
+}
+
+function shardedCategorySummaries(entries, shardSize) {
+	if (!entries.length) {
+		return [];
+	}
+
+	const summaries = [];
+	const groups = groupEntriesByBase(entries);
+
+	for (const base of sortCategories([...groups.keys()])) {
+		const group = groups.get(base);
+		const shards = shardSize < 1 ? [group] : packEntries(group, shardSize);
+
+		shards.forEach((shard, index) => {
+			summaries.push({
+				category:
+					shardSize < 1
+						? base
+						: shardName(base, index, shards.length),
+				files: shard.length,
+				its: shard.reduce((sum, entry) => sum + entry.count, 0),
+			});
+		});
+	}
+
+	return summaries;
+}
+
+function formatCategorySummaries(summaries) {
+	const width = Math.max(
+		8,
+		...summaries.map((row) => row.category.length)
+	);
+	const lines = summaries.map(
+		(row) =>
+			`${row.category.padEnd(width)}  ${String(row.its).padStart(4)} its  ${String(row.files).padStart(3)} files`
+	);
+	const totalIts = summaries.reduce((sum, row) => sum + row.its, 0);
+	const totalFiles = summaries.reduce((sum, row) => sum + row.files, 0);
+
+	lines.push(
+		`${'total'.padEnd(width)}  ${String(totalIts).padStart(4)} its  ${String(totalFiles).padStart(3)} files  ${summaries.length} categories`
+	);
+
+	return lines.join('\n');
+}
+
+function specsInShardedCategory(entries, category, shardSize) {
+	if (shardSize < 1) {
+		return entries
+			.filter((entry) => entry.base === category)
+			.map((entry) => entry.relative);
+	}
+
+	const numbered = String(category).match(/-(\d+)$/);
+	const groups = groupEntriesByBase(entries);
+
+	if (numbered) {
+		const base = stripShardSuffix(category);
+		const shards = packEntries(groups.get(base) || [], shardSize);
+
+		if (shards.length <= 1) {
+			return [];
+		}
+
+		const shard = shards[Number.parseInt(numbered[1], 10) - 1];
+		return shard ? shard.map((entry) => entry.relative) : [];
+	}
+
+	const shards = packEntries(groups.get(category) || [], shardSize);
+
+	if (shards.length !== 1) {
+		return [];
+	}
+
+	return shards[0].map((entry) => entry.relative);
+}
+
 function readPrCypressSpecs(prEnvFile, root) {
 	const abs = path.isAbsolute(prEnvFile)
 		? prEnvFile
@@ -283,25 +542,28 @@ function readPrCypressSpecs(prEnvFile, root) {
 	return specs.filter((spec) => typeof spec === 'string' && spec.trim());
 }
 
-function listCategoriesFromSpecPaths(paths, overrides = {}) {
+function listCategorySummariesFromSpecPaths(paths, overrides = {}) {
 	const options = resolveOptions(overrides);
-	const categories = new Set();
+	const entries = collectEntriesFromPaths(paths, options);
+	return shardedCategorySummaries(entries, options.shardSize);
+}
 
-	for (const spec of paths) {
-		const category = categoryForSpecFile(spec, options);
-		if (category) {
-			categories.add(category);
-		}
-	}
-
-	return sortCategories(Array.from(categories));
+function listCategoriesFromSpecPaths(paths, overrides = {}) {
+	return listCategorySummariesFromSpecPaths(paths, overrides).map(
+		(row) => row.category
+	);
 }
 
 function specsForCategory(paths, category, overrides = {}) {
 	const options = resolveOptions(overrides);
-	return paths.filter(
-		(spec) => categoryForSpecFile(spec, options) === category
-	);
+	const entries = collectEntriesFromPaths(paths, options);
+	return specsInShardedCategory(entries, category, options.shardSize);
+}
+
+function specsForCategoryFromDisk(category, overrides = {}) {
+	const options = resolveOptions(overrides);
+	const entries = collectEntriesFromDisk(options);
+	return specsInShardedCategory(entries, category, options.shardSize);
 }
 
 function collectFiles(options, filter) {
@@ -354,35 +616,27 @@ function sortCategories(categories) {
 
 /**
  * @param {Object} [overrides]
+ * @return {{ category: string, files: number, its: number }[]}
+ */
+function listCategorySummaries(overrides = {}) {
+	const options = resolveOptions(overrides);
+	const entries = collectEntriesFromDisk(options);
+	return shardedCategorySummaries(entries, options.shardSize);
+}
+
+/**
+ * @param {Object} [overrides]
  * @return {string[]} Sorted category names.
  */
 function listCategories(overrides = {}) {
-	const options = resolveOptions(overrides);
-	const categories = new Set();
+	return listCategorySummaries(overrides).map((row) => row.category);
+}
 
-	for (const file of collectFiles(options, options.packageFilter)) {
-		const category = categorizedFrom(
-			file,
-			options.suffix,
-			options.categoryMode
-		);
-		if (category && !matchesExclude(category, options.excludeCategories)) {
-			categories.add(category);
-		}
-	}
-
-	if (options.generalCategory) {
-		const generalFilter =
-			options.generalPackageFilter || options.packageFilter;
-		const hasGeneral = collectFiles(options, generalFilter).some((file) =>
-			isGeneralSpec(file, options.suffix)
-		);
-		if (hasGeneral) {
-			categories.add(options.generalCategory);
-		}
-	}
-
-	return sortCategories(Array.from(categories));
+function writeCategoryList(summaries) {
+	process.stderr.write(`${formatCategorySummaries(summaries)}\n`);
+	process.stdout.write(
+		JSON.stringify(summaries.map((row) => row.category))
+	);
 }
 
 function parseArgs(argv) {
@@ -441,6 +695,10 @@ function parseArgs(argv) {
 			args.categoryMode = next();
 		} else if (arg.startsWith('--category-mode=')) {
 			args.categoryMode = arg.slice('--category-mode='.length);
+		} else if (arg === '--shard-size') {
+			args.shardSize = next();
+		} else if (arg.startsWith('--shard-size=')) {
+			args.shardSize = arg.slice('--shard-size='.length);
 		} else if (arg === '--env-prefix') {
 			args.envPrefix = next();
 		} else if (arg.startsWith('--env-prefix=')) {
@@ -481,9 +739,13 @@ Options / env (BLOCKERA_TEST_* or --env-prefix):
   --exclude-files / EXCLUDE_FILES
   --file-pattern / FILE_PATTERN
   --category-mode / CATEGORY_MODE         dot-prefix | last-segment
+  --shard-size / SHARD_SIZE               pack extra shards as base-1..N; one shard keeps the id
   --env-prefix                            e.g. BLOCKERA_E2E
   --pr-env FILE                           Cypress .pr-cypress.env.json
-  --specs-for-category CAT                with --pr-env, print matching spec paths
+  --specs-for-category CAT                print matching spec paths (comma list)
+
+Listing categories prints a JSON array on stdout (matrix input) and
+registered it() / file counts per id on stderr.
 `);
 }
 
@@ -494,12 +756,6 @@ function runCli() {
 		if (args.help) {
 			printHelp();
 			return;
-		}
-
-		if (args.specsForCategory && !args.prEnv) {
-			throw new Error(
-				'list-test-categories: --specs-for-category requires --pr-env'
-			);
 		}
 
 		if (args.prEnv) {
@@ -514,14 +770,18 @@ function runCli() {
 				return;
 			}
 
+			writeCategoryList(listCategorySummariesFromSpecPaths(specs, args));
+			return;
+		}
+
+		if (args.specsForCategory) {
 			process.stdout.write(
-				JSON.stringify(listCategoriesFromSpecPaths(specs, args))
+				specsForCategoryFromDisk(args.specsForCategory, args).join(',')
 			);
 			return;
 		}
 
-		const categories = listCategories(args);
-		process.stdout.write(JSON.stringify(categories));
+		writeCategoryList(listCategorySummaries(args));
 	} catch (error) {
 		console.error(error.message || error);
 		process.exit(1);
@@ -529,13 +789,20 @@ function runCli() {
 }
 
 module.exports = {
+	baseCategoryForSpecFile,
 	categoryForSpecFile,
+	countItsInFile,
+	formatCategorySummaries,
 	listCategories,
 	listCategoriesFromSpecPaths,
+	listCategorySummaries,
+	listCategorySummariesFromSpecPaths,
 	parseArgs,
 	readPrCypressSpecs,
 	resolveOptions,
 	runCli,
 	specsForCategory,
+	specsForCategoryFromDisk,
 	sortCategories,
+	stripShardSuffix,
 };

@@ -6,6 +6,7 @@
 #
 #   BLOCKERA_E2E_LIST_CATEGORIES_CMD  default: node …/list-test-categories.js --suffix e2e.cy.js --env-prefix BLOCKERA_E2E
 #   BLOCKERA_E2E_PR_ENV_FILE          default: .pr-cypress.env.json
+#   BLOCKERA_E2E_SHARD_SIZE          optional; see list-test-categories.js
 set -euo pipefail
 
 LIST_CMD="${BLOCKERA_E2E_LIST_CATEGORIES_CMD:-node packages/global-packages/packages/dev-tools/github/scripts/list-test-categories.js --suffix e2e.cy.js --env-prefix BLOCKERA_E2E}"

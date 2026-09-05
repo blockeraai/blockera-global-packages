@@ -45,8 +45,11 @@ if [[ "${USE_CREATE_WP_ENV}" == "true" || -f "${PR_WP_ENV_FILE}" ]]; then
 	node "${CREATE_WP_ENV}" "${CATEGORY}"
 else
 	WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/base.json"
+	base_category="$(echo "${CATEGORY}" | sed -E 's/-[0-9]+$//')"
 	if [[ -f "${WP_ENV_CONFIG_DIR}/${CATEGORY}.json" ]]; then
 		WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/${CATEGORY}.json"
+	elif [[ -f "${WP_ENV_CONFIG_DIR}/${base_category}.json" ]]; then
+		WP_ENV_CONFIG="${WP_ENV_CONFIG_DIR}/${base_category}.json"
 	fi
 	echo "cypress-e2e/prepare: using ${WP_ENV_CONFIG}"
 	cp "${WP_ENV_CONFIG}" .wp-env.json

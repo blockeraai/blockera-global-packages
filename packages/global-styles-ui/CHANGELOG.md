@@ -16,9 +16,16 @@
 
 ### Automated Tests
 
+- Rename global-styles e2e specs to `.gs.e2e.cy.js`.
 - Global styles config retainers keep object identity when entity slices are
   unchanged and still replace `backgroundImage`.
 - Editor settings sync skip helper and iframe observer root selection.
+
+## [3.0.0] - 2026-09-05
+
+### Automated Tests
+- Drop manual `-N` suffixes from Cypress e2e spec filenames; CI shards
+  categories by registered test count.
 
 ## [2.0.0] - 2026-08-31
 
