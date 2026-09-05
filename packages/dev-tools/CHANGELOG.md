@@ -38,6 +38,8 @@
 ### Automated Tests
 - wp-env: cover apt-get inject prefixes and resolving the `wp-env` bin
   through package.json exports.
+- Build zip E2E prepare: assert wp-env start JS helpers are copied into
+  the extract tree.
 
 ## [2.3.0] - 2026-09-01
 

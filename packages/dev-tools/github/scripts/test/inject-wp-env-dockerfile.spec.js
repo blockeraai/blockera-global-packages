@@ -2,6 +2,7 @@
  * Internal dependencies
  */
 const fs = require('fs');
+const path = require('path');
 const {
 	bundledWordpressDockerfilePath,
 	getAptInstallPrefix,
@@ -73,5 +74,22 @@ describe('resolveWpEnvBin', () => {
 			/node_modules\/@wordpress\/env\/bin\/wp-env$/
 		);
 		expect(fs.existsSync(bin)).toBe(true);
+	});
+});
+
+describe('prepare-build-env wp-env start staging', () => {
+	it('copies run-wp-env-start.js and its preload/inject next to retry-wp-env-start.sh', () => {
+		const prepare = fs.readFileSync(
+			path.join(
+				__dirname,
+				'../jobs/build-plugin-zip-tests/prepare-build-env.sh'
+			),
+			'utf8'
+		);
+
+		expect(prepare).toContain('run-wp-env-start.js');
+		expect(prepare).toContain('preload-wp-env-docker-patch.js');
+		expect(prepare).toContain('inject-wp-env-dockerfile.js');
+		expect(prepare).toContain('retry-wp-env-start.sh');
 	});
 });
