@@ -1,6 +1,27 @@
-## Unreleased
+## [3.0.0] - 2026-09-05
 
 ### Development Notes
+- wp-env start: put `wp-env` on `PATH` so `.wp-env.json` `afterStart` hooks
+  that run `wp-env run cli` succeed (`node bin/wp-env` is not on PATH).
+- wp-env: rewrite apt sources from `deb.debian.org` to `security.debian.org`
+  / `ftp.debian.org` before install. GitHub Fastly POPs 404 bullseye
+  `sudo` on debian-security even after a fresh `apt-get update`.
+- wp-env: wipe `/var/lib/apt/lists` before each injected `apt-get update` so
+  cached WordPress image layers do not `Hit:` a debian-security index whose
+  pool files 404 (bullseye `sudo`). Inject reads this package's
+  `root-configs` template, not a lagging host `.docker/` copy.
+- Build zip E2E: stage `run-wp-env-start.js` (and preload/inject + Dockerfile)
+  next to `retry-wp-env-start.sh` under the extract dir so wp-env start
+  does not MODULE_NOT_FOUND.
+- Build zip E2E: copy `root-configs/.docker/Dockerfile.wordpress` beside the
+  staged inject script (`__dirname`), not only host `.docker/`.
+- wp-env: add `root-configs/.docker/Dockerfile.wordpress` (PHP_VERSION ARG
+  plus combined apt-get update/install flags) and copy `.docker/` via
+  sync-config / `write-root-configs`.
+- wp-env: inject those apt flags into generated WordPress Dockerfiles so
+  stale Debian security indexes do not 404; `run-wp-env-start.js` resolves
+  `wp-env` via `@wordpress/env/package.json` (package `exports` hide `bin/`).
+
 - Sync global-packages: keep one bump PR with a stable title (no commit
   count or gitlink); later GP master pins commit on that branch instead of
   closing the PR.
@@ -24,6 +45,19 @@
   validation; skip inbox for agent docs that only encode that gate.
 - Agent knowledge: free+Pro features extend via WordPress `applyFilters` /
   `addFilter` rather than forking the feature in Pro.
+
+### Automated Tests
+- wp-env: cover apt-get inject prefixes and resolving the `wp-env` bin
+  through package.json exports.
+- wp-env: cover putting `wp-env` on PATH for afterStart shell hooks.
+- wp-env: cover wiping apt lists in the inject prefix and reading flags
+  from the bundled template.
+- wp-env: cover retargeting apt off Fastly `deb.debian.org` and rewriting
+  `update && install` RUNs that lack that rewrite.
+- Build zip E2E prepare: assert wp-env start JS helpers are copied into
+  the extract tree.
+- Build zip E2E prepare: assert `root-configs/.docker/Dockerfile.wordpress`
+  is staged for inject.
 
 ## [2.3.0] - 2026-09-01
 

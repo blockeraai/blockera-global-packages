@@ -113,6 +113,7 @@ github/
     ensure-*.sh / bump-*.sh / retry-*.sh   # used in-place from toolkit
     actions/ensure-global-packages/         # source for consumer bootstrap action
     setup-wp-env.js
+    run-wp-env-start.js / inject-wp-env-dockerfile.js / preload-wp-env-docker-patch.js
     download-artifact.sh / create-wp-env.js       # merge wp-env-configs + .pr-env.json
     list-test-categories.js / list-visual-snapshot-batches.js
     lib/                     # walk-files, list-test-categories, retry.sh, package-match
@@ -130,11 +131,29 @@ available until ensure runs). Everything else is invoked from
 Used by consumer `npm run env:start` (local only). Copies
 `.github/wp-env-configs/<name>.json` → `.wp-env.json`. No-op when `CI` is set.
 
+`env:start` then runs `run-wp-env-start.js`, which preloads
+`preload-wp-env-docker-patch.js` so wp-env's generated `WordPress.Dockerfile` /
+`Tests-WordPress.Dockerfile` retarget apt off `deb.debian.org` (Fastly POPs
+404 debian-security pool files such as bullseye `sudo`), wipe lists, and
+refresh indexes in the same `RUN` as each `apt-get install`. It also prepends
+`node_modules/.bin` and `@wordpress/env/bin` to `PATH` so `lifecycleScripts.afterStart`
+hooks that call `wp-env run cli` work (spawning `node …/bin/wp-env` does not).
+Flags come from this package's `root-configs/.docker/Dockerfile.wordpress` unless
+`BLOCKERA_WP_ENV_DOCKERFILE` is set. Host `.docker/` is the sync-config /
+`project:bootstrap` copy for local docker builds; inject does not read it so
+a lagging host file cannot pin old apt flags. wp-env still selects
+`FROM wordpress:php${phpVersion}` from `.wp-env.json`.
+
 | Env (host `.env`) | Default |
 | --- | --- |
 | `WP_ENV_CONFIG` | `development` (file: `.github/wp-env-configs/development.json`) |
 | `WP_ENV_PORT` | unset — wp-env default `8888`; set unique values when multiple local envs run on one machine |
 | `WP_ENV_TESTS_PORT` | unset — wp-env default `8889` |
+| `BLOCKERA_WP_ENV_DOCKERFILE` | unset — this package `root-configs/.docker/Dockerfile.wordpress` |
+| `BLOCKERA_WP_ENV_SKIP_DOCKER_PATCH` | unset (`true` leaves generated Dockerfiles unchanged) |
+
+CI jobs that use `retry-wp-env-start.sh` call `run-wp-env-start.js` directly
+(they already wrote `.wp-env.json`; `setup-wp-env.js` is a no-op when `CI` is set).
 
 Example (host `.env`, local only):
 
@@ -226,6 +245,11 @@ run `*.build.e2e.cy.js` against wp-env.
 
 Staging is one script (`prepare-build-env.sh`). Consumers pass dest/path/wp-env
 knobs — there are no `prepare-pro` / `prepare-theme` / `prepare-toolkit` recipes.
+It copies `retry-wp-env-start.sh` plus `run-wp-env-start.js`,
+`preload-wp-env-docker-patch.js`, `inject-wp-env-dockerfile.js`, and
+`lib/retry.sh` into the extract tree (START_CMD runs from `BUILD_DIR`), and
+copies `root-configs/.docker/Dockerfile.wordpress` next to that tree so inject
+can resolve it from `__dirname` (not host `.docker/`).
 
 ```yaml
 # Theme-style example
