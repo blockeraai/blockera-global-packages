@@ -14,6 +14,12 @@
   tree and watches the interface skeleton for iframe mounts instead of
   `document.body`.
 
+### Automated Tests
+
+- Global styles config retainers keep object identity when entity slices are
+  unchanged and still replace `backgroundImage`.
+- Editor settings sync skip helper and iframe observer root selection.
+
 ## [2.0.0] - 2026-08-31
 
 ### Fixed
