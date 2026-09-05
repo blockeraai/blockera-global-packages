@@ -47,6 +47,8 @@
   through package.json exports.
 - wp-env: cover wiping apt lists in the inject prefix and reading flags
   from the bundled template.
+- wp-env: cover retargeting apt off Fastly `deb.debian.org` and rewriting
+  `update && install` RUNs that lack that rewrite.
 - Build zip E2E prepare: assert wp-env start JS helpers are copied into
   the extract tree.
 

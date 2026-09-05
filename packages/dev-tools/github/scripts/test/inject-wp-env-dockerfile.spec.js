@@ -15,7 +15,9 @@ describe('inject-wp-env-dockerfile', () => {
 	const template = fs.readFileSync(bundledWordpressDockerfilePath(), 'utf8');
 	const prefix = getAptInstallPrefix(template);
 
-	it('parses wipe-lists, update, and install flags from the template', () => {
+	it('parses wipe-lists, mirror rewrite, update, and install flags from the template', () => {
+		expect(prefix).toContain('security.debian.org');
+		expect(prefix).toContain('ftp.debian.org');
 		expect(prefix).toContain('rm -rf /var/lib/apt/lists/*');
 		expect(prefix).toContain('apt-get update --allow-releaseinfo-change');
 		expect(prefix).toContain('Apt::Get::AllowUnauthenticated=true');
@@ -44,12 +46,18 @@ RUN apt-get install -qy zlib1g-dev
 		expect(patched).toContain(`RUN ${prefix} sudo`);
 		expect(patched).toContain(`RUN ${prefix} zlib1g-dev`);
 		expect(patched).toContain('RUN apt-get -qy update');
-		expect(patched).toMatch(
-			/RUN rm -rf \/var\/lib\/apt\/lists\/\* && apt-get update/
-		);
+		expect(patched).toMatch(/RUN .*security\.debian\.org.* sudo/);
 	});
 
-	it('does not double-prefix a RUN that already updates then installs', () => {
+	it('replaces update&&install RUNs that are missing the mirror rewrite', () => {
+		const generated = `RUN apt-get update --allow-releaseinfo-change && apt-get -qy install sudo`;
+		const patched = patchWordPressDockerfile(generated, prefix);
+
+		expect(patched).toBe(`RUN ${prefix} sudo`);
+		expect(patched).toContain('security.debian.org');
+	});
+
+	it('does not double-prefix a RUN that already rewrote mirrors and wiped lists', () => {
 		const line = `RUN ${prefix} sudo`;
 
 		expect(patchWordPressDockerfile(line, prefix)).toBe(line);
@@ -69,6 +77,8 @@ RUN apt-get install -qy zlib1g-dev
 		expect(template).toMatch(/ARG PHP_VERSION=8\.2/);
 		expect(template).toMatch(/FROM wordpress:php\$\{PHP_VERSION\}/);
 		expect(template).toContain('rm -rf /var/lib/apt/lists/*');
+		expect(template).toContain('security.debian.org');
+		expect(template).toContain('ftp.debian.org');
 	});
 });
 
