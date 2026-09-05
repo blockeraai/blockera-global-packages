@@ -6,6 +6,11 @@
   instead of the global extensions UI store, so unselected canvas blocks do not
   regenerate CSS when another block’s inner target or breakpoint changes.
 
+### Automated Tests
+
+- Style engine canvas isolation oracle: fingerprint and BlockStyle memo equality
+  for pinned unselected current* vs sibling UI state.
+
 ## [3.0.0] - 2026-09-01
 
 ### Bug Fixes
