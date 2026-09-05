@@ -4,6 +4,10 @@
 - Drop manual `-N` suffixes from Cypress e2e spec filenames; CI shards
   categories by registered test count.
 
+### Development Notes
+- Feature test recipe filenames use `{name}.{category}.e2e.cy.js` without
+  a shard number.
+
 ## [3.0.0] - 2026-09-01
 
 ### Bug Fixes
