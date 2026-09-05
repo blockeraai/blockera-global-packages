@@ -21,7 +21,9 @@
  *   FILE_PATTERN           regex; when set, only matching files are scanned
  *   CATEGORY_MODE          dot-prefix (default) | last-segment
  *   SHARD_SIZE             positive int; pack base categories into base-1..N by
- *                          registered `it(` count (0 / unset disables)
+ *                          registered `it(` count when more than one shard is
+ *                          needed (a single shard keeps the original id; 0 / unset
+ *                          disables)
  */
 const fs = require('fs');
 const path = require('path');
@@ -433,7 +435,11 @@ function packEntries(entries, shardSize) {
 	return shards;
 }
 
-function shardName(base, index) {
+function shardName(base, index, shardCount) {
+	if (shardCount <= 1) {
+		return base;
+	}
+
 	return `${base}-${index + 1}`;
 }
 
@@ -448,7 +454,7 @@ function shardedCategoryNames(entries, shardSize) {
 	for (const base of sortCategories([...groups.keys()])) {
 		const shards = packEntries(groups.get(base), shardSize);
 		shards.forEach((_, index) => {
-			names.push(shardName(base, index));
+			names.push(shardName(base, index, shards.length));
 		});
 	}
 
@@ -462,18 +468,28 @@ function specsInShardedCategory(entries, category, shardSize) {
 			.map((entry) => entry.relative);
 	}
 
-	const base = stripShardSuffix(category);
-	const match = String(category).match(/-(\d+)$/);
-	const shardIndex = match ? Number.parseInt(match[1], 10) - 1 : 0;
-	const group = groupEntriesByBase(entries).get(base) || [];
-	const shards = packEntries(group, shardSize);
-	const shard = shards[shardIndex];
+	const numbered = String(category).match(/-(\d+)$/);
+	const groups = groupEntriesByBase(entries);
 
-	if (!shard) {
+	if (numbered) {
+		const base = stripShardSuffix(category);
+		const shards = packEntries(groups.get(base) || [], shardSize);
+
+		if (shards.length <= 1) {
+			return [];
+		}
+
+		const shard = shards[Number.parseInt(numbered[1], 10) - 1];
+		return shard ? shard.map((entry) => entry.relative) : [];
+	}
+
+	const shards = packEntries(groups.get(category) || [], shardSize);
+
+	if (shards.length !== 1) {
 		return [];
 	}
 
-	return shard.map((entry) => entry.relative);
+	return shards[0].map((entry) => entry.relative);
 }
 
 function readPrCypressSpecs(prEnvFile, root) {
@@ -668,7 +684,7 @@ Options / env (BLOCKERA_TEST_* or --env-prefix):
   --exclude-files / EXCLUDE_FILES
   --file-pattern / FILE_PATTERN
   --category-mode / CATEGORY_MODE         dot-prefix | last-segment
-  --shard-size / SHARD_SIZE               pack base-1..N by registered it() count
+  --shard-size / SHARD_SIZE               pack extra shards as base-1..N; one shard keeps the id
   --env-prefix                            e.g. BLOCKERA_E2E
   --pr-env FILE                           Cypress .pr-cypress.env.json
   --specs-for-category CAT                print matching spec paths (comma list)

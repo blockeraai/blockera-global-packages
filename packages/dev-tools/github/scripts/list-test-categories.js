@@ -6,6 +6,6 @@
  *   node list-test-categories.js --suffix e2e.cy.js --env-prefix BLOCKERA_E2E
  *   node list-test-categories.js --suffix ply.js --env-prefix BLOCKERA_PLAYWRIGHT
  *
- * `SHARD_SIZE` / `--shard-size` packs base categories into `base-1`…`N`.
+ * `SHARD_SIZE` / `--shard-size` packs overflow into `base-1`…`N`; one shard keeps the id.
  */
 require('./lib/list-test-categories').runCli();

@@ -15,7 +15,7 @@
 #   BLOCKERA_E2E_PRE_TEST_CMD          after build, before category specs
 #   BLOCKERA_E2E_PR_ENV_FILE           default: .pr-cypress.env.json
 #   BLOCKERA_CYPRESS_IGNORE_PR_FILTER  set during PRE_TEST when PR filter file exists
-#   BLOCKERA_E2E_SHARD_SIZE            pack base-1..N by registered it() count
+#   BLOCKERA_E2E_SHARD_SIZE            pack extra shards as base-1..N; one shard keeps the id
 #   BLOCKERA_E2E_LIST_CATEGORIES_CMD   default: node …/list-test-categories.js …
 set -euo pipefail
 

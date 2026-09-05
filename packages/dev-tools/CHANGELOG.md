@@ -2,9 +2,10 @@
 
 ### Development Notes
 - Cypress E2E CI: optional `SHARD_SIZE` packs each base spec category into
-  `base-1`…`N` by registered `it()` count (array `.forEach` around `it` is
-  expanded). `run.sh` passes an explicit spec list; wp-env config lookup
-  strips a trailing `-N` shard.
+  `base-1`…`N` by registered `it()` count when more than one shard is
+  needed (array `.forEach` around `it` is expanded). A category that fits
+  in one shard keeps the original id. `run.sh` passes an explicit spec
+  list; wp-env config lookup strips a trailing `-N` shard.
 
 ### Automated Tests
 - Cover category packing, `it.skip`, array-literal and const-array
