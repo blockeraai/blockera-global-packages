@@ -114,6 +114,26 @@ describe('resolveWpEnvBin', () => {
 	});
 });
 
+describe('wpEnvStartChildEnv', () => {
+	it('puts wp-env on PATH for afterStart shell hooks', () => {
+		const {
+			resolveWpEnvBin,
+			wpEnvStartChildEnv,
+		} = require('../run-wp-env-start');
+		const bin = resolveWpEnvBin(process.cwd());
+		const env = wpEnvStartChildEnv(bin, process.cwd());
+		const pathEntries = env.PATH.split(path.delimiter);
+
+		expect(pathEntries[0].replace(/\\/g, '/')).toMatch(
+			/node_modules\/\.bin$/
+		);
+		expect(pathEntries[1].replace(/\\/g, '/')).toBe(
+			path.dirname(bin).replace(/\\/g, '/')
+		);
+		expect(env.NODE_OPTIONS).toContain('preload-wp-env-docker-patch.js');
+	});
+});
+
 describe('prepare-build-env wp-env start staging', () => {
 	it('copies run-wp-env-start.js and its preload/inject next to retry-wp-env-start.sh', () => {
 		const prepare = fs.readFileSync(
