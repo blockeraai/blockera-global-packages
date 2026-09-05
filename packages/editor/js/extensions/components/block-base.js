@@ -1336,6 +1336,12 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 				?.replace(/(\.|#)block/gi, `#block-${clientId}`)
 				?.replace(/&/gi, `#block-${clientId}`),
 			activeDeviceType,
+			// From this BlockBase instance only (unselected pins master/normal/base).
+			// Do not re-read the global extensions UI store inside BlockStyle.
+			currentBlock,
+			currentState,
+			currentBreakpoint,
+			currentInnerBlockState,
 		};
 	}, [
 		presetPreviewAttributePatch,
@@ -1350,6 +1356,10 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 		defaultAttributes,
 		attributes?.blockeraCustomCSS?.value,
 		activeDeviceType,
+		currentBlock,
+		currentState,
+		currentBreakpoint,
+		currentInnerBlockState,
 	]);
 
 	const blockContextBlock = useMemo(

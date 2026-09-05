@@ -1,3 +1,11 @@
+## Unreleased
+
+### Development Notes
+
+- BlockStyle reads current block, state, and breakpoint from the owning BlockBase
+  instead of the global extensions UI store, so unselected canvas blocks do not
+  regenerate CSS when another block’s inner target or breakpoint changes.
+
 ## [3.0.0] - 2026-09-01
 
 ### Bug Fixes

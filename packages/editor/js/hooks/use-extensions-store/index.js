@@ -56,9 +56,10 @@ export const useExtensionsStore = (props: Object): ExtensionsStoreType => {
 		(select) => {
 			const { getSelectedBlock } = select('core/block-editor');
 			const selected = getSelectedBlock();
-			// Prefer the block instance passed into this hook (e.g. BlockStyle,
-			// feature wrappers). Using only getSelectedBlock() breaks canvas CSS when
-			// another block stays selected — common after programmatic insert (AI/JSON).
+			// Prefer the block instance passed into this hook (feature wrappers).
+			// BlockStyle must not use this hook: it would follow global currentBlock.
+			// Using only getSelectedBlock() breaks canvas CSS when another block
+			// stays selected — common after programmatic insert (AI/JSON).
 			const { name, clientId } =
 				typeof props?.clientId === 'string' &&
 				props.clientId !== '' &&

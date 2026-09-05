@@ -27,6 +27,10 @@ export type BlockStyleProps = {
 	defaultAttributes: Object,
 	currentAttributes: Object,
 	activeDeviceType: TStates,
+	currentBlock?: 'master' | InnerBlockType | string,
+	currentState?: TStates,
+	currentBreakpoint?: TBreakpoint,
+	currentInnerBlockState?: TStates,
 	isGlobalStylesWrapper?: boolean,
 	styleVariationName?: string,
 	/** Selector token before the variation slug, e.g. `is-style-` or `is-size-`. */

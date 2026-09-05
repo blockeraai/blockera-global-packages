@@ -21,6 +21,7 @@ import { sanitizeDefaultAttributes } from '../hooks/utils';
 import { ErrorBoundaryFallback } from '../hooks/block-settings';
 import { prepareBlockeraDefaultAttributesValues } from './utils';
 import { BlockStyle } from '../../style-engine/components/block-style';
+import { getBaseBreakpoint } from '../../editor/header-ui/components/breakpoints/helpers';
 
 export const GlobalStylesRenderer: ComponentType<any> = memo(
 	(blockType: Object): MixedElement => {
@@ -127,6 +128,10 @@ export const GlobalStylesRenderer: ComponentType<any> = memo(
 				activeDeviceType,
 				attributes: currentAttributes,
 				currentAttributes,
+				currentBlock: 'master',
+				currentState: 'normal',
+				currentBreakpoint: getBaseBreakpoint(),
+				currentInnerBlockState: 'normal',
 			}),
 			[
 				supports,
