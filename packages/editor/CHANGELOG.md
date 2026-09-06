@@ -14,8 +14,8 @@
 - Block editor no longer crashes on load when generating canvas CSS
   (`Cannot read properties of undefined (reading 'SizeStyles')`).
 - Paragraphs (and other blocks) no longer mix a gradient `background`
-  shorthand with `backgroundColor` on the same node, which triggered a
-  React style warning in the canvas.
+  shorthand with `backgroundColor` on the canvas node (React style warning).
+  Saved block markup is unchanged.
 
 ### Development Notes
 
@@ -46,6 +46,8 @@
 - Style fingerprints token nested attribute objects by identity so color-only
   updates do not JSON.stringify unchanged background layers.
 - Fingerprint primitives always return a string when JSON.stringify is void.
+- Canvas-only split of colliding `background` / `backgroundColor` React
+  styles; saved block HTML is not rewritten via extraProps.
 
 ### Automated Tests
 - Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.

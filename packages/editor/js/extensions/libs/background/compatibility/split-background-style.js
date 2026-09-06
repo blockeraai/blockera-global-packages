@@ -10,6 +10,10 @@ import { normalizeWpGradientSentinel } from './wp-gradient-sentinel';
  * `style.color.gradient` → React `background`. Both on one node trips React’s
  * shorthand/longhand warning. Gradients belong on `backgroundImage`.
  *
+ * Apply this only on the editor canvas (`wrapperProps`). Saved HTML must keep
+ * Gutenberg’s native `background` + `backgroundColor` mix so serialize matches
+ * parsed markup (otherwise save can hang without a success notice).
+ *
  * WP sentinel shorthands (`none`, `transparent none`) stay on `background`
  * unless a `backgroundColor` is also present — that matches the compatibility
  * e2e computed-style checks.
@@ -48,6 +52,8 @@ export function splitConflictingBackgroundStyle(style: ?Object): ?Object {
  * @param {Object|null|void} wrapperProps BlockListBlock wrapper props.
  * @return {Object|null|void} Same props, or a copy with a safe `style`.
  */
+const rewrittenWrapperProps: WeakMap<Object, Object> = new WeakMap();
+
 export function splitConflictingBackgroundWrapperProps(
 	wrapperProps: ?Object
 ): ?Object {
@@ -55,14 +61,22 @@ export function splitConflictingBackgroundWrapperProps(
 		return wrapperProps;
 	}
 
-	const nextStyle = splitConflictingBackgroundStyle(wrapperProps.style);
+	const cached = rewrittenWrapperProps.get(wrapperProps);
 
-	if (nextStyle === wrapperProps.style) {
-		return wrapperProps;
+	if (cached) {
+		return cached;
 	}
 
-	return {
-		...wrapperProps,
-		style: nextStyle,
-	};
+	const nextStyle = splitConflictingBackgroundStyle(wrapperProps.style);
+	const next =
+		nextStyle === wrapperProps.style
+			? wrapperProps
+			: {
+					...wrapperProps,
+					style: nextStyle,
+			  };
+
+	rewrittenWrapperProps.set(wrapperProps, next);
+
+	return next;
 }

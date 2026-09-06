@@ -5,7 +5,7 @@
  */
 import { addFilter } from '@wordpress/hooks';
 import { createHigherOrderComponent } from '@wordpress/compose';
-import { createElement } from '@wordpress/element';
+import { createElement, forwardRef } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -29,10 +29,7 @@ import {
 	mergeWPCompatibility,
 	sanitizeWPCompatibilityAttributes,
 } from '../utils';
-import {
-	splitConflictingBackgroundStyle,
-	splitConflictingBackgroundWrapperProps,
-} from './compatibility/split-background-style';
+import { splitConflictingBackgroundWrapperProps } from './compatibility/split-background-style';
 
 export const bootstrap = (): void => {
 	addFilter(
@@ -126,38 +123,26 @@ export const bootstrap = (): void => {
 		}
 	);
 
+	// Canvas only. Do not hook `blocks.getSaveContent.extraProps` — rewriting
+	// saved markup invalidates core blocks vs their original HTML and can
+	// stall post save (no success snackbar).
 	addFilter(
 		'editor.BlockListBlock',
 		'blockera.editor.sanitizeBackgroundStyleConflict',
 		createHigherOrderComponent((BlockListBlock) => {
-			return function BlockeraSanitizedBackgroundStyle(props: Object) {
+			return forwardRef(function BlockeraSanitizedBackgroundStyle(
+				props: Object,
+				ref: mixed
+			) {
 				return createElement(BlockListBlock, {
 					...props,
+					ref,
 					wrapperProps: splitConflictingBackgroundWrapperProps(
 						props.wrapperProps
 					),
 				});
-			};
+			});
 		}, 'withSanitizedBackgroundStyle'),
 		9
-	);
-
-	addFilter(
-		'blocks.getSaveContent.extraProps',
-		'blockera.editor.sanitizeBackgroundStyleConflict.save',
-		(extraProps: Object): Object => {
-			const nextStyle = splitConflictingBackgroundStyle(
-				extraProps?.style
-			);
-
-			if (nextStyle === extraProps?.style) {
-				return extraProps;
-			}
-
-			return {
-				...extraProps,
-				style: nextStyle,
-			};
-		}
 	);
 };
