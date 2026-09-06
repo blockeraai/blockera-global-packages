@@ -23,5 +23,6 @@ export * from './use-is-visible';
 export * from './use-drag-value';
 export * from './use-late-effect';
 export * from './use-outside-click';
+export * from './track-component-render';
 export * from './check-visible-item';
 export * from './convert-to-character/degree';

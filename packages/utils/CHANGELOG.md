@@ -1,3 +1,11 @@
+## Unreleased
+
+### Development Notes
+
+- Window-flag render counters (`__BLOCKERA_RENDER_DEBUG__` and the BlockBase
+  legacy key) let Cypress e2e count component commits in the production
+  bundle without a new webpack env. Unset flags stay a no-op.
+
 ## [2.0.0] - 2026-09-01
 
 ### Changed
