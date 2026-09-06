@@ -6,6 +6,8 @@
   Global Styles feel slow.
 - Blocks you have not customized in Global Styles no longer add extra lag in
   the background while you work.
+- Editing a block’s background color stays responsive while Image & Gradient
+  layers are on the same panel.
 
 ### Bug Fixes
 
@@ -28,6 +30,8 @@
 - Window-flag render counters (`trackComponentRender`) record BlockBase
   commits for Cypress when `__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__` or
   `__BLOCKERA_RENDER_DEBUG__` is set before boot.
+- Background panel splits Image & Gradient, BG Color, clipping, and blending
+  so a solid color edit does not rebuild the layers repeater.
 
 ### Automated Tests
 - Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.

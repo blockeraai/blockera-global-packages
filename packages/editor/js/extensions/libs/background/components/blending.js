@@ -3,6 +3,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
+import { memo } from '@wordpress/element';
 import type { MixedElement } from 'react';
 
 /**
@@ -17,8 +18,9 @@ import { renderSelectOptionChangesetPreview } from '../../../../components';
 import type { TBlockProps, THandleOnChangeAttributes } from '../../types';
 import { generateExtensionId } from '../../utils';
 import { blendModeFieldOptions } from '../utils';
+import { areBackgroundFieldPropsEqual } from './are-background-field-props-equal';
 
-export const Blending = ({
+const BlendingView = ({
 	blendMode,
 	block,
 	handleOnChangeAttributes,
@@ -207,3 +209,5 @@ export const Blending = ({
 		</ControlContextProvider>
 	);
 };
+
+export const Blending = memo(BlendingView, areBackgroundFieldPropsEqual);

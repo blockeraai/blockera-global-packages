@@ -3,6 +3,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
+import { memo } from '@wordpress/element';
 import { cloneElement, type MixedElement } from 'react';
 
 /**
@@ -22,6 +23,7 @@ import { Icon } from '@blockera/icons';
 import { renderSelectOptionChangesetPreview } from '../../../../components';
 import { generateExtensionId } from '../../utils';
 import type { TBlockProps, THandleOnChangeAttributes } from '../../types';
+import { areBackgroundFieldPropsEqual } from './are-background-field-props-equal';
 
 function mapBackgroundClipOptionsForPreview(
 	options: void | any,
@@ -45,7 +47,7 @@ function mapBackgroundClipOptionsForPreview(
 	return out;
 }
 
-export const BackgroundClipping = ({
+const BackgroundClippingView = ({
 	block,
 	value,
 	backgroundItems,
@@ -181,3 +183,8 @@ export const BackgroundClipping = ({
 		</ControlContextProvider>
 	);
 };
+
+export const BackgroundClipping = memo(
+	BackgroundClippingView,
+	areBackgroundFieldPropsEqual
+);

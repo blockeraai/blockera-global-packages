@@ -8,13 +8,7 @@ import type { MixedElement, ComponentType } from 'react';
 /**
  * Blockera dependencies
  */
-import {
-	BaseControl,
-	ColorControl,
-	PanelBodyControl,
-	BackgroundControl,
-	ControlContextProvider,
-} from '@blockera/controls';
+import { PanelBodyControl } from '@blockera/controls';
 import { extensionClassNames } from '@blockera/classnames';
 import { Icon } from '@blockera/icons';
 
@@ -22,13 +16,17 @@ import { Icon } from '@blockera/icons';
  * Internal dependencies
  */
 import { isShowField, isActiveExtension } from '../../api/utils';
-import { generateExtensionId } from '../utils';
 import { ExtensionSettings } from '../settings';
 import { EditorFeatureWrapper } from '../../..';
 import { useBlockSection } from '../../components';
 import { useFeatureSearch } from '../../components/feature-search-context';
 import type { TBackgroundProps } from './types/background-props';
-import { BackgroundClipping, Blending } from './components';
+import {
+	BackgroundClipping,
+	BackgroundColorField,
+	BackgroundLayersField,
+	Blending,
+} from './components';
 
 export const BackgroundExtension: ComponentType<TBackgroundProps> = ({
 	block,
@@ -104,79 +102,26 @@ export const BackgroundExtension: ComponentType<TBackgroundProps> = ({
 				isActive={isShowBackground}
 				config={blockeraBackground}
 			>
-				<ControlContextProvider
-					value={{
-						name: generateExtensionId(block, 'background'),
-						value: values.blockeraBackground,
-						attribute: 'blockeraBackground',
-						blockName: block.blockName,
-					}}
-					storeName={'blockera/controls/repeater'}
-				>
-					<BaseControl controlName="background" columns="columns-1">
-						<BackgroundControl
-							label={__('Image & Gradient', 'blockera')}
-							onChange={(newValue, ref) => {
-								handleOnChangeAttributes(
-									'blockeraBackground',
-									newValue,
-									{ ref }
-								);
-							}}
-							defaultValue={attributes.blockeraBackground.default}
-							{...extensionProps.blockeraBackground}
-						/>
-					</BaseControl>
-				</ControlContextProvider>
+				<BackgroundLayersField
+					block={block}
+					value={values.blockeraBackground}
+					defaultValue={attributes.blockeraBackground.default}
+					onChange={handleOnChangeAttributes}
+					{...extensionProps.blockeraBackground}
+				/>
 			</EditorFeatureWrapper>
 
 			<EditorFeatureWrapper
 				isActive={isShowBackgroundColor}
 				config={blockeraBackgroundColor}
 			>
-				<ControlContextProvider
-					value={{
-						name: generateExtensionId(block, 'background-color'),
-						value: values.blockeraBackgroundColor,
-						attribute: 'blockeraBackgroundColor',
-						blockName: block.blockName,
-					}}
-				>
-					<ColorControl
-						label={__('BG Color', 'blockera')}
-						labelPopoverTitle={__('Background Color', 'blockera')}
-						labelDescription={
-							<>
-								<p>
-									{__(
-										'It sets the color of the block’s background, providing a simple yet powerful way to apply solid color.',
-										'blockera'
-									)}
-								</p>
-								<p>
-									{__(
-										'You can use variables to use color from your site design system.',
-										'blockera'
-									)}
-								</p>
-							</>
-						}
-						columns="1fr 2.5fr"
-						onChange={(newValue, ref) =>
-							handleOnChangeAttributes(
-								'blockeraBackgroundColor',
-								newValue,
-								{ ref }
-							)
-						}
-						defaultValue={
-							attributes.blockeraBackgroundColor.default
-						}
-						controlAddonTypes={['variable']}
-						variableTypes={['color']}
-						{...extensionProps.blockeraBackgroundColor}
-					/>
-				</ControlContextProvider>
+				<BackgroundColorField
+					block={block}
+					value={values.blockeraBackgroundColor}
+					defaultValue={attributes.blockeraBackgroundColor.default}
+					onChange={handleOnChangeAttributes}
+					{...extensionProps.blockeraBackgroundColor}
+				/>
 			</EditorFeatureWrapper>
 
 			<EditorFeatureWrapper
