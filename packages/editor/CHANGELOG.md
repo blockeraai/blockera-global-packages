@@ -48,6 +48,8 @@
 - BlockBase re-render spec uses shared Cypress render-debug helpers.
 - Block partials e2e asserts idle BlockBase render budgets after the card
   and variation UI is shown.
+- Font Size functionality e2e budgets BlockBase and InputControl renders for
+  numeric typing and variable picker selection.
 
 ## [4.0.0] - 2026-09-05
 
