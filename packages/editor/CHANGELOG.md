@@ -158,6 +158,7 @@
 - Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
 - Rename global-styles compatibility e2e specs to `.gs-compatibility.e2e.cy.js`.
 - Rename global-styles e2e specs to `.gs.e2e.cy.js`.
+- Assert editor Global Styles targets use WordPress 7.1 selectors only.
 
 ### Development Notes
 - Style the Global Styles sidebar header title with the WordPress 7.1

@@ -1,12 +1,21 @@
 import { getTargets } from '../helpers';
 
 describe('getTargets api testing', () => {
-	it('should be retrieve targets object for wp version greater equal with 6.6.1', () => {
+	it('returns WordPress 7.1 global-styles-ui selectors regardless of version', () => {
 		const result = getTargets('6.6.1');
 		expect(result).toHaveProperty('globalStylesPanel');
 		expect(result).not.toHaveProperty('header');
 		expect(result.globalStylesPanel.screen).toBe(
-			'.edit-site-global-styles-sidebar__navigator-screen'
+			'.global-styles-ui-sidebar__navigator-screen'
+		);
+		expect(result.globalStylesPanel.navigatorScreen).toBe(
+			'.global-styles-ui-sidebar__navigator-screen'
+		);
+		expect(result.globalStylesPanel.screenRoot).toBe(
+			'.global-styles-ui-screen-root'
+		);
+		expect(result.globalStylesPanel.globalStylesScreen).toBe(
+			'.global-styles-ui-block-types-search'
 		);
 	});
 
@@ -26,18 +35,5 @@ describe('getTargets api testing', () => {
 		const result = getTargets('6.6');
 		expect(result).toHaveProperty('globalStylesPanel');
 		expect(result).not.toHaveProperty('header');
-	});
-
-	it('should use global-styles-ui selectors for WordPress 7.0', () => {
-		const result = getTargets('7.0');
-		expect(result.globalStylesPanel.navigatorScreen).toBe(
-			'.global-styles-ui-sidebar__navigator-screen'
-		);
-		expect(result.globalStylesPanel.screenRoot).toBe(
-			'.global-styles-ui-screen-root'
-		);
-		expect(result.globalStylesPanel.globalStylesScreen).toBe(
-			'.global-styles-ui-block-types-search'
-		);
 	});
 });
