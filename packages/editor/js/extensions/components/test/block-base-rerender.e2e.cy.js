@@ -10,11 +10,8 @@
  */
 import {
 	appendBlocks,
-	closeWelcomeGuide,
-	disableGutenbergFeatures,
-	getWPDataObject,
-	removeScopedStorageKeys,
-	setAbsoluteBlockToolbar,
+	createPostWithRenderDebug,
+	snapshotBlockBaseRenderStats,
 } from '@blockera/dev-cypress/js/helpers';
 
 const PARAGRAPH_MARKUP =
@@ -28,63 +25,6 @@ const PARAGRAPH_MARKUP =
 <p>Three</p>
 <!-- /wp:paragraph -->`;
 
-function createPostWithBlockBaseRenderDebug() {
-	const testURL = Cypress.env('testURL');
-	let path = '/wp-admin/post-new.php?post_type=post';
-
-	if (
-		(testURL.endsWith('/') && !path.startsWith('/')) ||
-		(!testURL.endsWith('/') && path.startsWith('/'))
-	) {
-		path = `${testURL}${path}`;
-	} else if (!testURL.endsWith('/') && !path.startsWith('/')) {
-		path = `${testURL}/${path}`;
-	} else if (testURL.endsWith('/') && path.startsWith('/')) {
-		path = `${testURL.slice(0, -1)}${path}`;
-	} else {
-		path = `${testURL}${path}`;
-	}
-
-	return cy
-		.visit(path, {
-			onBeforeLoad(win) {
-				removeScopedStorageKeys(
-					win.localStorage,
-					'blockeraEditorZoomPercent'
-				);
-				win.__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__ = true;
-				win.__BLOCKERA_BLOCK_BASE_RENDER_STATS__ = {
-					total: 0,
-					byClientId: {},
-					log: [],
-				};
-			},
-		})
-		.then(() => {
-			// eslint-disable-next-line
-			cy.wait(2000);
-			closeWelcomeGuide();
-			disableGutenbergFeatures();
-			setAbsoluteBlockToolbar();
-			return getWPDataObject();
-		});
-}
-
-function readBlockBaseRenderStats() {
-	return cy.window().then((win) => win.__BLOCKERA_BLOCK_BASE_RENDER_STATS__);
-}
-
-function snapshotStats(alias) {
-	return readBlockBaseRenderStats().then((stats) => {
-		cy.log(
-			`[BlockBase renders] ${alias} total=${stats?.total ?? 0} blocks=${
-				Object.keys(stats?.byClientId || {}).length
-			}`
-		);
-		cy.wrap(JSON.parse(JSON.stringify(stats || {}))).as(alias);
-	});
-}
-
 function paragraphClientIds() {
 	return cy.window().then((win) => {
 		const blocks = win.wp.data
@@ -97,7 +37,7 @@ function paragraphClientIds() {
 
 describe('BlockBase re-render performance', () => {
 	beforeEach(() => {
-		createPostWithBlockBaseRenderDebug();
+		createPostWithRenderDebug({ mode: 'blockBase' });
 		appendBlocks(PARAGRAPH_MARKUP);
 		cy.getBlock('core/paragraph').first().click();
 		cy.getByAriaControls('styles-view').click();
@@ -105,10 +45,10 @@ describe('BlockBase re-render performance', () => {
 
 	it('does not keep re-rendering every BlockBase while the editor is idle', () => {
 		cy.wait(800);
-		snapshotStats('idleStart');
+		snapshotBlockBaseRenderStats('idleStart');
 
 		cy.wait(1000);
-		snapshotStats('idleEnd');
+		snapshotBlockBaseRenderStats('idleEnd');
 
 		cy.get('@idleStart').then((start) => {
 			cy.get('@idleEnd').then((end) => {
@@ -129,12 +69,12 @@ describe('BlockBase re-render performance', () => {
 			const otherIds = ids.slice(1);
 
 			cy.wait(500);
-			snapshotStats('beforeEdit');
+			snapshotBlockBaseRenderStats('beforeEdit');
 
 			cy.setColorControlValue('Text Color', 'aaaaaa');
 
 			cy.wait(500);
-			snapshotStats('afterEdit');
+			snapshotBlockBaseRenderStats('afterEdit');
 
 			cy.get('@beforeEdit').then((before) => {
 				cy.get('@afterEdit').then((after) => {

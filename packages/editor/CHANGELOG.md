@@ -45,6 +45,7 @@
 - Confirms Global Styles skip extra work for blocks with no custom styles, and
   still update when block types or style variations change.
 - Typography input-field and advanced-features memo equality helpers.
+- BlockBase re-render spec uses shared Cypress render-debug helpers.
 
 ## [4.0.0] - 2026-09-05
 
