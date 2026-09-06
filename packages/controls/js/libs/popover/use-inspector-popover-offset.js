@@ -12,6 +12,7 @@ import {
 	computeInspectorPopoverOffset,
 	getInspectorSidebarElement,
 	resolvePopoverAnchorElement,
+	shouldUpdateInspectorPopoverOffset,
 } from './utils';
 
 type UseInspectorPopoverOffsetArgs = {
@@ -35,9 +36,28 @@ export function useInspectorPopoverOffset({
 	);
 
 	useLayoutEffect(() => {
-		const updateOffset = () => {
+		let lastSidebarWidth = Number.NaN;
+
+		const updateOffset = ({ force = false } = {}) => {
+			const resolvedAnchor = resolveAnchor();
+			const sidebar = getInspectorSidebarElement(resolvedAnchor);
+			const nextWidth =
+				sidebar?.getBoundingClientRect().width ?? Number.NaN;
+
+			if (
+				!force &&
+				!shouldUpdateInspectorPopoverOffset(
+					lastSidebarWidth,
+					nextWidth
+				)
+			) {
+				return;
+			}
+
+			lastSidebarWidth = nextWidth;
+
 			const nextOffset = computeInspectorPopoverOffset(
-				resolveAnchor(),
+				resolvedAnchor,
 				placement,
 				inspectorGap
 			);
@@ -48,18 +68,18 @@ export function useInspectorPopoverOffset({
 		};
 
 		let frameId = 0;
-		const scheduleUpdateOffset = () => {
+		const scheduleUpdateOffset = (force = false) => {
 			if (frameId) {
 				return;
 			}
 
 			frameId = window.requestAnimationFrame(() => {
 				frameId = 0;
-				updateOffset();
+				updateOffset({ force });
 			});
 		};
 
-		updateOffset();
+		updateOffset({ force: true });
 
 		const resolvedAnchor = resolveAnchor();
 
@@ -68,38 +88,35 @@ export function useInspectorPopoverOffset({
 		}
 
 		const sidebar = getInspectorSidebarElement(resolvedAnchor);
-		const resizeObserver = new ResizeObserver(scheduleUpdateOffset);
+		const resizeObserver = new ResizeObserver((entries) => {
+			const entry = entries[0];
+			const nextWidth = entry?.contentRect?.width ?? Number.NaN;
+
+			if (
+				!shouldUpdateInspectorPopoverOffset(
+					lastSidebarWidth,
+					nextWidth
+				)
+			) {
+				return;
+			}
+
+			scheduleUpdateOffset();
+		});
 
 		if (sidebar) {
 			resizeObserver.observe(sidebar);
 		}
 
-		window.addEventListener('resize', scheduleUpdateOffset);
-
-		const scrollTarget =
-			resolvedAnchor.closest('.interface-complementary-area') ||
-			sidebar?.querySelector('.components-panel') ||
-			sidebar;
-
-		if (scrollTarget) {
-			scrollTarget.addEventListener('scroll', scheduleUpdateOffset, {
-				passive: true,
-			});
-		}
+		const onWindowResize = () => scheduleUpdateOffset(true);
+		window.addEventListener('resize', onWindowResize);
 
 		return () => {
 			if (frameId) {
 				window.cancelAnimationFrame(frameId);
 			}
 			resizeObserver.disconnect();
-			window.removeEventListener('resize', scheduleUpdateOffset);
-
-			if (scrollTarget) {
-				scrollTarget.removeEventListener(
-					'scroll',
-					scheduleUpdateOffset
-				);
-			}
+			window.removeEventListener('resize', onWindowResize);
 		};
 	}, [explicitAnchor, fallbackAnchor, placement, inspectorGap]);
 

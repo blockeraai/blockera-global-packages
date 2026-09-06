@@ -8,6 +8,7 @@
 
 .blockera-component-popover {
 	position: relative;
+	z-index: 1000000;
 	--popover-overflow: auto;
 	--popover-min-height: auto;
 	--popover-height: 430px;

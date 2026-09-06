@@ -6,6 +6,9 @@
 
 ### Improvements
 - Confirming a variable delete shows a snackbar.
+- Inspector popovers stay put when only the sidebar height changes, and
+  stack above the settings overlay so color pickers stay clickable during
+  Global Styles edits.
 
 ### Bug Fixes
 - Vertically center the snackbar icon with the message.

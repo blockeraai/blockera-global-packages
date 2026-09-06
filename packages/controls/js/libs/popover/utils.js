@@ -317,6 +317,26 @@ export function computeInspectorPopoverOffset(
 	return inspectorGap;
 }
 
+/**
+ * Inspector offset only depends on sidebar width vs the opener. Height ticks
+ * from Global Styles / canvas updates should not reposition an open picker.
+ */
+export function shouldUpdateInspectorPopoverOffset(
+	previousWidth: number,
+	nextWidth: number,
+	epsilon: number = 0.5
+): boolean {
+	if (!Number.isFinite(previousWidth)) {
+		return true;
+	}
+
+	if (!Number.isFinite(nextWidth)) {
+		return true;
+	}
+
+	return Math.abs(previousWidth - nextWidth) >= epsilon;
+}
+
 export const POPOVER_ROOT_SELECTOR =
 	'.blockera-component-popover, .components-popover';
 
