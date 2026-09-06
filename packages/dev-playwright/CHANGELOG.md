@@ -1,5 +1,10 @@
 ## Unreleased
 
+### Automated Tests
+- Open Global Styles in Playwright by enabling the complementary area and
+  waiting for WordPress 7.1 sidebar chrome, instead of clicking only the
+  header pin.
+
 ### Development Notes
 - Open and close editor sidebars via Blockera dock toggles in Playwright
   helpers, with fallback to Gutenberg header controls.

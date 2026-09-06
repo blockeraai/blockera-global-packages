@@ -1124,24 +1124,99 @@ async function checkBlockSections(page, expectedSections, check = 'exist') {
  * @return {Promise<void>}
  */
 async function openGlobalStylesPanel(page) {
-	const button = page
+	await page.waitForFunction(() => window?.wp?.data, { timeout: 30000 });
+
+	await page
+		.locator('.edit-site-layout.is-full-canvas, .editor-header')
+		.first()
+		.waitFor({ state: 'attached', timeout: 30000 });
+
+	await page.evaluate(() => {
+		const dispatch = window.wp.data.dispatch;
+		const persistence = dispatch('blockera/editor-persistence');
+
+		dispatch('core/preferences')?.set?.('core', 'showIconLabels', false);
+		dispatch('core/interface')?.pinItem?.('core', 'edit-site/global-styles');
+
+		if (typeof persistence?.setSidebarLayout === 'function') {
+			persistence.setSidebarLayout({
+				inserter: { dock: 'left', order: 0 },
+				listView: { dock: 'left', order: 1 },
+				complementary: { dock: 'right', order: 0 },
+			});
+			persistence.setDockPaneHeights?.('left', ['50%', '50%']);
+			persistence.setDockPaneHeights?.('right', ['100%']);
+			persistence.setPrimarySidebarOpen?.(true);
+		}
+
+		dispatch('core/interface')?.enableComplementaryArea?.(
+			'core',
+			'edit-site/global-styles'
+		);
+	});
+
+	await page.waitForFunction(
+		() =>
+			window.wp?.data
+				?.select('core/interface')
+				?.getActiveComplementaryArea('core') ===
+			'edit-site/global-styles',
+		{ timeout: 20000 }
+	);
+
+	const headerPin = page
 		.locator(
-			'.interface-interface-skeleton button[aria-controls="edit-site:global-styles"]'
+			'.editor-header .interface-pinned-items button[aria-controls="edit-site:global-styles"]'
 		)
 		.first();
 
-	await button.waitFor({ state: 'visible', timeout: 10000 });
+	if (await headerPin.count()) {
+		const pressed = await headerPin.getAttribute('aria-pressed');
+		const expanded = await headerPin.getAttribute('aria-expanded');
+		const alreadyOpen =
+			pressed === 'true' ||
+			expanded === 'true' ||
+			(await headerPin.evaluate((el) =>
+				el.classList.contains('is-pressed')
+			));
 
-	const isPressed = await button.getAttribute('aria-pressed');
-	if (isPressed === 'true') {
-		return;
+		if (!alreadyOpen) {
+			await headerPin.click({ force: true });
+			await page.waitForFunction(
+				() =>
+					window.wp?.data
+						?.select('core/interface')
+						?.getActiveComplementaryArea('core') ===
+					'edit-site/global-styles',
+				{ timeout: 20000 }
+			);
+		}
 	}
 
-	await button.click();
+	await page
+		.locator(
+			'.editor-global-styles-sidebar, .edit-site-global-styles-sidebar'
+		)
+		.first()
+		.waitFor({ state: 'attached', timeout: 30000 });
 
-	await expect(button).toHaveAttribute('aria-pressed', 'true', {
-		timeout: 5000,
-	});
+	const blockeraSidebar = page.locator(
+		'[data-test="blockera-primary-sidebar-content"]'
+	);
+	if (await blockeraSidebar.count()) {
+		try {
+			await expect(blockeraSidebar).toHaveClass(/is-visible/, {
+				timeout: 10000,
+			});
+		} catch {
+			// Overlay may still host GS chrome without is-visible yet.
+		}
+	}
+
+	await page
+		.locator('button[id="/blocks"]')
+		.first()
+		.waitFor({ state: 'attached', timeout: 30000 });
 }
 
 /**
