@@ -4,15 +4,24 @@
  * External dependencies
  */
 import type { MixedElement } from 'react';
-import { useDispatch, useSelect, select as dataSelect } from '@wordpress/data';
-import { createContext, useMemo, useRef } from '@wordpress/element';
+import {
+	useDispatch,
+	useSelect,
+	useRegistry,
+	select as dataSelect,
+} from '@wordpress/data';
+import {
+	createContext,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+} from '@wordpress/element';
 
 /**
  * Blockera dependencies
  */
 import {
 	isEquals,
-	isUndefined,
 	shouldTrackComponentRender,
 	trackComponentRender,
 } from '@blockera/utils';
@@ -20,10 +29,14 @@ import {
 /**
  * Internal dependencies
  */
-import { registerControl } from '../api';
 import { STORE_NAME } from '../store/constants';
 import type { ControlContextProviderProps } from './types';
 import { retainIfEqual } from './retain-if-equal';
+import { resolveControlSelectResult } from './resolve-control-select-result';
+import {
+	enqueueControlRegistration,
+	flushQueuedControlRegistrations,
+} from './enqueue-control-registration';
 
 export const ControlContext: Object = createContext({
 	controlInfo: {
@@ -51,13 +64,6 @@ export const ControlContextProvider = ({
 			name: controlInfo?.name,
 		});
 	}
-	if (!dataSelect(storeName).getControl(controlInfo.name)) {
-		// $FlowFixMe
-		registerControl({
-			...controlInfo,
-			type: storeName,
-		});
-	}
 
 	const controlInfoRef = useRef(controlInfo);
 	const stableControlInfo = retainIfEqual(
@@ -67,54 +73,61 @@ export const ControlContextProvider = ({
 	);
 	controlInfoRef.current = stableControlInfo;
 
-	//Prepare control status and value!
-	const { status, value } = useSelect(
+	const registry = useRegistry();
+
+	// Queue during render (no dispatch). Flush once after this commit so
+	// opening the inspector is one store update, not one per control.
+	if (
+		stableControlInfo?.name &&
+		!dataSelect(storeName).getControl(stableControlInfo.name)
+	) {
+		enqueueControlRegistration({
+			...stableControlInfo,
+			type: storeName,
+		});
+	}
+
+	useLayoutEffect(() => {
+		const batch =
+			registry && typeof registry.batch === 'function'
+				? registry.batch.bind(registry)
+				: null;
+		flushQueuedControlRegistrations(batch);
+	}, [registry]);
+
+	const selectResult = useSelect(
 		(select) => {
 			const { getControl } = select(storeName);
-
 			const control = getControl(stableControlInfo.name);
 
-			const skipSyncValue =
-				stableControlInfo.hasOwnProperty('skipSyncValue') &&
-				true === stableControlInfo.skipSyncValue;
-
-			/**
-			 * If the control skipSyncValue is defined and true, we skip the value update based on control name.
-			 */
-			if (skipSyncValue) {
-				return control;
+			if (!control) {
+				return null;
 			}
 
-			if (
-				!isUndefined(stableControlInfo.value) &&
-				!isEquals(control?.value, stableControlInfo.value)
-			) {
-				return {
-					...control,
-					value: stableControlInfo.value,
-				};
-			}
-
-			return control;
+			return resolveControlSelectResult(
+				control,
+				stableControlInfo,
+				isEquals
+			);
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[stableControlInfo]
+		[stableControlInfo, storeName]
 	);
-	//control dispatch for available actions
+
 	const dispatch = useDispatch(storeName);
 
 	const providerValue = useMemo(
 		() => ({
 			controlInfo: stableControlInfo,
-			value,
+			value: selectResult?.value,
 			dispatch,
 			STORE_NAME,
 		}),
-		[stableControlInfo, value, dispatch]
+		[stableControlInfo, selectResult?.value, dispatch]
 	);
 
-	//You can to enable||disable current control with status column!
-	if (!status) {
+	// Wait until addControl has landed. Children (e.g. RepeaterControl) read
+	// getControl(name) and crash if the store record is still missing.
+	if (!selectResult || !selectResult.status) {
 		return null;
 	}
 

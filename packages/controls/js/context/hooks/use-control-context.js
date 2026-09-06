@@ -109,10 +109,10 @@ export const useControlContext = (args?: ControlContextHookProps): Object => {
 	const isRepeaterControl = (): boolean => {
 		let isRepeater = false;
 		const { getControl } = select(CONTROL_STORE_NAME);
-		let control = getControl(controlInfo.name);
+		let control = getControl(controlInfo?.name);
 
 		if (!control) {
-			control = select(REPEATER_STORE_NAME).getControl(controlInfo.name);
+			control = select(REPEATER_STORE_NAME).getControl(controlInfo?.name);
 
 			if (control) {
 				isRepeater = true;
@@ -507,9 +507,9 @@ export const useControlContext = (args?: ControlContextHookProps): Object => {
 			resetRef();
 		},
 		value: calculatedValue,
-		blockName: controlInfo.blockName,
-		attribute: controlInfo.attribute,
-		controlInfo: getControl(controlInfo.name),
+		blockName: controlInfo?.blockName,
+		attribute: controlInfo?.attribute,
+		controlInfo: getControl(controlInfo?.name) || controlInfo,
 		getControlPath,
 		/**
 		 * Reset control value to default value.

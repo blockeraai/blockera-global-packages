@@ -6,6 +6,10 @@
   ref warning.
 - Opening a color picker no longer logs a React `defaultProps` warning
   from the Sketch panel.
+- Saving a post no longer warns that `ControlContextProvider` updated
+  another `ControlContextProvider` during render.
+- Repeater controls no longer crash when their store record is not
+  registered yet.
 
 ### Improvements
 
@@ -30,6 +34,11 @@
   promo callback instead of regenerating mesh defaults on each render.
 - ColorControl keeps value-addon and preset interface identities stable across
   parent renders.
+- ControlContextProvider registers controls in useLayoutEffect instead of
+  during render, and does not mount children until the store record exists.
+- ControlContextProvider queues missing controls during render and flushes
+  them in one WP data batch after commit.
+- retainIfEqual skips walking `value` when name and value identities match.
 
 ### Automated Tests
 
