@@ -49,6 +49,8 @@
   and variation UI is shown.
 - Font Size functionality e2e budgets BlockBase and InputControl renders for
   numeric typing and variable picker selection.
+- Background field memo equality keeps Image & Gradient skipped when only
+  BG Color identity changes.
 
 ## [4.0.0] - 2026-09-05
 
