@@ -17,6 +17,7 @@
 
 ### Automated Tests
 
+- Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
 - retainIfEqual keeps the previous object identity when contents match.
 - InputControl unit catalogs stay cached and not-found units append without
   mutating the shared catalog.
