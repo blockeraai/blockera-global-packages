@@ -159,6 +159,10 @@
 - Rename global-styles compatibility e2e specs to `.gs-compatibility.e2e.cy.js`.
 - Rename global-styles e2e specs to `.gs.e2e.cy.js`.
 
+### Development Notes
+- Style the Global Styles sidebar header title with the WordPress 7.1
+  `editor-global-styles-sidebar__header-title` class only.
+
 ## [4.0.0] - 2026-09-05
 
 ### Automated Tests
