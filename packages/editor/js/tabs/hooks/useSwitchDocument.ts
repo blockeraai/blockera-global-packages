@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useSelect, resolveSelect } from '@wordpress/data';
+import { useSelect, resolveSelect, useRegistry } from '@wordpress/data';
 import { useCallback } from '@wordpress/element';
 import { store as editorStore } from '@wordpress/editor';
 import { store as coreStore } from '@wordpress/core-data';
@@ -117,6 +117,7 @@ export function useSwitchDocument(): (
 	postType: string,
 	postId: string | number
 ) => Promise<boolean> {
+	const registry = useRegistry();
 	const onNavigateToEntityRecord = useSelect((select) => {
 		const editorSettings = (
 			select(editorStore) as { getEditorSettings: () => EditorSettings }
@@ -134,20 +135,18 @@ export function useSwitchDocument(): (
 		[]
 	);
 
-	// Check if post type config is already resolved
-	const hasPostTypeResolved = useSelect(
-		(select) =>
-			(postType: string): boolean => {
-				return (
-					select(coreStore) as {
-						hasFinishedResolution: (
-							selector: string,
-							args: string[]
-						) => boolean;
-					}
-				).hasFinishedResolution('getPostType', [postType]);
-			},
-		[]
+	const hasPostTypeResolved = useCallback(
+		(postType: string): boolean => {
+			return (
+				registry.select(coreStore) as {
+					hasFinishedResolution: (
+						selector: string,
+						args: string[]
+					) => boolean;
+				}
+			).hasFinishedResolution('getPostType', [postType]);
+		},
+		[registry]
 	);
 
 	// Function to ensure post type config is resolved before switching

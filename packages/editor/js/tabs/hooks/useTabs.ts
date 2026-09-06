@@ -9,7 +9,7 @@ import {
 	useRef,
 	useMemo,
 } from '@wordpress/element';
-import { useSelect } from '@wordpress/data';
+import { useRegistry } from '@wordpress/data';
 import { store as coreStore } from '@wordpress/core-data';
 
 /**
@@ -190,6 +190,7 @@ export function getWorkspaceTabs(workspaceTabs: WorkspaceTabs): WorkspaceTabs {
 export function useTabs({
 	persistenceEnabled = true,
 }: UseTabsOptions = {}): UseTabsReturn {
+	const registry = useRegistry();
 	const tabsConfig = useMemo(() => resolveTabsConfig(), []);
 	const tabsLimits = tabsConfig.limits;
 
@@ -257,24 +258,29 @@ export function useTabs({
 	 */
 	const tabs = useMemo(() => combineTabs(workspaceTabs), [workspaceTabs]);
 
-	const getEntityRecord = useSelect(
-		(select) =>
-			(
-				select(coreStore) as {
+	type TabEntityRecord = {
+		slug?: string;
+		status?: string;
+		title?: string | { rendered?: string };
+	};
+
+	const getEntityRecord = useCallback(
+		(
+			kind: string,
+			name: string,
+			id: string | number
+		): TabEntityRecord | undefined => {
+			return (
+				registry.select(coreStore) as {
 					getEntityRecord: (
-						kind: string,
-						name: string,
-						id: string | number
-					) =>
-						| {
-								slug?: string;
-								status?: string;
-								title?: string | { rendered?: string };
-						  }
-						| undefined;
+						recordKind: string,
+						recordName: string,
+						recordId: string | number
+					) => TabEntityRecord | undefined;
 				}
-			).getEntityRecord,
-		[]
+			).getEntityRecord(kind, name, id);
+		},
+		[registry]
 	);
 
 	/**

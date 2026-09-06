@@ -30,6 +30,10 @@
 - Window-flag render counters (`trackComponentRender`) record BlockBase
   commits for Cypress when `__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__` or
   `__BLOCKERA_RENDER_DEBUG__` is set before boot.
+- Workspace tabs subscribe to per-tab dirty booleans instead of returning
+  core-data selector functions from `useSelect` (those functions are a new
+  identity on every call and trip WordPress’s same-state warning). Tab
+  helpers read entity records and post-type resolution through the registry.
 - Background panel splits Image & Gradient, BG Color, clipping, and blending
   so a solid color edit does not rebuild the layers repeater.
 - Style fingerprints token nested attribute objects by identity so color-only
