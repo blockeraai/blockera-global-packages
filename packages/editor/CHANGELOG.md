@@ -25,6 +25,9 @@
   unsaved states skip the selector walk.
 - Extension memo equality compares own keys with a Set so Flow does not reject
   unbound Object.prototype.hasOwnProperty.
+- Window-flag render counters (`trackComponentRender`) record BlockBase
+  commits for Cypress when `__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__` or
+  `__BLOCKERA_RENDER_DEBUG__` is set before boot.
 
 ### Automated Tests
 - Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.

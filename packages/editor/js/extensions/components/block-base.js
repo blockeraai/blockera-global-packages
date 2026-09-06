@@ -75,7 +75,10 @@ import { BlockInspectorEditContent } from './block-inspector-edit-content';
 import { BlockInspectorTabSync } from './block-inspector-tab-sync';
 import { BlockBaseInspectorBundle } from './block-base-inspector-bundle';
 import { useBlockBaseStoreSelect } from './use-block-base-store-select';
-import { trackBlockBaseRender } from './track-block-base-render';
+import {
+	trackBlockBaseRender,
+	shouldTrackComponentRender,
+} from './track-block-base-render';
 import { enqueueBlockAttributePersist } from './persist-attribute-queue';
 import { shouldFlushGlobalStylesEntityNow } from './should-flush-global-styles-entity';
 import { blockInspectorTabPersistence } from './use-sync-block-inspector-tab';
@@ -205,15 +208,16 @@ const BlockBaseImpl = (_props: Object): Element<any> | null => {
 
 	const registry = useRegistry();
 
-	// No-op unless window.__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__ is set
-	// (Cypress BlockBase re-render spec). Counts this render for idle /
-	// sibling-edit budgets; iframe instances report to the parent window.
-	trackBlockBaseRender({
-		clientId,
-		name,
-		isSelected,
-		insideBlockInspector,
-	});
+	// Isolated debug block: no-op unless Cypress (or a console session) set
+	// window.__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__ or __BLOCKERA_RENDER_DEBUG__.
+	if (shouldTrackComponentRender('BlockBase')) {
+		trackBlockBaseRender({
+			clientId,
+			name,
+			isSelected,
+			insideBlockInspector,
+		});
+	}
 
 	const [notice, setNotice] = useState(null);
 	const [extraPreviewCss, setExtraPreviewCss] = useState('');
