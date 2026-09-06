@@ -9,6 +9,8 @@
 - Inspector popovers stay put when only the sidebar height changes, and
   stack above the settings overlay so color pickers stay clickable during
   Global Styles edits.
+- Color picker popovers open and close without a position animation, so the
+  swatch and close control stay clickable while Global Styles updates.
 
 ### Bug Fixes
 - Vertically center the snackbar icon with the message.
