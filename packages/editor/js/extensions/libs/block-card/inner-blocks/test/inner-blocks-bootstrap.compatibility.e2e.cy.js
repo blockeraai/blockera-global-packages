@@ -33,6 +33,16 @@ const selectInnerBlockInGlobalStyles = (blockType) => {
 				GLOBAL_STYLES_STYLE_UI_CONTEXT
 			);
 	});
+	cy.window({ timeout: 20000 }).should((win) => {
+		expect(
+			win.wp.data
+				.select('blockera/extensions')
+				.getExtensionCurrentBlock(GLOBAL_STYLES_STYLE_UI_CONTEXT)
+		).to.equal(blockType);
+	});
+	cy.getByDataTest('blockera-inner-block-card', { timeout: 20000 }).should(
+		'be.visible'
+	);
 };
 
 const setInnerBlockStateInGlobalStyles = (state) => {
@@ -421,11 +431,11 @@ describe('Inner blocks bootstrap → global styles theme.json (mu-plugins)', () 
 			});
 
 			selectInnerBlockInGlobalStyles('elements/link');
-			cy.getByDataTest('blockera-inner-block-card', {
-				timeout: 15000,
-			}).should('exist');
+			setInnerBlockStateInGlobalStyles('normal');
+			cy.getParentContainer('Text Color');
 			cy.setColorControlValue('Text Color', '666666');
 			setInnerBlockStateInGlobalStyles('hover');
+			cy.getParentContainer('Text Color');
 			cy.setColorControlValue('Text Color', '888888');
 
 			assertBlockData((data) => {
@@ -445,6 +455,7 @@ describe('Inner blocks bootstrap → global styles theme.json (mu-plugins)', () 
 			});
 
 			selectInnerBlockInGlobalStyles('core/button');
+			cy.getParentContainer('Text Color');
 			cy.setColorControlValue('Text Color', '445566');
 
 			assertBlockData((data) => {
