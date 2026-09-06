@@ -24,6 +24,9 @@
 - Assert a snackbar after deleting a variable from the picker.
 - Open the styles inspector tab with `switchBlockTab`.
 
+### Development Notes
+- Annotate inspector popover offset callbacks for Flow.
+
 ## [5.0.0] - 2026-09-05
 
 ### Automated Tests

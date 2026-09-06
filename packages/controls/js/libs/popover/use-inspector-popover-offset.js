@@ -38,7 +38,9 @@ export function useInspectorPopoverOffset({
 	useLayoutEffect(() => {
 		let lastSidebarWidth = Number.NaN;
 
-		const updateOffset = ({ force = false } = {}) => {
+		const updateOffset = ({
+			force = false,
+		}: { force?: boolean } = {}): void => {
 			const resolvedAnchor = resolveAnchor();
 			const sidebar = getInspectorSidebarElement(resolvedAnchor);
 			const nextWidth =
@@ -68,7 +70,7 @@ export function useInspectorPopoverOffset({
 		};
 
 		let frameId = 0;
-		const scheduleUpdateOffset = (force = false) => {
+		const scheduleUpdateOffset = (force: boolean = false): void => {
 			if (frameId) {
 				return;
 			}
