@@ -61,7 +61,7 @@ type ResizeHandleProps = {
 
 /**
  * Reusable resize handle component for sidebars.
- * Shows a 4px handle after 300ms of hovering, allows dragging to resize.
+ * Shows a 4px handle after 200ms of hovering, allows dragging to resize.
  *
  * @param {ResizeHandleProps} props Component props.
  * @return {JSX.Element | null} The resize handle element or null if not visible.
@@ -76,7 +76,7 @@ export const ResizeHandle = ({
 	onResizeStart,
 	onResizeEnd,
 }: ResizeHandleProps) => {
-	// Track hover state and timeout for 300ms delay
+	// Track hover state and timeout for 200ms delay
 	const [showHandle, setShowHandle] = useState(false);
 	const [isDragging, setIsDragging] = useState(false);
 	const [isAtLimit, setIsAtLimit] = useState(false); // Track if min/max limit is hit
@@ -128,7 +128,7 @@ export const ResizeHandle = ({
 		};
 	}, [isVisible, side]);
 
-	// Handle hover detection with 300ms delay
+	// Handle hover detection with 200ms delay
 	const handleMouseEnter = useCallback(() => {
 		if (!isVisible || isDragging) {
 			return;
@@ -139,16 +139,16 @@ export const ResizeHandle = ({
 			clearTimeout(hoverTimeoutRef.current);
 		}
 
-		// Show handle after 300ms
+		// Show handle after 200ms
 		hoverTimeoutRef.current = setTimeout(() => {
 			if (!isDragging) {
 				setShowHandle(true);
 			}
-		}, 300);
+		}, 200);
 	}, [isVisible, isDragging]);
 
 	const handleMouseLeave = useCallback(() => {
-		// Clear timeout if mouse leaves before 300ms
+		// Clear timeout if mouse leaves before 200ms
 		if (hoverTimeoutRef.current) {
 			clearTimeout(hoverTimeoutRef.current);
 			hoverTimeoutRef.current = null;
@@ -375,7 +375,7 @@ export const ResizeHandle = ({
 					// If mouse is still over handle, keep it visible (will hide on mouseleave)
 				} else {
 					// If we can't determine mouse position, hide the handle
-					// It will show again on hover with the 300ms delay
+					// It will show again on hover with the 200ms delay
 					setShowHandle(false);
 				}
 

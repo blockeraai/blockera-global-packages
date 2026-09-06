@@ -41,6 +41,7 @@
   transition was missed by the interface store subscriber.
 - Deleting a style or size variation, and sharing a variation with other
   blocks, now show a snackbar.
+- Sidebar resize handles appear after 200ms of hovering.
 
 ### Automated Tests
 
