@@ -4,6 +4,8 @@
 
 - Number and unit fields in the inspector update more smoothly while you type
   and when other settings change.
+- Image & Gradient background layers no longer rebuild on every inspector
+  paint, so typing a background color stays smoother.
 
 ### Development Notes
 
@@ -17,6 +19,8 @@
 - InputControl, UnitInput, and ControlContextProvider count renders when
   `window.__BLOCKERA_RENDER_DEBUG__` is set (Cypress e2e); production stays a
   no-op when the flag is absent.
+- BackgroundControl reuses a stable default repeater item, value cleanup, and
+  promo callback instead of regenerating mesh defaults on each render.
 
 ### Automated Tests
 
