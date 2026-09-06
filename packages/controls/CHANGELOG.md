@@ -4,6 +4,8 @@
 
 - Reset icons on control labels can receive a tooltip without a React
   ref warning.
+- Opening a color picker no longer logs a React `defaultProps` warning
+  from the Sketch panel.
 
 ### Improvements
 
