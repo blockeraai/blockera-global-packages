@@ -48,6 +48,9 @@
 - Fingerprint primitives always return a string when JSON.stringify is void.
 - Canvas-only split of colliding `background` / `backgroundColor` React
   styles; saved block HTML is not rewritten via extraProps.
+- Register the canvas background-style BlockListBlock filter only once.
+- Canvas background-style wrap skips rewrite work when the node has no
+  colliding `background` + `backgroundColor`.
 
 ### Automated Tests
 - Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.

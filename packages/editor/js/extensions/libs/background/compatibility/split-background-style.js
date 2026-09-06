@@ -21,12 +21,20 @@ import { normalizeWpGradientSentinel } from './wp-gradient-sentinel';
  * @param {Object|null|void} style Inline style object from block wrapper props.
  * @return {Object|null|void} Same object, or a copy without the `background` shorthand.
  */
-export function splitConflictingBackgroundStyle(style: ?Object): ?Object {
-	if (!style || style.background == null || style.background === '') {
-		return style;
-	}
+export function splitConflictingBackgroundStyleNeedsRewrite(
+	style: ?Object
+): boolean {
+	return Boolean(
+		style &&
+			style.background != null &&
+			style.background !== '' &&
+			style.backgroundColor != null &&
+			style.backgroundColor !== ''
+	);
+}
 
-	if (style.backgroundColor == null || style.backgroundColor === '') {
+export function splitConflictingBackgroundStyle(style: ?Object): ?Object {
+	if (!splitConflictingBackgroundStyleNeedsRewrite(style)) {
 		return style;
 	}
 
@@ -58,6 +66,10 @@ export function splitConflictingBackgroundWrapperProps(
 	wrapperProps: ?Object
 ): ?Object {
 	if (!wrapperProps) {
+		return wrapperProps;
+	}
+
+	if (!splitConflictingBackgroundStyleNeedsRewrite(wrapperProps.style)) {
 		return wrapperProps;
 	}
 
