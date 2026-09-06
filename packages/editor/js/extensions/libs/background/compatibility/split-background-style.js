@@ -34,7 +34,7 @@ export function splitConflictingBackgroundStyleNeedsRewrite(
 }
 
 export function splitConflictingBackgroundStyle(style: ?Object): ?Object {
-	if (!splitConflictingBackgroundStyleNeedsRewrite(style)) {
+	if (!style || !splitConflictingBackgroundStyleNeedsRewrite(style)) {
 		return style;
 	}
 

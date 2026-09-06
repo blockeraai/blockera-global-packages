@@ -51,6 +51,8 @@
 - Register the canvas background-style BlockListBlock filter only once.
 - Canvas background-style wrap skips rewrite work when the node has no
   colliding `background` + `backgroundColor`.
+- Refine background-style split after the rewrite guard so Flow sees a
+  defined style object.
 
 ### Automated Tests
 - Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
