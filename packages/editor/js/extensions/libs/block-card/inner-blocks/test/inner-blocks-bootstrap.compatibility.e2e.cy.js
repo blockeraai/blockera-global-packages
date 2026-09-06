@@ -45,6 +45,30 @@ const selectInnerBlockInGlobalStyles = (blockType) => {
 	);
 };
 
+const waitForTextColorValue = (needle) => {
+	const hexNeedle = String(needle).replace(/^#/, '').toLowerCase();
+
+	cy.getParentContainer('Text Color')
+		.last()
+		.then(($container) => {
+			$container[0].scrollIntoView({
+				block: 'center',
+				inline: 'nearest',
+				behavior: 'auto',
+			});
+		});
+
+	cy.getParentContainer('Text Color')
+		.last()
+		.within(() => {
+			cy.getByDataCy('color-label').should((el) => {
+				expect(el.text().replace(/^#/, '').toLowerCase()).to.include(
+					hexNeedle
+				);
+			});
+		});
+};
+
 const setInnerBlockStateInGlobalStyles = (state) => {
 	cy.window().then((win) => {
 		win.wp.data
@@ -432,16 +456,22 @@ describe('Inner blocks bootstrap → global styles theme.json (mu-plugins)', () 
 
 			selectInnerBlockInGlobalStyles('elements/link');
 			setInnerBlockStateInGlobalStyles('normal');
-			cy.getParentContainer('Text Color');
+			waitForTextColorValue('ffbaba');
 			cy.setColorControlValue('Text Color', '666666');
 			setInnerBlockStateInGlobalStyles('hover');
-			cy.getParentContainer('Text Color');
+			waitForTextColorValue('ff1d1d');
 			cy.setColorControlValue('Text Color', '888888');
 
 			assertBlockData((data) => {
 				const group = getGroupGlobalStyles(data);
 				const link = group?.elements?.link;
+				const inner = getInnerAttrs(group, 'elements/link');
 
+				expect('#666666').to.equal(inner?.blockeraFontColor);
+				expect('#888888').to.equal(
+					inner?.blockeraBlockStates?.hover?.breakpoints?.desktop
+						?.attributes?.blockeraFontColor
+				);
 				expect('#666666').to.equal(link?.color?.text);
 				expect('#888888').to.equal(link?.[':hover']?.color?.text);
 			});
@@ -455,7 +485,7 @@ describe('Inner blocks bootstrap → global styles theme.json (mu-plugins)', () 
 			});
 
 			selectInnerBlockInGlobalStyles('core/button');
-			cy.getParentContainer('Text Color');
+			waitForTextColorValue('ff6868');
 			cy.setColorControlValue('Text Color', '445566');
 
 			assertBlockData((data) => {

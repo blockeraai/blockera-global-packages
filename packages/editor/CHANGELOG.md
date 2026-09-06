@@ -52,8 +52,8 @@
 
 - Width compatibility: open the Styles tab before asserting Button Width so
   the control is in the DOM (inspector defaults to Settings).
-- Inner-blocks bootstrap: wait for the global-styles current inner block and
-  Text Color control before syncing link colors to theme.json.
+- Inner-blocks bootstrap: wait until the inner-block Text Color shows the
+  imported value before syncing link colors to theme.json.
 - Switch the block inspector with `switchBlockTab` instead of clicking
   `styles-view` / `settings-view` directly.
 - General Settings: customize a default breakpoint, save, reset the current
