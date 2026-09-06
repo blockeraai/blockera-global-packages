@@ -24,6 +24,7 @@
 - retainIfEqual keeps the previous object identity when contents match.
 - InputControl unit catalogs stay cached and not-found units append without
   mutating the shared catalog.
+- Inspector input re-render e2e budgets for idle and Font Size typing.
 
 ## [5.0.0] - 2026-09-05
 
