@@ -13,6 +13,9 @@
 
 - Block editor no longer crashes on load when generating canvas CSS
   (`Cannot read properties of undefined (reading 'SizeStyles')`).
+- Paragraphs (and other blocks) no longer mix a gradient `background`
+  shorthand with `backgroundColor` on the same node, which triggered a
+  React style warning in the canvas.
 
 ### Development Notes
 
