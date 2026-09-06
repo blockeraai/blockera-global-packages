@@ -46,6 +46,8 @@
   still update when block types or style variations change.
 - Typography input-field and advanced-features memo equality helpers.
 - BlockBase re-render spec uses shared Cypress render-debug helpers.
+- Block partials e2e asserts idle BlockBase render budgets after the card
+  and variation UI is shown.
 
 ## [4.0.0] - 2026-09-05
 

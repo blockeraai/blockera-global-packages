@@ -1,9 +1,38 @@
-import { createPost } from '@blockera/dev-cypress/js/helpers/site-navigation';
-import { appendBlocks } from '@blockera/dev-cypress/js/helpers/editor';
+/**
+ * Block partials UI plus BlockBase render-count budgets.
+ *
+ * Enables `window.__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__` before the editor
+ * boots (same pattern as the BlockBase re-render spec). After the card /
+ * variation UI is shown, idle BlockBase commits must stay near zero.
+ */
+import {
+	appendBlocks,
+	createPostWithRenderDebug,
+	snapshotBlockBaseRenderStats,
+} from '@blockera/dev-cypress/js/helpers';
+
+function expectIdleBlockBaseRenders(max = 6) {
+	cy.wait(800);
+	snapshotBlockBaseRenderStats('idleStart');
+
+	cy.wait(1000);
+	snapshotBlockBaseRenderStats('idleEnd');
+
+	cy.get('@idleStart').then((start) => {
+		cy.get('@idleEnd').then((end) => {
+			const delta = (end.total || 0) - (start.total || 0);
+			cy.log(`[BlockBase renders] idle delta=${delta}`);
+			expect(
+				delta,
+				`idle BlockBase renders (${delta}) should stay near zero after block partials UI`
+			).to.be.at.most(max);
+		});
+	});
+}
 
 describe('Block Partials Testing ...', () => {
 	beforeEach(() => {
-		createPost();
+		createPostWithRenderDebug({ mode: 'blockBase' });
 	});
 
 	it('should be able to hide WordPress original block card and display blockera block card', () => {
@@ -31,6 +60,8 @@ describe('Block Partials Testing ...', () => {
 			'display',
 			'flex'
 		);
+
+		expectIdleBlockBaseRenders();
 	});
 
 	it('should be able to hide WordPress original block variation transform and display blockera block variation transform', () => {
@@ -51,6 +82,8 @@ describe('Block Partials Testing ...', () => {
 		cy.get('.blockera-block-variation-transforms')
 			.should('exist')
 			.should('be.visible');
+
+		expectIdleBlockBaseRenders();
 	});
 
 	it('should be able to hide WordPress original block variations and display blockera block variations', () => {
@@ -77,5 +110,7 @@ describe('Block Partials Testing ...', () => {
 		cy.getByAriaLabel('Styles').click();
 
 		cy.getByAriaLabel('Pill Shape').contains('Pill Shape');
+
+		expectIdleBlockBaseRenders();
 	});
 });
