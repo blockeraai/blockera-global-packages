@@ -16,19 +16,25 @@ const objectIdentityTokens: WeakMap<Object, number> = new WeakMap();
 let nextObjectIdentityToken: number = 1;
 
 function fingerprintValue(value: mixed): string {
-	if (value === null || typeof value !== 'object') {
-		return JSON.stringify(value);
+	if (value !== null && typeof value === 'object') {
+		const objectValue: Object = value;
+		let token = objectIdentityTokens.get(objectValue);
+
+		if (token === undefined) {
+			token = nextObjectIdentityToken++;
+			objectIdentityTokens.set(objectValue, token);
+		}
+
+		return '@' + String(token);
 	}
 
-	const objectValue: Object = value;
-	let token = objectIdentityTokens.get(objectValue);
-
-	if (token === undefined) {
-		token = nextObjectIdentityToken++;
-		objectIdentityTokens.set(objectValue, token);
+	if (value === undefined) {
+		return 'undefined';
 	}
 
-	return '@' + String(token);
+	const encoded: string | void = JSON.stringify(value);
+
+	return encoded ?? String(value);
 }
 
 /**

@@ -42,6 +42,7 @@
   signatures.
 - Style fingerprints token nested attribute objects by identity so color-only
   updates do not JSON.stringify unchanged background layers.
+- Fingerprint primitives always return a string when JSON.stringify is void.
 
 ### Automated Tests
 - Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
