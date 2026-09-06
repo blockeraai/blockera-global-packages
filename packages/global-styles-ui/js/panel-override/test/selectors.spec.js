@@ -2,23 +2,8 @@ import { getGlobalStylesPanelTargets } from '../selectors';
 import { isWordPress70OrHigher, normalizeWordPressVersion } from '../version';
 
 describe('panel-override selectors', () => {
-	it('returns legacy edit-site selectors before WordPress 7.0', () => {
-		const selectors = getGlobalStylesPanelTargets('6.7.3-beta-12345');
-
-		expect(selectors.navigatorScreen).toBe(
-			'.edit-site-global-styles-sidebar__navigator-screen'
-		);
-		expect(selectors.screenRoot).toBe(
-			'.edit-site-global-styles-screen-root'
-		);
-		expect(selectors.activeStyleTile).toBe(
-			'.edit-site-global-styles-screen-root__active-style-tile'
-		);
-		expect(selectors.screen).toBe(selectors.navigatorScreen);
-	});
-
-	it('returns global-styles-ui selectors for WordPress 7.0+', () => {
-		const selectors = getGlobalStylesPanelTargets('7.0');
+	it('returns WordPress 7.1 global-styles-ui selectors', () => {
+		const selectors = getGlobalStylesPanelTargets();
 
 		expect(selectors.navigatorScreen).toBe(
 			'.global-styles-ui-sidebar__navigator-screen'
@@ -36,6 +21,16 @@ describe('panel-override selectors', () => {
 		expect(selectors.sidebarHeaderTitle).toBe(
 			'.editor-global-styles-sidebar__header-title'
 		);
+		expect(selectors.screen).toBe(selectors.navigatorScreen);
+	});
+
+	it('ignores WordPress version and never returns pre-7.1 edit-site selectors', () => {
+		const selectors = getGlobalStylesPanelTargets('6.7.3-beta-12345');
+
+		expect(selectors.navigatorScreen).toBe(
+			'.global-styles-ui-sidebar__navigator-screen'
+		);
+		expect(selectors.screenRoot).not.toContain('edit-site-global-styles');
 	});
 
 	it('normalizes alpha and beta version strings', () => {

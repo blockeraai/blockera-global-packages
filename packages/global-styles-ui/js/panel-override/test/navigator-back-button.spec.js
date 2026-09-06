@@ -25,7 +25,7 @@ describe('panel-override navigator back button', () => {
 		);
 	});
 
-	it('finds screen header with legacy and WP 7 class hooks', () => {
+	it('finds screen header with WordPress 7.1 class hooks', () => {
 		document.body.innerHTML = `
 			<div class="global-styles-ui-sidebar__navigator-screen">
 				<h2 class="global-styles-ui-header">Typography</h2>
@@ -40,15 +40,14 @@ describe('panel-override navigator back button', () => {
 
 	it('updates the screen header title', () => {
 		document.body.innerHTML = `
-			<div class="edit-site-global-styles-sidebar__navigator-screen">
-				<h2 class="edit-site-global-styles-header">Core/Button</h2>
+			<div class="global-styles-ui-sidebar__navigator-screen">
+				<h2 class="global-styles-ui-header">Core/Button</h2>
 			</div>
 		`;
 
 		expect(setGlobalStylesScreenHeaderTitle('Blocks')).toBe(true);
 		expect(
-			document.querySelector('.edit-site-global-styles-header')
-				?.textContent
+			document.querySelector('.global-styles-ui-header')?.textContent
 		).toBe('Blocks');
 	});
 });

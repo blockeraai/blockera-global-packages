@@ -6,6 +6,7 @@
   `edit-site-global-styles-*` selectors are no longer used.
 
 ### Automated Tests
+- Cover WordPress 7.1 Global Styles panel selectors only.
 - Switch the block inspector with `switchBlockTab` instead of clicking
   `styles-view` directly.
 - Rename global-styles e2e specs to `.gs.e2e.cy.js`.

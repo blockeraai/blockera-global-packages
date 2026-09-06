@@ -13,7 +13,7 @@ const LINE_HEIGHT_INSPECTOR_ACTIVE_CLASS =
 	'blockera-line-height-preset-inspector-active';
 
 const NAVIGATOR_SCREEN_SELECTOR =
-	'.edit-site-global-styles-sidebar__navigator-screen, .global-styles-ui-sidebar__navigator-screen';
+	'.global-styles-ui-sidebar__navigator-screen';
 
 function openFontSizeVariablesScreen() {
 	openGlobalStylesTypographyFlow();
