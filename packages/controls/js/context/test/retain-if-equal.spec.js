@@ -16,4 +16,18 @@ describe('retainIfEqual', () => {
 
 		expect(retainIfEqual(previous, next, isEquals)).toBe(next);
 	});
+
+	it('does not walk value when name and value identities match', () => {
+		const value = { value: '16px' };
+		const previous = { name: 'font-size', value, attribute: 'a' };
+		const next = { name: 'font-size', value, attribute: 'a' };
+		const deepEqual = jest.fn(isEquals);
+
+		expect(retainIfEqual(previous, next, deepEqual)).toBe(previous);
+		expect(deepEqual).toHaveBeenCalledTimes(1);
+		expect(deepEqual.mock.calls[0][0]).toEqual({
+			name: 'font-size',
+			attribute: 'a',
+		});
+	});
 });

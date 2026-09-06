@@ -44,6 +44,10 @@
 
 - Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
 - retainIfEqual keeps the previous object identity when contents match.
+- retainIfEqual skips walking value when name and value identities match.
+- resolveControlSelectResult keeps provider value when the control is not
+  registered yet and overlays when the store value differs.
+- Control registration queue flushes many payloads in one batch.
 - InputControl unit catalogs stay cached and not-found units append without
   mutating the shared catalog.
 - Inspector input re-render e2e budgets for idle and Font Size typing.
