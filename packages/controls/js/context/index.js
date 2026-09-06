@@ -75,8 +75,8 @@ export const ControlContextProvider = ({
 
 	const registry = useRegistry();
 
-	// Queue during render (no dispatch). Flush once after this commit so
-	// opening the inspector is one store update, not one per control.
+	// Queue during render (no dispatch). Flush after commit so opening the
+	// inspector is one store update, not one per control.
 	if (
 		stableControlInfo?.name &&
 		!dataSelect(storeName).getControl(stableControlInfo.name)
@@ -87,22 +87,30 @@ export const ControlContextProvider = ({
 		});
 	}
 
+	// Flush even when the provider stays mounted: control names can change
+	// (inner block / Global Styles) without remounting. A missed flush left
+	// getControl empty and tore down open pickers.
 	useLayoutEffect(() => {
 		const batch =
 			registry && typeof registry.batch === 'function'
 				? registry.batch.bind(registry)
 				: null;
 		flushQueuedControlRegistrations(batch);
-	}, [registry]);
+	}, [registry, stableControlInfo.name]);
+
+	const hasStoreRecord = useSelect(
+		(select) =>
+			Boolean(
+				stableControlInfo?.name &&
+					select(storeName).getControl(stableControlInfo.name)
+			),
+		[stableControlInfo.name, storeName]
+	);
 
 	const selectResult = useSelect(
 		(select) => {
 			const { getControl } = select(storeName);
 			const control = getControl(stableControlInfo.name);
-
-			if (!control) {
-				return null;
-			}
 
 			return resolveControlSelectResult(
 				control,
@@ -125,9 +133,15 @@ export const ControlContextProvider = ({
 		[stableControlInfo, selectResult?.value, dispatch]
 	);
 
-	// Wait until addControl has landed. Children (e.g. RepeaterControl) read
-	// getControl(name) and crash if the store record is still missing.
-	if (!selectResult || !selectResult.status) {
+	// First paint waits for addControl so Repeater can see a store record.
+	// After that, keep children mounted even if the name is briefly missing
+	// (GS inner-block updates) so open pickers are not torn down.
+	const hasRenderedChildrenRef = useRef(false);
+	if (hasStoreRecord) {
+		hasRenderedChildrenRef.current = true;
+	}
+
+	if (!hasRenderedChildrenRef.current) {
 		return null;
 	}
 

@@ -10,6 +10,8 @@
   another `ControlContextProvider` during render.
 - Repeater controls no longer crash when their store record is not
   registered yet.
+- Color pickers stay open after you type a hex value while the inspector
+  updates (Global Styles inner blocks included).
 
 ### Improvements
 
@@ -35,7 +37,9 @@
 - ColorControl keeps value-addon and preset interface identities stable across
   parent renders.
 - ControlContextProvider registers controls in useLayoutEffect instead of
-  during render, and does not mount children until the store record exists.
+  during render. Children stay mounted with the incoming value until the
+  store record exists. Queued registrations flush after every commit so a
+  renamed control does not unmount open popovers.
 - ControlContextProvider queues missing controls during render and flushes
   them in one WP data batch after commit.
 - retainIfEqual skips walking `value` when name and value identities match.
