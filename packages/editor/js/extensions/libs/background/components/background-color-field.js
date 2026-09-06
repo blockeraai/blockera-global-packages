@@ -4,12 +4,16 @@
  */
 import { __ } from '@wordpress/i18n';
 import { memo, useCallback } from '@wordpress/element';
-import type { MixedElement } from 'react';
+import type { ComponentType, MixedElement } from 'react';
 
 /**
  * Blockera dependencies
  */
-import { ColorControl, ControlContextProvider } from '@blockera/controls';
+import {
+	ColorControl,
+	ControlContextProvider,
+	type ControlContextRef,
+} from '@blockera/controls';
 
 /**
  * Internal dependencies
@@ -20,6 +24,13 @@ import { areBackgroundFieldPropsEqual } from './are-background-field-props-equal
 
 const COLOR_VARIABLE_TYPES = ['color'];
 const COLOR_CONTROL_ADDON_TYPES = ['variable'];
+
+type BackgroundColorFieldProps = {
+	block: TBlockProps,
+	value: mixed,
+	defaultValue: mixed,
+	onChange: THandleOnChangeAttributes,
+};
 
 const BG_COLOR_LABEL_DESCRIPTION = (
 	<>
@@ -43,14 +54,9 @@ const BackgroundColorFieldView = ({
 	value,
 	defaultValue,
 	onChange,
-}: {
-	block: TBlockProps,
-	value: mixed,
-	defaultValue: mixed,
-	onChange: THandleOnChangeAttributes,
-}): MixedElement => {
+}: BackgroundColorFieldProps): MixedElement => {
 	const handleChange = useCallback(
-		(newValue: mixed, ref: mixed) => {
+		(newValue: mixed, ref?: ControlContextRef): void => {
 			onChange('blockeraBackgroundColor', newValue, { ref });
 		},
 		[onChange]
@@ -79,7 +85,5 @@ const BackgroundColorFieldView = ({
 	);
 };
 
-export const BackgroundColorField = memo(
-	BackgroundColorFieldView,
-	areBackgroundFieldPropsEqual
-);
+export const BackgroundColorField: ComponentType<BackgroundColorFieldProps> =
+	memo(BackgroundColorFieldView, areBackgroundFieldPropsEqual);

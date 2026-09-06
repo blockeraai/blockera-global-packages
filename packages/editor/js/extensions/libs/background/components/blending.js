@@ -4,7 +4,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import { memo } from '@wordpress/element';
-import type { MixedElement } from 'react';
+import type { ComponentType, MixedElement } from 'react';
 
 /**
  * Blockera dependencies
@@ -20,6 +20,14 @@ import { generateExtensionId } from '../../utils';
 import { blendModeFieldOptions } from '../utils';
 import { areBackgroundFieldPropsEqual } from './are-background-field-props-equal';
 
+type BlendingProps = {
+	blendMode: string | void,
+	block: TBlockProps,
+	handleOnChangeAttributes: THandleOnChangeAttributes,
+	defaultValue: string,
+	labelProps?: Object,
+};
+
 const BlendingView = ({
 	blendMode,
 	block,
@@ -27,13 +35,7 @@ const BlendingView = ({
 	defaultValue,
 	labelProps: labelPropsFromExtension,
 	...props
-}: {
-	blendMode: string | void,
-	block: TBlockProps,
-	handleOnChangeAttributes: THandleOnChangeAttributes,
-	defaultValue: string,
-	labelProps?: Object,
-}): MixedElement => {
+}: BlendingProps): MixedElement => {
 	return (
 		<ControlContextProvider
 			value={{
@@ -210,4 +212,7 @@ const BlendingView = ({
 	);
 };
 
-export const Blending = memo(BlendingView, areBackgroundFieldPropsEqual);
+export const Blending: ComponentType<BlendingProps> = memo(
+	BlendingView,
+	areBackgroundFieldPropsEqual
+);

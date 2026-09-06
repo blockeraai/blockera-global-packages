@@ -4,7 +4,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import { memo, useCallback } from '@wordpress/element';
-import type { MixedElement } from 'react';
+import type { ComponentType, MixedElement } from 'react';
 
 /**
  * Blockera dependencies
@@ -13,6 +13,7 @@ import {
 	BaseControl,
 	BackgroundControl,
 	ControlContextProvider,
+	type ControlContextRef,
 } from '@blockera/controls';
 
 /**
@@ -22,19 +23,21 @@ import { generateExtensionId } from '../../utils';
 import type { TBlockProps, THandleOnChangeAttributes } from '../../types';
 import { areBackgroundFieldPropsEqual } from './are-background-field-props-equal';
 
+type BackgroundLayersFieldProps = {
+	block: TBlockProps,
+	value: mixed,
+	defaultValue: mixed,
+	onChange: THandleOnChangeAttributes,
+};
+
 const BackgroundLayersFieldView = ({
 	block,
 	value,
 	defaultValue,
 	onChange,
-}: {
-	block: TBlockProps,
-	value: mixed,
-	defaultValue: mixed,
-	onChange: THandleOnChangeAttributes,
-}): MixedElement => {
+}: BackgroundLayersFieldProps): MixedElement => {
 	const handleChange = useCallback(
-		(newValue: mixed, ref: mixed) => {
+		(newValue: mixed, ref?: ControlContextRef): void => {
 			onChange('blockeraBackground', newValue, { ref });
 		},
 		[onChange]
@@ -61,7 +64,5 @@ const BackgroundLayersFieldView = ({
 	);
 };
 
-export const BackgroundLayersField = memo(
-	BackgroundLayersFieldView,
-	areBackgroundFieldPropsEqual
-);
+export const BackgroundLayersField: ComponentType<BackgroundLayersFieldProps> =
+	memo(BackgroundLayersFieldView, areBackgroundFieldPropsEqual);

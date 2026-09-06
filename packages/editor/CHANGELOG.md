@@ -38,6 +38,8 @@
   missing, so the same-state `useSelect` check does not see a new object.
 - Background panel splits Image & Gradient, BG Color, clipping, and blending
   so a solid color edit does not rebuild the layers repeater.
+- Annotate memoized background field exports so Flow can verify module
+  signatures.
 - Style fingerprints token nested attribute objects by identity so color-only
   updates do not JSON.stringify unchanged background layers.
 
