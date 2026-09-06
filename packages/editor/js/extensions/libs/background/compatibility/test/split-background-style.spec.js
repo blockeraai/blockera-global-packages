@@ -102,4 +102,18 @@ describe('splitConflictingBackgroundWrapperProps', () => {
 			'linear-gradient(red, blue)'
 		);
 	});
+
+	it('returns a stable wrapper identity for the same input object', () => {
+		const wrapperProps = {
+			className: 'has-background',
+			style: {
+				backgroundColor: '#fff',
+				background: 'linear-gradient(red, blue)',
+			},
+		};
+
+		expect(splitConflictingBackgroundWrapperProps(wrapperProps)).toBe(
+			splitConflictingBackgroundWrapperProps(wrapperProps)
+		);
+	});
 });

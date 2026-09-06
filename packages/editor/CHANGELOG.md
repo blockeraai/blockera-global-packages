@@ -71,6 +71,8 @@
   BG Color identity changes.
 - splitConflictingBackgroundStyle only rewrites a gradient shorthand when
   backgroundColor is also set, and maps WP none sentinels to backgroundImage.
+- splitConflictingBackgroundWrapperProps reuses the same wrapper object when
+  the same input is passed twice.
 
 ## [4.0.0] - 2026-09-05
 
