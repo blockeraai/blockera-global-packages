@@ -34,6 +34,8 @@
   core-data selector functions from `useSelect` (those functions are a new
   identity on every call and trip WordPress’s same-state warning). Tab
   helpers read entity records and post-type resolution through the registry.
+- useEntity reuses one empty select result when the current document id is
+  missing, so the same-state `useSelect` check does not see a new object.
 - Background panel splits Image & Gradient, BG Color, clipping, and blending
   so a solid color edit does not rebuild the layers repeater.
 - Style fingerprints token nested attribute objects by identity so color-only

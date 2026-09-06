@@ -126,6 +126,20 @@ export interface UseEntityReturn {
  * @param postId - Post ID.
  * @return Flat object with entity data, state flags, URLs, and actions.
  */
+const EMPTY_ENTITY_SELECT = {
+	title: null,
+	status: null,
+	slug: null,
+	link: null,
+	record: null,
+	dirty: false,
+	isCurrentDocument: false,
+	isLoading: false,
+	hasResolved: true,
+	isSaveable: false,
+	isViewable: false,
+};
+
 export function useEntity(
 	postType: string | null | undefined,
 	postId: string | number | null | undefined
@@ -155,24 +169,7 @@ export function useEntity(
 		(select) => {
 			// Early return if missing identifiers
 			if (!postType || !postId) {
-				return {
-					// Entity data
-					title: null,
-					status: null,
-					slug: null,
-					link: null,
-					record: null,
-
-					// State flags
-					dirty: false,
-					isCurrentDocument: false,
-					isLoading: false,
-					hasResolved: true,
-
-					// Preview state
-					isSaveable: false,
-					isViewable: false,
-				};
+				return EMPTY_ENTITY_SELECT;
 			}
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
