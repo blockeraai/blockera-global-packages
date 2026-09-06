@@ -2,6 +2,7 @@ import {
 	computeInspectorPopoverOffset,
 	DEFAULT_POPOVER_OFFSET,
 	getInspectorSidebarElement,
+	shouldUpdateInspectorPopoverOffset,
 	getPopoverRoot,
 	getPopoverRootFromCloseControl,
 	hasNestedOverlayOpenAsideFrom,
@@ -41,6 +42,15 @@ describe('popover offset utils', () => {
 	describe('computeInspectorPopoverOffset', () => {
 		afterEach(() => {
 			document.body.innerHTML = '';
+		});
+
+		it('ignores height-only sidebar size ticks', () => {
+			expect(shouldUpdateInspectorPopoverOffset(300, 300)).toBe(false);
+			expect(shouldUpdateInspectorPopoverOffset(300, 300.2)).toBe(false);
+			expect(shouldUpdateInspectorPopoverOffset(300, 360)).toBe(true);
+			expect(shouldUpdateInspectorPopoverOffset(Number.NaN, 300)).toBe(
+				true
+			);
 		});
 
 		it('returns the default offset when anchor is missing', () => {
