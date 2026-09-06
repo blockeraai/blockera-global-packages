@@ -44,6 +44,7 @@
 - Sidebar resize handles appear after 200ms of hovering.
 - Resize handles no longer watch `document.body` class mutations to find
   their host, so inspector clicks stay responsive during Global Styles edits.
+- Settings tab underline CSS variables are only written when they change.
 
 ### Automated Tests
 

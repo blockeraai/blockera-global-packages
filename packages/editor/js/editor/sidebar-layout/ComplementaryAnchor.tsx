@@ -109,14 +109,18 @@ export default function ComplementaryAnchor({
 				return;
 			}
 
-			tablist.style.setProperty(
-				'--selected-width',
-				String(selected.offsetWidth)
-			);
-			tablist.style.setProperty(
-				'--selected-left',
-				String(selected.offsetLeft)
-			);
+			const nextWidth = String(selected.offsetWidth);
+			const nextLeft = String(selected.offsetLeft);
+			if (
+				tablist.style.getPropertyValue('--selected-width') !== nextWidth
+			) {
+				tablist.style.setProperty('--selected-width', nextWidth);
+			}
+			if (
+				tablist.style.getPropertyValue('--selected-left') !== nextLeft
+			) {
+				tablist.style.setProperty('--selected-left', nextLeft);
+			}
 		};
 
 		syncCoreTablistIndicator();
