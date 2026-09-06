@@ -17,6 +17,71 @@ function persistenceDispatch(win) {
 	return win.wp.data.dispatch('blockera/editor-persistence');
 }
 
+function parsePx(value) {
+	const parsed = Number.parseFloat(value);
+	return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function dragSidebarWidthHandle(testId, deltaX, hostSelector, edge) {
+	cy.get(hostSelector).should(($host) => {
+		expect($host[0].getBoundingClientRect().width).to.be.greaterThan(200);
+	});
+
+	cy.get(hostSelector).then(($host) => {
+		const box = $host[0].getBoundingClientRect();
+		const startX = edge === 'left' ? box.left + 2 : box.right - 2;
+		const startY = box.top + box.height / 2;
+
+		cy.getByDataTest(testId).then(($handle) => {
+			const el = $handle[0];
+
+			cy.window().then((win) => {
+				el.dispatchEvent(
+					new win.MouseEvent('mousedown', {
+						bubbles: true,
+						cancelable: true,
+						view: win,
+						clientX: startX,
+						clientY: startY,
+						button: 0,
+						buttons: 1,
+					})
+				);
+			});
+
+			cy.wait(20);
+
+			cy.window().then((win) => {
+				win.document.dispatchEvent(
+					new win.MouseEvent('mousemove', {
+						bubbles: true,
+						cancelable: true,
+						view: win,
+						clientX: startX + deltaX,
+						clientY: startY,
+						buttons: 1,
+					})
+				);
+			});
+
+			cy.wait(50);
+
+			cy.window().then((win) => {
+				win.document.dispatchEvent(
+					new win.MouseEvent('mouseup', {
+						bubbles: true,
+						cancelable: true,
+						view: win,
+						clientX: startX + deltaX,
+						clientY: startY,
+						button: 0,
+					})
+				);
+			});
+		});
+	});
+}
+
 function applyDefaultSidebarLayout(win) {
 	const dispatch = persistenceDispatch(win);
 	dispatch.setSidebarLayout(DEFAULT_SIDEBAR_LAYOUT);
@@ -78,6 +143,97 @@ describe('Blockera sidebars (primary + secondary)', () => {
 					.select('blockera/editor-persistence')
 					.areBothSidebarsClosed()
 			).to.eq(true);
+		});
+	};
+
+	const assertDraggingSidebarHandlesChangesWidth = () => {
+		cy.window().then((win) => {
+			const dispatch = persistenceDispatch(win);
+			dispatch.setPrimarySidebarWidth('300px');
+			dispatch.setSecondarySidebarWidth('350px');
+		});
+
+		ensureBothClosed();
+
+		cy.pressPrimaryShiftKey('.', 'Period');
+		cy.window().should((win) => {
+			expect(
+				win.wp.data
+					.select('blockera/editor-persistence')
+					.isPrimarySidebarOpen()
+			).to.eq(true);
+		});
+
+		cy.get(
+			'.interface-interface-skeleton__primary-sidebar-blockera'
+		).should(($el) => {
+			expect($el[0].getBoundingClientRect().width).to.be.greaterThan(200);
+		});
+		cy.get(
+			'.interface-interface-skeleton__sidebar.blockera-complementary-overlay'
+		)
+			.should('exist')
+			.and(($el) => {
+				expect($el[0].getBoundingClientRect().width).to.be.greaterThan(
+					200
+				);
+			})
+			.find('[data-test="blockera-sidebar-resize-handle--left"]')
+			.should('exist');
+
+		dragSidebarWidthHandle(
+			'blockera-sidebar-resize-handle--left',
+			-80,
+			'.interface-interface-skeleton__primary-sidebar-blockera',
+			'left'
+		);
+
+		cy.window().should((win) => {
+			const width = parsePx(
+				win.wp.data
+					.select('blockera/editor-persistence')
+					.getPrimarySidebarWidth()
+			);
+			expect(width).to.be.greaterThan(340);
+		});
+		cy.get(
+			'.interface-interface-skeleton__primary-sidebar-blockera'
+		).should(($el) => {
+			expect($el[0].getBoundingClientRect().width).to.be.greaterThan(340);
+		});
+
+		cy.pressPrimaryShiftKey(',', 'Comma');
+		cy.window().should((win) => {
+			expect(
+				win.wp.data
+					.select('blockera/editor-persistence')
+					.isSecondarySidebarOpen()
+			).to.eq(true);
+		});
+
+		cy.getByDataTest('blockera-sidebar-resize-handle--right').should(
+			'exist'
+		);
+
+		dragSidebarWidthHandle(
+			'blockera-sidebar-resize-handle--right',
+			80,
+			'.interface-interface-skeleton__secondary-sidebar-blockera',
+			'right'
+		);
+
+		cy.window().should((win) => {
+			const width = parsePx(
+				win.wp.data
+					.select('blockera/editor-persistence')
+					.getSecondarySidebarWidth()
+			);
+			expect(width).to.be.greaterThan(390);
+		});
+		cy.get(
+			'.interface-interface-skeleton__secondary-sidebar-blockera'
+		).should(($el) => {
+			expect($el[0].getBoundingClientRect().width).to.be.greaterThan(390);
 		});
 	};
 
@@ -263,6 +419,15 @@ describe('Blockera sidebars (primary + secondary)', () => {
 				'not.exist'
 			);
 		});
+
+		it('should change primary and secondary sidebar widths when dragging their resize handles', () => {
+			createPost();
+			closeWelcomeGuide();
+			resetSidebarLayout();
+			expectSidebarsStore();
+			focusEditorChrome();
+			assertDraggingSidebarHandlesChangesWidth();
+		});
 	});
 
 	describe('Site Editor', () => {
@@ -349,6 +514,17 @@ describe('Blockera sidebars (primary + secondary)', () => {
 						.isSecondarySidebarOpen()
 				).to.eq(false);
 			});
+		});
+
+		it('should change primary and secondary sidebar widths when dragging their resize handles', () => {
+			goTo('/wp-admin/site-editor.php?canvas=edit').then(() => {
+				cy.wait(2000);
+			});
+			closeWelcomeGuide();
+			expectSidebarsStore();
+			focusEditorChrome();
+			resetSidebarLayout();
+			assertDraggingSidebarHandlesChangesWidth();
 		});
 	});
 });

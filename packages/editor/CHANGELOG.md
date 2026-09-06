@@ -53,6 +53,9 @@
   with two blocks.
 - Complementary overlay: unit coverage that height-only dock resizes do not
   reposition settings while the sidebar is idle.
+- Sidebars: e2e coverage that dragging primary and secondary resize handles
+  changes dock width in Post Editor and Site Editor canvas=edit, including
+  when the settings overlay is on the right dock.
 - Resize handle: unit coverage that the width handle portals into the
   complementary overlay when that overlay covers the dock.
 - Complementary overlay: unit coverage that a floating settings pane updates
