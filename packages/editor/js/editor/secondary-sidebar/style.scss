@@ -23,7 +23,8 @@
 		width: var(--sidebar-width);
 	}
 
-	&:has(.is-resizing) {
+	&:has(.is-resizing),
+	&.is-resizing {
 		/* stylelint-disable-next-line declaration-no-important */
 		transition: none !important;
 	}

@@ -265,7 +265,7 @@ body.has-blockera-complementary-overlay
 
 .interface-interface-skeleton__sidebar.blockera-complementary-overlay {
 	position: fixed !important;
-	z-index: 20 !important;
+	z-index: 100 !important;
 	width: var(--sidebar-width) !important;
 	min-width: var(--sidebar-width) !important;
 	max-width: var(--sidebar-width) !important;
@@ -278,11 +278,17 @@ body.has-blockera-complementary-overlay
 	contain: strict;
 }
 
-.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='right'] {
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay
+	.blockera-sidebar-resize-handle {
+	z-index: 100002;
+	pointer-events: auto;
+}
+
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock="right"] {
 	justify-content: flex-start;
 }
 
-.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='left'] {
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock="left"] {
 	justify-content: flex-start;
 }
 
@@ -296,20 +302,22 @@ body.has-blockera-complementary-overlay
 	transition: none !important;
 }
 
-.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='right']
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock="right"]
 	.interface-complementary-area__fill,
-.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='right']
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock="right"]
 	.interface-complementary-area {
-	width: var(--blockera-primary-sidebar-width, 300px) !important;
-	min-width: var(--blockera-primary-sidebar-width, 300px) !important;
+	width: 100% !important;
+	min-width: 0 !important;
+	max-width: none !important;
 }
 
-.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='left']
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock="left"]
 	.interface-complementary-area__fill,
-.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock='left']
+.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock="left"]
 	.interface-complementary-area {
-	width: var(--blockera-secondary-sidebar-width, 350px) !important;
-	min-width: var(--blockera-secondary-sidebar-width, 350px) !important;
+	width: 100% !important;
+	min-width: 0 !important;
+	max-width: none !important;
 }
 
 .editor-editor-interface
@@ -330,7 +338,8 @@ body.has-blockera-complementary-overlay
 		width: var(--sidebar-width);
 	}
 
-	&:has(.is-resizing) {
+	&:has(.is-resizing),
+	&.is-resizing {
 		transition: none !important;
 	}
 
@@ -370,9 +379,7 @@ body.has-blockera-complementary-overlay
 .blockera-secondary-sidebar-content:has(
 	.block-editor-inserter__menu.show-panel
 ),
-.blockera-primary-sidebar-content:has(
-	.block-editor-inserter__menu.show-panel
-),
+.blockera-primary-sidebar-content:has(.block-editor-inserter__menu.show-panel),
 .blockera-sidebar-dock:has(.block-editor-inserter__menu.show-panel) {
 	--sidebar-pattern-inserter-width: 280px;
 }
@@ -380,9 +387,7 @@ body.has-blockera-complementary-overlay
 .blockera-secondary-sidebar-content:has(
 	.block-editor-inserter__menu.show-panel
 ),
-.blockera-primary-sidebar-content:has(
-	.block-editor-inserter__menu.show-panel
-),
+.blockera-primary-sidebar-content:has(.block-editor-inserter__menu.show-panel),
 .blockera-combined-sidebar:has(.block-editor-inserter__menu.show-panel) {
 	--sidebar-width: calc(
 		var(--sidebar-width-raw) + var(--sidebar-pattern-inserter-width, 280px)
@@ -391,17 +396,17 @@ body.has-blockera-complementary-overlay
 
 @media (min-width: 782px) {
 	.interface-interface-skeleton__secondary-sidebar-blockera:has(
-			.block-editor-inserter__menu.show-panel
-		),
+		.block-editor-inserter__menu.show-panel
+	),
 	.interface-interface-skeleton__primary-sidebar-blockera:has(
-			.block-editor-inserter__menu.show-panel
-		),
+		.block-editor-inserter__menu.show-panel
+	),
 	.blockera-secondary-sidebar-content:has(
-			.block-editor-inserter__menu.show-panel
-		),
+		.block-editor-inserter__menu.show-panel
+	),
 	.blockera-primary-sidebar-content:has(
-			.block-editor-inserter__menu.show-panel
-		) {
+		.block-editor-inserter__menu.show-panel
+	) {
 		overflow: visible;
 	}
 
@@ -454,8 +459,8 @@ body.has-blockera-complementary-overlay
 	}
 
 	.blockera-primary-sidebar-content:has(
-			.block-editor-inserter__menu.show-panel
-		) {
+		.block-editor-inserter__menu.show-panel
+	) {
 		.block-editor-inserter__main-area .block-editor-tabbed-sidebar {
 			margin-inline-start: var(--sidebar-pattern-inserter-width, 280px);
 		}
@@ -473,7 +478,7 @@ body.has-blockera-complementary-overlay
 	/* Right dock: category column opens to the left — label on the right,
 	   chevron on the left pointing toward the panel. */
 	.blockera-sidebar-dock--right .block-editor-inserter__category-tablist {
-		[role='tab'] {
+		[role="tab"] {
 			flex-direction: row-reverse;
 
 			> span {

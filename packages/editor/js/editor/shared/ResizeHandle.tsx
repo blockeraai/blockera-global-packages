@@ -11,6 +11,15 @@ import {
 } from '@wordpress/element';
 
 /**
+ * Internal dependencies
+ */
+import {
+	findResizeHandleContainer,
+	readHorizontalSidebarStartWidth,
+	setSidebarResizingClass,
+} from './find-resize-handle-container';
+
+/**
  * Props for the ResizeHandle component.
  */
 type ResizeHandleProps = {
@@ -83,51 +92,40 @@ export const ResizeHandle = ({
 	// Determine if this is a vertical resize (top) or horizontal resize (left/right)
 	const isVertical = side === 'top';
 
-	// Find the sidebar container element
-	// For primary sidebar: .interface-interface-skeleton__sidebar
-	// For secondary sidebar: .blockera-secondary-sidebar-content
+	// Portal into the dock content, or the complementary overlay when it covers that dock.
 	useEffect(() => {
 		if (!isVisible) {
 			setContainer(null);
 			return;
 		}
 
-		const findContainer = () => {
-			if (side === 'left') {
-				return (
-					(document.querySelector(
-						'.blockera-primary-sidebar-content'
-					) as HTMLElement | null) ||
-					(document.querySelector(
-						'.interface-interface-skeleton__sidebar'
-					) as HTMLElement | null)
-				);
-			} else if (side === 'right') {
-				// Secondary sidebar (left side of screen, resizable from right)
-				return document.querySelector(
-					'.blockera-secondary-sidebar-content'
-				) as HTMLElement | null;
-			}
-			// Top: List view panel for vertical resizing (handle positioned on top of it)
-			return document.querySelector(
-				'.blockera-combined-sidebar__list-view'
-			) as HTMLElement | null;
+		const syncContainer = () => {
+			const next = findResizeHandleContainer(side);
+			setContainer((current) => (current === next ? current : next));
 		};
 
-		const foundContainer = findContainer();
-		if (foundContainer) {
-			setContainer(foundContainer);
-			return;
+		syncContainer();
+		const timeoutId = setTimeout(syncContainer, 100);
+
+		const observer = new MutationObserver(syncContainer);
+		observer.observe(document.body, {
+			attributes: true,
+			attributeFilter: ['class'],
+		});
+		const skeleton = document.querySelector(
+			'.interface-interface-skeleton__sidebar'
+		);
+		if (skeleton) {
+			observer.observe(skeleton, {
+				attributes: true,
+				attributeFilter: ['class', 'data-blockera-overlay-dock'],
+			});
 		}
 
-		// Retry if not found (DOM might not be ready)
-		const timeoutId = setTimeout(() => {
-			const retryContainer = findContainer();
-			if (retryContainer) {
-				setContainer(retryContainer);
-			}
-		}, 100);
-		return () => clearTimeout(timeoutId);
+		return () => {
+			clearTimeout(timeoutId);
+			observer.disconnect();
+		};
 	}, [isVisible, side]);
 
 	// Handle hover detection with 300ms delay
@@ -199,26 +197,7 @@ export const ResizeHandle = ({
 			startXRef.current = e.clientX;
 			startYRef.current = e.clientY;
 
-			// Disable transitions on container and related elements while dragging
-			if (container) {
-				container.classList.add('is-resizing');
-				// Also disable transitions on nested elements for primary sidebar
-				if (side === 'left') {
-					const fillElement = container.querySelector(
-						'.interface-complementary-area__fill'
-					) as HTMLElement | null;
-					if (fillElement) {
-						fillElement.classList.add('is-resizing');
-						const areaElement = fillElement.querySelector(
-							'.interface-complementary-area'
-						) as HTMLElement | null;
-						if (areaElement) {
-							areaElement.classList.add('is-resizing');
-						}
-					}
-				}
-				// For 'top' type, the container is already the combined sidebar, so is-resizing class is sufficient
-			}
+			setSidebarResizingClass(side, container, true);
 
 			// Get current width/height from CSS variable or computed style
 			if (isVertical) {
@@ -251,26 +230,10 @@ export const ResizeHandle = ({
 				})();
 				startHeightRef.current = heightPercentage;
 			} else {
-				// Horizontal resize: get width in pixels
-				const currentWidth = (() => {
-					if (side === 'left') {
-						// Primary sidebar: get from --sidebar-width-raw or computed width
-						const rawWidth = container.style.getPropertyValue(
-							'--sidebar-width-raw'
-						);
-						if (rawWidth) {
-							return parseFloat(rawWidth);
-						}
-						const computed = window
-							.getComputedStyle(container)
-							.getPropertyValue('--sidebar-width');
-						return parseFloat(computed) || 300;
-					}
-					// Secondary sidebar: get from CSS variable or computed width
-					const computed = window.getComputedStyle(container).width;
-					return parseFloat(computed) || 350;
-				})();
-				startWidthRef.current = currentWidth;
+				startWidthRef.current = readHorizontalSidebarStartWidth(
+					side === 'right' ? 'right' : 'left',
+					container
+				);
 			}
 
 			// Call resize start callback
@@ -389,25 +352,7 @@ export const ResizeHandle = ({
 				document.body.style.userSelect = '';
 				document.body.style.cursor = '';
 
-				// Re-enable transitions on container and related elements
-				if (container) {
-					container.classList.remove('is-resizing');
-					// Also re-enable transitions on nested elements for primary sidebar
-					if (side === 'left') {
-						const fillElement = container.querySelector(
-							'.interface-complementary-area__fill'
-						) as HTMLElement | null;
-						if (fillElement) {
-							fillElement.classList.remove('is-resizing');
-							const areaElement = fillElement.querySelector(
-								'.interface-complementary-area'
-							) as HTMLElement | null;
-							if (areaElement) {
-								areaElement.classList.remove('is-resizing');
-							}
-						}
-					}
-				}
+				setSidebarResizingClass(side, container, false);
 
 				setIsDragging(false);
 				setIsAtLimit(false); // Reset limit state when drag ends
@@ -479,24 +424,7 @@ export const ResizeHandle = ({
 				clearTimeout(hoverTimeoutRef.current);
 				hoverTimeoutRef.current = null;
 			}
-			// Remove resizing class if sidebar closes during drag
-			if (container) {
-				container.classList.remove('is-resizing');
-				if (side === 'left') {
-					const fillElement = container.querySelector(
-						'.interface-complementary-area__fill'
-					) as HTMLElement | null;
-					if (fillElement) {
-						fillElement.classList.remove('is-resizing');
-						const areaElement = fillElement.querySelector(
-							'.interface-complementary-area'
-						) as HTMLElement | null;
-						if (areaElement) {
-							areaElement.classList.remove('is-resizing');
-						}
-					}
-				}
-			}
+			setSidebarResizingClass(side, container, false);
 		}
 	}, [isVisible, container, side]);
 
@@ -512,24 +440,7 @@ export const ResizeHandle = ({
 			// Restore text selection and cursor if component unmounts during drag
 			document.body.style.userSelect = '';
 			document.body.style.cursor = '';
-			// Remove resizing class if component unmounts during drag
-			if (container) {
-				container.classList.remove('is-resizing');
-				if (side === 'left') {
-					const fillElement = container.querySelector(
-						'.interface-complementary-area__fill'
-					) as HTMLElement | null;
-					if (fillElement) {
-						fillElement.classList.remove('is-resizing');
-						const areaElement = fillElement.querySelector(
-							'.interface-complementary-area'
-						) as HTMLElement | null;
-						if (areaElement) {
-							areaElement.classList.remove('is-resizing');
-						}
-					}
-				}
-			}
+			setSidebarResizingClass(side, container, false);
 		};
 	}, [container, side]);
 
