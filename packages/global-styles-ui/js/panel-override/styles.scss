@@ -1,9 +1,8 @@
 /**
  * Consolidated CSS overrides for Blockera Global Styles panel takeover.
  *
- * Targets both pre-WP 7.0 (`edit-site-global-styles-*`) and WP 7.0+
- * (`global-styles-ui-*`, `editor-global-styles-sidebar*`) class hooks so
- * overrides stay forward/backward compatible without runtime branching in CSS.
+ * Targets WordPress 7.1+ (`global-styles-ui-*`, `editor-global-styles-sidebar*`)
+ * class hooks.
  */
 
 @use "sass:list";
@@ -11,16 +10,16 @@
 @use "sass:string";
 
 // Navigator + screen shells
-$gs-navigator-screen: ".edit-site-global-styles-sidebar__navigator-screen, .global-styles-ui-sidebar__navigator-screen";
-$gs-screen-root: ".edit-site-global-styles-screen-root, .global-styles-ui-screen-root";
-$gs-active-style-tile: ".edit-site-global-styles-screen-root__active-style-tile, .global-styles-ui-screen-root__active-style-tile";
-$gs-global-styles-screen: ".edit-site-global-styles-screen, .global-styles-ui-sidebar__navigator-screen, .global-styles-ui-screen-body";
-$gs-screen-body: ".edit-site-global-styles-screen > div, .global-styles-ui-screen-body";
-$gs-screen-header: ".edit-site-global-styles-header, .global-styles-ui-header";
-$gs-header-description: ".edit-site-global-styles-header__description, .global-styles-ui-header__description";
-$gs-block-types-search: ".edit-site-block-types-search, .global-styles-ui-block-types-search";
-$gs-block-types-list: ".edit-site-block-types-item-list, .global-styles-ui-block-types-item-list";
-$gs-block-preview-panel: ".edit-site-global-styles__block-preview-panel, .global-styles-ui__block-preview-panel";
+$gs-navigator-screen: ".global-styles-ui-sidebar__navigator-screen";
+$gs-screen-root: ".global-styles-ui-screen-root";
+$gs-active-style-tile: ".global-styles-ui-screen-root__active-style-tile";
+$gs-global-styles-screen: ".global-styles-ui-sidebar__navigator-screen, .global-styles-ui-screen-body";
+$gs-screen-body: ".global-styles-ui-screen-body";
+$gs-screen-header: ".global-styles-ui-header";
+$gs-header-description: ".global-styles-ui-header__description";
+$gs-block-types-search: ".global-styles-ui-block-types-search";
+$gs-block-types-list: ".global-styles-ui-block-types-item-list";
+$gs-block-preview-panel: ".global-styles-ui__block-preview-panel";
 $gs-navigator-back-button: 'button[data-wp-component="Navigator.BackButton"]';
 
 @mixin blockera-preset-cleanup-screen-styles(

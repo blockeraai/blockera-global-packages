@@ -74,6 +74,7 @@ Major surfaces:
 
 - Importing the root entry loads panel-override styles as a **side effect**.
 - Prefer exported wrapper/selector APIs over hard-coded DOM selectors against WordPress global-styles internals (upgrade risk).
+- Panel override selectors and CSS target WordPress 7.1+ `global-styles-ui-*` / `editor-global-styles-sidebar*` classes only.
 - Depends on `@blockera/env` for experimental gating where used.
 - PHP has no library API — do not invent server exports here.
 

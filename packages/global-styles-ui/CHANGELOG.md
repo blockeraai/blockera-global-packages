@@ -1,5 +1,10 @@
 ## Unreleased
 
+### Development Notes
+- Target WordPress 7.1 Global Styles DOM classes only
+  (`global-styles-ui-*` / `editor-global-styles-sidebar*`). Pre-7.1
+  `edit-site-global-styles-*` selectors are no longer used.
+
 ### Automated Tests
 - Switch the block inspector with `switchBlockTab` instead of clicking
   `styles-view` directly.

@@ -39,7 +39,7 @@ export const findGlobalStylesNavigatorBackButton = (
 };
 
 /**
- * Locate the active Global Styles screen header (legacy + WP 7+).
+ * Locate the active Global Styles screen header (WordPress 7.1+).
  */
 export const findGlobalStylesScreenHeader = (
 	root?: ParentNode | Document | null
