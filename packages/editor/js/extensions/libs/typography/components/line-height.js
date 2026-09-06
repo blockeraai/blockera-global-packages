@@ -3,7 +3,8 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import type { MixedElement } from 'react';
+import { memo, useCallback } from '@wordpress/element';
+import type { MixedElement, ComponentType } from 'react';
 
 /**
  * Blockera dependencies
@@ -16,8 +17,9 @@ import type { ControlSize } from '@blockera/controls/js/types/general-control-ty
  */
 import { generateExtensionId } from '../../utils';
 import type { TBlockProps, THandleOnChangeAttributes } from '../../types';
+import { areTypographyInputFieldPropsEqual } from './are-typography-input-field-props-equal';
 
-export const LineHeight = ({
+function LineHeightComponent({
 	block,
 	value,
 	onChange,
@@ -32,7 +34,14 @@ export const LineHeight = ({
 	onChange: THandleOnChangeAttributes,
 	size?: ControlSize,
 	activeSearchMode: boolean,
-}): MixedElement => {
+}): MixedElement {
+	const handleChange = useCallback(
+		(newValue: mixed, ref: Object) => {
+			onChange('blockeraLineHeight', newValue, { ref });
+		},
+		[onChange]
+	);
+
 	return (
 		<ControlContextProvider
 			value={{
@@ -67,9 +76,7 @@ export const LineHeight = ({
 				unitType="line-height"
 				min={0}
 				defaultValue={defaultValue}
-				onChange={(newValue, ref) =>
-					onChange('blockeraLineHeight', newValue, { ref })
-				}
+				onChange={handleChange}
 				controlAddonTypes={['variable']}
 				variableTypes={['line-height']}
 				size={size}
@@ -77,4 +84,9 @@ export const LineHeight = ({
 			/>
 		</ControlContextProvider>
 	);
-};
+}
+
+export const LineHeight: ComponentType<any> = memo(
+	LineHeightComponent,
+	areTypographyInputFieldPropsEqual
+);
