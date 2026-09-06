@@ -14,6 +14,9 @@
   keystrokes still update the canvas immediately.
 - Annotate memoized NumberInput, OtherInput, and UnitInput exports so Flow can
   verify their module signatures.
+- InputControl, UnitInput, and ControlContextProvider count renders when
+  `window.__BLOCKERA_RENDER_DEBUG__` is set (Cypress e2e); production stays a
+  no-op when the flag is absent.
 
 ### Automated Tests
 

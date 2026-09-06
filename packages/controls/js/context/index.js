@@ -10,7 +10,12 @@ import { createContext, useMemo, useRef } from '@wordpress/element';
 /**
  * Blockera dependencies
  */
-import { isEquals, isUndefined } from '@blockera/utils';
+import {
+	isEquals,
+	isUndefined,
+	shouldTrackComponentRender,
+	trackComponentRender,
+} from '@blockera/utils';
 
 /**
  * Internal dependencies
@@ -39,6 +44,13 @@ export const ControlContextProvider = ({
 	storeName = STORE_NAME,
 	...props
 }: ControlContextProviderProps): MixedElement | null => {
+	// Isolated debug block: no-op unless window.__BLOCKERA_RENDER_DEBUG__.
+	if (shouldTrackComponentRender()) {
+		trackComponentRender('ControlContextProvider', {
+			id: controlInfo?.name,
+			name: controlInfo?.name,
+		});
+	}
 	if (!dataSelect(storeName).getControl(controlInfo.name)) {
 		// $FlowFixMe
 		registerControl({

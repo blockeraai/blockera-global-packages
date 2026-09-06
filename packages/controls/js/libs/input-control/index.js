@@ -11,7 +11,12 @@ import { useState, useEffect, useMemo, useCallback } from '@wordpress/element';
  * Blockera dependencies
  */
 import { controlClassNames } from '@blockera/classnames';
-import { isEmpty, isUndefined } from '@blockera/utils';
+import {
+	isEmpty,
+	isUndefined,
+	shouldTrackComponentRender,
+	trackComponentRender,
+} from '@blockera/utils';
 
 /**
  * Internal dependencies
@@ -75,6 +80,14 @@ export default function InputControl({
 	fieldProps,
 	...props
 }: InputControlProps): MixedElement {
+	// Isolated debug block: no-op unless window.__BLOCKERA_RENDER_DEBUG__.
+	if (shouldTrackComponentRender()) {
+		trackComponentRender('InputControl', {
+			id,
+			name: label,
+		});
+	}
+
 	let isValidValue = true;
 	const [units, setUnits] = useState(
 		isEmpty(_units) ? getCSSUnits(unitType) : _units

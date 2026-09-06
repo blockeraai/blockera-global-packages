@@ -20,7 +20,13 @@ import {
 	controlClassNames,
 	controlInnerClassNames,
 } from '@blockera/classnames';
-import { isUndefined, isEmpty, useDragValue } from '@blockera/utils';
+import {
+	isUndefined,
+	isEmpty,
+	useDragValue,
+	shouldTrackComponentRender,
+	trackComponentRender,
+} from '@blockera/utils';
 import { Icon } from '@blockera/icons';
 
 /**
@@ -63,6 +69,16 @@ export const UnitInput: ComponentType<UnitInputProps> = memo(function UnitInput(
 	onVariableShortcut,
 	...props
 }: UnitInputProps): MixedElement {
+	// Isolated debug block: no-op unless window.__BLOCKERA_RENDER_DEBUG__.
+	if (shouldTrackComponentRender()) {
+		trackComponentRender('UnitInput', {
+			id:
+				typeof unitValue?.value === 'string'
+					? unitValue.value
+					: 'unit',
+		});
+	}
+
 	const [isMaximizeVisible, setIsMaximizeVisible] = useState(false);
 	const [typedValue, setTypedValue] = useState(inputValue);
 	const unitUpdateTimeout = useRef(null);
