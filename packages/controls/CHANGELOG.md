@@ -21,6 +21,8 @@
   no-op when the flag is absent.
 - BackgroundControl reuses a stable default repeater item, value cleanup, and
   promo callback instead of regenerating mesh defaults on each render.
+- ColorControl keeps value-addon and preset interface identities stable across
+  parent renders.
 
 ### Automated Tests
 
