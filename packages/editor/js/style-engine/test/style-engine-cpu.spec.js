@@ -81,4 +81,24 @@ describe('getBlockeraStyleFingerprint identity cache', () => {
 
 		expect(first).not.toBe(second);
 	});
+
+	it('does not re-serialize unchanged nested trees when only a primitive changes', () => {
+		const layers = { item: { type: 'image', image: 'x.png' } };
+		const first = getBlockeraStyleFingerprint({
+			blockeraBackground: layers,
+			blockeraBackgroundColor: '#aaa',
+		});
+		const second = getBlockeraStyleFingerprint({
+			blockeraBackground: layers,
+			blockeraBackgroundColor: '#bbb',
+		});
+		const sameColor = getBlockeraStyleFingerprint({
+			blockeraBackground: layers,
+			blockeraBackgroundColor: '#aaa',
+		});
+
+		expect(first).not.toBe(second);
+		expect(first).toBe(sameColor);
+		expect(first).toContain('blockeraBackground');
+	});
 });

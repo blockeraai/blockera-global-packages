@@ -44,6 +44,8 @@
 - Extension memo equality helper covers sliced values vs callback identity.
 - Style engine CPU: generator filter is invoked once per burst; fingerprint
   cache keeps the same string for the same attributes object.
+- Fingerprint identity tokens keep the same string when nested Blockera trees
+  are reused and only a primitive color changes.
 - Confirms Global Styles skip extra work for blocks with no custom styles, and
   still update when block types or style variations change.
 - BlockBase re-render spec uses shared Cypress render-debug helpers.
