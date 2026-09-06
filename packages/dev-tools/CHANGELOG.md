@@ -1,3 +1,10 @@
+## Unreleased
+
+### Development Notes
+
+- Webpack intercepts `react-color` Checkboard with a pitch loader so
+  Alpha's relative `./Checkboard` import uses the controls implementation.
+
 ## [4.0.0] - 2026-09-05
 
 ### Development Notes

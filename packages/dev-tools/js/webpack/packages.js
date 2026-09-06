@@ -187,6 +187,14 @@ module.exports = (env, argv) => {
 						'fortawesome-wp-icon-name-loader.js'
 					),
 				},
+				{
+					test: /[\\/]react-color[\\/](?:lib|es)[\\/]components[\\/]common[\\/]Checkboard\.js$/,
+					enforce: 'pre',
+					loader: resolve(
+						__dirname,
+						'react-color-checkboard-loader.js'
+					),
+				},
 			],
 		},
 		plugins: [
