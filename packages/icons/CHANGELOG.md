@@ -1,3 +1,8 @@
+## Unreleased
+
+### Automated Tests
+- Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
+
 ## [2.0.0] - 2026-09-05
 
 ### Automated Tests

@@ -10,7 +10,7 @@ import {
 
 /**
  * Front: Blockera merges rules in `style#blockera-inline-css`. Include
- * `sheet.cssRules[].cssText` so long rules remain visible (same as grid.general-2).
+ * `sheet.cssRules[].cssText` so long rules remain visible (same as grid.e2e.cy.js).
  */
 function assertFrontendPageStylesInclude(fragment) {
 	cy.get('style#blockera-inline-css', { timeout: 30000 }).should(($style) => {

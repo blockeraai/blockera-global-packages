@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Automated Tests
+- Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
 - Rename global-styles compatibility e2e specs to `.gs-compatibility.e2e.cy.js`.
 - Rename global-styles e2e specs to `.gs.e2e.cy.js`.
 
