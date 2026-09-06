@@ -45,6 +45,8 @@
 - Resize handles no longer watch `document.body` class mutations to find
   their host, so inspector clicks stay responsive during Global Styles edits.
 - Settings tab underline CSS variables are only written when they change.
+- Settings overlay stacking stays below editor popovers so color picker open
+  and close are not delayed by the overlay covering the picker.
 
 ### Automated Tests
 
