@@ -53,6 +53,8 @@
   with two blocks.
 - Complementary overlay: unit coverage that height-only dock resizes do not
   reposition settings while the sidebar is idle.
+- Resize handle: unit coverage that the width handle portals into the
+  complementary overlay when that overlay covers the dock.
 - Complementary overlay: unit coverage that a floating settings pane updates
   overlay left and top together.
 - Sidebar layout: e2e coverage that dragging settings keeps the Gutenberg
