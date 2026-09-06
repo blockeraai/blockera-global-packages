@@ -373,7 +373,11 @@ describe('Width → WP Compatibility', () => {
 			);
 
 			// Select target block
-			cy.getBlock('core/button').click();
+			cy.getBlock('core/button').first().click();
+
+			// Button inspector defaults to Settings (WP width %). Styles must
+			// be open before Blockera's Width control is in the DOM.
+			cy.switchBlockTab('styles');
 
 			// add alias to the feature container
 			cy.getParentContainer('Width').as('widthContainer');
@@ -444,7 +448,9 @@ describe('Width → WP Compatibility', () => {
 			);
 
 			// Select target block
-			cy.getBlock('core/button').click();
+			cy.getBlock('core/button').first().click();
+
+			cy.switchBlockTab('styles');
 
 			// add alias to the feature container
 			cy.getParentContainer('Width').as('widthContainer');

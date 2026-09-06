@@ -50,6 +50,8 @@
 
 ### Automated Tests
 
+- Width compatibility: open the Styles tab before asserting Button Width so
+  the control is in the DOM (inspector defaults to Settings).
 - Switch the block inspector with `switchBlockTab` instead of clicking
   `styles-view` / `settings-view` directly.
 - General Settings: customize a default breakpoint, save, reset the current
