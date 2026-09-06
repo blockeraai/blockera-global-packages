@@ -67,6 +67,8 @@
   numeric typing and variable picker selection.
 - Background field memo equality keeps Image & Gradient skipped when only
   BG Color identity changes.
+- splitConflictingBackgroundStyle only rewrites a gradient shorthand when
+  backgroundColor is also set, and maps WP none sentinels to backgroundImage.
 
 ## [4.0.0] - 2026-09-05
 
