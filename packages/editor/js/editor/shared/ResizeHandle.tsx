@@ -108,10 +108,6 @@ export const ResizeHandle = ({
 		const timeoutId = setTimeout(syncContainer, 100);
 
 		const observer = new MutationObserver(syncContainer);
-		observer.observe(document.body, {
-			attributes: true,
-			attributeFilter: ['class'],
-		});
 		const skeleton = document.querySelector(
 			'.interface-interface-skeleton__sidebar'
 		);

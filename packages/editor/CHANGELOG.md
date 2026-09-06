@@ -42,6 +42,8 @@
 - Deleting a style or size variation, and sharing a variation with other
   blocks, now show a snackbar.
 - Sidebar resize handles appear after 200ms of hovering.
+- Resize handles no longer watch `document.body` class mutations to find
+  their host, so inspector clicks stay responsive during Global Styles edits.
 
 ### Automated Tests
 
