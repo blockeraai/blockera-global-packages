@@ -1,6 +1,8 @@
 ## Unreleased
 
 ### Development Notes
+- `setColorControlValue` scrolls the control into view, commits the CSS
+  field with a DOM blur, and waits until the color label shows the new value.
 - Add `switchBlockTab` Cypress command (`styles` | `settings`) for the block
   inspector tabs. Skips the click when that tab is already active.
 - Variable picker and companion helpers use `switchBlockTab`. Drop

@@ -620,6 +620,18 @@ export const registerCommands = () => {
 	);
 
 	Cypress.Commands.add('setColorControlValue', (label, value) => {
+		const hexNeedle = String(value).replace(/^#/, '').toLowerCase();
+
+		cy.getParentContainer(label)
+			.last()
+			.then(($container) => {
+				$container[0].scrollIntoView({
+					block: 'center',
+					inline: 'nearest',
+					behavior: 'auto',
+				});
+			});
+
 		cy.getParentContainer(label)
 			.last()
 			.within(() => {
@@ -632,10 +644,19 @@ export const registerCommands = () => {
 			.within(() => {
 				cy.getByDataCy('color-picker-css-value').then(($input) => {
 					cy.wrap($input).setControlledInputValue(value);
+					$input[0].blur();
 				});
-				cy.getByDataCy('color-picker-css-value').blur();
-
 				cy.getByDataTest('close-popover').click({ force: true });
+			});
+
+		cy.getParentContainer(label)
+			.last()
+			.within(() => {
+				cy.getByDataCy('color-label').should((el) => {
+					expect(el.text().replace(/^#/, '').toLowerCase()).to.include(
+						hexNeedle
+					);
+				});
 			});
 	});
 
