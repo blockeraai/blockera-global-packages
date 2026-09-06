@@ -6,6 +6,11 @@
   legacy key) let Cypress e2e count component commits in the production
   bundle without a new webpack env. Unset flags stay a no-op.
 
+### Automated Tests
+
+- Shared render tracker is a no-op without the window flag; BlockBase legacy
+  flag does not enable InputControl counts.
+
 ## [2.0.0] - 2026-09-01
 
 ### Changed
