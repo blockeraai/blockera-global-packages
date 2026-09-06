@@ -19,7 +19,7 @@ type CheckboardProps = {
 	renderers?: { canvas?: mixed },
 	borderRadius?: string | number,
 	boxShadow?: string,
-	children?: mixed,
+	children?: MixedElement,
 };
 
 export function Checkboard({
@@ -48,9 +48,12 @@ export function Checkboard({
 	};
 
 	if (isValidElement(children)) {
+		const childProps: Object =
+			children && typeof children === 'object' ? children.props || {} : {};
+
 		return cloneElement(children, {
-			...children.props,
-			style: { ...children.props.style, ...grid },
+			...childProps,
+			style: { ...childProps.style, ...grid },
 		});
 	}
 

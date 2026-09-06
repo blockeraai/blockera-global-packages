@@ -2,10 +2,10 @@
 /**
  * External dependencies
  */
-import type { MixedElement } from 'react';
+import type { ComponentType, MixedElement } from 'react';
 import { forwardRef } from '@wordpress/element';
 
-const ResetIcon = forwardRef(function ResetIcon(
+const ResetIcon: ComponentType<Object> = forwardRef(function ResetIcon(
 	props: Object,
 	ref: mixed
 ): MixedElement {

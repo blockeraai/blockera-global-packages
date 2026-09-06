@@ -39,6 +39,8 @@
 - ControlContextProvider queues missing controls during render and flushes
   them in one WP data batch after commit.
 - retainIfEqual skips walking `value` when name and value identities match.
+- Annotate ResetIcon, Checkboard children, and background-style split so Flow
+  can verify those modules.
 
 ### Automated Tests
 
