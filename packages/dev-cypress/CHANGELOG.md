@@ -1,5 +1,10 @@
 ## Unreleased
 
+### Automated Tests
+
+- `setColorControlValue` commits the hex field by closing the picker
+  instead of `cy.blur()`, which fails when React replaces the input.
+
 ### Development Notes
 
 - Cypress `createPostWithRenderDebug` sets window render-count flags before
