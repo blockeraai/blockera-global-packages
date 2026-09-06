@@ -1,4 +1,14 @@
-export default function ResetIcon({ ...props }) {
+// @flow
+/**
+ * External dependencies
+ */
+import type { MixedElement } from 'react';
+import { forwardRef } from '@wordpress/element';
+
+const ResetIcon = forwardRef(function ResetIcon(
+	props: Object,
+	ref: mixed
+): MixedElement {
 	return (
 		<svg
 			width="19"
@@ -7,6 +17,7 @@ export default function ResetIcon({ ...props }) {
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 			{...props}
+			ref={ref}
 		>
 			<path
 				className="circle-bg"
@@ -22,4 +33,6 @@ export default function ResetIcon({ ...props }) {
 			/>
 		</svg>
 	);
-}
+});
+
+export default ResetIcon;

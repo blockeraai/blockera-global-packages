@@ -1,5 +1,10 @@
 ## Unreleased
 
+### Bug Fixes
+
+- Reset icons on control labels can receive a tooltip without a React
+  ref warning.
+
 ### Improvements
 
 - Number and unit fields in the inspector update more smoothly while you type
