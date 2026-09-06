@@ -1,3 +1,10 @@
+## Unreleased
+
+### Development Notes
+
+- Cypress `createPostWithRenderDebug` sets window render-count flags before
+  editor boot so production-bundle e2e can snapshot component commit deltas.
+
 ## [4.0.0] - 2026-09-01
 
 ### Development Notes
