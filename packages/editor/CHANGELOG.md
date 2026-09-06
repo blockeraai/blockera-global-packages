@@ -32,6 +32,8 @@
   `__BLOCKERA_RENDER_DEBUG__` is set before boot.
 - Background panel splits Image & Gradient, BG Color, clipping, and blending
   so a solid color edit does not rebuild the layers repeater.
+- Style fingerprints token nested attribute objects by identity so color-only
+  updates do not JSON.stringify unchanged background layers.
 
 ### Automated Tests
 - Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.

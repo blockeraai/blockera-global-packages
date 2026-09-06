@@ -3,12 +3,33 @@
 /**
  * Stable fingerprint of Blockera-controlled attributes for style-engine memoization.
  * Stringify is skipped when the same attributes object (and inlineStyles ref) is reused.
+ * Nested objects use identity tokens so color-only updates do not re-serialize
+ * unchanged Image & Gradient (or other) trees.
  */
 
 const fingerprintByAttributes: WeakMap<
 	Object,
 	{ inline: Object | null | void, fingerprint: string }
 > = new WeakMap();
+
+const objectIdentityTokens: WeakMap<Object, number> = new WeakMap();
+let nextObjectIdentityToken: number = 1;
+
+function fingerprintValue(value: mixed): string {
+	if (value === null || typeof value !== 'object') {
+		return JSON.stringify(value);
+	}
+
+	const objectValue: Object = value;
+	let token = objectIdentityTokens.get(objectValue);
+
+	if (token === undefined) {
+		token = nextObjectIdentityToken++;
+		objectIdentityTokens.set(objectValue, token);
+	}
+
+	return '@' + String(token);
+}
 
 /**
  * @param {Object|null|void} attributes Block attributes.
@@ -32,12 +53,12 @@ export function getBlockeraStyleFingerprint(
 
 	for (const key of Object.keys(attributes).sort()) {
 		if (key === 'className' || key.startsWith('blockera')) {
-			parts.push(`${key}:${JSON.stringify(attributes[key])}`);
+			parts.push(`${key}:${fingerprintValue(attributes[key])}`);
 		}
 	}
 
 	if (inlineStyles && Object.keys(inlineStyles).length) {
-		parts.push(`inline:${JSON.stringify(inlineStyles)}`);
+		parts.push(`inline:${fingerprintValue(inlineStyles)}`);
 	}
 
 	const fingerprint = parts.join('|');
