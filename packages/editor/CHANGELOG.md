@@ -6,8 +6,6 @@
   Global Styles feel slow.
 - Blocks you have not customized in Global Styles no longer add extra lag in
   the background while you work.
-- Changing one typography value no longer refreshes every other typography
-  field in the inspector.
 
 ### Bug Fixes
 
@@ -30,8 +28,6 @@
 - Window-flag render counters (`trackComponentRender`) record BlockBase
   commits for Cypress when `__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__` or
   `__BLOCKERA_RENDER_DEBUG__` is set before boot.
-- Memo Font Size, letter spacing, line height, and advanced typography on
-  sliced props so sibling fields skip when another typography value changes.
 
 ### Automated Tests
 - Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.

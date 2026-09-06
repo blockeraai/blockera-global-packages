@@ -3,8 +3,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { memo, useCallback } from '@wordpress/element';
-import type { MixedElement, ComponentType } from 'react';
+import type { MixedElement } from 'react';
 
 /**
  * Blockera dependencies
@@ -17,9 +16,8 @@ import type { ControlSize } from '@blockera/controls/js/types/general-control-ty
  */
 import { generateExtensionId } from '../../utils';
 import type { TBlockProps, THandleOnChangeAttributes } from '../../types';
-import { areTypographyInputFieldPropsEqual } from './are-typography-input-field-props-equal';
 
-function FontSizeComponent({
+export const FontSize = ({
 	block,
 	value,
 	onChange,
@@ -32,14 +30,7 @@ function FontSizeComponent({
 	defaultValue?: string,
 	size?: ControlSize,
 	onChange: THandleOnChangeAttributes,
-}): MixedElement {
-	const handleChange = useCallback(
-		(newValue: mixed, ref: Object) => {
-			onChange('blockeraFontSize', newValue, { ref });
-		},
-		[onChange]
-	);
-
+}): MixedElement => {
 	return (
 		<ControlContextProvider
 			value={{
@@ -71,7 +62,9 @@ function FontSizeComponent({
 				unitType="essential"
 				min={0}
 				defaultValue={defaultValue}
-				onChange={handleChange}
+				onChange={(newValue, ref) =>
+					onChange('blockeraFontSize', newValue, { ref })
+				}
 				controlAddonTypes={['variable']}
 				variableTypes={['font-size']}
 				size={size}
@@ -79,9 +72,4 @@ function FontSizeComponent({
 			/>
 		</ControlContextProvider>
 	);
-}
-
-export const FontSize: ComponentType<any> = memo(
-	FontSizeComponent,
-	areTypographyInputFieldPropsEqual
-);
+};

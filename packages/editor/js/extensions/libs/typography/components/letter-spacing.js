@@ -3,8 +3,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { memo, useCallback } from '@wordpress/element';
-import type { MixedElement, ComponentType } from 'react';
+import type { MixedElement } from 'react';
 
 /**
  * Blockera dependencies
@@ -16,9 +15,8 @@ import { ControlContextProvider, InputControl } from '@blockera/controls';
  */
 import { generateExtensionId } from '../../utils';
 import type { TBlockProps, THandleOnChangeAttributes } from '../../types';
-import { areTypographyInputFieldPropsEqual } from './are-typography-input-field-props-equal';
 
-function LetterSpacingComponent({
+export const LetterSpacing = ({
 	block,
 	value,
 	onChange,
@@ -31,14 +29,7 @@ function LetterSpacingComponent({
 	defaultValue?: string,
 	onChange: THandleOnChangeAttributes,
 	activeSearchMode: boolean,
-}): MixedElement {
-	const handleChange = useCallback(
-		(newValue: Object, ref?: Object): void => {
-			onChange('blockeraLetterSpacing', newValue, { ref });
-		},
-		[onChange]
-	);
-
+}): MixedElement => {
 	return (
 		<ControlContextProvider
 			value={{
@@ -75,14 +66,11 @@ function LetterSpacingComponent({
 				defaultValue={defaultValue}
 				arrows={true}
 				unitType="letter-spacing"
-				onChange={handleChange}
+				onChange={(newValue: Object, ref?: Object): void =>
+					onChange('blockeraLetterSpacing', newValue, { ref })
+				}
 				{...props}
 			/>
 		</ControlContextProvider>
 	);
-}
-
-export const LetterSpacing: ComponentType<any> = memo(
-	LetterSpacingComponent,
-	areTypographyInputFieldPropsEqual
-);
+};

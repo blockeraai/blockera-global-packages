@@ -3,7 +3,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useCallback, useMemo, memo } from '@wordpress/element';
+import { useCallback, useMemo } from '@wordpress/element';
 import type { MixedElement, ComponentType } from 'react';
 
 /**
@@ -41,7 +41,6 @@ import {
 	TextWrap,
 } from './components';
 import type { TTypographyProps } from './type/typography-props';
-import { areAdvancedTypographyFeaturesEqual } from './are-advanced-typography-features-equal';
 
 const SPACING_KEYS = [
 	'blockeraLetterSpacing',
@@ -142,8 +141,9 @@ function isFeatureEdited(
 	}
 }
 
-export const AdvancedTypographyFeatures: ComponentType<AdvancedFeaturesProps> =
-	memo(function AdvancedTypographyFeatures({
+export const AdvancedTypographyFeatures: ComponentType<
+	AdvancedFeaturesProps,
+> = ({
 	block,
 	values,
 	attributes,
@@ -164,7 +164,7 @@ export const AdvancedTypographyFeatures: ComponentType<AdvancedFeaturesProps> =
 	isShowTextStroke,
 	isShowTextWrap,
 	isShowWordBreak,
-}: AdvancedFeaturesProps): MixedElement {
+}: AdvancedFeaturesProps): MixedElement => {
 	const isSpacingVisible =
 		isShowLetterSpacing || isShowWordSpacing || isShowTextIndent;
 
@@ -679,4 +679,4 @@ export const AdvancedTypographyFeatures: ComponentType<AdvancedFeaturesProps> =
 			)}
 		</>
 	);
-}, areAdvancedTypographyFeaturesEqual);
+};
