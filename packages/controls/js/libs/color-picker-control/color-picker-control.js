@@ -5,7 +5,7 @@
 import { __ } from '@wordpress/i18n';
 import { useInstanceId } from '@wordpress/compose';
 import type { MixedElement } from 'react';
-import { useCallback, useState } from '@wordpress/element';
+import { useCallback, useRef, useState } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -58,8 +58,15 @@ export default function ColorPickerControl({
 			valueCleanup,
 		});
 
+	const cssValueInputRef = useRef(null);
+
 	const commitColorValue = useCallback(() => {
-		const finalized = finalizeColorString(value);
+		const inputEl = cssValueInputRef.current;
+		const rawFromInput =
+			inputEl && typeof inputEl.value === 'string'
+				? inputEl.value
+				: value;
+		const finalized = finalizeColorString(rawFromInput);
 
 		if (finalized !== value) {
 			setValue(finalized);
@@ -187,6 +194,7 @@ export default function ColorPickerControl({
 			</label>
 			<input
 				id={cssValueInputId}
+				ref={cssValueInputRef}
 				type="text"
 				className="blockera-color-picker-css-field__input"
 				data-cy="color-picker-css-value"

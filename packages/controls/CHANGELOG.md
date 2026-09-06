@@ -13,6 +13,8 @@
   swatch and close control stay clickable while Global Styles updates.
 
 ### Bug Fixes
+- Color picker blur and close commit the value currently in the color field,
+  so a slow inspector remount cannot save the previous color.
 - Vertically center the snackbar icon with the message.
 
 ### Automated Tests
