@@ -11,6 +11,7 @@
 - Vertically center the snackbar icon with the message.
 
 ### Automated Tests
+- Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
 - Cover the default branded snackbar message and icon.
 - Assert the snackbar icon is vertically centered.
 - Assert a snackbar after deleting a variable from the picker.

@@ -216,7 +216,7 @@ This package is the **only** allowed native browser-storage access (`eslintrc.js
 | File | Kind | Covers |
 |------|------|--------|
 | `js/tests/local-storage.spec.js` | Jest | Scoping, string/JSON API, `freshItem`, sessionStorage |
-| `js/tests/storage-site-key.general.e2e.cy.js` | Cypress | `window.blockeraStorageSiteKey` / `UserId` on editor load |
+| `js/tests/storage-site-key.e2e.cy.js` | Cypress | `window.blockeraStorageSiteKey` / `UserId` on editor load |
 
 Cypress helpers for scoped keys live in `@blockera/dev-cypress` (`js/helpers/storage.js`: `getScopedStorageKey`, `removeScopedStorageKeys`).
 

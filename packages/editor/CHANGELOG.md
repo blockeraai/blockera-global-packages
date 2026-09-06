@@ -141,6 +141,7 @@
   a stacked panel is dragged.
 - Sidebar layout: drag session notifies layout only when the hovered slot
   changes, and e2e checks that layout updates stay below pointer-move count.
+- Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
 - Rename global-styles compatibility e2e specs to `.gs-compatibility.e2e.cy.js`.
 - Rename global-styles e2e specs to `.gs.e2e.cy.js`.
 
