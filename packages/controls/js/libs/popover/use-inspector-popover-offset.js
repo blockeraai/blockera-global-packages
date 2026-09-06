@@ -22,6 +22,10 @@ type UseInspectorPopoverOffsetArgs = {
 	inspectorGap: number,
 };
 
+type UpdateOffsetOptions = {
+	force?: boolean,
+};
+
 export function useInspectorPopoverOffset({
 	explicitAnchor,
 	fallbackAnchor,
@@ -38,9 +42,8 @@ export function useInspectorPopoverOffset({
 	useLayoutEffect(() => {
 		let lastSidebarWidth = Number.NaN;
 
-		const updateOffset = ({
-			force = false,
-		}: { force?: boolean } = {}): void => {
+		const updateOffset = (options?: UpdateOffsetOptions): void => {
+			const force: boolean = Boolean(options && options.force);
 			const resolvedAnchor = resolveAnchor();
 			const sidebar = getInspectorSidebarElement(resolvedAnchor);
 			const nextWidth =
@@ -70,14 +73,14 @@ export function useInspectorPopoverOffset({
 		};
 
 		let frameId = 0;
-		const scheduleUpdateOffset = (force: boolean = false): void => {
+		const scheduleUpdateOffset = (force?: boolean): void => {
 			if (frameId) {
 				return;
 			}
 
 			frameId = window.requestAnimationFrame(() => {
 				frameId = 0;
-				updateOffset({ force });
+				updateOffset({ force: Boolean(force) });
 			});
 		};
 

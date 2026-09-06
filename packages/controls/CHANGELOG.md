@@ -26,6 +26,8 @@
 
 ### Development Notes
 - Annotate inspector popover offset callbacks for Flow.
+- Avoid destructured defaults on those callbacks so Flow
+  `missing-local-annot` passes.
 
 ## [5.0.0] - 2026-09-05
 
