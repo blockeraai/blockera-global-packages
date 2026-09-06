@@ -5,6 +5,9 @@
 - Window-flag render counters (`__BLOCKERA_RENDER_DEBUG__` and the BlockBase
   legacy key) let Cypress e2e count component commits in the production
   bundle without a new webpack env. Unset flags stay a no-op.
+- Render-debug looks at the local window first and only reads the parent
+  when this document is framed, so inspector typing does not pay a
+  cross-window flag check.
 
 ### Automated Tests
 

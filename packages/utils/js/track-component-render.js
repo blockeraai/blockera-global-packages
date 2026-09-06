@@ -39,16 +39,22 @@ export function getRenderDebugWindow(component: ?string): null | Object {
 
 	const keys = debugKeysForComponent(component);
 
-	try {
-		if (window.parent && windowHasDebugFlag(window.parent, keys)) {
-			return window.parent;
-		}
-	} catch (e) {
-		// Cross-origin parent; fall through to the local window.
-	}
-
 	if (windowHasDebugFlag(window, keys)) {
 		return window;
+	}
+
+	const parent = window.parent;
+
+	if (!parent || parent === window) {
+		return null;
+	}
+
+	try {
+		if (windowHasDebugFlag(parent, keys)) {
+			return parent;
+		}
+	} catch (e) {
+		// Cross-origin parent; ignore.
 	}
 
 	return null;
