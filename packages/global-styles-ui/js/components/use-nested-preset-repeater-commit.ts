@@ -7,7 +7,10 @@ import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
  * Internal dependencies
  */
 import { useDeferredPresetItemCommit } from './use-deferred-preset-item-commit';
-import { shouldCommitNestedRepeaterChange } from './should-commit-nested-repeater-change';
+import {
+	didNestedRepeaterLayerClose,
+	shouldCommitNestedRepeaterChange,
+} from './should-commit-nested-repeater-change';
 
 type ChangeRepeaterItem = (args: {
 	onChange: (newValue: unknown) => void;
@@ -32,6 +35,7 @@ export function useNestedPresetRepeaterCommit({
 	getItem,
 	initialRecord,
 	persistedSignature,
+	buildPersistPatch,
 }: {
 	changeRepeaterItem: ChangeRepeaterItem;
 	onChange: (newValue: unknown) => void;
@@ -42,6 +46,7 @@ export function useNestedPresetRepeaterCommit({
 	getItem: () => Object;
 	initialRecord: Record<string, unknown>;
 	persistedSignature: unknown;
+	buildPersistPatch?: (record: Record<string, unknown>) => Object;
 }) {
 	const { stagePatch, commitPatch } = useDeferredPresetItemCommit({
 		changeRepeaterItem,
@@ -73,14 +78,19 @@ export function useNestedPresetRepeaterCommit({
 			newValue: Record<string, Record<string, unknown>>,
 			patch: Object
 		) => {
+			const previousRecord = nestedRepeaterRef.current;
 			const commitNow = shouldCommitNestedRepeaterChange(
-				nestedRepeaterRef.current,
+				previousRecord,
+				newValue as Record<string, unknown>
+			);
+			const layerClosed = didNestedRepeaterLayerClose(
+				previousRecord,
 				newValue as Record<string, unknown>
 			);
 			nestedRepeaterRef.current = newValue as Record<string, unknown>;
 			setLiveRecord(newValue as Record<string, unknown>);
 
-			if (commitNow) {
+			if (commitNow || layerClosed) {
 				commitPatch(patch);
 			} else {
 				stagePatch(patch);
@@ -88,6 +98,28 @@ export function useNestedPresetRepeaterCommit({
 		},
 		[commitPatch, stagePatch]
 	);
+
+	useEffect(() => {
+		if (!buildPersistPatch) {
+			return;
+		}
+
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape') {
+				return;
+			}
+
+			commitPatch(
+				buildPersistPatch(nestedRepeaterRef.current)
+			);
+		};
+
+		document.addEventListener('keydown', onKeyDown);
+
+		return () => {
+			document.removeEventListener('keydown', onKeyDown);
+		};
+	}, [buildPersistPatch, commitPatch]);
 
 	return { commitNestedChange, liveRecord, stagePatch, commitPatch };
 }

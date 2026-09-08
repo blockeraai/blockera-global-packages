@@ -14,6 +14,16 @@
 - Opening Color variables no longer crashes the editor.
 - Duplicating a custom variable (or a nested shadow or filter layer) keeps
   the editor open so the upgrade prompt can still appear.
+- Closing a nested shadow or filter layer (Escape or the close control)
+  saves the value you typed, instead of leaving it unsaved.
+- Leaving a nested transition (or similar) field with Escape saves the
+  typed value to Global Styles before the editor closes.
+- Editing a nested transform layer (for example Move-X) and pressing Escape
+  saves the items array on the theme variable.
+- Editing a nested text shadow layer (blur) and pressing Escape saves the
+  CSS shadow string on the theme variable.
+- Editing a nested box shadow layer (offset) and pressing Escape saves the
+  CSS shadow string on the theme variable.
 
 ### Development Notes
 

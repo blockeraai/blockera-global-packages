@@ -1,8 +1,9 @@
 /**
  * Nested preset controls (box shadow, filter) write the inner repeater store
  * on every field keystroke. Persist the outer row for type, visibility, or
- * reorder changes. Add, clone, delete, and layer open/close stay staged
- * until the preset editor closes.
+ * reorder changes. Add, clone, and delete stay staged until the preset editor
+ * closes. Closing a nested layer (Escape or the close control) persists the
+ * staged field values.
  */
 
 function itemKeys(record: Record<string, unknown> | null | undefined): string[] {
@@ -70,6 +71,48 @@ export function shouldCommitNestedRepeaterChange(
 		}
 
 		if (rowOrder(prev[key]) !== rowOrder(next?.[key])) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function rowIsOpen(row: unknown): boolean {
+	if (!row || typeof row !== 'object' || Array.isArray(row)) {
+		return false;
+	}
+
+	return (row as { isOpen?: unknown }).isOpen === true;
+}
+
+/**
+ * True when an existing nested layer went from open to closed (same item key).
+ * Deletes are not closes — those stay staged until the outer editor unmounts.
+ *
+ * @param {Record<string, unknown> | null | undefined} prev Previous inner repeater record.
+ * @param {Record<string, unknown> | null | undefined} next Next inner repeater record.
+ * @return {boolean} True when a nested layer just closed.
+ */
+export function didNestedRepeaterLayerClose(
+	prev: Record<string, unknown> | null | undefined,
+	next: Record<string, unknown> | null | undefined
+): boolean {
+	if (!prev || !next) {
+		return false;
+	}
+
+	const prevKeys = itemKeys(prev);
+
+	for (let i = 0; i < prevKeys.length; i++) {
+		const key = prevKeys[i];
+		const nextRow = next[key];
+
+		if (!nextRow || typeof nextRow !== 'object' || Array.isArray(nextRow)) {
+			continue;
+		}
+
+		if (rowIsOpen(prev[key]) && !rowIsOpen(nextRow)) {
 			return true;
 		}
 	}

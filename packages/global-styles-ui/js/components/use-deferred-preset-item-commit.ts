@@ -81,20 +81,14 @@ export function useDeferredPresetItemCommit({
 		}
 
 		const args = argsRef.current;
-		queueMicrotask(() => {
-			if (suppressPersistRef.current) {
-				return;
-			}
-
-			pendingRef.current = null;
-			args.changeRepeaterItem({
-				onChange: args.onChange,
-				valueCleanup: args.valueCleanup,
-				controlId: args.controlId,
-				repeaterId: args.repeaterId,
-				itemId: args.itemId,
-				value,
-			});
+		pendingRef.current = null;
+		args.changeRepeaterItem({
+			onChange: args.onChange,
+			valueCleanup: args.valueCleanup,
+			controlId: args.controlId,
+			repeaterId: args.repeaterId,
+			itemId: args.itemId,
+			value,
 		});
 	}, []);
 
@@ -194,9 +188,7 @@ export function useDeferredPresetItemCommit({
 				target instanceof Element &&
 				target.closest(POPOVER_CLOSE_CONTROL_SELECTOR)
 			) {
-				queueMicrotask(() => {
-					flushNow();
-				});
+				flushNow();
 			}
 		};
 
@@ -206,8 +198,21 @@ export function useDeferredPresetItemCommit({
 			}, 0);
 		};
 
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape') {
+				return;
+			}
+
+			// Bubble after the focused field commits (e.g. UnitInput Escape).
+			// Nested transform/filter layers stay mounted on the first Escape
+			// (only the inner popover closes), so unmount persist does not run —
+			// flush here in the same turn as the key so Cypress/entity reads see items.
+			flushNow();
+		};
+
 		document.addEventListener('mousedown', onPointerDownCapture, true);
 		document.addEventListener('mouseup', onPointerUp, true);
+		document.addEventListener('keydown', onKeyDown);
 
 		return () => {
 			document.removeEventListener(
@@ -216,6 +221,7 @@ export function useDeferredPresetItemCommit({
 				true
 			);
 			document.removeEventListener('mouseup', onPointerUp, true);
+			document.removeEventListener('keydown', onKeyDown);
 		};
 	}, [flushNow]);
 

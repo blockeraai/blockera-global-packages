@@ -95,6 +95,15 @@ function TransitionPresetSizeComponent({
 		[transitionPreset.items]
 	);
 
+	const buildPersistPatch = useCallback(
+		(record: Record<string, unknown>) => ({
+			items: repeaterRecordToItems(
+				record as Record<string, Record<string, unknown>>
+			),
+		}),
+		[]
+	);
+
 	const { commitNestedChange, liveRecord } = useNestedPresetRepeaterCommit({
 		changeRepeaterItem,
 		onChange,
@@ -105,6 +114,7 @@ function TransitionPresetSizeComponent({
 		getItem,
 		initialRecord: repeaterItems as unknown as Record<string, unknown>,
 		persistedSignature: transitionPreset.items,
+		buildPersistPatch,
 	});
 
 	const handleTransitionChange = useCallback(

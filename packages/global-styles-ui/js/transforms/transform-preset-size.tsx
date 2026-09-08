@@ -102,6 +102,15 @@ function TransformPresetSizeComponent({
 		[transformPreset.items]
 	);
 
+	const buildPersistPatch = useCallback(
+		(record: Record<string, unknown>) => ({
+			items: repeaterRecordToItems(
+				record as Record<string, Record<string, unknown>>
+			),
+		}),
+		[]
+	);
+
 	const { commitNestedChange, liveRecord } = useNestedPresetRepeaterCommit({
 		changeRepeaterItem,
 		onChange,
@@ -112,6 +121,7 @@ function TransformPresetSizeComponent({
 		getItem,
 		initialRecord: repeaterItems as unknown as Record<string, unknown>,
 		persistedSignature: transformPreset.items,
+		buildPersistPatch,
 	});
 
 	const handleTransformChange = useCallback(

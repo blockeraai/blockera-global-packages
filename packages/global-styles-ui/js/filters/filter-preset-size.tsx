@@ -108,6 +108,15 @@ function FilterPresetSizeComponent({
 		[filterPreset.items]
 	);
 
+	const buildPersistPatch = useCallback(
+		(record: Record<string, unknown>) => ({
+			items: repeaterRecordToItems(
+				record as Record<string, Record<string, unknown>>
+			),
+		}),
+		[]
+	);
+
 	const { commitNestedChange, liveRecord } = useNestedPresetRepeaterCommit({
 		changeRepeaterItem,
 		onChange,
@@ -118,6 +127,7 @@ function FilterPresetSizeComponent({
 		getItem,
 		initialRecord: repeaterItems as unknown as Record<string, unknown>,
 		persistedSignature: filterPreset.items,
+		buildPersistPatch,
 	});
 
 	const handleFilterChange = useCallback(

@@ -106,6 +106,17 @@ function TextShadowPresetSizeComponent({
 		return textShadowItemsToRepeaterRecord(textShadowItemsFromRaw(raw));
 	}, [textShadowPreset.shadow]);
 
+	const buildPersistPatch = useCallback(
+		(record: Record<string, unknown>) => ({
+			shadow: textShadowPresetItemsToCss(
+				repeaterRecordToTextShadowItems(
+					record as Record<string, Record<string, unknown>>
+				)
+			),
+		}),
+		[]
+	);
+
 	const { commitNestedChange, liveRecord } = useNestedPresetRepeaterCommit({
 		changeRepeaterItem,
 		onChange,
@@ -116,6 +127,7 @@ function TextShadowPresetSizeComponent({
 		getItem,
 		initialRecord: repeaterItems as unknown as Record<string, unknown>,
 		persistedSignature: textShadowPreset.shadow,
+		buildPersistPatch,
 	});
 
 	const [draftShadow, setDraftShadow] = useState(() =>
