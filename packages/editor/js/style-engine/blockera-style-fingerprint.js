@@ -2,9 +2,11 @@
 
 /**
  * Stable fingerprint of Blockera-controlled attributes for style-engine memoization.
- * Stringify is skipped when the same attributes object (and inlineStyles ref) is reused.
- * Nested objects use identity tokens so color-only updates do not re-serialize
- * unchanged Image & Gradient (or other) trees.
+ *
+ * The attributes object is cached by identity. Nested values are path-scoped:
+ * each object is memoized, and a cloned wrapper with the same child refs (or
+ * the same primitive leaves) keeps the same string so color-only updates do
+ * not re-serialize unchanged Image & Gradient trees.
  */
 
 const fingerprintByAttributes: WeakMap<
@@ -12,22 +14,9 @@ const fingerprintByAttributes: WeakMap<
 	{ inline: Object | null | void, fingerprint: string }
 > = new WeakMap();
 
-const objectIdentityTokens: WeakMap<Object, number> = new WeakMap();
-let nextObjectIdentityToken: number = 1;
+const nestedFingerprintByObject: WeakMap<Object, string> = new WeakMap();
 
-function fingerprintValue(value: mixed): string {
-	if (value !== null && typeof value === 'object') {
-		const objectValue: Object = value;
-		let token = objectIdentityTokens.get(objectValue);
-
-		if (token === undefined) {
-			token = nextObjectIdentityToken++;
-			objectIdentityTokens.set(objectValue, token);
-		}
-
-		return '@' + String(token);
-	}
-
+function fingerprintPrimitive(value: mixed): string {
 	if (value === undefined) {
 		return 'undefined';
 	}
@@ -35,6 +24,52 @@ function fingerprintValue(value: mixed): string {
 	const encoded: string | void = JSON.stringify(value);
 
 	return encoded ?? String(value);
+}
+
+function fingerprintValue(value: mixed): string {
+	if (value === null) {
+		return 'null';
+	}
+
+	if (typeof value !== 'object') {
+		return fingerprintPrimitive(value);
+	}
+
+	const objectValue: Object = value;
+	const cached = nestedFingerprintByObject.get(objectValue);
+
+	if (cached !== undefined) {
+		return cached;
+	}
+
+	// Break cycles before walking children.
+	nestedFingerprintByObject.set(objectValue, '#');
+
+	let result: string;
+
+	if (Array.isArray(objectValue)) {
+		const parts: Array<string> = [];
+
+		for (let i = 0; i < objectValue.length; i++) {
+			parts.push(fingerprintValue(objectValue[i]));
+		}
+
+		result = '[' + parts.join(',') + ']';
+	} else {
+		const keys = Object.keys(objectValue).sort();
+		const parts: Array<string> = [];
+
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i];
+			parts.push(key + ':' + fingerprintValue(objectValue[key]));
+		}
+
+		result = '{' + parts.join(',') + '}';
+	}
+
+	nestedFingerprintByObject.set(objectValue, result);
+
+	return result;
 }
 
 /**

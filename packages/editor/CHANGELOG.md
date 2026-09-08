@@ -43,8 +43,8 @@
   so a solid color edit does not rebuild the layers repeater.
 - Annotate memoized background field exports so Flow can verify module
   signatures.
-- Style fingerprints token nested attribute objects by identity so color-only
-  updates do not JSON.stringify unchanged background layers.
+- Style fingerprints token nested trees by path so a cloned wrapper with
+  the same child values does not look like a style change.
 - Fingerprint primitives always return a string when JSON.stringify is void.
 - Canvas-only split of colliding `background` / `backgroundColor` React
   styles; saved block HTML is not rewritten via extraProps.
