@@ -152,28 +152,6 @@ export const PopoverCore: React$AbstractComponent<TPopoverCoreProps, mixed> =
 						return;
 					}
 
-					const eventTarget = event.target;
-
-					if (
-						eventTarget instanceof HTMLElement &&
-						eventTarget.closest(
-							'input, textarea, select, [contenteditable="true"]'
-						)
-					) {
-						return;
-					}
-
-					const isBodyOrRoot =
-						eventTarget === document.body ||
-						eventTarget === document.documentElement ||
-						eventTarget === document;
-
-					// Leave focused popover Escape to Gutenberg. This path only
-					// covers `cy.get('body').type('{esc}')` / unfocused body events.
-					if (!isBodyOrRoot) {
-						return;
-					}
-
 					const popoverRoot = normalizePopoverRoot(
 						popoverRef.current
 					);
@@ -186,6 +164,29 @@ export const PopoverCore: React$AbstractComponent<TPopoverCoreProps, mixed> =
 						return;
 					}
 
+					const eventTarget = event.target;
+					const fieldInsideThisPopover =
+						eventTarget instanceof HTMLElement &&
+						Boolean(
+							eventTarget.closest(
+								'input, textarea, select, [contenteditable="true"]'
+							)
+						) &&
+						popoverRoot.contains(eventTarget);
+
+					const isBodyOrRoot =
+						eventTarget === document.body ||
+						eventTarget === document.documentElement ||
+						eventTarget === document;
+
+					// Innermost layer: Escape from a field closes this popover.
+					// Unfocused body covers `cy.get('body').type('{esc}')`.
+					// Other focused chrome is left to Gutenberg.
+					if (!fieldInsideThisPopover && !isBodyOrRoot) {
+						return;
+					}
+
+					event.preventDefault();
 					dismissPopover({ skipMountGuard: true });
 				};
 

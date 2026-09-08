@@ -16,6 +16,8 @@
   so the upgrade prompt can appear.
 - Clicking shade toggles (and other controls) in a preset edit popover no
   longer closes the variable picker.
+- Escape in a field inside a nested popover closes that layer instead of
+  leaving it open.
 
 ### Improvements
 
