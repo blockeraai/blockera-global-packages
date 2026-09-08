@@ -40,8 +40,9 @@
 - Object identity helpers, control registration batches, InputControl unit
   catalogs, inspector typing budgets, and popover dismiss for repeater
   clone chrome and field-leave.
-- InputControl component tests give the store a name when the field id is
-  missing or invalid.
+- InputControl, TextAreaControl, BorderControl, CheckboxControl, and
+  RepeaterControl component tests give the store a name so delayed
+  registration can mount the control.
 
 ## [5.0.0] - 2026-09-05
 
