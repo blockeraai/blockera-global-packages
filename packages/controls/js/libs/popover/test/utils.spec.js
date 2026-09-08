@@ -6,7 +6,10 @@ import {
 	getPopoverRootFromCloseControl,
 	hasNestedOverlayOpenAsideFrom,
 	isOtherPopoverClosing,
+	isElementInsideRepeaterChrome,
+	isFocusLeavingElement,
 	isPopoverDismissIgnoredTarget,
+	isRepeaterActionTarget,
 	isSketchPickerInteractionActiveFor,
 	isElementInsideValueAddonPointers,
 	isElementInsideVariablePickerPopover,
@@ -268,6 +271,137 @@ describe('popover offset utils', () => {
 			expect(
 				isPopoverDismissIgnoredTarget(parentPopover, closeButton)
 			).toBe(true);
+		});
+
+		it('isElementInsideRepeaterChrome matches clone chrome and not a field input', () => {
+			const clone = document.createElement('button');
+			clone.className = 'blockera-control-btn-clone';
+			const input = document.createElement('input');
+			document.body.appendChild(clone);
+			document.body.appendChild(input);
+
+			expect(isElementInsideRepeaterChrome(clone)).toBe(true);
+			expect(isRepeaterActionTarget(clone)).toBe(true);
+			expect(isRepeaterActionTarget(input)).toBe(false);
+
+			document.body.removeChild(clone);
+			document.body.removeChild(input);
+		});
+
+		it('isRepeaterActionTarget matches a WordPress modal overlay', () => {
+			const overlay = document.createElement('div');
+			overlay.className = 'components-modal__screen-overlay';
+			const button = document.createElement('button');
+			overlay.appendChild(button);
+			document.body.appendChild(overlay);
+
+			expect(isRepeaterActionTarget(button)).toBe(true);
+
+			document.body.removeChild(overlay);
+		});
+
+		it('isFocusLeavingElement returns false for descendants, clone chrome, and nested popovers', () => {
+			const parent = document.createElement('div');
+			const child = document.createElement('input');
+			parent.appendChild(child);
+
+			expect(
+				isFocusLeavingElement({
+					currentTarget: parent,
+					relatedTarget: child,
+				})
+			).toBe(false);
+
+			const clone = document.createElement('button');
+			clone.className = 'blockera-control-btn-clone';
+			document.body.appendChild(clone);
+
+			expect(
+				isFocusLeavingElement({
+					currentTarget: parent,
+					relatedTarget: clone,
+				})
+			).toBe(false);
+
+			document.body.removeChild(clone);
+
+			const picker = document.createElement('div');
+			picker.className = 'sketch-picker';
+			const swatch = document.createElement('div');
+			picker.appendChild(swatch);
+			document.body.appendChild(picker);
+
+			expect(
+				isFocusLeavingElement({
+					currentTarget: parent,
+					relatedTarget: swatch,
+				})
+			).toBe(false);
+
+			document.body.removeChild(picker);
+
+			expect(
+				isFocusLeavingElement({
+					currentTarget: parent,
+					relatedTarget: null,
+				})
+			).toBe(false);
+
+			const outsider = document.createElement('input');
+
+			expect(
+				isFocusLeavingElement({
+					currentTarget: parent,
+					relatedTarget: outsider,
+				})
+			).toBe(true);
+
+			const parentPopover = document.createElement('div');
+			parentPopover.className = 'components-popover';
+			const field = document.createElement('div');
+			parentPopover.appendChild(field);
+
+			const nestedPopover = document.createElement('div');
+			nestedPopover.className = 'components-popover';
+			const nestedButton = document.createElement('button');
+			nestedPopover.appendChild(nestedButton);
+			document.body.appendChild(parentPopover);
+			document.body.appendChild(nestedPopover);
+
+			expect(
+				isFocusLeavingElement({
+					currentTarget: field,
+					relatedTarget: nestedButton,
+				})
+			).toBe(false);
+
+			const otherField = document.createElement('input');
+			parentPopover.appendChild(otherField);
+
+			expect(
+				isFocusLeavingElement({
+					currentTarget: field,
+					relatedTarget: otherField,
+				})
+			).toBe(true);
+
+			document.body.removeChild(parentPopover);
+			document.body.removeChild(nestedPopover);
+		});
+
+		it('isPopoverDismissIgnoredTarget keeps the popover open for repeater clone chrome', () => {
+			const popover = document.createElement('div');
+			popover.className = 'blockera-component-popover';
+			document.body.appendChild(popover);
+
+			const clone = document.createElement('button');
+			clone.className = 'blockera-control-btn-clone';
+			document.body.appendChild(clone);
+
+			expect(isPopoverDismissIgnoredTarget(popover, clone)).toBe(true);
+
+			document.body.removeChild(popover);
+			document.body.removeChild(clone);
 		});
 
 		it('isPopoverDismissIgnoredTarget keeps the popover open for inside targets', () => {
