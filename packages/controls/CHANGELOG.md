@@ -18,6 +18,8 @@
   longer closes the variable picker.
 - Escape in a field inside a nested popover closes that layer instead of
   leaving it open.
+- Unit fields commit the typed value when you press Escape, so nested
+  Global Styles editors can save before they close.
 
 ### Improvements
 

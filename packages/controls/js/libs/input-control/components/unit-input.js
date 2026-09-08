@@ -501,6 +501,16 @@ export const UnitInput: ComponentType<UnitInputProps> = memo(function UnitInput(
 			return;
 		}
 
+		if (event.key === 'Escape') {
+			if (typeof onChange === 'function') {
+				onChange({
+					unitValue,
+					inputValue: String(typedValue ?? ''),
+				});
+			}
+			return;
+		}
+
 		// Handle calculations on Enter key
 		if (event.key === 'Enter') {
 			event.preventDefault();
