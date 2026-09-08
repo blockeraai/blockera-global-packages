@@ -1,4 +1,7 @@
-import { shouldCommitNestedRepeaterChange } from '../should-commit-nested-repeater-change';
+import {
+	didNestedRepeaterLayerClose,
+	shouldCommitNestedRepeaterChange,
+} from '../should-commit-nested-repeater-change';
 
 describe('shouldCommitNestedRepeaterChange', () => {
 	const openLayer = {
@@ -29,6 +32,29 @@ describe('shouldCommitNestedRepeaterChange', () => {
 			shouldCommitNestedRepeaterChange(
 				{ 'outer-0': openLayer },
 				{ 'outer-0': { ...openLayer, isOpen: false, blur: '18px' } }
+			)
+		).toBe(false);
+	});
+
+	it('detects nested layer close separately from structural commit', () => {
+		expect(
+			didNestedRepeaterLayerClose(
+				{ 'outer-0': openLayer },
+				{ 'outer-0': { ...openLayer, isOpen: false, blur: '18px' } }
+			)
+		).toBe(true);
+
+		expect(
+			didNestedRepeaterLayerClose(
+				{ 'outer-0': openLayer },
+				{ 'outer-0': { ...openLayer, blur: '18px' } }
+			)
+		).toBe(false);
+
+		expect(
+			didNestedRepeaterLayerClose(
+				{ 'outer-0': openLayer },
+				{}
 			)
 		).toBe(false);
 	});
