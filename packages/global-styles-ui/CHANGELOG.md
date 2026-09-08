@@ -41,6 +41,8 @@
   dropping siblings, and reuses the same string for the same settings object.
 - Preset item editors: deferred persist coalesces field patches, equality
   ignores row chrome, and header drafts notify only the patched row.
+- Variable editor e2e: typing does not save until leave or close; color,
+  shadow, and filter keep their pickers attached.
 
 ## [3.0.0] - 2026-09-05
 
