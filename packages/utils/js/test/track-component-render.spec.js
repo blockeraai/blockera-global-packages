@@ -1,9 +1,11 @@
 import {
 	BLOCK_BASE_RENDER_DEBUG_KEY,
+	PERF_COUNTERS_KEY,
 	RENDER_DEBUG_KEY,
 	RENDER_STATS_KEY,
 	shouldTrackComponentRender,
 	trackComponentRender,
+	trackPerfCounter,
 } from '../track-component-render';
 
 describe('trackComponentRender', () => {
@@ -11,6 +13,7 @@ describe('trackComponentRender', () => {
 		delete window[RENDER_DEBUG_KEY];
 		delete window[BLOCK_BASE_RENDER_DEBUG_KEY];
 		delete window[RENDER_STATS_KEY];
+		delete window[PERF_COUNTERS_KEY];
 		delete window.__BLOCKERA_BLOCK_BASE_RENDER_STATS__;
 	});
 
@@ -51,6 +54,27 @@ describe('trackComponentRender', () => {
 		expect(window[RENDER_STATS_KEY]?.byComponent?.InputControl).toBeUndefined();
 		expect(window.__BLOCKERA_BLOCK_BASE_RENDER_STATS__.total).toBe(1);
 		expect(window.__BLOCKERA_BLOCK_BASE_RENDER_STATS__.byClientId.abc.count).toBe(
+			1
+		);
+	});
+
+	test('trackPerfCounter is a no-op without the shared render flag', () => {
+		trackPerfCounter('gs.mergeConfigs', { outcome: 'rebuilt' });
+		expect(window[PERF_COUNTERS_KEY]).toBeUndefined();
+	});
+
+	test('trackPerfCounter counts totals and outcomes when the flag is set', () => {
+		window[RENDER_DEBUG_KEY] = true;
+		trackPerfCounter('gs.mergeConfigs', { outcome: 'retained' });
+		trackPerfCounter('gs.mergeConfigs', { outcome: 'rebuilt' });
+		trackPerfCounter('gs.editEntityRecord');
+
+		expect(window[PERF_COUNTERS_KEY].byName['gs.mergeConfigs'].total).toBe(2);
+		expect(window[PERF_COUNTERS_KEY].byName['gs.mergeConfigs'].retained).toBe(
+			1
+		);
+		expect(window[PERF_COUNTERS_KEY].byName['gs.mergeConfigs'].rebuilt).toBe(1);
+		expect(window[PERF_COUNTERS_KEY].byName['gs.editEntityRecord'].total).toBe(
 			1
 		);
 	});
