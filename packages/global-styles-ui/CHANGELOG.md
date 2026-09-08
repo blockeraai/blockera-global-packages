@@ -28,6 +28,8 @@
   unchanged, still replace `backgroundImage`, and keep theme/default preset
   arrays when only custom values change.
 - Editor settings sync skip helper and iframe observer root selection.
+- Supplemental preset CSS skips core color vars, patches one infix without
+  dropping siblings, and reuses the same string for the same settings object.
 
 ## [3.0.0] - 2026-09-05
 

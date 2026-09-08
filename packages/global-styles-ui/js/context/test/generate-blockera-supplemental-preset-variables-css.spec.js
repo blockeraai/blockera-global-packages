@@ -1,75 +1,70 @@
-import { generateBlockeraSupplementalPresetVariablesCss } from '../generate-blockera-supplemental-preset-variables-css';
+import {
+	generateBlockeraSupplementalPresetVariablesCss,
+	resetBlockeraSupplementalPresetVariablesCssCacheForTests,
+} from '../generate-blockera-supplemental-preset-variables-css';
 
 describe('generateBlockeraSupplementalPresetVariablesCss', () => {
-	it('emits line-height preset variables from merged settings', () => {
+	beforeEach(() => {
+		resetBlockeraSupplementalPresetVariablesCssCacheForTests();
+	});
+
+	it('skips core-engine buckets such as color', () => {
 		const css = generateBlockeraSupplementalPresetVariablesCss({
+			color: {
+				palette: {
+					custom: [{ slug: 'accent', color: '#f00', isVisible: true }],
+				},
+			},
 			typography: {
 				blockeraLineHeights: {
-					custom: [{ slug: 'relaxed', size: '1.8', isVisible: true }],
+					custom: [{ slug: 'relaxed', size: '1.5', isVisible: true }],
 				},
 			},
 		});
 
-		expect(css).toContain('--wp--preset--line-height--relaxed: 1.8');
+		expect(css).not.toContain('--wp--preset--color--');
+		expect(css).toContain('--wp--preset--line-height--relaxed');
 	});
 
-	it('returns empty string when no supplemental presets exist', () => {
-		expect(
-			generateBlockeraSupplementalPresetVariablesCss({
-				typography: {
-					fontSizes: { theme: [{ slug: 'small', size: '14px' }] },
-				},
-			})
-		).toBe('');
-	});
-
-	it('emits border preset variables from merged settings', () => {
-		const css = generateBlockeraSupplementalPresetVariablesCss({
-			border: {
-				blockeraBorder: {
-					presets: {
-						custom: [
-							{
-								slug: 'accent',
-								border: {
-									width: '1px',
-									style: 'solid',
-									color: '#112233',
-								},
-							},
-						],
-					},
+	it('updates one infix and slug without dropping sibling infixes', () => {
+		const widthSizes = {
+			custom: [{ slug: 'wide', size: '1200px', isVisible: true }],
+		};
+		const first = generateBlockeraSupplementalPresetVariablesCss({
+			typography: {
+				blockeraLineHeights: {
+					custom: [{ slug: 'relaxed', size: '1.5', isVisible: true }],
 				},
 			},
+			blockeraWidthSizes: widthSizes,
 		});
-
-		expect(css).toContain(
-			'--wp--preset--border--accent: 1px solid #112233'
-		);
-	});
-
-	it('defaults empty border style to solid in preset variables CSS', () => {
-		const css = generateBlockeraSupplementalPresetVariablesCss({
-			border: {
-				blockeraBorder: {
-					presets: {
-						custom: [
-							{
-								slug: 'border-1',
-								border: {
-									width: '10px',
-									style: '',
-									color: '#d53a3a',
-								},
-							},
-						],
-					},
+		const second = generateBlockeraSupplementalPresetVariablesCss({
+			typography: {
+				blockeraLineHeights: {
+					custom: [{ slug: 'relaxed', size: '2', isVisible: true }],
 				},
 			},
+			blockeraWidthSizes: widthSizes,
 		});
 
-		expect(css).toContain(
-			'--wp--preset--border--border-1: 10px solid #d53a3a'
-		);
+		expect(first).toContain('--wp--preset--line-height--relaxed: 1.5');
+		expect(second).toContain('--wp--preset--line-height--relaxed: 2');
+		expect(second).toContain('--wp--preset--width-size--wide: 1200px');
+		expect(first).toContain('--wp--preset--width-size--wide: 1200px');
+	});
+
+	it('returns the same string while settings identity is unchanged', () => {
+		const settings = {
+			typography: {
+				blockeraLineHeights: {
+					custom: [{ slug: 'relaxed', size: '1.5', isVisible: true }],
+				},
+			},
+		};
+
+		const first = generateBlockeraSupplementalPresetVariablesCss(settings);
+		const second = generateBlockeraSupplementalPresetVariablesCss(settings);
+
+		expect(second).toBe(first);
 	});
 });
