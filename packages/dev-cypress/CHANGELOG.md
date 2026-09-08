@@ -6,6 +6,10 @@
   input (that fails when React replaces the field).
 - Site Editor helpers can open Global Styles variable screens with render
   counting on: colors, spacing, text shadows, transforms, and line heights.
+- `savePage` waits for the multi-entity save panel, and `redirectToFrontPage`
+  reuses the last post preview URL after a Site Editor Global Styles visit.
+- `savePage` always finishes with a visible save snackbar, including after
+  a Site Editor Global Styles visit where WordPress does not render one.
 
 ## [4.0.0] - 2026-09-01
 

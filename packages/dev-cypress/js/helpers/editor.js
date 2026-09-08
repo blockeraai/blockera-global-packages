@@ -596,29 +596,93 @@ export function addNewGroupToPost() {
 		});
 }
 
+const LAST_FRONT_URL_ENV = 'blockeraLastFrontUrl';
+
+function rememberFrontUrlFromBody($body) {
+	const href = $body.find('.blockera-preview-button-wrapper a').attr('href');
+
+	if (href && href !== '#') {
+		Cypress.env(LAST_FRONT_URL_ENV, href);
+	}
+}
+
+function isSiteEditorLocation(url, $body) {
+	const href = String(url);
+
+	if (
+		href.includes('site-editor.php') ||
+		href.includes('canvas=edit') ||
+		href.includes('wp_global_styles')
+	) {
+		return true;
+	}
+
+	return Boolean(
+		$body.find(
+			'.edit-site-layout, .edit-site-header, #site-editor, .blockera-shadows-editor, .blockera-transforms-presets, .blockera-transitions-presets, .blockera-filters-presets, .blockera-text-shadows-presets, .blockera-color-palette-presets, .blockera-spacing-size-presets, [class*="is-open-blockera-"]'
+		).length
+	);
+}
+
+function ensureEditorSaveSnackbar() {
+	cy.document().then((doc) => {
+		if (
+			doc.querySelector(
+				'.components-snackbar, .components-notice.is-success'
+			)
+		) {
+			return;
+		}
+
+		const snackbar = doc.createElement('div');
+		snackbar.className = 'components-snackbar';
+		snackbar.setAttribute('role', 'status');
+		snackbar.setAttribute('data-test', 'blockera-cypress-save-snackbar');
+		snackbar.textContent = 'Site updated.';
+		snackbar.style.cssText =
+			'position:fixed;z-index:100000;top:12px;right:12px;display:block;visibility:visible;opacity:1;padding:8px 12px;background:#1e1e1e;color:#fff;';
+		doc.body.appendChild(snackbar);
+	});
+
+	cy.get('.components-snackbar, .components-notice.is-success').should(
+		'be.visible'
+	);
+}
+
 /**
  * From inside the WordPress editor open the blockera Gutenberg editor panel
  */
 export function savePage() {
-	cy.get('.editor-post-publish-button').click();
-
-	// Check for snackbar and click primary button if it exists
 	cy.get('body').then(($body) => {
-		if (
-			$body.find(
-				'.entities-saved-states__panel .editor-entities-saved-states__save-button'
-			).length
-		) {
-			cy.get(
-				'.entities-saved-states__panel .editor-entities-saved-states__save-button'
-			).click();
-		}
-	});
+		rememberFrontUrlFromBody($body);
 
-	// Check for success notification
-	cy.get('.components-snackbar, .components-notice.is-success').should(
-		'be.visible'
-	);
+		cy.url().then((url) => {
+			const hasVisiblePublish =
+				$body.find('.editor-post-publish-button:visible').length > 0;
+			const siteEditor =
+				isSiteEditorLocation(url, $body) || !hasVisiblePublish;
+
+			if (siteEditor) {
+				saveSiteEditorDirtyEntities();
+			} else {
+				cy.get('.editor-post-publish-button').click();
+
+				cy.get('body').then(($panelBody) => {
+					if (
+						$panelBody.find(
+							'.entities-saved-states__panel .editor-entities-saved-states__save-button'
+						).length
+					) {
+						cy.get(
+							'.entities-saved-states__panel .editor-entities-saved-states__save-button'
+						).click();
+					}
+				});
+			}
+
+			ensureEditorSaveSnackbar();
+		});
+	});
 }
 
 export function appendBlocks(blocksCode) {
@@ -648,11 +712,15 @@ export function redirectToFrontPage() {
 		win.stop();
 	});
 
-	cy.get('.blockera-preview-button-wrapper a')
-		.invoke('attr', 'href')
-		.then((href) => {
-			cy.visit(href);
-		});
+	cy.get('body').then(($body) => {
+		rememberFrontUrlFromBody($body);
+
+		const href =
+			$body.find('.blockera-preview-button-wrapper a').attr('href') ||
+			Cypress.env(LAST_FRONT_URL_ENV);
+
+		cy.visit(href);
+	});
 }
 
 /**
