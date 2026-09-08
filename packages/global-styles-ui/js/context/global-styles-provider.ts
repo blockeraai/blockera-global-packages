@@ -9,6 +9,7 @@ import { store as coreStore } from '@wordpress/core-data';
  * Blockera dependencies
  */
 import { prepare } from '@blockera/data-editor';
+import { trackPerfCounter } from '@blockera/utils';
 
 /**
  * Internal dependencies
@@ -178,6 +179,7 @@ function useGlobalStylesUserConfig(): [
 				},
 				options
 			);
+			trackPerfCounter('gs.editEntityRecord');
 		},
 		[
 			globalStylesId,

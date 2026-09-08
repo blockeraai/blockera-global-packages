@@ -4,12 +4,17 @@
 
 - Global Styles variable screens stay smoother while you edit colors, fonts,
   and other presets.
+- Global Styles stays smoother when you save a custom variable: theme and
+  default lists do not rebuild as if they changed.
 
 ### Development Notes
 
 - Shared retainers keep one merged theme.json per user/base identity across
   preset hooks; setting/style memos no longer depend on a rest-spread context
   object or a fresh default `{}`.
+- After a merged theme.json rebuild, unchanged nested settings (theme/default
+  preset arrays) keep their previous object identity. `useGlobalSetting`
+  applies the same retainer at the path value.
 - Editor experimental-features sync skips `JSON.stringify` of the full features
   tree and watches the interface skeleton for iframe mounts instead of
   `document.body`.

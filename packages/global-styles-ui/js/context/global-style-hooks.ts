@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { useMemo, useCallback } from '@wordpress/element';
+import { useMemo, useCallback, useRef } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -11,6 +11,7 @@ import { omit, setImmutably } from '@blockera/utils';
 /**
  * Internal dependencies
  */
+import { retainEqualSubtrees } from './global-styles-config';
 import { useGlobalStylesContext } from './global-styles-provider';
 import {
 	getValueFromObjectPath,
@@ -57,6 +58,16 @@ export function useGlobalSetting<T = unknown>(
 		);
 	}, [configToUse, globalPath, propertyPath, contextualPath]);
 
+	const retainedSettingValueRef = useRef(settingValue);
+	const retainedSettingValue = useMemo(() => {
+		const retained = retainEqualSubtrees(
+			retainedSettingValueRef.current,
+			settingValue
+		);
+		retainedSettingValueRef.current = retained;
+		return retained;
+	}, [settingValue]);
+
 	const setSetting = useCallback(
 		(newValue: unknown): void => {
 			setUserConfig((currentConfig: Record<string, unknown>) =>
@@ -65,7 +76,7 @@ export function useGlobalSetting<T = unknown>(
 		},
 		[setUserConfig, contextualPath]
 	);
-	return [settingValue as T, setSetting as (newValue: T) => void];
+	return [retainedSettingValue as T, setSetting as (newValue: T) => void];
 }
 
 export function useGlobalStyle(
