@@ -23,7 +23,8 @@
 
 - Rename global-styles e2e specs to `.gs.e2e.cy.js`.
 - Global styles config retainers keep object identity when entity slices are
-  unchanged and still replace `backgroundImage`.
+  unchanged, still replace `backgroundImage`, and keep theme/default preset
+  arrays when only custom values change.
 - Editor settings sync skip helper and iframe observer root selection.
 
 ## [3.0.0] - 2026-09-05
