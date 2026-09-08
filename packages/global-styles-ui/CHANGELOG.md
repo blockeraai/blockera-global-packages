@@ -39,6 +39,8 @@
 - Editor settings sync skip helper and iframe observer root selection.
 - Supplemental preset CSS skips core color vars, patches one infix without
   dropping siblings, and reuses the same string for the same settings object.
+- Preset item editors: deferred persist coalesces field patches, equality
+  ignores row chrome, and header drafts notify only the patched row.
 
 ## [3.0.0] - 2026-09-05
 
