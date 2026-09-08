@@ -4,6 +4,7 @@ export const RENDER_DEBUG_KEY = '__BLOCKERA_RENDER_DEBUG__';
 export const RENDER_STATS_KEY = '__BLOCKERA_RENDER_STATS__';
 export const BLOCK_BASE_RENDER_DEBUG_KEY = '__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__';
 export const BLOCK_BASE_RENDER_STATS_KEY = '__BLOCKERA_BLOCK_BASE_RENDER_STATS__';
+export const PERF_COUNTERS_KEY = '__BLOCKERA_PERF_COUNTERS__';
 
 const LOG_LIMIT = 400;
 
@@ -62,6 +63,48 @@ export function getRenderDebugWindow(component: ?string): null | Object {
 
 export function shouldTrackComponentRender(component: ?string): boolean {
 	return getRenderDebugWindow(component) !== null;
+}
+
+function ensurePerfCounters(target: Object): Object {
+	if (!target[PERF_COUNTERS_KEY]) {
+		target[PERF_COUNTERS_KEY] = {
+			byName: {},
+		};
+	}
+
+	return target[PERF_COUNTERS_KEY];
+}
+
+/**
+ * Named counters for Phase 0 traces (entity persist, merge, CSS var regen).
+ * No-op unless `__BLOCKERA_RENDER_DEBUG__` is set.
+ *
+ * @param {string} name
+ * @param {Object} extra Optional `outcome` increments a nested key (e.g. rebuilt).
+ * @return {void}
+ */
+export function trackPerfCounter(
+	name: string,
+	extra: Object = {}
+): void {
+	const target = getRenderDebugWindow();
+
+	if (!target) {
+		return;
+	}
+
+	const bag = ensurePerfCounters(target);
+
+	if (!bag.byName[name]) {
+		bag.byName[name] = { total: 0 };
+	}
+
+	bag.byName[name].total += 1;
+
+	if (typeof extra.outcome === 'string' && extra.outcome) {
+		const outcome = extra.outcome;
+		bag.byName[name][outcome] = (bag.byName[name][outcome] || 0) + 1;
+	}
 }
 
 function ensureSharedStats(target: Object): Object {
