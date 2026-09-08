@@ -676,6 +676,39 @@ describe('popover offset utils', () => {
 			).toBe(true);
 		});
 
+		it('keeps the variable picker open when clicking controls in the preset edit popover', () => {
+			const outerVarPicker = document.createElement('div');
+			outerVarPicker.className =
+				'blockera-component-popover blockera-control-popover-variables';
+			const outerContent = document.createElement('div');
+			outerContent.dataset.test = 'variable-picker-popover';
+			outerVarPicker.appendChild(outerContent);
+			document.body.appendChild(outerVarPicker);
+
+			const editPopover = document.createElement('div');
+			editPopover.className =
+				'blockera-component-popover blockera-control-group-popover blockera-control-popover-variables blockera-control-popover-variables-mode-edit';
+			const toggle = document.createElement('input');
+			toggle.className = 'components-form-toggle__input';
+			toggle.type = 'checkbox';
+			editPopover.appendChild(toggle);
+			document.body.appendChild(editPopover);
+
+			expect(isPopoverDismissIgnoredTarget(outerVarPicker, toggle)).toBe(
+				true
+			);
+			expect(
+				shouldDismissPopoverFromPointerDown(
+					outerVarPicker,
+					toggle,
+					null
+				)
+			).toBe(false);
+			expect(
+				shouldDismissPopoverFromPointerDown(editPopover, toggle, null)
+			).toBe(false);
+		});
+
 		it('keeps outer var-picker open when clicking repeater rows in nested var-picker', () => {
 			const outerVarPicker = document.createElement('div');
 			outerVarPicker.className =
