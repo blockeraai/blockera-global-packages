@@ -12,6 +12,8 @@
   registered yet.
 - Color pickers stay open after you type a hex value while the inspector
   updates (Global Styles inner blocks included).
+- Repeater clone, delete, and add buttons no longer close an open editor,
+  so the upgrade prompt can appear.
 
 ### Improvements
 
@@ -45,6 +47,8 @@
 - retainIfEqual skips walking `value` when name and value identities match.
 - Annotate ResetIcon, Checkboard children, and background-style split so Flow
   can verify those modules.
+- Popover field-leave and repeater-row action helpers live with dismiss
+  rules so other screens import them instead of copying chrome selectors.
 
 ### Automated Tests
 

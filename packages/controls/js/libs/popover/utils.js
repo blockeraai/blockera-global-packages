@@ -633,8 +633,101 @@ function isModalInteractionIgnoredForPopover(
  * - inside a modal opened from this popover
  * - inside value-addon pointer controls (variable / dynamic value openers)
  * - inside variable picker selection targets (nested var-picker support)
+ * - inside repeater clone/delete/add chrome (upgrade prompt must stay attached)
  * - inside dropdown surfaces such as SelectControl menus
  */
+const REPEATER_CHROME_SELECTOR = [
+	'.blockera-control-btn-clone',
+	'.blockera-control-btn-delete',
+	'.blockera-control-btn-add',
+	'.blockera-control-btn-visibility',
+	'.blockera-control-btn-reset',
+	'.blockera-control-btn-toggle',
+	'.feature-wrapper--repeater-upgrade',
+	'[data-cy="blockera-repeater-promo"]',
+].join(', ');
+
+const FIELD_LEAVE_POPOVER_SELECTOR =
+	POPOVER_ROOT_SELECTOR + ', .blockera-control-group-popover';
+
+export function isElementInsideRepeaterChrome(target: ?EventTarget): boolean {
+	return (
+		target instanceof Element &&
+		Boolean(target.closest(REPEATER_CHROME_SELECTOR))
+	);
+}
+
+/**
+ * Clone/delete/add chrome, upgrade prompt, or an open WordPress modal.
+ * Pointer events here must not flush deferred field persist (the editor would
+ * remount before the upgrade prompt can open).
+ */
+export function isRepeaterActionTarget(target: ?EventTarget): boolean {
+	if (isElementInsideRepeaterChrome(target)) {
+		return true;
+	}
+
+	return (
+		target instanceof Element &&
+		(isElementInsideModalOverlay(target) ||
+			Boolean(target.closest('.components-modal__frame')))
+	);
+}
+
+function getFieldLeavePopoverRoot(element: mixed): ?HTMLElement {
+	if (!(element instanceof Element)) {
+		return null;
+	}
+
+	const popover = element.closest(FIELD_LEAVE_POPOVER_SELECTOR);
+
+	return popover instanceof HTMLElement ? popover : null;
+}
+
+/**
+ * True when focus left `currentTarget` (not a descendant, repeater chrome,
+ * sketch picker, or a nested portaled popover). Sharing the same ancestor
+ * popover still counts as leaving the field wrapper.
+ */
+export function isFocusLeavingElement(event: {
+	currentTarget: EventTarget,
+	relatedTarget: EventTarget | null,
+}): boolean {
+	const current = event.currentTarget;
+	const next = event.relatedTarget;
+
+	if (isRepeaterActionTarget(next)) {
+		return false;
+	}
+
+	if (!next) {
+		return false;
+	}
+
+	if (next instanceof Element && next.closest(SKETCH_PICKER_SELECTOR)) {
+		return false;
+	}
+
+	if (
+		current instanceof Element &&
+		next instanceof Node &&
+		current.contains(next)
+	) {
+		return false;
+	}
+
+	if (current instanceof Element && next instanceof Element) {
+		const currentPopover = getFieldLeavePopoverRoot(current);
+		const nextPopover = getFieldLeavePopoverRoot(next);
+
+		if (nextPopover && nextPopover !== currentPopover) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 export function isPopoverDismissIgnoredTarget(
 	popoverRoot: ?HTMLElement,
 	target: ?EventTarget
@@ -649,6 +742,10 @@ export function isPopoverDismissIgnoredTarget(
 
 	if (!(target instanceof Element)) {
 		return false;
+	}
+
+	if (isElementInsideRepeaterChrome(target)) {
+		return true;
 	}
 
 	if (shouldIgnoreDismissForVariablePickerInteraction(popoverRoot, target)) {

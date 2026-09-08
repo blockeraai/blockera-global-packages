@@ -18,6 +18,12 @@ export { TextLoading } from './loading';
 export { default as Divider } from './divider';
 export { default as Popover } from './popover';
 export type { PopoverPlacement } from './popover/types';
+export {
+	isElementInsideRepeaterChrome,
+	isRepeaterActionTarget,
+	isFocusLeavingElement,
+	POPOVER_CLOSE_CONTROL_SELECTOR,
+} from './popover/utils';
 export { default as MediaUploader } from './media-uploader';
 export { Tooltip } from './tooltip';
 export { default as ConditionalWrapper } from './conditional-wrapper';

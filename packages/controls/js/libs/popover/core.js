@@ -235,6 +235,10 @@ export const PopoverCore: React$AbstractComponent<TPopoverCoreProps, mixed> =
 					'btn-pick-color',
 					// Handles repeater item cases when displayed in accordion mode within a popover.
 					'blockera-control-btn-toggle',
+					'blockera-control-btn-clone',
+					'blockera-control-btn-delete',
+					'blockera-control-btn-add',
+					'blockera-control-btn-visibility',
 				];
 
 				const focusTarget = e.target;

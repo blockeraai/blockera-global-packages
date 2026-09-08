@@ -161,6 +161,8 @@ const RepeaterItem = ({
 	const styleRef = useRef(null);
 	const itemRef = useRef(null);
 	const mainPresetHeaderRef = useRef(null);
+	const [mainPresetHeaderAnchor, setMainPresetHeaderAnchor] =
+		useState(null);
 	const prevItemIdRef = useRef(itemId);
 	const scrollBehavior = useReducedMotion() ? 'auto' : 'smooth';
 	const [draggingIndex, setDraggingIndex] = useState(null);
@@ -569,7 +571,12 @@ const RepeaterItem = ({
 		</div>
 	) : (
 		<div
-			ref={mainPresetHeaderRef}
+			ref={(node) => {
+				mainPresetHeaderRef.current = node;
+				if (node !== mainPresetHeaderAnchor) {
+					setMainPresetHeaderAnchor(node);
+				}
+			}}
 			className={controlInnerClassNames('repeater-item-header-holder')}
 			style={{ width: '100%' }}
 			onClickCapture={(e) => {
@@ -791,8 +798,8 @@ const RepeaterItem = ({
 					)
 				}
 				anchor={
-					mainPresetHeaderRef.current instanceof HTMLElement
-						? mainPresetHeaderRef.current
+					mainPresetHeaderAnchor instanceof HTMLElement
+						? mainPresetHeaderAnchor
 						: undefined
 				}
 				onClose={handleItemPopoverClose}

@@ -69,8 +69,17 @@ export default function RepeaterPopoverTitleDelete({
 	} = useControlContext();
 
 	function deleteFunction(event: MouseEvent) {
-		if (event && event?.hasOwnProperty('stopPropagation')) {
-			event.stopPropagation();
+		if (event) {
+			if (typeof event.stopPropagation === 'function') {
+				event.stopPropagation();
+			}
+
+			if (
+				typeof event.nativeEvent?.stopImmediatePropagation ===
+				'function'
+			) {
+				event.nativeEvent.stopImmediatePropagation();
+			}
 		}
 
 		if (!isConfirmDeleteModalOpen && shouldConfirmDeleteModal) {
@@ -143,6 +152,10 @@ export default function RepeaterPopoverTitleDelete({
 			<Button
 				size="extra-small"
 				align="center"
+				className="blockera-control-btn-delete"
+				onMouseDown={(event: MouseEvent) => {
+					event.stopPropagation();
+				}}
 				onClick={(event: MouseEvent) => {
 					event.stopPropagation();
 					deleteFunction(event);
