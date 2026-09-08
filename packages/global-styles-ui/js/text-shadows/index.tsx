@@ -29,6 +29,7 @@ import {
 	PresetTaxonomyGroupLayout,
 	PresetVariablesScreenToolbar,
 	buildVisiblePresetOriginSets,
+	coerceThemeJsonPresetOriginList,
 } from '../components';
 import { useGlobalSetting } from '../context/global-style-hooks';
 import { BLOCKERA_GLOBAL_SETTING_PATH } from '@blockera/data';
@@ -131,6 +132,8 @@ const TextShadowPresetGroup = memo(TextShadowPresetGroupComponent);
  * each preset `{ slug, name, shadow }` with CSS `text-shadow` (same value pattern as core shadow presets).
  */
 export function TextShadowsPresetContent() {
+	const [rawPresetsGroup] = useGlobalSetting('blockeraTextShadow.presets', '');
+
 	const [rawThemePresets, setThemePresets] = useGlobalSetting(
 		BLOCKERA_GLOBAL_SETTING_PATH.TEXT_SHADOW_PRESETS_THEME,
 		''
@@ -138,6 +141,11 @@ export function TextShadowsPresetContent() {
 
 	const [baseThemePresets] = useGlobalSetting(
 		BLOCKERA_GLOBAL_SETTING_PATH.TEXT_SHADOW_PRESETS_THEME,
+		'',
+		'base'
+	);
+	const [basePresetsGroup] = useGlobalSetting(
+		'blockeraTextShadow.presets',
 		'',
 		'base'
 	);
@@ -163,8 +171,25 @@ export function TextShadowsPresetContent() {
 	);
 
 	const themePresets = useMemo(
-		() => sanitizeTextShadowPresets(rawThemePresets),
-		[rawThemePresets]
+		() =>
+			sanitizeTextShadowPresets(
+				coerceThemeJsonPresetOriginList(
+					rawThemePresets,
+					rawPresetsGroup
+				)
+			),
+		[rawThemePresets, rawPresetsGroup]
+	);
+
+	const baseThemeSizes = useMemo(
+		() =>
+			sanitizeTextShadowPresets(
+				coerceThemeJsonPresetOriginList(
+					baseThemePresets,
+					basePresetsGroup
+				)
+			),
+		[baseThemePresets, basePresetsGroup]
 	);
 	const defaultPresets = useMemo(
 		() => sanitizeTextShadowPresets(rawDefaultPresets),
@@ -207,8 +232,8 @@ export function TextShadowsPresetContent() {
 	);
 
 	const resetThemeToBase = useCallback(() => {
-		setThemePresets(sanitizeTextShadowPresets(baseThemePresets));
-	}, [setThemePresets, baseThemePresets]);
+		setThemePresets(baseThemeSizes);
+	}, [setThemePresets, baseThemeSizes]);
 
 	const resetDefaultToBase = useCallback(() => {
 		setDefaultPresets(sanitizeTextShadowPresets(baseDefaultPresets));
@@ -222,12 +247,12 @@ export function TextShadowsPresetContent() {
 		if (!themePresets?.length) {
 			return undefined;
 		}
-		const base = sanitizeTextShadowPresets(baseThemePresets ?? []);
+		const base = baseThemeSizes;
 		if (isEquals(themePresets, base)) {
 			return undefined;
 		}
 		return resetThemeToBase;
-	}, [themePresets, baseThemePresets, resetThemeToBase]);
+	}, [themePresets, baseThemeSizes, resetThemeToBase]);
 
 	const defaultResetHandler = useMemo(() => {
 		if (!defaultPresets?.length) {
@@ -255,11 +280,6 @@ export function TextShadowsPresetContent() {
 		defaultLayerOn,
 		themePresets.length,
 		defaultPresets.length
-	);
-
-	const baseThemeSizes = useMemo(
-		() => sanitizeTextShadowPresets(baseThemePresets),
-		[baseThemePresets]
 	);
 
 	const baseDefaultSizes = useMemo(

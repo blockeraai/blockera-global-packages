@@ -24,6 +24,9 @@
   CSS shadow string on the theme variable.
 - Editing a nested box shadow layer (offset) and pressing Escape saves the
   CSS shadow string on the theme variable.
+- Theme.json transform, text-shadow, and box-shadow lists (`presets[]`) still
+  appear under Theme variables when WordPress has not keyed them as
+  `presets.theme`.
 
 ### Development Notes
 

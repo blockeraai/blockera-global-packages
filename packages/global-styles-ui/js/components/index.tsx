@@ -1,3 +1,4 @@
+export * from './coerce-theme-json-preset-origin-list';
 export * from './utils';
 export * from './preset-meta-utils';
 export * from './subtitle';

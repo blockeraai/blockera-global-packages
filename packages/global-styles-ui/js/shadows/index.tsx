@@ -35,6 +35,7 @@ import {
 	PresetTaxonomyGroupLayout,
 	PresetVariablesScreenToolbar,
 	buildVisiblePresetOriginSets,
+	coerceThemeJsonPresetOriginList,
 } from '../components';
 import {
 	BLOCKERA_SHADOWS_PRESET_INSPECTOR_ACTIVE_CLASS,
@@ -137,6 +138,8 @@ const ShadowPresetGroup = memo(ShadowPresetGroupComponent);
  * `{ slug, name, shadow }` (CSS `box-shadow` value).
  */
 export function ShadowsPresetContent() {
+	const [rawPresetsGroup] = useGlobalSetting('shadow.presets', '');
+
 	const [rawThemePresets, setThemePresets] = useGlobalSetting(
 		'shadow.presets.theme',
 		''
@@ -147,6 +150,7 @@ export function ShadowsPresetContent() {
 		'',
 		'base'
 	);
+	const [basePresetsGroup] = useGlobalSetting('shadow.presets', '', 'base');
 	const [rawDefaultPresets, setDefaultPresets] = useGlobalSetting(
 		'shadow.presets.default',
 		''
@@ -169,8 +173,25 @@ export function ShadowsPresetContent() {
 	);
 
 	const themePresets = useMemo(
-		() => sanitizeShadowPresets(rawThemePresets),
-		[rawThemePresets]
+		() =>
+			sanitizeShadowPresets(
+				coerceThemeJsonPresetOriginList(
+					rawThemePresets,
+					rawPresetsGroup
+				)
+			),
+		[rawThemePresets, rawPresetsGroup]
+	);
+
+	const baseThemeSizes = useMemo(
+		() =>
+			sanitizeShadowPresets(
+				coerceThemeJsonPresetOriginList(
+					baseThemePresets,
+					basePresetsGroup
+				)
+			),
+		[baseThemePresets, basePresetsGroup]
 	);
 	const defaultPresets = useMemo(
 		() => sanitizeShadowPresets(rawDefaultPresets),
@@ -213,8 +234,8 @@ export function ShadowsPresetContent() {
 	);
 
 	const resetThemeToBase = useCallback(() => {
-		setThemePresets(sanitizeShadowPresets(baseThemePresets));
-	}, [setThemePresets, baseThemePresets]);
+		setThemePresets(baseThemeSizes);
+	}, [setThemePresets, baseThemeSizes]);
 
 	const resetDefaultToBase = useCallback(() => {
 		setDefaultPresets(sanitizeShadowPresets(baseDefaultPresets));
@@ -228,12 +249,12 @@ export function ShadowsPresetContent() {
 		if (!themePresets?.length) {
 			return undefined;
 		}
-		const base = sanitizeShadowPresets(baseThemePresets ?? []);
+		const base = baseThemeSizes;
 		if (isEquals(themePresets, base)) {
 			return undefined;
 		}
 		return resetThemeToBase;
-	}, [themePresets, baseThemePresets, resetThemeToBase]);
+	}, [themePresets, baseThemeSizes, resetThemeToBase]);
 
 	const defaultResetHandler = useMemo(() => {
 		if (!defaultPresets?.length) {
@@ -261,11 +282,6 @@ export function ShadowsPresetContent() {
 		defaultLayerOn,
 		themePresets.length,
 		defaultPresets.length
-	);
-
-	const baseThemeSizes = useMemo(
-		() => sanitizeShadowPresets(baseThemePresets),
-		[baseThemePresets]
 	);
 
 	const baseDefaultSizes = useMemo(
