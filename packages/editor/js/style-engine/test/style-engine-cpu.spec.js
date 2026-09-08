@@ -101,4 +101,27 @@ describe('getBlockeraStyleFingerprint identity cache', () => {
 		expect(first).toBe(sameColor);
 		expect(first).toContain('blockeraBackground');
 	});
+
+	it('keeps the same string when a nested wrapper is cloned with the same child refs', () => {
+		const item = { type: 'image', image: 'x.png' };
+		const first = getBlockeraStyleFingerprint({
+			blockeraBackground: { item },
+		});
+		const second = getBlockeraStyleFingerprint({
+			blockeraBackground: { item },
+		});
+
+		expect(first).toBe(second);
+	});
+
+	it('keeps the same string for equal nested values on new object identities', () => {
+		const first = getBlockeraStyleFingerprint({
+			blockeraBackground: { item: { type: 'image', image: 'x.png' } },
+		});
+		const second = getBlockeraStyleFingerprint({
+			blockeraBackground: { item: { type: 'image', image: 'x.png' } },
+		});
+
+		expect(first).toBe(second);
+	});
 });
