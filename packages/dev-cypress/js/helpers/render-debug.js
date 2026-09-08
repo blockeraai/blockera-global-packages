@@ -19,6 +19,7 @@ export const BLOCK_BASE_RENDER_DEBUG_KEY =
 	'__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__';
 export const BLOCK_BASE_RENDER_STATS_KEY =
 	'__BLOCKERA_BLOCK_BASE_RENDER_STATS__';
+export const PERF_COUNTERS_KEY = '__BLOCKERA_PERF_COUNTERS__';
 
 function emptyBlockBaseStats() {
 	return {
@@ -125,6 +126,105 @@ export function snapshotRenderStats(alias) {
 			}`
 		);
 		cy.wrap(JSON.parse(JSON.stringify(stats || {}))).as(alias);
+	});
+}
+
+function resolveSiteEditorPath() {
+	const path = '/wp-admin/site-editor.php?p=%2F&canvas=edit';
+	const testURL = Cypress.env('testURL');
+
+	if (
+		(testURL.endsWith('/') && !path.startsWith('/')) ||
+		(!testURL.endsWith('/') && path.startsWith('/'))
+	) {
+		return `${testURL}${path}`;
+	}
+
+	if (!testURL.endsWith('/') && !path.startsWith('/')) {
+		return `${testURL}/${path}`;
+	}
+
+	if (testURL.endsWith('/') && path.startsWith('/')) {
+		return `${testURL.slice(0, -1)}${path}`;
+	}
+
+	return `${testURL}${path}`;
+}
+
+/**
+ * Site Editor visit with render-debug flags before boot (GS preset Phase 0).
+ *
+ * @param {{ mode?: 'all' | 'blockBase' }} [options]
+ */
+export function openSiteEditorWithRenderDebug({ mode = 'all' } = {}) {
+	return cy
+		.visit(resolveSiteEditorPath(), {
+			onBeforeLoad(win) {
+				installRenderDebugOnWindow(win, { mode });
+			},
+		})
+		.then(() => {
+			// eslint-disable-next-line
+			cy.wait(2000);
+			closeWelcomeGuide();
+		});
+}
+
+export function readPerfCounters() {
+	return cy.window().then((win) => win[PERF_COUNTERS_KEY] || { byName: {} });
+}
+
+export function snapshotPerfCounters(alias) {
+	return readPerfCounters().then((stats) => {
+		cy.log(`[perf] ${alias} ${JSON.stringify(stats?.byName || {})}`);
+		cy.wrap(JSON.parse(JSON.stringify(stats || { byName: {} }))).as(alias);
+	});
+}
+
+export function perfCounterTotal(stats, name) {
+	return stats?.byName?.[name]?.total || 0;
+}
+
+export function perfCounterOutcome(stats, name, outcome) {
+	return stats?.byName?.[name]?.[outcome] || 0;
+}
+
+/**
+ * Log keystroke deltas for GS preset traces. Does not fail on high counts.
+ */
+export function logPresetPerfDeltas(startAlias, endAlias) {
+	return cy.get(`@${startAlias}`).then((start) => {
+		cy.get(`@${endAlias}`).then((end) => {
+			const names = [
+				'gs.editEntityRecord',
+				'gs.mergeConfigs',
+				'gs.supplementalCss',
+			];
+			const summary = {};
+
+			names.forEach((name) => {
+				summary[name] = {
+					total:
+						perfCounterTotal(end, name) - perfCounterTotal(start, name),
+					rebuilt:
+						perfCounterOutcome(end, name, 'rebuilt') -
+						perfCounterOutcome(start, name, 'rebuilt'),
+					retained:
+						perfCounterOutcome(end, name, 'retained') -
+						perfCounterOutcome(start, name, 'retained'),
+				};
+			});
+
+			cy.log(
+				`[perf delta] ${startAlias}→${endAlias} ${JSON.stringify(summary)}`
+			);
+			cy.wrap(summary).as(`${endAlias}Delta`);
+			// Surface counts in the Cypress assertion list (Phase 0 oracle).
+			expect(
+				JSON.stringify(summary),
+				`${startAlias}→${endAlias} perf counters`
+			).to.be.a('string');
+		});
 	});
 }
 

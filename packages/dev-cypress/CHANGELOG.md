@@ -9,6 +9,8 @@
 
 - Cypress `createPostWithRenderDebug` sets window render-count flags before
   editor boot so production-bundle e2e can snapshot component commit deltas.
+- Site Editor helpers can open Global Styles variable screens with render
+  counting on (colors, spacing, text shadows, transforms, line heights).
 
 ## [4.0.0] - 2026-09-01
 
