@@ -14,6 +14,8 @@
   updates (including Global Styles).
 - Repeater clone, delete, and add buttons no longer close an open editor,
   so the upgrade prompt can appear.
+- Clicking shade toggles (and other controls) in a preset edit popover no
+  longer closes the variable picker.
 
 ### Improvements
 

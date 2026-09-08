@@ -60,6 +60,30 @@ export function isElementInsideVariablePickerPopover(
 	return Boolean(element.closest(VARIABLE_PICKER_POPOVER_MARKER_SELECTOR));
 }
 
+export function isElementInsidePresetVariableEditPopover(
+	element: Element
+): boolean {
+	return Boolean(
+		element.closest('.blockera-control-popover-variables-mode-edit')
+	);
+}
+
+function isVariablePickerPopoverRoot(root: ?HTMLElement): boolean {
+	const normalized = normalizePopoverRoot(root);
+
+	if (!(normalized instanceof HTMLElement)) {
+		return false;
+	}
+
+	if (normalized.matches(VARIABLE_PICKER_POPOVER_MARKER_SELECTOR)) {
+		return true;
+	}
+
+	return Boolean(
+		normalized.querySelector(VARIABLE_PICKER_POPOVER_MARKER_SELECTOR)
+	);
+}
+
 function getVariablePickerPopoverRootFromTarget(target: Element): ?HTMLElement {
 	const marker = target.closest(VARIABLE_PICKER_POPOVER_MARKER_SELECTOR);
 
@@ -79,6 +103,13 @@ function shouldIgnoreDismissForVariablePickerInteraction(
 	target: Element
 ): boolean {
 	if (isElementInsideVariablePickerSelectionTarget(target)) {
+		return true;
+	}
+
+	if (
+		isVariablePickerPopoverRoot(popoverRoot) &&
+		isElementInsidePresetVariableEditPopover(target)
+	) {
 		return true;
 	}
 

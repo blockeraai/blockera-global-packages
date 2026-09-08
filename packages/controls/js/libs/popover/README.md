@@ -114,7 +114,7 @@ Edit-variable / preset repeater popovers may use `blockera-control-popover-varia
 |-------------|----------------|----------------------------|
 | Click value-addon **pointer** (open var) | Stay open | May close |
 | Click **variable item** / row inside var-picker | Stay open | Stays open until selection completes |
-| Click inside **edit-variable popover** (non-pointer) | Normal dismiss rules | Normal dismiss rules |
+| Click inside **edit-variable popover** (non-pointer) | Stay open when parent is a var-picker | Stays open |
 
 Helpers:
 
@@ -162,7 +162,7 @@ Modal ignore is scoped to modals opened **from** the popover:
 |-----|---------|
 | `markPopoverClosing(root)` | Parent popovers ignore dismiss/focus-outside while a child closes (100ms window) |
 | `isOtherPopoverClosing(root)` | Guard in dismiss handlers |
-| `hasNestedOverlayOpenAsideFrom(root)` | Escape key — let innermost overlay handle first |
+| `hasNestedOverlayOpenAsideFrom(root)` | Escape key — let innermost overlay handle first. Escape from a field inside this popover also closes this innermost layer. |
 
 ---
 
