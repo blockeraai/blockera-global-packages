@@ -69,6 +69,7 @@ describe('input control component testing', () => {
 		});
 
 		it('should control data value equal with expected defaultValue when id was not provided for InputControl', () => {
+			const name = nanoid();
 			cy.withDataProvider({
 				component: (
 					<InputControl defaultValue={'default value'} id="invalid" />
