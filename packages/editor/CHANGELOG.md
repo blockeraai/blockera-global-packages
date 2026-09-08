@@ -11,73 +11,30 @@
 
 ### Bug Fixes
 
-- Block editor no longer crashes on load when generating canvas CSS
-  (`Cannot read properties of undefined (reading 'SizeStyles')`).
+- Block editor no longer crashes on load when generating canvas CSS.
 - Paragraphs (and other blocks) no longer mix a gradient `background`
-  shorthand with `backgroundColor` on the canvas node (React style warning).
-  Saved block markup is unchanged.
+  shorthand with `backgroundColor` on the canvas. Saved block markup is
+  unchanged.
 
 ### Development Notes
 
-- BlockStyle reads current block, state, and breakpoint from the owning BlockBase
-  instead of the global extensions UI store, so unselected canvas blocks do not
-  regenerate CSS when another block’s inner target or breakpoint changes.
-- Inspector typing path: BlockEditContext splits identity vs attributes,
-  style extensions skip re-render when their value slice is unchanged, and
-  feature search no longer deep-clones settings before filtering.
-- Style engine: applyFilters for generators runs once per CSS burst, fingerprints
-  reuse stringify when the attributes object identity is unchanged, and empty
-  unsaved states skip the selector walk.
-- Extension memo equality compares own keys with a Set so Flow does not reject
-  unbound Object.prototype.hasOwnProperty.
-- Window-flag render counters (`trackComponentRender`) record BlockBase
-  commits for Cypress when `__BLOCKERA_BLOCK_BASE_RENDER_DEBUG__` or
-  `__BLOCKERA_RENDER_DEBUG__` is set before boot.
-- Workspace tabs subscribe to per-tab dirty booleans instead of returning
-  core-data selector functions from `useSelect` (those functions are a new
-  identity on every call and trip WordPress’s same-state warning). Tab
-  helpers read entity records and post-type resolution through the registry.
-- useEntity reuses one empty select result when the current document id is
-  missing, so the same-state `useSelect` check does not see a new object.
-- Background panel splits Image & Gradient, BG Color, clipping, and blending
-  so a solid color edit does not rebuild the layers repeater.
-- Annotate memoized background field exports so Flow can verify module
-  signatures.
-- Style fingerprints token nested trees by path so a cloned wrapper with
-  the same child values does not look like a style change.
-- Fingerprint primitives always return a string when JSON.stringify is void.
-- Canvas-only split of colliding `background` / `backgroundColor` React
-  styles; saved block HTML is not rewritten via extraProps.
-- Register the canvas background-style BlockListBlock filter only once.
-- Canvas background-style wrap skips rewrite work when the node has no
-  colliding `background` + `backgroundColor`.
-- Refine background-style split after the rewrite guard so Flow sees a
-  defined style object.
+- Unselected canvas blocks no longer regenerate CSS when another block’s
+  inner target or breakpoint changes.
+- Inspector typing skips unchanged style slices; feature search no longer
+  deep-clones settings before filtering.
+- Style generation walks empty unsaved states less, reuses fingerprints when
+  nested values are unchanged, and splits colliding background styles only
+  on the canvas (saved HTML is unchanged).
+- Workspace tabs and missing-document entity reads keep stable identities so
+  WordPress does not warn about `useSelect` returning new functions or objects.
+- Background panel splits Image & Gradient from solid color so a color edit
+  does not rebuild the layers list.
 
 ### Automated Tests
-- Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
-- Rename global-styles compatibility e2e specs to `.gs-compatibility.e2e.cy.js`.
-- Rename global-styles e2e specs to `.gs.e2e.cy.js`.
-- Style engine canvas isolation oracle: fingerprint and BlockStyle memo equality
-  for pinned unselected current* vs sibling UI state.
-- Extension memo equality helper covers sliced values vs callback identity.
-- Style engine CPU: generator filter is invoked once per burst; fingerprint
-  cache keeps the same string for the same attributes object.
-- Fingerprint identity tokens keep the same string when nested Blockera trees
-  are reused and only a primitive color changes.
-- Confirms Global Styles skip extra work for blocks with no custom styles, and
-  still update when block types or style variations change.
-- BlockBase re-render spec uses shared Cypress render-debug helpers.
-- Block partials e2e asserts idle BlockBase render budgets after the card
-  and variation UI is shown.
-- Font Size functionality e2e budgets BlockBase and InputControl renders for
-  numeric typing and variable picker selection.
-- Background field memo equality keeps Image & Gradient skipped when only
-  BG Color identity changes.
-- splitConflictingBackgroundStyle only rewrites a gradient shorthand when
-  backgroundColor is also set, and maps WP none sentinels to backgroundImage.
-- splitConflictingBackgroundWrapperProps reuses the same wrapper object when
-  the same input is passed twice.
+
+- Canvas CSS isolation, style fingerprints, Global Styles skip for blocks
+  with no custom styles, BlockBase idle budgets, Font Size typing, and
+  background field memo equality.
 
 ## [4.0.0] - 2026-09-05
 

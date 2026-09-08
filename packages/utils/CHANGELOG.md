@@ -2,21 +2,13 @@
 
 ### Development Notes
 
-- Window-flag render counters (`__BLOCKERA_RENDER_DEBUG__` and the BlockBase
-  legacy key) let Cypress e2e count component commits in the production
-  bundle without a new webpack env. Unset flags stay a no-op.
-- `trackPerfCounter` records named persist/merge/CSS events on the same
-  window flag so Global Styles preset traces stay a no-op in production.
-- Render-debug looks at the local window first and only reads the parent
-  when this document is framed, so inspector typing does not pay a
-  cross-window flag check.
+- Optional window flags let Cypress count component paints and named save
+  events in the production editor. Unset flags do nothing.
 
 ### Automated Tests
 
-- Shared render tracker is a no-op without the window flag; BlockBase legacy
-  flag does not enable InputControl counts.
-- `trackPerfCounter` is a no-op without the shared flag and counts outcomes
-  when it is set.
+- Render and save counters stay off without the window flag and count when
+  it is set.
 
 ## [2.0.0] - 2026-09-01
 

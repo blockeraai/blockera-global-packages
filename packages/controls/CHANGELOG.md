@@ -11,7 +11,7 @@
 - Repeater controls no longer crash when their store record is not
   registered yet.
 - Color pickers stay open after you type a hex value while the inspector
-  updates (Global Styles inner blocks included).
+  updates (including Global Styles).
 - Repeater clone, delete, and add buttons no longer close an open editor,
   so the upgrade prompt can appear.
 
@@ -24,44 +24,22 @@
 
 ### Development Notes
 
-- ControlContextProvider keeps a stable context value when control info contents
-  are unchanged so inspector controls do not re-render on unrelated parent updates.
-- InputControl reuses CSS unit catalogs, keeps unit option lookups indexed, and
-  avoids rebuilding unit menus and handlers on unrelated parent renders. Numeric
-  keystrokes still update the canvas immediately.
-- Annotate memoized NumberInput, OtherInput, and UnitInput exports so Flow can
-  verify their module signatures.
-- InputControl, UnitInput, and ControlContextProvider count renders when
-  `window.__BLOCKERA_RENDER_DEBUG__` is set (Cypress e2e); production stays a
-  no-op when the flag is absent.
-- BackgroundControl reuses a stable default repeater item, value cleanup, and
-  promo callback instead of regenerating mesh defaults on each render.
-- ColorControl keeps value-addon and preset interface identities stable across
-  parent renders.
-- ControlContextProvider registers controls in useLayoutEffect instead of
-  during render. Children stay mounted with the incoming value until the
-  store record exists. Queued registrations flush after every commit so a
-  renamed control does not unmount open popovers.
-- ControlContextProvider queues missing controls during render and flushes
-  them in one WP data batch after commit.
-- retainIfEqual skips walking `value` when name and value identities match.
-- Annotate ResetIcon, Checkboard children, and background-style split so Flow
-  can verify those modules.
-- Popover field-leave and repeater-row action helpers live with dismiss
-  rules so other screens import them instead of copying chrome selectors.
+- ControlContextProvider keeps a stable context value when contents are
+  unchanged, registers controls after commit (not during render), and
+  queues missing records so open popovers stay mounted.
+- InputControl reuses CSS unit catalogs and keeps unit option lookups
+  indexed. Numeric keystrokes still update the canvas immediately.
+- BackgroundControl and ColorControl keep stable default item, cleanup,
+  promo, value-addon, and preset identities across parent renders.
+- Popover helpers for field leave, repeater-row actions, and dismiss live
+  in this package. Other screens should import them instead of copying
+  clone/delete or popover selectors.
 
 ### Automated Tests
 
-- Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
-- retainIfEqual keeps the previous object identity when contents match.
-- retainIfEqual skips walking value when name and value identities match.
-- resolveControlSelectResult keeps provider value when the control is not
-  registered yet and overlays when the store value differs.
-- Control registration queue flushes many payloads in one batch.
-- InputControl unit catalogs stay cached and not-found units append without
-  mutating the shared catalog.
-- Inspector input re-render e2e budgets for idle and Font Size typing.
-- Popover dismiss stays ignored for repeater clone chrome and field-leave.
+- Object identity helpers, control registration batches, InputControl unit
+  catalogs, inspector typing budgets, and popover dismiss for repeater
+  clone chrome and field-leave.
 
 ## [5.0.0] - 2026-09-05
 

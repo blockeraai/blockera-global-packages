@@ -2,15 +2,10 @@
 
 ### Automated Tests
 
-- `setColorControlValue` commits the hex field by closing the picker
-  instead of `cy.blur()`, which fails when React replaces the input.
-
-### Development Notes
-
-- Cypress `createPostWithRenderDebug` sets window render-count flags before
-  editor boot so production-bundle e2e can snapshot component commit deltas.
+- Hex color fields commit by closing the picker instead of blurring the
+  input (that fails when React replaces the field).
 - Site Editor helpers can open Global Styles variable screens with render
-  counting on (colors, spacing, text shadows, transforms, line heights).
+  counting on: colors, spacing, text shadows, transforms, and line heights.
 
 ## [4.0.0] - 2026-09-01
 

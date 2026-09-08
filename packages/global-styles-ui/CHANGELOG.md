@@ -2,15 +2,12 @@
 
 ### Improvements
 
-- Global Styles variable screens stay smoother while you edit colors, fonts,
-  and other presets.
-- Global Styles stays smoother when you save a custom variable: theme and
-  default lists do not rebuild as if they changed.
-- Saving a custom variable no longer rebuilds every extra CSS variable on
-  the canvas; only the changed preset updates.
+- Global Styles variables (colors, fonts, shadows, filters, and the rest)
+  stay smoother while you edit. Theme and default lists stay put, extra CSS
+  variables update only when a preset actually changes, and row headers
+  follow the value as you type.
 - Typing in a variable editor no longer saves on every keystroke. The value
-  saves when you leave the field or close the editor. Row headers follow
-  the value as you type.
+  saves when you leave the field or close the editor.
 
 ### Bug Fixes
 
@@ -20,29 +17,13 @@
 
 ### Development Notes
 
-- Shared retainers keep one merged theme.json per user/base identity across
-  preset hooks; setting/style memos no longer depend on a rest-spread context
-  object or a fresh default `{}`.
-- After a merged theme.json rebuild, unchanged nested settings (theme/default
-  preset arrays) keep their previous object identity. `useGlobalSetting`
-  applies the same retainer at the path value.
-- Editor experimental-features sync skips `JSON.stringify` of the full features
-  tree and watches the interface skeleton for iframe mounts instead of
-  `document.body`.
+- Variable screens: save later while typing, keep unchanged lists stable,
+  skip extra CSS rebuilds, and keep inner editors attached.
 
 ### Automated Tests
 
-- Rename global-styles e2e specs to `.gs.e2e.cy.js`.
-- Global styles config retainers keep object identity when entity slices are
-  unchanged, still replace `backgroundImage`, and keep theme/default preset
-  arrays when only custom values change.
-- Editor settings sync skip helper and iframe observer root selection.
-- Supplemental preset CSS skips core color vars, patches one infix without
-  dropping siblings, and reuses the same string for the same settings object.
-- Preset item editors: deferred persist coalesces field patches, equality
-  ignores row chrome, and header drafts notify only the patched row.
-- Variable editor e2e: typing does not save until leave or close; color,
-  shadow, and filter keep their pickers attached.
+- Variable editors: typing does not save until leave or close; color, shadow,
+  and filter keep their pickers attached.
 
 ## [3.0.0] - 2026-09-05
 
