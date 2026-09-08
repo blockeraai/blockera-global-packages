@@ -8,6 +8,15 @@
   default lists do not rebuild as if they changed.
 - Saving a custom variable no longer rebuilds every extra CSS variable on
   the canvas; only the changed preset updates.
+- Typing in a variable editor no longer saves on every keystroke. The value
+  saves when you leave the field or close the editor. Row headers follow
+  the value as you type.
+
+### Bug Fixes
+
+- Opening Color variables no longer crashes the editor.
+- Duplicating a custom variable (or a nested shadow or filter layer) keeps
+  the editor open so the upgrade prompt can still appear.
 
 ### Development Notes
 

@@ -36,7 +36,14 @@ import {
 	variablePickerItemMatchesSearch,
 	variablePopoverModeClassName,
 } from '@blockera/controls';
-import { noop, pascalCase, isObject, isEquals } from '@blockera/utils';
+import {
+	noop,
+	pascalCase,
+	isObject,
+	isEquals,
+	shouldTrackComponentRender,
+	trackComponentRender,
+} from '@blockera/utils';
 import {
 	classNames,
 	controlClassNames,
@@ -59,6 +66,8 @@ import {
 import { PresetStateContainer } from './preset-state-container';
 import { getPresetDeleteConfirmWarningText } from './preset-origin-utils';
 import { resolvePresetRepeaterItemSize } from './preset-taxonomy-ui/preset-taxonomy-utils';
+import { LivePresetRepeaterItemHeader } from './live-preset-repeater-item-header';
+import { PresetItemHeaderDraftProvider } from './preset-item-header-draft-context';
 import {
 	applyVariablePickerRepeaterSelection,
 	buildPresetVariablePickerPayload,
@@ -227,6 +236,13 @@ const Presets = ({
 	useIndexRepeaterItemIds = false,
 	...props
 }: PresetsProps) => {
+	if (shouldTrackComponentRender()) {
+		trackComponentRender('PresetGroup', {
+			id: controlName,
+			name: controlName,
+		});
+	}
+
 	const renderPromo = useCallback(
 		({
 			items,
@@ -306,7 +322,24 @@ const Presets = ({
 		};
 	}, [origin, title]);
 
+	const liveRepeaterItemHeader = useCallback(
+		(headerProps: Record<string, unknown>) => {
+			if (!RepeaterItemHeader) {
+				return null;
+			}
+
+			return (
+				<LivePresetRepeaterItemHeader
+					Header={RepeaterItemHeader}
+					{...headerProps}
+				/>
+			);
+		},
+		[RepeaterItemHeader]
+	);
+
 	return (
+		<PresetItemHeaderDraftProvider>
 		<RepeaterControl
 			label={label}
 			id={controlName}
@@ -333,7 +366,7 @@ const Presets = ({
 			shouldConfirmDeleteModal={true}
 			confirmDeleteModalProps={confirmDeleteModalProps}
 			repeaterItemChildren={FieldsComponent}
-			repeaterItemHeader={RepeaterItemHeader}
+			repeaterItemHeader={liveRepeaterItemHeader}
 			repeaterItemVariations={repeaterItemVariations}
 			defaultRepeaterItemValue={defaultPresetValue}
 			enableCreatingStep={enableCreatingStep}
@@ -367,6 +400,7 @@ const Presets = ({
 			companionGateAllRepeaterActions={true}
 			{...props}
 		/>
+		</PresetItemHeaderDraftProvider>
 	);
 };
 

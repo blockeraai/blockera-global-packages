@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useCallback, memo, useContext } from '@wordpress/element';
+import { memo, useContext } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -19,7 +19,14 @@ import {
  * Internal dependencies
  */
 import SpacingSizePreview from './spacing-size-preview';
-import { SharedPresetControls, useCanEditGlobalStyles } from '../components';
+import {
+	PresetEditorFields,
+	SharedPresetControls,
+	useCanEditGlobalStyles,
+	useDeferredPresetItemCommit,
+	useDeferredScalarPresetField,
+	useLatestPresetItem,
+} from '../components';
 import { type VariableType } from '../components/types';
 import { getAllVariableSlugs as getAllSpacingSlugs } from '../components/utils';
 
@@ -40,6 +47,7 @@ function SpacingSizeComponent({
 	presetId: string | number;
 	spacingSize: VariableType & SpacingDefaultPresetValue;
 }) {
+	const getItem = useLatestPresetItem(spacingSize);
 	const { slug } = spacingSize;
 	const canEditGlobalStyles = useCanEditGlobalStyles();
 
@@ -63,34 +71,26 @@ function SpacingSizeComponent({
 		itemIdGenerator?: (itemId: string | number) => string;
 	};
 
-	const updateSpacingViaRepeater = useCallback(
-		(key: string, value: any) => {
-			changeRepeaterItem({
-				onChange,
-				valueCleanup,
-				controlId,
-				repeaterId,
-				itemId: presetId,
-				value: { ...spacingSize, [key]: value },
-			});
-		},
-		[
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			presetId,
-			spacingSize,
-		]
-	);
+	const { stagePatch, flush } = useDeferredPresetItemCommit({
+		changeRepeaterItem,
+		onChange,
+		valueCleanup,
+		controlId,
+		repeaterId,
+		itemId: presetId,
+		getItem,
+	});
 
-	const handleSizeChange = useCallback(
-		(value: string | undefined) => {
-			updateSpacingViaRepeater('size', value);
-		},
-		[updateSpacingViaRepeater]
-	);
+	const {
+		draft,
+		onChange: handleSizeChange,
+		onFieldsBlur,
+	} = useDeferredScalarPresetField({
+		persistedValue: spacingSize.size,
+		fieldKey: 'size',
+		stagePatch,
+		flush,
+	});
 
 	if (!origin || !slug) {
 		return null;
@@ -98,47 +98,47 @@ function SpacingSizeComponent({
 
 	const spacingSizeValueControls = (
 		<ControlContextProvider
-			value={{
-				name: `spacing-size-${slug}`,
-				value: spacingSize.size,
-				attribute: 'blockeraSpacingSize',
-				blockName: 'global-styles',
-			}}
-		>
-			<InputControl
-				data-test="spacing-size-input"
-				label={__('Size', 'blockera')}
-				readOnly={!canEditGlobalStyles}
-				controlAddonTypes={[]}
-				labelDescription={
-					<>
-						<p>
-							{__(
-								'Sets the spacing preset value used for margin, padding, and gap controls across the site.',
-								'blockera'
-							)}
-						</p>
-						<p>
-							{__(
-								'You can use fixed lengths (px, rem), percentages, viewport units, or fluid values such as clamp().',
-								'blockera'
-							)}
-						</p>
-					</>
-				}
-				columns="1.2fr 3fr"
-				unitType="general"
-				min={0}
-				onChange={(newValue: string | undefined) =>
-					handleSizeChange(newValue)
-				}
-			/>
-		</ControlContextProvider>
+				value={{
+					name: `spacing-size-${slug}`,
+					value: draft,
+					attribute: 'blockeraSpacingSize',
+					blockName: 'global-styles',
+				}}
+			>
+				<InputControl
+					data-test="spacing-size-input"
+					label={__('Size', 'blockera')}
+					readOnly={!canEditGlobalStyles}
+					controlAddonTypes={[]}
+					labelDescription={
+						<>
+							<p>
+								{__(
+									'Sets the spacing preset value used for margin, padding, and gap controls across the site.',
+									'blockera'
+								)}
+							</p>
+							<p>
+								{__(
+									'You can use fixed lengths (px, rem), percentages, viewport units, or fluid values such as clamp().',
+									'blockera'
+								)}
+							</p>
+						</>
+					}
+					columns="1.2fr 3fr"
+					unitType="general"
+					min={0}
+					onChange={(newValue: string | undefined) =>
+						handleSizeChange(newValue as string)
+					}
+				/>
+			</ControlContextProvider>
 	);
 
 	return (
 		<Flex direction="column" gap="15px">
-			<SpacingSizePreview size={spacingSize.size} />
+			<SpacingSizePreview size={draft} />
 
 			<SharedPresetControls
 				itemId={presetId}
@@ -146,8 +146,11 @@ function SpacingSizeComponent({
 				name={spacingSize.name}
 				slug={spacingSize.slug}
 				allSlugs={getAllSpacingSlugs(sizes)}
+				onValueFieldsBlur={onFieldsBlur}
 			>
-				{spacingSizeValueControls}
+				<PresetEditorFields signature={{ slug, draft }}>
+					{spacingSizeValueControls}
+				</PresetEditorFields>
 			</SharedPresetControls>
 		</Flex>
 	);

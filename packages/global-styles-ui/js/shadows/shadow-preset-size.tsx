@@ -2,7 +2,14 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useCallback, memo, useContext, useMemo } from '@wordpress/element';
+import {
+	useCallback,
+	memo,
+	useContext,
+	useMemo,
+	useState,
+	useEffect,
+} from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -15,12 +22,18 @@ import {
 	useControlContext,
 	ControlContextProvider,
 } from '@blockera/controls';
+import { shouldTrackComponentRender, trackComponentRender } from '@blockera/utils';
 
 /**
  * Internal dependencies
  */
 import ShadowPresetPreview from './shadow-preset-preview';
-import { SharedPresetControls } from '../components';
+import {
+	PresetEditorFields,
+	SharedPresetControls,
+	useLatestPresetItem,
+	useNestedPresetRepeaterCommit,
+} from '../components';
 import { type VariableType } from '../components/types';
 import { getAllVariableSlugs as getAllShadowSlugs } from '../components/utils';
 import {
@@ -40,6 +53,16 @@ export type ShadowDefaultPresetValue = {
 	visibilitySupport: boolean;
 };
 
+const SHADOW_PRESET_REPEATER_DEFAULT = {
+	type: 'outer' as const,
+	x: '10px',
+	y: '10px',
+	blur: '10px',
+	spread: '0px',
+	color: '#000000ab',
+	isVisible: true,
+};
+
 function ShadowPresetSizeComponent({
 	origin,
 	shadowPreset,
@@ -49,6 +72,14 @@ function ShadowPresetSizeComponent({
 	presetId: string | number;
 	shadowPreset: VariableType & ShadowDefaultPresetValue & WpShadowPreset;
 }) {
+	if (shouldTrackComponentRender()) {
+		trackComponentRender('ShadowPresetFields', {
+			id: shadowPreset?.slug,
+			name: shadowPreset?.slug,
+		});
+	}
+
+	const getItem = useLatestPresetItem(shadowPreset);
 	const { slug } = shadowPreset;
 
 	const {
@@ -79,34 +110,45 @@ function ShadowPresetSizeComponent({
 	const repeaterItems = useMemo(() => {
 		const raw = shadowPreset as unknown as Record<string, unknown>;
 		return shadowItemsToRepeaterRecord(shadowItemsFromRaw(raw));
-	}, [shadowPreset]);
+	}, [shadowPreset.shadow]);
+
+	const { commitNestedChange, liveRecord } = useNestedPresetRepeaterCommit({
+		changeRepeaterItem,
+		onChange,
+		valueCleanup,
+		controlId,
+		repeaterId,
+		itemId: presetId,
+		getItem,
+		initialRecord: repeaterItems as unknown as Record<string, unknown>,
+		persistedSignature: shadowPreset.shadow,
+	});
+
+	const [draftShadow, setDraftShadow] = useState(() =>
+		shadowCssFromPreset(shadowPreset as unknown as Record<string, unknown>)
+	);
+
+	useEffect(() => {
+		setDraftShadow(
+			shadowCssFromPreset(
+				shadowPreset as unknown as Record<string, unknown>
+			)
+		);
+	}, [shadowPreset.shadow]);
 
 	const handleBoxShadowChange = useCallback(
 		(newValue: Record<string, Record<string, unknown>>) => {
 			const items = repeaterRecordToShadowItems(newValue);
 			const shadow = shadowPresetItemsToCss(items);
-			// Defer: BoxShadow onChange runs synchronously from the inner repeater reducer;
-			// updating the preset list in the same tick hits Redux error #3 (getState during reducer).
-			queueMicrotask(() => {
-				changeRepeaterItem({
-					onChange,
-					valueCleanup,
-					controlId,
-					repeaterId,
-					itemId: presetId,
-					value: { ...shadowPreset, shadow },
-				});
-			});
+			setDraftShadow(shadow);
+			commitNestedChange(newValue, { shadow });
 		},
-		[
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			presetId,
-			shadowPreset,
-		]
+		[commitNestedChange]
+	);
+
+	const editorSignature = useMemo(
+		() => ({ slug, liveRecord }),
+		[slug, liveRecord]
 	);
 
 	if (!origin || !slug) {
@@ -117,7 +159,7 @@ function ShadowPresetSizeComponent({
 		<ControlContextProvider
 			value={{
 				name: `shadow-preset-${slug}`,
-				value: repeaterItems,
+				value: liveRecord,
 				attribute: 'blockeraShadowPreset',
 				blockName: 'global-styles-shadows',
 			}}
@@ -131,15 +173,7 @@ function ShadowPresetSizeComponent({
 					key={slug}
 					withoutValueAddons
 					id={`shadow-preset-box-${slug}`}
-					defaultRepeaterItemValue={{
-						type: 'outer',
-						x: '10px',
-						y: '10px',
-						blur: '10px',
-						spread: '0px',
-						color: '#000000ab',
-						isVisible: true,
-					}}
+					defaultRepeaterItemValue={SHADOW_PRESET_REPEATER_DEFAULT}
 					label={__('Box shadow', 'blockera')}
 					labelDescription={
 						<>
@@ -157,7 +191,7 @@ function ShadowPresetSizeComponent({
 							</p>
 						</>
 					}
-					defaultValue={repeaterItems}
+					defaultValue={liveRecord}
 					onChange={handleBoxShadowChange}
 				/>
 			</BaseControl>
@@ -166,11 +200,7 @@ function ShadowPresetSizeComponent({
 
 	return (
 		<Flex direction="column" gap="15px">
-			<ShadowPresetPreview
-				shadow={shadowCssFromPreset(
-					shadowPreset as unknown as Record<string, unknown>
-				)}
-			/>
+			<ShadowPresetPreview shadow={draftShadow} />
 
 			<SharedPresetControls
 				itemId={presetId}
@@ -179,7 +209,9 @@ function ShadowPresetSizeComponent({
 				slug={shadowPreset.slug}
 				allSlugs={getAllShadowSlugs(presets)}
 			>
-				{shadowPresetValueControls}
+				<PresetEditorFields signature={editorSignature}>
+					{shadowPresetValueControls}
+				</PresetEditorFields>
 			</SharedPresetControls>
 		</Flex>
 	);

@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useCallback, memo, useContext, useMemo } from '@wordpress/element';
+import { memo, useCallback, useContext, useMemo } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -18,7 +18,12 @@ import {
 /**
  * Internal dependencies
  */
-import { SharedPresetControls } from '../components';
+import {
+	PresetEditorFields,
+	SharedPresetControls,
+	useLatestPresetItem,
+	useNestedPresetRepeaterCommit,
+} from '../components';
 import { type VariableType } from '../components/types';
 import { getAllVariableSlugs as getAllTransitionSlugs } from '../components/utils';
 import {
@@ -36,6 +41,14 @@ export type TransitionDefaultPresetValue = {
 	visibilitySupport: boolean;
 };
 
+const TRANSITION_PRESET_REPEATER_DEFAULT = {
+	type: 'all' as const,
+	duration: '500ms',
+	timing: 'ease',
+	delay: '0ms',
+	isVisible: true,
+};
+
 function TransitionPresetSizeComponent({
 	origin,
 	transitionPreset,
@@ -47,6 +60,7 @@ function TransitionPresetSizeComponent({
 		WpTransitionPreset;
 	presetId: string | number;
 }) {
+	const getItem = useLatestPresetItem(transitionPreset);
 	const { slug } = transitionPreset;
 
 	const {
@@ -81,31 +95,29 @@ function TransitionPresetSizeComponent({
 		[transitionPreset.items]
 	);
 
+	const { commitNestedChange, liveRecord } = useNestedPresetRepeaterCommit({
+		changeRepeaterItem,
+		onChange,
+		valueCleanup,
+		controlId,
+		repeaterId,
+		itemId: presetId,
+		getItem,
+		initialRecord: repeaterItems as unknown as Record<string, unknown>,
+		persistedSignature: transitionPreset.items,
+	});
+
 	const handleTransitionChange = useCallback(
 		(newValue: Record<string, Record<string, unknown>>) => {
 			const items = repeaterRecordToItems(newValue);
-			// Defer: inner repeater may dispatch during the same tick; updating the preset list
-			// synchronously triggers Redux “getState during reducer” (#3). Same pattern as text-shadow presets.
-			queueMicrotask(() => {
-				changeRepeaterItem({
-					onChange,
-					valueCleanup,
-					controlId,
-					repeaterId,
-					itemId: presetId,
-					value: { ...transitionPreset, items },
-				});
-			});
+			commitNestedChange(newValue, { items });
 		},
-		[
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			presetId,
-			transitionPreset,
-		]
+		[commitNestedChange]
+	);
+
+	const editorSignature = useMemo(
+		() => ({ slug, liveRecord }),
+		[slug, liveRecord]
 	);
 
 	if (!origin || !slug) {
@@ -116,7 +128,7 @@ function TransitionPresetSizeComponent({
 		<ControlContextProvider
 			value={{
 				name: `transition-preset-${slug}`,
-				value: repeaterItems,
+				value: liveRecord,
 				attribute: 'blockeraTransitionPreset',
 				blockName: 'global-styles-transitions',
 			}}
@@ -147,14 +159,8 @@ function TransitionPresetSizeComponent({
 							</p>
 						</>
 					}
-					defaultRepeaterItemValue={{
-						type: 'all',
-						duration: '500ms',
-						timing: 'ease',
-						delay: '0ms',
-						isVisible: true,
-					}}
-					defaultValue={repeaterItems}
+					defaultRepeaterItemValue={TRANSITION_PRESET_REPEATER_DEFAULT}
+					defaultValue={liveRecord}
 					onChange={handleTransitionChange}
 				/>
 			</BaseControl>
@@ -169,7 +175,9 @@ function TransitionPresetSizeComponent({
 			slug={transitionPreset.slug}
 			allSlugs={getAllTransitionSlugs(presets)}
 		>
-			{transitionPresetValueControls}
+			<PresetEditorFields signature={editorSignature}>
+				{transitionPresetValueControls}
+			</PresetEditorFields>
 		</SharedPresetControls>
 	);
 }

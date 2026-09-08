@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useCallback, memo, useContext, useMemo } from '@wordpress/element';
+import { memo, useCallback, useContext, useMemo } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -18,7 +18,12 @@ import {
 /**
  * Internal dependencies
  */
-import { SharedPresetControls } from '../components';
+import {
+	PresetEditorFields,
+	SharedPresetControls,
+	useLatestPresetItem,
+	useNestedPresetRepeaterCommit,
+} from '../components';
 import { type VariableType } from '../components/types';
 import { getAllVariableSlugs as getAllTransformSlugs } from '../components/utils';
 import {
@@ -62,6 +67,7 @@ function TransformPresetSizeComponent({
 		WpTransformPreset;
 	presetId: string | number;
 }) {
+	const getItem = useLatestPresetItem(transformPreset);
 	const { slug } = transformPreset;
 
 	const {
@@ -96,31 +102,29 @@ function TransformPresetSizeComponent({
 		[transformPreset.items]
 	);
 
+	const { commitNestedChange, liveRecord } = useNestedPresetRepeaterCommit({
+		changeRepeaterItem,
+		onChange,
+		valueCleanup,
+		controlId,
+		repeaterId,
+		itemId: presetId,
+		getItem,
+		initialRecord: repeaterItems as unknown as Record<string, unknown>,
+		persistedSignature: transformPreset.items,
+	});
+
 	const handleTransformChange = useCallback(
 		(newValue: Record<string, Record<string, unknown>>) => {
 			const items = repeaterRecordToItems(newValue);
-			// Defer: inner repeater may dispatch during the same tick; updating the preset list
-			// synchronously triggers Redux “getState during reducer”. Same pattern as transition / text-shadow presets.
-			queueMicrotask(() => {
-				changeRepeaterItem({
-					onChange,
-					valueCleanup,
-					controlId,
-					repeaterId,
-					itemId: presetId,
-					value: { ...transformPreset, items },
-				});
-			});
+			commitNestedChange(newValue, { items });
 		},
-		[
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			presetId,
-			transformPreset,
-		]
+		[commitNestedChange]
+	);
+
+	const editorSignature = useMemo(
+		() => ({ slug, liveRecord }),
+		[slug, liveRecord]
 	);
 
 	if (!origin || !slug) {
@@ -131,7 +135,7 @@ function TransformPresetSizeComponent({
 		<ControlContextProvider
 			value={{
 				name: `transform-preset-${slug}`,
-				value: repeaterItems,
+				value: liveRecord,
 				attribute: 'blockeraTransformPreset',
 				blockName: 'global-styles-transforms',
 			}}
@@ -163,7 +167,7 @@ function TransformPresetSizeComponent({
 						</>
 					}
 					defaultRepeaterItemValue={TRANSFORM_PRESET_REPEATER_DEFAULT}
-					defaultValue={repeaterItems}
+					defaultValue={liveRecord}
 					onChange={handleTransformChange}
 				/>
 			</BaseControl>
@@ -178,7 +182,9 @@ function TransformPresetSizeComponent({
 			slug={transformPreset.slug}
 			allSlugs={getAllTransformSlugs(presets)}
 		>
-			{transformPresetValueControls}
+			<PresetEditorFields signature={editorSignature}>
+				{transformPresetValueControls}
+			</PresetEditorFields>
 		</SharedPresetControls>
 	);
 }

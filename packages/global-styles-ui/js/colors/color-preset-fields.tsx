@@ -1,13 +1,17 @@
 /**
  * External dependencies
  */
+import type { ReactNode } from 'react';
 import { __ } from '@wordpress/i18n';
 import { applyFilters } from '@wordpress/hooks';
 import {
 	useCallback,
+	createContext,
 	memo,
 	useContext,
+	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from '@wordpress/element';
 import type { Color } from '@wordpress/global-styles-engine';
@@ -31,6 +35,7 @@ import {
 	RepeaterContext,
 	BaseControl,
 	useVarPickerPresetContext,
+	isFocusLeavingElement,
 } from '@blockera/controls';
 import { Icon } from '@blockera/icons';
 
@@ -45,6 +50,9 @@ import {
 	VariableVariationsFieldsSlotProvider,
 	VariableVariationsFieldsToggleSlot,
 	getAllVariableSlugs as getAllColorSlugs,
+	getDeferredPresetFieldSignature,
+	useDeferredPresetItemCommit,
+	useLatestPresetItem,
 } from '../components';
 import { useCanEditGlobalStyles } from '../components/use-global-styles-preset-edit';
 import {
@@ -319,7 +327,7 @@ function resolveRepeaterItemIdForColorUpdates(
 	return bySlug ?? presetId;
 }
 
-function GlobalStylesMainColorControl({
+const GlobalStylesMainColorControl = memo(function GlobalStylesMainColorControl({
 	controlName,
 	value,
 	disabled,
@@ -348,7 +356,213 @@ function GlobalStylesMainColorControl({
 			/>
 		</ControlContextProvider>
 	);
-}
+});
+
+type ColorDraftContextValue = {
+	draftColor: unknown;
+	presetLocked: boolean;
+	slug: string;
+	sharedPresetSlug: string;
+	isAnchorShadeRow: boolean;
+	handleColorFieldChange: (next: unknown) => void;
+	handleColorFieldsBlur: (event: {
+		currentTarget: EventTarget;
+		relatedTarget: EventTarget | null;
+	}) => void;
+};
+
+const ColorDraftContext = createContext<ColorDraftContextValue | null>(null);
+
+const ColorValueSession = memo(function ColorValueSession({
+	persistedColor,
+	isAnchorShadeRow,
+	presetLocked,
+	slug,
+	sharedPresetSlug,
+	onPersistColor,
+	onStageColor,
+	onClearPending,
+	children,
+}: {
+	persistedColor: unknown;
+	isAnchorShadeRow: boolean;
+	presetLocked: boolean;
+	slug: string;
+	sharedPresetSlug: string;
+	onPersistColor: (next: unknown) => void;
+	onStageColor: (next: unknown) => void;
+	onClearPending: () => void;
+	children: ReactNode;
+}) {
+	const persistedColorSignature =
+		getDeferredPresetFieldSignature(persistedColor);
+	const [draftColor, setDraftColor] = useState(persistedColor);
+	const draftRef = useRef(draftColor);
+	const persistRef = useRef(onPersistColor);
+	const stageRef = useRef(onStageColor);
+	const clearPendingRef = useRef(onClearPending);
+	const lastCommittedSigRef = useRef(persistedColorSignature);
+
+	draftRef.current = draftColor;
+	persistRef.current = onPersistColor;
+	stageRef.current = onStageColor;
+	clearPendingRef.current = onClearPending;
+
+	useEffect(() => {
+		setDraftColor(persistedColor);
+		lastCommittedSigRef.current = persistedColorSignature;
+		// Identity-only color object updates must not rewind in-progress edits.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [persistedColorSignature]);
+
+	const persistDraft = useCallback(() => {
+		const next = draftRef.current;
+		const sig = getDeferredPresetFieldSignature(next);
+
+		if (sig === lastCommittedSigRef.current) {
+			return;
+		}
+
+		lastCommittedSigRef.current = sig;
+		clearPendingRef.current();
+		persistRef.current(next);
+	}, []);
+
+	const handleColorFieldChange = useCallback((newValue: unknown) => {
+		setDraftColor(newValue);
+		stageRef.current(newValue);
+	}, []);
+
+	const handleColorFieldsBlur = useCallback(
+		(event: {
+			currentTarget: EventTarget;
+			relatedTarget: EventTarget | null;
+		}) => {
+			if (!isFocusLeavingElement(event)) {
+				return;
+			}
+
+			persistDraft();
+		},
+		[persistDraft]
+	);
+
+	useEffect(() => {
+		return () => {
+			persistDraft();
+		};
+	}, [persistDraft]);
+
+	const draftContextValue = useMemo(
+		(): ColorDraftContextValue => ({
+			draftColor,
+			presetLocked,
+			slug,
+			sharedPresetSlug,
+			isAnchorShadeRow,
+			handleColorFieldChange,
+			handleColorFieldsBlur,
+		}),
+		[
+			draftColor,
+			presetLocked,
+			slug,
+			sharedPresetSlug,
+			isAnchorShadeRow,
+			handleColorFieldChange,
+			handleColorFieldsBlur,
+		]
+	);
+
+	return (
+		<ColorDraftContext.Provider value={draftContextValue}>
+			{children}
+		</ColorDraftContext.Provider>
+	);
+});
+
+const ColorDraftPreview = memo(function ColorDraftPreview({
+	paintType,
+	shadesSaved,
+	isShadeRow,
+	stackMap,
+}: {
+	paintType?: string;
+	shadesSaved: boolean;
+	isShadeRow: boolean;
+	stackMap?: ColorShadesMap;
+}) {
+	const draft = useContext(ColorDraftContext);
+
+	if (!draft) {
+		return null;
+	}
+
+	return (
+		<ColorPreview
+			color={
+				typeof draft.draftColor === 'string'
+					? draft.draftColor
+					: undefined
+			}
+			paintType={paintType}
+			shadesEnabled={!isShadeRow && shadesSaved}
+			stackMap={shadesSaved ? stackMap : undefined}
+		/>
+	);
+});
+
+const ColorValueField = memo(function ColorValueField({
+	children,
+}: {
+	children?: ReactNode;
+}) {
+	const draft = useContext(ColorDraftContext);
+
+	if (!draft) {
+		return null;
+	}
+
+	return (
+		<BaseControl
+			columns="1.2fr 3fr"
+			label={__('Color', 'blockera')}
+			controlName={`color-value-${draft.isAnchorShadeRow ? draft.sharedPresetSlug : draft.slug}`}
+		>
+			<GlobalStylesMainColorControl
+				controlName={`color-value-${draft.isAnchorShadeRow ? draft.sharedPresetSlug : draft.slug}`}
+				value={
+					typeof draft.draftColor === 'string'
+						? draft.draftColor
+						: undefined
+				}
+				onChange={draft.handleColorFieldChange}
+				disabled={draft.presetLocked}
+			/>
+			{children}
+		</BaseControl>
+	);
+});
+
+const ColorValueFieldsBlurHost = memo(function ColorValueFieldsBlurHost({
+	children,
+}: {
+	children: ReactNode;
+}) {
+	const draft = useContext(ColorDraftContext);
+
+	return (
+		<Flex
+			direction="row"
+			alignItems="center"
+			gap={8}
+			style={{ flex: 1, minWidth: 0 }}
+			onBlur={draft?.handleColorFieldsBlur}
+		>
+			{children}
+		</Flex>
+	);
+});
 
 interface ColorPresetFieldsProps {
 	origin: string | string[];
@@ -361,6 +575,7 @@ function ColorPresetFieldsComponent({
 	presetId,
 	colorItem,
 }: ColorPresetFieldsProps) {
+	const getItem = useLatestPresetItem(colorItem);
 	const { slug, baseSlug } = colorItem;
 	const effectiveBaseSlug = baseSlug || slug;
 	const shadeSlugParsed = parsePaletteShadeSlug(String(slug ?? ''));
@@ -536,6 +751,23 @@ function ColorPresetFieldsComponent({
 				fullItems
 			),
 		[colorItem, presetId, colors, fullItems]
+	);
+
+	const { stagePatch, clearPending } = useDeferredPresetItemCommit({
+		changeRepeaterItem,
+		onChange,
+		valueCleanup,
+		controlId,
+		repeaterId,
+		itemId: repeaterItemIdForUpdates,
+		getItem,
+	});
+
+	const stageColorDraft = useCallback(
+		(next: unknown) => {
+			stagePatch({ color: next });
+		},
+		[stagePatch]
 	);
 
 	const [shadeConsentOpen, setShadeConsentOpen] = useState(false);
@@ -843,6 +1075,10 @@ function ColorPresetFieldsComponent({
 		]
 	);
 
+	const persistedColor = isAnchorShadeRow
+		? (displayRampMain.color ?? colorItem.color)
+		: colorItem.color;
+
 	const shadeEditedBaselineLookup = useMemo(():
 		Record<string, string> | undefined => {
 		if (!origin || !slug || isShadeRow || !shadesSaved) {
@@ -884,24 +1120,28 @@ function ColorPresetFieldsComponent({
 	const canEditShadeColors = canEditColorShadeColors();
 	const displayToggleChecked = shadeConsentOpen ? false : shadesSaved;
 
-	let previewColor = colorItem.color;
-	if (isAnchorShadeRow) {
-		previewColor = displayRampMain.color ?? colorItem.color;
-	}
-
 	return (
-		<Flex direction="column" gap={15}>
-			<ColorPreview
-				color={previewColor}
+		<ColorValueSession
+			persistedColor={persistedColor}
+			isAnchorShadeRow={isAnchorShadeRow}
+			presetLocked={presetLocked}
+			slug={String(slug ?? '')}
+			sharedPresetSlug={sharedPresetSlug}
+			onPersistColor={handleValueChange}
+			onStageColor={stageColorDraft}
+			onClearPending={clearPending}
+		>
+			<Flex direction="column" gap={15}>
+			<ColorDraftPreview
 				paintType={
 					typeof (colorItem as { type?: string }).type === 'string'
 						? (colorItem as { type?: string }).type
 						: undefined
 				}
-				shadesEnabled={!isShadeRow && shadesSaved}
-				stackMap={shadesSaved ? stackMap : undefined}
+				shadesSaved={shadesSaved}
+				isShadeRow={isShadeRow}
+				stackMap={stackMap}
 			/>
-
 			<SharedPresetControls
 				itemId={repeaterItemIdForUpdates}
 				variable={sharedPresetVariable}
@@ -919,30 +1159,9 @@ function ColorPresetFieldsComponent({
 						gap={12}
 						style={{ width: '100%' }}
 					>
-						<Flex
-							direction="row"
-							alignItems="center"
-							gap={8}
-							style={{ flex: 1, minWidth: 0 }}
-						>
-							<BaseControl
-								columns="1.2fr 3fr"
-								label={__('Color', 'blockera')}
-								controlName={`color-value-${isAnchorShadeRow ? sharedPresetSlug : slug}`}
-							>
-								<GlobalStylesMainColorControl
-									controlName={`color-value-${isAnchorShadeRow ? sharedPresetSlug : slug}`}
-									value={
-										isAnchorShadeRow
-											? (displayRampMain.color ??
-												colorItem.color)
-											: colorItem.color
-									}
-									onChange={handleValueChange}
-									disabled={presetLocked}
-								/>
-
-								<VariableVariationsFieldsSection>
+						<ColorValueFieldsBlurHost>
+							<ColorValueField>
+							<VariableVariationsFieldsSection>
 									{!isShadeRow ? (
 										<>
 											<VariableVariationsFieldsSlotProvider>
@@ -1013,8 +1232,8 @@ function ColorPresetFieldsComponent({
 										</>
 									) : null}
 								</VariableVariationsFieldsSection>
-							</BaseControl>
-						</Flex>
+							</ColorValueField>
+						</ColorValueFieldsBlurHost>
 					</Flex>
 
 					<VariableVariationsFieldsSection>
@@ -1117,7 +1336,8 @@ function ColorPresetFieldsComponent({
 					}}
 				/>
 			) : null}
-		</Flex>
+			</Flex>
+		</ColorValueSession>
 	);
 }
 
