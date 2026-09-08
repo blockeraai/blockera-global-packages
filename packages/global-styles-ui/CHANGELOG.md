@@ -6,6 +6,8 @@
   and other presets.
 - Global Styles stays smoother when you save a custom variable: theme and
   default lists do not rebuild as if they changed.
+- Saving a custom variable no longer rebuilds every extra CSS variable on
+  the canvas; only the changed preset updates.
 
 ### Development Notes
 
