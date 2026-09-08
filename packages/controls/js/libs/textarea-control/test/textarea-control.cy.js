@@ -69,6 +69,7 @@ describe('textarea control component testing', () => {
 		});
 
 		it('should control data value equal with expected defaultValue when id was not provided for TextAreaControl', () => {
+			const name = nanoid();
 			cy.withDataProvider({
 				component: (
 					<TextAreaControl
