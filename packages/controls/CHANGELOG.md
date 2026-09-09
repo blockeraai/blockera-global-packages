@@ -25,6 +25,9 @@
   Global Styles editors can save before they close. A unit typed in the
   field (for example `33px`) is not appended again as `33pxpx`. CSS
   function values still keep the `func` suffix.
+- Confirming delete on a repeater item (including a variable in the
+  picker) finishes the delete instead of stopping when the confirm button
+  is not a DOM event.
 
 ### Improvements
 
@@ -55,6 +58,7 @@
   clone chrome and field-leave.
 - Escape on a unit field does not double a typed unit suffix, and CSS
   function values still keep the `func` suffix.
+- Repeater delete confirm can pass a non-event payload without throwing.
 - InputControl, TextAreaControl, BorderControl, CheckboxControl, and
   RepeaterControl component tests give the store a name so delayed
   registration can mount the control.

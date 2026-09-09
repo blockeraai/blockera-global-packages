@@ -499,11 +499,24 @@ export function shouldPreserveRepeaterPopoverForNestedOpen(
 }
 
 export function stopRepeaterItemClick(event: Object): void {
-	event.stopPropagation();
-	event.preventDefault();
+	if (!event || typeof event !== 'object') {
+		return;
+	}
+
+	if (typeof event.stopPropagation === 'function') {
+		event.stopPropagation();
+	}
+
+	if (typeof event.preventDefault === 'function') {
+		event.preventDefault();
+	}
+
 	const nativeEvent: ?Object = event.nativeEvent;
 
-	if (nativeEvent) {
+	if (
+		nativeEvent &&
+		typeof nativeEvent.stopImmediatePropagation === 'function'
+	) {
 		nativeEvent.stopImmediatePropagation();
 	}
 }
