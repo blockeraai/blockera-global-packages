@@ -651,12 +651,30 @@ export const registerCommands = () => {
 
 		cy.getParentContainer(label)
 			.last()
-			.within(() => {
-				cy.getByDataCy('color-label').should((el) => {
-					expect(el.text().replace(/^#/, '').toLowerCase()).to.include(
-						hexNeedle
-					);
-				});
+			.should(($container) => {
+				const $label = $container.find('[data-cy="color-label"]');
+
+				if ($label.length) {
+					expect(
+						$label.text().replace(/^#/, '').toLowerCase()
+					).to.include(hexNeedle);
+					return;
+				}
+
+				const $btn = $container.find('[data-cy="color-btn"]').first();
+				const primary =
+					$btn[0]?.style.getPropertyValue(
+						'--blockera-controls-primary-color'
+					) || '';
+				const indicatorBackground =
+					$container.find('[data-cy="color-indicator"]')[0]?.style
+						.background || '';
+
+				expect(
+					`${primary} ${indicatorBackground}`
+						.replace(/#/g, '')
+						.toLowerCase()
+				).to.include(hexNeedle);
 			});
 	});
 
