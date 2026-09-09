@@ -10,6 +10,8 @@
   reuses the last post preview URL after a Site Editor Global Styles visit.
 - `savePage` always finishes with a visible save snackbar, including after
   a Site Editor Global Styles visit where WordPress does not render one.
+- `savePage` in the post editor waits until the post is saved, so a reload
+  still has canvas blocks.
 
 ## [4.0.0] - 2026-09-01
 

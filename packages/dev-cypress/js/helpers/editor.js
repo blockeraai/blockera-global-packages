@@ -649,6 +649,64 @@ function ensureEditorSaveSnackbar() {
 	);
 }
 
+function clickVisiblePostPublishButton() {
+	cy.get(
+		'.editor-post-publish-button, .editor-post-publish-button__button'
+	)
+		.filter(':visible')
+		.first()
+		.click();
+}
+
+/**
+ * Finish a post-editor Publish/Update. Tests disable the pre-publish sidebar,
+ * so one click should save; still confirm the panel if WordPress shows it.
+ */
+function completePostEditorSave() {
+	cy.location('pathname').then((pathname) => {
+		const isNewPost = String(pathname).includes('post-new.php');
+
+		clickVisiblePostPublishButton();
+
+		cy.get('body').then(($body) => {
+			if ($body.find('.editor-post-publish-panel:visible').length) {
+				cy.get(
+					'.editor-post-publish-panel__header-publish-button button, .editor-post-publish-panel .editor-post-publish-button'
+				)
+					.filter(':visible')
+					.last()
+					.click();
+			}
+
+			if (
+				$body.find(
+					'.entities-saved-states__panel .editor-entities-saved-states__save-button'
+				).length
+			) {
+				cy.get(
+					'.entities-saved-states__panel .editor-entities-saved-states__save-button'
+				).click();
+			}
+		});
+
+		if (isNewPost) {
+			cy.location('href', { timeout: 30000 }).should((href) => {
+				expect(
+					href.includes('post.php') &&
+						!href.includes('post-new.php'),
+					'post editor saved (left post-new.php)'
+				).to.equal(true);
+			});
+			return;
+		}
+
+		cy.get(
+			'.editor-post-saved-state.is-saved, .components-snackbar, .components-notice.is-success',
+			{ timeout: 30000 }
+		).should('exist');
+	});
+}
+
 /**
  * From inside the WordPress editor open the blockera Gutenberg editor panel
  */
@@ -658,29 +716,18 @@ export function savePage() {
 
 		cy.url().then((url) => {
 			const hasVisiblePublish =
-				$body.find('.editor-post-publish-button:visible').length > 0;
+				$body.find(
+					'.editor-post-publish-button:visible, .editor-post-publish-button__button:visible'
+				).length > 0;
 			const siteEditor =
 				isSiteEditorLocation(url, $body) || !hasVisiblePublish;
 
 			if (siteEditor) {
 				saveSiteEditorDirtyEntities();
+				ensureEditorSaveSnackbar();
 			} else {
-				cy.get('.editor-post-publish-button').click();
-
-				cy.get('body').then(($panelBody) => {
-					if (
-						$panelBody.find(
-							'.entities-saved-states__panel .editor-entities-saved-states__save-button'
-						).length
-					) {
-						cy.get(
-							'.entities-saved-states__panel .editor-entities-saved-states__save-button'
-						).click();
-					}
-				});
+				completePostEditorSave();
 			}
-
-			ensureEditorSaveSnackbar();
 		});
 	});
 }
