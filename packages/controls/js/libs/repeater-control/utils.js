@@ -32,6 +32,46 @@ import {
 } from '../popover/utils';
 import { getRepeaterActiveItemsCount } from './helpers';
 
+/**
+ * True when the repeater row id changed because the item `type` was renamed
+ * (`blur-0` → `drop-shadow-0`), not because items were reordered or deleted.
+ */
+export function isRepeaterTypeKeyRename(
+	previousItemId: mixed,
+	itemId: mixed,
+	item: mixed
+): boolean {
+	if (
+		previousItemId === itemId ||
+		'string' !== typeof previousItemId ||
+		'string' !== typeof itemId ||
+		!previousItemId ||
+		!itemId
+	) {
+		return false;
+	}
+
+	const prevSuffix = previousItemId.match(/-(\d+)$/);
+	const nextSuffix = itemId.match(/-(\d+)$/);
+
+	if (!prevSuffix || !nextSuffix || prevSuffix[1] !== nextSuffix[1]) {
+		return false;
+	}
+
+	const type =
+		item && typeof item === 'object' && !Array.isArray(item)
+			? item.type
+			: undefined;
+
+	if ('string' === typeof type && type !== '') {
+		return itemId.startsWith(`${type}-`);
+	}
+
+	return (
+		previousItemId.replace(/-\d+$/, '') !== itemId.replace(/-\d+$/, '')
+	);
+}
+
 export const isOpenPopoverEvent = (
 	event: Object,
 	excludedTargetWrapper?: string

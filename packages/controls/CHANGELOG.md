@@ -28,6 +28,8 @@
 - Confirming delete on a repeater item (including a variable in the
   picker) finishes the delete instead of stopping when the confirm button
   is not a DOM event.
+- Changing a nested layer type (for example filter blur to drop-shadow)
+  keeps the layer editor open.
 
 ### Improvements
 

@@ -33,6 +33,7 @@ import {
 	INSPECTOR_REPEATER_POPOVER_CLOSE_EVENT,
 	isClickInsideOpenInspectorRepeaterPopover,
 	isOpenPopoverEvent,
+	isRepeaterTypeKeyRename,
 	isRepeaterPromoActive,
 	shouldApplyRepeaterItemNativeStyle,
 	shouldGateRepeaterItemHeaderForPromo,
@@ -275,7 +276,8 @@ const RepeaterItem = ({
 		isCreatingStepPopoverCloseGuarded,
 	]);
 
-	// Rename-by-type changes itemId while the edit popover is open — keep it open.
+	// Rename-by-type changes itemId (and may dismiss the popover via a native
+	// select). Keep or reopen the editor on the new key.
 	useEffect(() => {
 		const previousItemId = prevItemIdRef.current;
 
@@ -283,9 +285,21 @@ const RepeaterItem = ({
 			return;
 		}
 
-		if (isOpen) {
+		const typeKeyRename = isRepeaterTypeKeyRename(
+			previousItemId,
+			itemId,
+			item
+		);
+
+		if (isOpen || typeKeyRename) {
+			suppressAutoOpenRef.current = false;
+
 			if ('function' === typeof reparentPendingOpenItemId) {
 				reparentPendingOpenItemId(previousItemId, itemId);
+			}
+
+			if (!isOpen) {
+				handleItemOpen({ refreshContent: true });
 			}
 
 			if (item?.isOpen !== true && item?.creatingStep !== true) {
@@ -314,6 +328,7 @@ const RepeaterItem = ({
 		valueCleanup,
 		changeRepeaterItem,
 		reparentPendingOpenItemId,
+		handleItemOpen,
 	]);
 
 	// Stable row keys survive delete/reorder — close when this itemId is gone.
