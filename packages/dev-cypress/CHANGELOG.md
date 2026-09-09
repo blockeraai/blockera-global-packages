@@ -12,6 +12,8 @@
   a Site Editor Global Styles visit where WordPress does not render one.
 - `savePage` in the post editor waits until the post is saved, so a reload
   still has canvas blocks.
+- `getIframeBody` waits until the editor canvas document has blocks, so
+  specs that reload the post editor still find canvas content.
 
 ## [4.0.0] - 2026-09-01
 
