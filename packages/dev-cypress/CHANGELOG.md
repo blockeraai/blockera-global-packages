@@ -7,6 +7,10 @@
 - Site Editor helpers can open Global Styles variable screens with render
   counting on: colors, spacing, text shadows, transforms, and line heights.
 - Borders Global Styles helper accepts the same render counting option.
+- Navigation “Add page” clicks the canvas Page List overlay on WordPress
+  7.1 when List View has no appender.
+- Navigation submenu inner add inserts a child link when WordPress 7.1
+  hides the canvas appender.
 - `savePage` waits for the multi-entity save panel, and `redirectToFrontPage`
   reuses the last post preview URL after a Site Editor Global Styles visit.
 - `savePage` always finishes with a visible save snackbar, including after

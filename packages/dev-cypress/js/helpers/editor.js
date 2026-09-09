@@ -855,6 +855,87 @@ export function openBlockNavigator() {
 }
 
 /**
+ * Click the control used to add a Navigation page/link.
+ *
+ * WordPress 7.1 puts "Add page" on the canvas Page List overlay, not inside
+ * List View. Older editors still expose it (or "Add block") in List View.
+ */
+export function clickListViewAddPage() {
+	openBlockNavigator();
+
+	cy.get('.block-editor-list-view-tree', { timeout: 20000 }).should(
+		'be.visible'
+	);
+
+	const listViewAppender =
+		'.block-editor-list-view-tree [aria-label="Add page"], .block-editor-list-view-tree [aria-label="Add block"], .block-editor-list-view-tree .list-view-appender button';
+
+	cy.get('body').then(($body) => {
+		if ($body.find(listViewAppender).length) {
+			cy.get(listViewAppender).filter(':visible').first().click({
+				force: true,
+			});
+			return;
+		}
+
+		cy.getIframeBody()
+			.find('[aria-label="Add page"], [aria-label="Add block"]', {
+				timeout: 20000,
+			})
+			.first()
+			.click({ force: true });
+	});
+}
+
+/**
+ * Add a child link under the selected Navigation submenu.
+ *
+ * WordPress 7.1 overlay Navigation does not expose the classic canvas
+ * `.block-editor-button-block-appender` on the visible submenu copy.
+ */
+export function clickNavigationSubmenuInnerAppender() {
+	cy.window().then((win) => {
+		const editorSelect = win.wp.data.select('core/block-editor');
+		const editorDispatch = win.wp.data.dispatch('core/block-editor');
+		const createBlock = win.wp.blocks.createBlock;
+		const selected = editorSelect.getSelectedBlock();
+
+		const findSubmenuClientId = (blocks) => {
+			for (const block of blocks) {
+				if (block.name === 'core/navigation-submenu') {
+					return block.clientId;
+				}
+
+				const nested = findSubmenuClientId(block.innerBlocks || []);
+
+				if (nested) {
+					return nested;
+				}
+			}
+
+			return null;
+		};
+
+		const parentId =
+			selected?.name === 'core/navigation-submenu'
+				? selected.clientId
+				: findSubmenuClientId(editorSelect.getBlocks());
+
+		expect(parentId, 'Navigation submenu to insert into').to.exist;
+
+		editorDispatch.insertBlock(
+			createBlock('core/navigation-link', {
+				url: '#submenu-child-item',
+				label: 'Child',
+				kind: 'custom',
+			}),
+			undefined,
+			parentId
+		);
+	});
+}
+
+/**
  * Close the block navigator.
  */
 export function closeBlockNavigator() {
