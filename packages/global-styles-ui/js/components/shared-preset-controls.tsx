@@ -432,6 +432,61 @@ function SharedPresetControlsComponent<T extends VariableType>({
 		buildPresetNameUpdateValue,
 	]);
 
+	const syncCreatingNameToRepeaterStore = useCallback(
+		(nextName: string, { syncCreatingSlug = true } = {}) => {
+			const updatedRow = buildPresetNameUpdateValue(nextName, {
+				syncCreatingSlug,
+			});
+
+			modifyControlValue({
+				controlId,
+				value: {
+					...repeaterItemsRef.current,
+					[itemId]: updatedRow,
+				},
+			});
+
+			if (syncCreatingSlug) {
+				notifyPresetFeatureBinding(updatedRow);
+			}
+		},
+		[
+			buildPresetNameUpdateValue,
+			controlId,
+			itemId,
+			modifyControlValue,
+			notifyPresetFeatureBinding,
+		]
+	);
+
+	const syncCreatingSlugToRepeaterStore = useCallback(
+		(nextSlug: string) => {
+			const updatedRow = applyDeferredDescriptionToRow({
+				...(variable as Record<string, unknown>),
+				slug: nextSlug,
+				name: draftNameRef.current,
+			});
+
+			modifyControlValue({
+				controlId,
+				value: {
+					...repeaterItemsRef.current,
+					[itemId]: updatedRow,
+				},
+			});
+
+			notifyPresetFeatureBinding(updatedRow);
+		},
+		[
+			applyDeferredDescriptionToRow,
+			controlId,
+			itemId,
+			modifyControlValue,
+			notifyPresetFeatureBinding,
+			variable,
+		]
+	);
+
 	const persistCreatingSlugToTheme = useCallback(
 		(
 			nextSlug: string,
@@ -834,6 +889,9 @@ function SharedPresetControlsComponent<T extends VariableType>({
 				}
 
 				headerDraftStore?.patch(itemIdKey, headerPatch);
+				syncCreatingNameToRepeaterStore(newValue, {
+					syncCreatingSlug: shouldSyncSlugFromName,
+				});
 				return;
 			}
 
@@ -847,6 +905,7 @@ function SharedPresetControlsComponent<T extends VariableType>({
 			headerDraftStore,
 			isCreating,
 			itemIdKey,
+			syncCreatingNameToRepeaterStore,
 			stageLiveIdentityPatch,
 		]
 	);
@@ -864,8 +923,14 @@ function SharedPresetControlsComponent<T extends VariableType>({
 			setHasManualSlugDuringCreating(true);
 			hasManualSlugDuringCreatingRef.current = true;
 			headerDraftStore?.patch(itemIdKey, { slug: normalized });
+			syncCreatingSlugToRepeaterStore(normalized);
 		},
-		[headerDraftStore, isCreating, itemIdKey]
+		[
+			headerDraftStore,
+			isCreating,
+			itemIdKey,
+			syncCreatingSlugToRepeaterStore,
+		]
 	);
 
 	const handleDescriptionChange = useCallback(
