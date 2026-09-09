@@ -5,6 +5,7 @@
  */
 import {
 	nameNewGlobalStylesCustomPreset,
+	openGlobalStylesBordersScreen,
 	openGlobalStylesColorPaletteScreen,
 	openGlobalStylesFiltersScreen,
 	openGlobalStylesFontSizesVariablesScreen,
@@ -521,6 +522,44 @@ describe('Global Styles → preset repeater item performance (Phase 1–5)', () 
 			min: 1,
 			max: 2,
 			message: 'leaving the color picker should persist once',
+		});
+	});
+
+	it('creating: name keystrokes do not persist until close', () => {
+		openGlobalStylesBordersScreen({ renderDebug: 'all' });
+
+		cy.addNewGlobalStylesCustomPresetByDataTest(
+			'global-styles-preset-add-border-preset-presets-custom'
+		);
+
+		cy.getByDataTest('repeater-item-creating-step', {
+			timeout: 20000,
+		}).should('exist');
+
+		snapshotPerfCounters('createNameBefore');
+
+		cy.getByDataTest('global-styles-preset-name-field', { timeout: 20000 })
+			.first()
+			.click({ force: true })
+			.clear({ force: true })
+			.type('Perf Border Name', { delay: 0, force: true });
+
+		cy.wait(400);
+		snapshotPerfCounters('createNameAfterType');
+		expectPersistDelta('createNameBefore', 'createNameAfterType', {
+			max: 0,
+			message: 'creating-step name keystrokes must not persist the entity',
+		});
+
+		cy.realPress('Escape');
+		cy.getByDataTest('repeater-item-creating-step').should('not.exist');
+
+		cy.wait(400);
+		snapshotPerfCounters('createNameAfterClose');
+		expectPersistDelta('createNameAfterType', 'createNameAfterClose', {
+			min: 1,
+			max: 2,
+			message: 'closing a new preset should persist the name once',
 		});
 	});
 });

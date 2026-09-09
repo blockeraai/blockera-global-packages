@@ -442,11 +442,15 @@ export function openGlobalStylesShadowsScreen({
 }
 
 /** Border box presets (`settings.border.blockeraBorder.presets.custom`). */
-export function openGlobalStylesBordersScreen({ reset } = { reset: true }) {
+export function openGlobalStylesBordersScreen({
+	reset,
+	renderDebug,
+} = { reset: true }) {
 	return openGlobalStylesDesignSystemPresetScreen({
 		panelButtonId: 'borders',
 		waitSelector: '.blockera-borders-presets',
 		reset,
+		renderDebug,
 	});
 }
 

@@ -49,6 +49,7 @@
 
 - Variable editors: typing does not save until leave or close; color, shadow,
   and filter keep their pickers attached.
+- Creating a custom border variable does not persist on each name keystroke.
 - Escape persist from a name-only hook does not overwrite a sibling size
   (or other field) persist.
 - Nested layer persist echo keeps an open filter (or similar) editor open.

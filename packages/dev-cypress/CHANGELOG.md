@@ -6,6 +6,7 @@
   input (that fails when React replaces the field).
 - Site Editor helpers can open Global Styles variable screens with render
   counting on: colors, spacing, text shadows, transforms, and line heights.
+- Borders Global Styles helper accepts the same render counting option.
 - `savePage` waits for the multi-entity save panel, and `redirectToFrontPage`
   reuses the last post preview URL after a Site Editor Global Styles visit.
 - `savePage` always finishes with a visible save snackbar, including after
