@@ -54,6 +54,20 @@ describe('shouldCommitNestedRepeaterChange', () => {
 		expect(
 			didNestedRepeaterLayerClose(
 				{ 'outer-0': openLayer },
+				{
+					'outer-0': {
+						type: 'outer',
+						blur: '18px',
+						isVisible: true,
+						order: 0,
+					},
+				}
+			)
+		).toBe(false);
+
+		expect(
+			didNestedRepeaterLayerClose(
+				{ 'outer-0': openLayer },
 				{}
 			)
 		).toBe(false);

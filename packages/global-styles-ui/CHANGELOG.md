@@ -49,6 +49,7 @@
   and filter keep their pickers attached.
 - Escape persist from a name-only hook does not overwrite a sibling size
   (or other field) persist.
+- Nested layer persist echo keeps an open filter (or similar) editor open.
 
 ## [3.0.0] - 2026-09-05
 
