@@ -114,6 +114,20 @@ describe('Util functions', () => {
 				})
 			).toBe(false);
 		});
+
+		test('slug or index key changes without a type are not a type rename', () => {
+			expect(
+				isRepeaterTypeKeyRename('custom-0', 'perf-border-0', {})
+			).toBe(false);
+		});
+
+		test('new id must start with the item type', () => {
+			expect(
+				isRepeaterTypeKeyRename('blur-0', 'custom-0', {
+					type: 'drop-shadow',
+				})
+			).toBe(false);
+		});
 	});
 });
 
