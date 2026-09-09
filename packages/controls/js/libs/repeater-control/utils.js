@@ -77,6 +77,39 @@ export function isRepeaterTypeKeyRename(
 	);
 }
 
+/**
+ * Persist (and reopen) after an itemId change only inside the same control
+ * instance. Rows stay mounted across type renames (`order` keys) AND across
+ * state/breakpoint switches (`controlId` includes those). Treating inherit
+ * swaps (`linear-gradient-0` → `image-0`) as type renames wrote the inherited
+ * value into the new state.
+ */
+export function shouldPersistRepeaterItemAfterIdChange({
+	previousControlId,
+	controlId,
+	previousItemId,
+	itemId,
+	item,
+	isOpen,
+}: {
+	previousControlId: mixed,
+	controlId: mixed,
+	previousItemId: mixed,
+	itemId: mixed,
+	item: mixed,
+	isOpen: boolean,
+}): boolean {
+	if (previousControlId !== controlId) {
+		return false;
+	}
+
+	if (previousItemId === itemId) {
+		return false;
+	}
+
+	return isOpen || isRepeaterTypeKeyRename(previousItemId, itemId, item);
+}
+
 export const isOpenPopoverEvent = (
 	event: Object,
 	excludedTargetWrapper?: string

@@ -33,7 +33,7 @@ import {
 	INSPECTOR_REPEATER_POPOVER_CLOSE_EVENT,
 	isClickInsideOpenInspectorRepeaterPopover,
 	isOpenPopoverEvent,
-	isRepeaterTypeKeyRename,
+	shouldPersistRepeaterItemAfterIdChange,
 	isRepeaterPromoActive,
 	shouldApplyRepeaterItemNativeStyle,
 	shouldGateRepeaterItemHeaderForPromo,
@@ -167,6 +167,7 @@ const RepeaterItem = ({
 	const [mainPresetHeaderAnchor, setMainPresetHeaderAnchor] =
 		useState(null);
 	const prevItemIdRef = useRef(itemId);
+	const prevControlIdRef = useRef(controlId);
 	const scrollBehavior = useReducedMotion() ? 'auto' : 'smooth';
 	const [draggingIndex, setDraggingIndex] = useState(null);
 	const [variationsAccordionOpen, setVariationsAccordionOpen] =
@@ -279,22 +280,25 @@ const RepeaterItem = ({
 	]);
 
 	// Rename-by-type changes itemId (and may dismiss the popover via a native
-	// select). Keep or reopen the editor on the new key.
+	// select). Keep or reopen the editor on the new key. Skip when controlId
+	// changed: that is a state/breakpoint switch, not a user type rename.
 	useEffect(() => {
 		const previousItemId = prevItemIdRef.current;
+		const previousControlId = prevControlIdRef.current;
+		prevControlIdRef.current = controlId;
 
-		if (previousItemId === itemId) {
-			return;
-		}
-
-		const typeKeyRename = isRepeaterTypeKeyRename(
-			previousItemId,
-			itemId,
-			itemValueRef.current
-		);
 		const row = itemValueRef.current;
 
-		if (isOpen || typeKeyRename) {
+		if (
+			shouldPersistRepeaterItemAfterIdChange({
+				previousControlId,
+				controlId,
+				previousItemId,
+				itemId,
+				item: row,
+				isOpen,
+			})
+		) {
 			suppressAutoOpenRef.current = false;
 
 			if ('function' === typeof reparentPendingOpenItemId) {

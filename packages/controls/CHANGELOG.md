@@ -2,6 +2,8 @@
 
 ### Bug Fixes
 
+- Changing device or block state with a background layer editor open no
+  longer saves that layer onto the new device or state.
 - Reset icons on control labels can receive a tooltip without a React
   ref warning.
 - Opening a color picker no longer logs a React `defaultProps` warning
