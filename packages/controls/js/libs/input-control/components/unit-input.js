@@ -502,10 +502,33 @@ export const UnitInput: ComponentType<UnitInputProps> = memo(function UnitInput(
 		}
 
 		if (event.key === 'Escape') {
+			if (unitUpdateTimeout.current) {
+				clearTimeout(unitUpdateTimeout.current);
+				unitUpdateTimeout.current = null;
+			}
+
+			const value = String(typedValue ?? '');
+			const match = value.match(/^(-?\d*\.?\d*)([a-zA-Z%]+)?$/);
+
+			if (match) {
+				const [, numericValue = '', unit = ''] = match;
+
+				applyParsedNumericAndUnit(numericValue, unit, value);
+
+				if (!unit && typeof onChange === 'function') {
+					onChange({
+						unitValue,
+						inputValue: numericValue,
+					});
+				}
+
+				return;
+			}
+
 			if (typeof onChange === 'function') {
 				onChange({
 					unitValue,
-					inputValue: String(typedValue ?? ''),
+					inputValue: value,
 				});
 			}
 			return;

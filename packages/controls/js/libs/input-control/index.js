@@ -30,6 +30,7 @@ import { setValueAddon, useValueAddon } from '../../value-addons';
 import { BaseControl } from './../index';
 import {
 	appendNotFoundUnitOption,
+	combineNumericInputWithUnit,
 	extractNumberAndUnit,
 	getCSSUnits,
 	getFirstUnit,
@@ -296,14 +297,24 @@ export default function InputControl({
 				'' !== inputValue &&
 				(nextUnitValue.value || extractedValue.unit === '')
 			) {
-				setValue(inputValue + nextUnitValue.value);
+				setValue(
+					combineNumericInputWithUnit(
+						inputValue,
+						nextUnitValue.value
+					)
+				);
 			} else if (
 				!extractedNoUnit &&
 				value &&
 				value !== nextUnitValue.value &&
 				!isEmpty(inputValue)
 			) {
-				setValue(inputValue + nextUnitValue.value);
+				setValue(
+					combineNumericInputWithUnit(
+						inputValue,
+						nextUnitValue.value
+					)
+				);
 			} else if (
 				(isEmpty(inputValue) && value) ||
 				(isEmpty(inputValue) && '' === value)

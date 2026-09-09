@@ -1581,6 +1581,56 @@ export function extractNumberAndUnit(value: Object | string): Object {
 	};
 }
 
+/**
+ * Join a unit-field number (or a number that still includes a typed unit) with
+ * the selected unit without producing values like `33pxpx`.
+ */
+export function combineNumericInputWithUnit(
+	inputValue: mixed,
+	unit: mixed
+): string {
+	const input =
+		inputValue === undefined || inputValue === null
+			? ''
+			: String(inputValue);
+	const unitStr = typeof unit === 'string' ? unit : '';
+
+	if (!unitStr) {
+		return input;
+	}
+
+	if (unitStr === 'func') {
+		if (input.endsWith('func')) {
+			return input;
+		}
+
+		return input + 'func';
+	}
+
+	const match = input.match(/^(-?\d*\.?\d*)([a-zA-Z%]*)$/);
+
+	if (match) {
+		const numeric = match[1];
+		const typedUnit = (match[2] || '').toLowerCase();
+
+		if (numeric === '' && !typedUnit) {
+			return input;
+		}
+
+		if (typedUnit) {
+			return `${numeric}${typedUnit}`;
+		}
+
+		return `${numeric}${unitStr}`;
+	}
+
+	if (input.endsWith(unitStr)) {
+		return input;
+	}
+
+	return input + unitStr;
+}
+
 export function getFirstUnit(units: Array<any>): Object {
 	if (isUndefined(units)) {
 		return {};
