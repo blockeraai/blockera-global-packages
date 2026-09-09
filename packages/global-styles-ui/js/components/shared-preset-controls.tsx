@@ -53,6 +53,7 @@ import { usePresetVariationsStorageOptional } from '../context/preset-variations
 import { isNameBasedTaxonomyPreset } from './preset-taxonomy/parse-preset-name-taxonomy';
 import { resolvePresetTaxonomyEditName } from './preset-taxonomy/taxonomy-meta';
 import { usePresetTaxonomyEditSessionActionsOptional } from './preset-taxonomy/preset-taxonomy-edit-session-context';
+import { usePresetItemHeaderDraftStore } from './preset-item-header-draft-context';
 
 export interface SharedPresetControlsProps<
 	T extends VariableType = VariableType,
@@ -110,8 +111,9 @@ function SharedPresetControlsComponent<T extends VariableType>({
 
 	const persistedName = committedTaxonomyName ?? name;
 	const itemIdKey = String(itemId);
+	const headerDraftStore = usePresetItemHeaderDraftStore();
 	const isCreating = variable.creatingStep === true;
-	// Local drafts during creatingStep keep inputs stable; repeater rows still sync via changeRepeaterItem.
+	// Local drafts during creatingStep keep inputs and headers stable; persist on close.
 	const deferFieldEdits = Boolean(editSessionActions) && !isCreating;
 	const deferNameEdits = deferFieldEdits;
 	// Description stays in a local draft during create to avoid textarea/store sync fights in the picker.
@@ -281,7 +283,6 @@ function SharedPresetControlsComponent<T extends VariableType>({
 		});
 	const persistedDescriptionRef = useRef(persistedDescription);
 	persistedDescriptionRef.current = persistedDescription;
-	const CREATING_NAME_PERSIST_MS = 200;
 
 	const clearCreatingNamePersistTimeout = useCallback(() => {
 		if (creatingNamePersistTimeoutRef.current) {
@@ -430,63 +431,6 @@ function SharedPresetControlsComponent<T extends VariableType>({
 		stageIdentityPatch,
 		buildPresetNameUpdateValue,
 	]);
-
-	const syncCreatingNameToRepeaterStore = useCallback(
-		(nextName: string, { syncCreatingSlug = true } = {}) => {
-			const updatedRow = buildPresetNameUpdateValue(nextName, {
-				syncCreatingSlug,
-			});
-
-			modifyControlValue({
-				controlId,
-				value: {
-					...repeaterItems,
-					[itemId]: updatedRow,
-				},
-			});
-
-			if (syncCreatingSlug) {
-				notifyPresetFeatureBinding(updatedRow);
-			}
-		},
-		[
-			buildPresetNameUpdateValue,
-			controlId,
-			itemId,
-			modifyControlValue,
-			notifyPresetFeatureBinding,
-			repeaterItems,
-		]
-	);
-
-	const syncCreatingSlugToRepeaterStore = useCallback(
-		(nextSlug: string) => {
-			const updatedRow = applyDeferredDescriptionToRow({
-				...(variable as Record<string, unknown>),
-				slug: nextSlug,
-				name: draftNameRef.current,
-			});
-
-			modifyControlValue({
-				controlId,
-				value: {
-					...repeaterItems,
-					[itemId]: updatedRow,
-				},
-			});
-
-			notifyPresetFeatureBinding(updatedRow);
-		},
-		[
-			applyDeferredDescriptionToRow,
-			controlId,
-			itemId,
-			modifyControlValue,
-			notifyPresetFeatureBinding,
-			repeaterItems,
-			variable,
-		]
-	);
 
 	const persistCreatingSlugToTheme = useCallback(
 		(
@@ -875,23 +819,21 @@ function SharedPresetControlsComponent<T extends VariableType>({
 
 			if (isCreating) {
 				setDraftName(newValue);
+				draftNameRef.current = newValue;
 				const shouldSyncSlugFromName =
 					!hasManualSlugDuringCreatingRef.current;
 				const derivedSlug = normalizeVariablePresetSlug(newValue);
+				const headerPatch: Record<string, unknown> = {
+					name: newValue,
+				};
+
 				if (shouldSyncSlugFromName && derivedSlug) {
 					setVariableSlug(derivedSlug);
+					variableSlugRef.current = derivedSlug;
+					headerPatch.slug = derivedSlug;
 				}
 
-				syncCreatingNameToRepeaterStore(newValue, {
-					syncCreatingSlug: shouldSyncSlugFromName,
-				});
-				clearCreatingNamePersistTimeout();
-				creatingNamePersistTimeoutRef.current = setTimeout(() => {
-					persistCreatingNameToTheme(draftNameRef.current, {
-						syncCreatingSlug: shouldSyncSlugFromName,
-					});
-				}, CREATING_NAME_PERSIST_MS);
-
+				headerDraftStore?.patch(itemIdKey, headerPatch);
 				return;
 			}
 
@@ -902,10 +844,9 @@ function SharedPresetControlsComponent<T extends VariableType>({
 		[
 			presetLocked,
 			deferNameEdits,
+			headerDraftStore,
 			isCreating,
-			clearCreatingNamePersistTimeout,
-			persistCreatingNameToTheme,
-			syncCreatingNameToRepeaterStore,
+			itemIdKey,
 			stageLiveIdentityPatch,
 		]
 	);
@@ -922,18 +863,9 @@ function SharedPresetControlsComponent<T extends VariableType>({
 
 			setHasManualSlugDuringCreating(true);
 			hasManualSlugDuringCreatingRef.current = true;
-			syncCreatingSlugToRepeaterStore(normalized);
-			clearCreatingSlugPersistTimeout();
-			creatingSlugPersistTimeoutRef.current = setTimeout(() => {
-				persistCreatingSlugToTheme(normalized);
-			}, CREATING_NAME_PERSIST_MS);
+			headerDraftStore?.patch(itemIdKey, { slug: normalized });
 		},
-		[
-			isCreating,
-			syncCreatingSlugToRepeaterStore,
-			clearCreatingSlugPersistTimeout,
-			persistCreatingSlugToTheme,
-		]
+		[headerDraftStore, isCreating, itemIdKey]
 	);
 
 	const handleDescriptionChange = useCallback(

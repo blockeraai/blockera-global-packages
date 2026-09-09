@@ -8,6 +8,8 @@
   follow the value as you type.
 - Typing in a variable editor no longer saves on every keystroke. The value
   saves when you leave the field or close the editor.
+- Naming a new custom variable no longer saves Global Styles on every
+  letter. The name is saved when you close the editor.
 
 ### Bug Fixes
 
