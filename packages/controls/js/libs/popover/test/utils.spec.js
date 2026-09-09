@@ -5,6 +5,7 @@ import {
 	getPopoverRoot,
 	getPopoverRootFromCloseControl,
 	hasNestedOverlayOpenAsideFrom,
+	shouldClosePopoverOnEscape,
 	isOtherPopoverClosing,
 	isElementInsideRepeaterChrome,
 	isFocusLeavingElement,
@@ -1089,6 +1090,75 @@ describe('popover offset utils', () => {
 			document.body.appendChild(overlay);
 
 			expect(hasNestedOverlayOpenAsideFrom(rootPopover)).toBe(true);
+		});
+
+		it('shouldClosePopoverOnEscape closes a field even when sibling WordPress popovers exist', () => {
+			const rootPopover = document.createElement('div');
+			rootPopover.className =
+				'components-popover blockera-component-popover';
+			const input = document.createElement('input');
+			rootPopover.appendChild(input);
+			document.body.appendChild(rootPopover);
+
+			const siblingPopover = document.createElement('div');
+			siblingPopover.className = 'components-popover';
+			document.body.appendChild(siblingPopover);
+
+			const fieldEscape = new KeyboardEvent('keydown', {
+				key: 'Escape',
+				bubbles: true,
+			});
+			Object.defineProperty(fieldEscape, 'target', { value: input });
+
+			expect(shouldClosePopoverOnEscape(rootPopover, fieldEscape)).toBe(
+				true
+			);
+
+			const preventedEscape = new KeyboardEvent('keydown', {
+				key: 'Escape',
+				bubbles: true,
+				cancelable: true,
+			});
+			preventedEscape.preventDefault();
+			Object.defineProperty(preventedEscape, 'target', {
+				value: input,
+			});
+
+			expect(
+				shouldClosePopoverOnEscape(rootPopover, preventedEscape)
+			).toBe(true);
+
+			document.body.removeChild(siblingPopover);
+			document.body.removeChild(rootPopover);
+		});
+
+		it('shouldClosePopoverOnEscape leaves the parent open when a nested child has the field', () => {
+			const parentPopover = document.createElement('div');
+			parentPopover.className = 'blockera-component-popover';
+			document.body.appendChild(parentPopover);
+
+			const nestedPopover = document.createElement('div');
+			nestedPopover.className = 'blockera-component-popover';
+			const input = document.createElement('input');
+			nestedPopover.appendChild(input);
+			document.body.appendChild(nestedPopover);
+			linkNestedPopoverToParent(nestedPopover, parentPopover);
+
+			const fieldEscape = new KeyboardEvent('keydown', {
+				key: 'Escape',
+				bubbles: true,
+			});
+			Object.defineProperty(fieldEscape, 'target', { value: input });
+
+			expect(shouldClosePopoverOnEscape(parentPopover, fieldEscape)).toBe(
+				false
+			);
+			expect(shouldClosePopoverOnEscape(nestedPopover, fieldEscape)).toBe(
+				true
+			);
+
+			document.body.removeChild(nestedPopover);
+			document.body.removeChild(parentPopover);
 		});
 
 		it('isOtherPopoverClosing ignores parent dismiss while a nested popover closes', () => {
