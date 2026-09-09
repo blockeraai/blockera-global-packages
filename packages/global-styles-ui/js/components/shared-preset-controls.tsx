@@ -258,17 +258,6 @@ function SharedPresetControlsComponent<T extends VariableType>({
 
 	const persistLiveIdentity = !isCreating && !deferNameEdits;
 
-	const { stagePatch: stageIdentityPatch, flush: flushIdentityPatch } =
-		useDeferredPresetItemCommit({
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			itemId,
-			getItem: () => variable as Object,
-		});
-
 	const creatingNamePersistTimeoutRef = useRef<ReturnType<
 		typeof setTimeout
 	> | null>(null);
@@ -279,6 +268,17 @@ function SharedPresetControlsComponent<T extends VariableType>({
 	repeaterItemsRef.current = repeaterItems;
 	const variableRef = useRef(variable);
 	variableRef.current = variable;
+
+	const { stagePatch: stageIdentityPatch, flush: flushIdentityPatch } =
+		useDeferredPresetItemCommit({
+			changeRepeaterItem,
+			onChange,
+			valueCleanup,
+			controlId,
+			repeaterId,
+			itemId,
+			getItem: () => variableRef.current as Object,
+		});
 	const persistedDescriptionRef = useRef(persistedDescription);
 	persistedDescriptionRef.current = persistedDescription;
 	const CREATING_NAME_PERSIST_MS = 200;

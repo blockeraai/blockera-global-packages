@@ -26,7 +26,10 @@ import {
  * Internal dependencies
  */
 import { usePresetItemHeaderDraftStore } from './preset-item-header-draft-context';
-import { coalesceDeferredPresetItemValue } from './coalesce-deferred-preset-item-value';
+import {
+	coalesceDeferredPresetItemValue,
+	shouldPersistEndingCreate,
+} from './coalesce-deferred-preset-item-value';
 
 /**
  * Stage outer preset-row updates locally and persist through `changeRepeaterItem`
@@ -98,8 +101,14 @@ export function useDeferredPresetItemCommit({
 		}
 
 		const args = argsRef.current;
+		const current = args.getItem();
+
+		if (!shouldPersistEndingCreate(pendingRef.current, current)) {
+			return;
+		}
+
 		const next = coalesceDeferredPresetItemValue(
-			args.getItem(),
+			current,
 			pendingRef.current,
 			{}
 		);

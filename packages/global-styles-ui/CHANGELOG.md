@@ -31,6 +31,8 @@
   keyed them as `presets.theme`.
 - Closing a new custom preset (Escape or the close control) finishes the
   create step so the row is no longer marked as still being created.
+- Editing a spacing (or other) preset size and pressing Escape keeps the
+  new size instead of reverting to the previous value.
 
 ### Development Notes
 
