@@ -42,7 +42,7 @@ describe('Global Styles UI → border radius presets (theme.json + UI)', () => {
 				cy.getByDataTest('border-radius-size-input').clear({
 					force: true,
 				});
-				cy.getByDataTest('border-radius-size-input').type('18px', {
+				cy.getByDataTest('border-radius-size-input').type('18', {
 					delay: 0,
 					force: true,
 				});
