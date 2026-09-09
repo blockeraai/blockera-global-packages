@@ -70,6 +70,8 @@
   registration can mount the control.
 - Repeater type-key rename keeps the same layer index (for example blur-0
   to drop-shadow-0) and does not treat a reorder or slug key as a rename.
+- Repeater item id changes do not persist when the control instance
+  switched (state or breakpoint), including while the layer editor is open.
 
 ## [5.0.0] - 2026-09-05
 
