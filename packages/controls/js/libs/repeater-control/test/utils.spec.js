@@ -2,6 +2,7 @@ import {
 	prepValueForHeader,
 	getArialLabelSuffix,
 	isClickInsideOpenInspectorRepeaterPopover,
+	isRepeaterTypeKeyRename,
 	isRepeaterPromoActive,
 	isRepeaterCompanionGateActive,
 	shouldApplyRepeaterItemNativeStyle,
@@ -94,6 +95,24 @@ describe('Util functions', () => {
 			expect(getArialLabelSuffix('this-is-test')).toStrictEqual(
 				'this is test'
 			);
+		});
+	});
+
+	describe('isRepeaterTypeKeyRename', () => {
+		test('blur to drop-shadow with the same index', () => {
+			expect(
+				isRepeaterTypeKeyRename('blur-0', 'drop-shadow-0', {
+					type: 'drop-shadow',
+				})
+			).toBe(true);
+		});
+
+		test('different indexes are not a type rename', () => {
+			expect(
+				isRepeaterTypeKeyRename('blur-1', 'blur-0', {
+					type: 'blur',
+				})
+			).toBe(false);
 		});
 	});
 });

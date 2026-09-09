@@ -64,6 +64,8 @@
 - InputControl, TextAreaControl, BorderControl, CheckboxControl, and
   RepeaterControl component tests give the store a name so delayed
   registration can mount the control.
+- Repeater type-key rename keeps the same layer index (for example blur-0
+  to drop-shadow-0) and does not treat a reorder as a rename.
 
 ## [5.0.0] - 2026-09-05
 
