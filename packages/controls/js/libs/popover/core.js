@@ -36,7 +36,7 @@ import {
 	registerPopoverOpen,
 	shouldDismissPopoverFromPointerDown,
 	shouldIgnorePopoverFocusOutside,
-	hasNestedOverlayOpenAsideFrom,
+	shouldClosePopoverOnEscape,
 	unregisterPopoverRoot,
 } from './utils';
 import type { TPopoverProps } from './types';
@@ -148,41 +148,13 @@ export const PopoverCore: React$AbstractComponent<TPopoverCoreProps, mixed> =
 
 			useEffect(() => {
 				const handleEscape = (event: KeyboardEvent) => {
-					if (event.key !== 'Escape' || event.defaultPrevented) {
-						return;
-					}
-
 					const popoverRoot = normalizePopoverRoot(
 						popoverRef.current
 					);
 
-					if (!(popoverRoot instanceof HTMLElement)) {
-						return;
-					}
-
-					if (hasNestedOverlayOpenAsideFrom(popoverRoot)) {
-						return;
-					}
-
-					const eventTarget = event.target;
-					const fieldInsideThisPopover =
-						eventTarget instanceof HTMLElement &&
-						Boolean(
-							eventTarget.closest(
-								'input, textarea, select, [contenteditable="true"]'
-							)
-						) &&
-						popoverRoot.contains(eventTarget);
-
-					const isBodyOrRoot =
-						eventTarget === document.body ||
-						eventTarget === document.documentElement ||
-						eventTarget === document;
-
-					// Innermost layer: Escape from a field closes this popover.
-					// Unfocused body covers `cy.get('body').type('{esc}')`.
-					// Other focused chrome is left to Gutenberg.
-					if (!fieldInsideThisPopover && !isBodyOrRoot) {
+					if (
+						!shouldClosePopoverOnEscape(popoverRoot, event)
+					) {
 						return;
 					}
 
@@ -190,10 +162,14 @@ export const PopoverCore: React$AbstractComponent<TPopoverCoreProps, mixed> =
 					dismissPopover({ skipMountGuard: true });
 				};
 
-				document.addEventListener('keydown', handleEscape);
+				document.addEventListener('keydown', handleEscape, true);
 
 				return () => {
-					document.removeEventListener('keydown', handleEscape);
+					document.removeEventListener(
+						'keydown',
+						handleEscape,
+						true
+					);
 				};
 			}, [dismissPopover]);
 

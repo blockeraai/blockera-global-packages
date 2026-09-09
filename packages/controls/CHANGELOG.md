@@ -18,6 +18,9 @@
   longer closes the variable picker.
 - Escape in a field inside a nested popover closes that layer instead of
   leaving it open.
+- Escape in a field inside a preset editor still closes that editor when
+  other WordPress popovers are open (for example after typing a border width),
+  including when Gutenberg already handled the Escape key.
 - Unit fields commit the typed value when you press Escape, so nested
   Global Styles editors can save before they close.
 

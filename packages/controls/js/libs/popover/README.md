@@ -162,7 +162,8 @@ Modal ignore is scoped to modals opened **from** the popover:
 |-----|---------|
 | `markPopoverClosing(root)` | Parent popovers ignore dismiss/focus-outside while a child closes (100ms window) |
 | `isOtherPopoverClosing(root)` | Guard in dismiss handlers |
-| `hasNestedOverlayOpenAsideFrom(root)` | Escape key — let innermost overlay handle first. Escape from a field inside this popover also closes this innermost layer. |
+| `hasNestedOverlayOpenAsideFrom(root)` | True when another popover/modal exists (body-level Escape defers). |
+| `shouldClosePopoverOnEscape(root, event)` | Escape from a field inside this popover closes it even if sibling WordPress popovers are open. Nested Blockera children still receive Escape first. |
 
 ---
 
@@ -249,7 +250,7 @@ npm run build
 
 **Nested registry:** `registerPopoverOpen`, `unregisterPopoverRoot`, `linkNestedPopoverToParent`, `isPopoverNestedChildOf`
 
-**Closing guards:** `markPopoverClosing`, `isOtherPopoverClosing`, `hasNestedOverlayOpenAsideFrom`
+**Closing guards:** `markPopoverClosing`, `isOtherPopoverClosing`, `hasNestedOverlayOpenAsideFrom`, `shouldClosePopoverOnEscape`
 
 **DOM helpers:** `getPopoverRoot`, `normalizePopoverRoot`, `POPOVER_ROOT_SELECTOR`
 

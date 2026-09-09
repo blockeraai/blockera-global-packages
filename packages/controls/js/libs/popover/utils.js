@@ -920,6 +920,97 @@ export function hasNestedOverlayOpenAsideFrom(
 	return false;
 }
 
+const ESCAPE_FIELD_SELECTOR =
+	'input, textarea, select, [contenteditable="true"]';
+
+function isEscapeFieldTarget(eventTarget: mixed): boolean {
+	return (
+		eventTarget instanceof HTMLElement &&
+		Boolean(eventTarget.closest(ESCAPE_FIELD_SELECTOR))
+	);
+}
+
+function isFieldInsidePopoverTree(
+	popoverRoot: HTMLElement,
+	eventTarget: mixed
+): boolean {
+	if (!isEscapeFieldTarget(eventTarget) || !(eventTarget instanceof Node)) {
+		return false;
+	}
+
+	if (popoverRoot.contains(eventTarget)) {
+		return true;
+	}
+
+	if (!(eventTarget instanceof Element)) {
+		return false;
+	}
+
+	const targetPopover = getPopoverRoot(eventTarget);
+
+	return (
+		targetPopover instanceof HTMLElement &&
+		(targetPopover === popoverRoot || popoverRoot.contains(targetPopover))
+	);
+}
+
+/**
+ * Whether this popover should dismiss on Escape.
+ *
+ * Site Editor keeps many sibling `.components-popover` nodes. Those must not
+ * block Escape when the focused field is inside this popover. Nested Blockera
+ * children still win first (inner layer closes; parent stays).
+ *
+ * Gutenberg may `preventDefault` Escape before bubble listeners. A field
+ * inside this popover still closes it.
+ */
+export function shouldClosePopoverOnEscape(
+	popoverRoot: ?HTMLElement,
+	event: KeyboardEvent
+): boolean {
+	if (event.key !== 'Escape') {
+		return false;
+	}
+
+	const normalizedRoot = normalizePopoverRoot(popoverRoot);
+
+	if (!(normalizedRoot instanceof HTMLElement)) {
+		return false;
+	}
+
+	const eventTarget = event.target;
+
+	if (eventTarget instanceof Element) {
+		const targetPopover = getPopoverRoot(eventTarget);
+
+		if (
+			targetPopover instanceof HTMLElement &&
+			targetPopover !== normalizedRoot &&
+			isPopoverNestedChildOf(targetPopover, normalizedRoot)
+		) {
+			return false;
+		}
+	}
+
+	if (isFieldInsidePopoverTree(normalizedRoot, eventTarget)) {
+		return true;
+	}
+
+	if (event.defaultPrevented) {
+		return false;
+	}
+
+	if (hasNestedOverlayOpenAsideFrom(normalizedRoot)) {
+		return false;
+	}
+
+	return (
+		eventTarget === document.body ||
+		eventTarget === document.documentElement ||
+		eventTarget === document
+	);
+}
+
 function handlePopoverCloseGuardPointerDown(event: MouseEvent | TouchEvent) {
 	lastPopoverPointerDownTarget = event.target;
 	notePopoverPointerInteraction(event.target);
