@@ -783,6 +783,24 @@ describe('input control component testing', () => {
 				});
 			});
 
+			it('should not double the unit when Escape commits a typed unit suffix', () => {
+				const name = nanoid();
+				cy.withDataProvider({
+					component: <InputControl unitType="general" />,
+					name,
+					value: '20px',
+				});
+
+				cy.get('input').focus();
+				cy.get('input').clear();
+				cy.get('input').type('33px', { delay: 0 });
+				cy.get('input').type('{esc}');
+
+				cy.then(() => {
+					return expect(getControlValue(name)).to.eq('33px');
+				});
+			});
+
 			it('should handle pasting units', () => {
 				const name = nanoid();
 				cy.withDataProvider({

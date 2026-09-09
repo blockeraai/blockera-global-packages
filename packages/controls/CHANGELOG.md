@@ -22,7 +22,9 @@
   other WordPress popovers are open (for example after typing a border width),
   including when Gutenberg already handled the Escape key.
 - Unit fields commit the typed value when you press Escape, so nested
-  Global Styles editors can save before they close.
+  Global Styles editors can save before they close. A unit typed in the
+  field (for example `33px`) is not appended again as `33pxpx`. CSS
+  function values still keep the `func` suffix.
 
 ### Improvements
 
@@ -51,6 +53,8 @@
 - Object identity helpers, control registration batches, InputControl unit
   catalogs, inspector typing budgets, and popover dismiss for repeater
   clone chrome and field-leave.
+- Escape on a unit field does not double a typed unit suffix, and CSS
+  function values still keep the `func` suffix.
 - InputControl, TextAreaControl, BorderControl, CheckboxControl, and
   RepeaterControl component tests give the store a name so delayed
   registration can mount the control.
