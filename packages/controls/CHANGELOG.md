@@ -43,6 +43,8 @@
 - Popover helpers for field leave, repeater-row actions, and dismiss live
   in this package. Other screens should import them instead of copying
   clone/delete or popover selectors.
+- Repeater clone/delete click handlers use a Flow-safe event helper so
+  native stopImmediatePropagation does not fail typecheck.
 
 ### Automated Tests
 

@@ -498,6 +498,16 @@ export function shouldPreserveRepeaterPopoverForNestedOpen(
 	return false;
 }
 
+export function stopRepeaterItemClick(event: Object): void {
+	event.stopPropagation();
+	event.preventDefault();
+	const nativeEvent: ?Object = event.nativeEvent;
+
+	if (nativeEvent) {
+		nativeEvent.stopImmediatePropagation();
+	}
+}
+
 /** Ask all repeater rows to close any open local edit popovers. */
 export function closeInspectorRepeaterPopovers(
 	openingFrom?: ?HTMLElement

@@ -25,6 +25,7 @@ import {
 	getArialLabelSuffix,
 	isRepeaterPromoActive,
 	closeInspectorRepeaterPopovers,
+	stopRepeaterItemClick,
 } from '../utils';
 
 export default function RepeaterItemActions({
@@ -128,15 +129,7 @@ export default function RepeaterItemActions({
 	}
 
 	function deleteFunction(event: MouseEvent) {
-		if (event && event?.hasOwnProperty('stopPropagation')) {
-			event.stopPropagation();
-			if (
-				typeof event.nativeEvent?.stopImmediatePropagation ===
-				'function'
-			) {
-				event.nativeEvent.stopImmediatePropagation();
-			}
-		}
+		stopRepeaterItemClick(event);
 
 		// Try to open the confirm delete modal if it is not open and shouldConfirmDeleteModal is true
 		if (!isConfirmDeleteModalOpen && shouldConfirmDeleteModal) {
@@ -238,13 +231,7 @@ export default function RepeaterItemActions({
 	}
 
 	function cloneFunction(event: MouseEvent) {
-		event.stopPropagation();
-		if (event.preventDefault) {
-			event.preventDefault();
-		}
-		if (typeof event.nativeEvent?.stopImmediatePropagation === 'function') {
-			event.nativeEvent.stopImmediatePropagation();
-		}
+		stopRepeaterItemClick(event);
 		closeMenu(event);
 
 		const performClone = (): void => {

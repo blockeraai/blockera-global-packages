@@ -23,6 +23,7 @@ import {
 	getArialLabelSuffix,
 	isRepeaterPromoActive,
 	closeInspectorRepeaterPopovers,
+	stopRepeaterItemClick,
 } from '../utils';
 
 type Props = {
@@ -69,18 +70,7 @@ export default function RepeaterPopoverTitleDelete({
 	} = useControlContext();
 
 	function deleteFunction(event: MouseEvent) {
-		if (event) {
-			if (typeof event.stopPropagation === 'function') {
-				event.stopPropagation();
-			}
-
-			if (
-				typeof event.nativeEvent?.stopImmediatePropagation ===
-				'function'
-			) {
-				event.nativeEvent.stopImmediatePropagation();
-			}
-		}
+		stopRepeaterItemClick(event);
 
 		if (!isConfirmDeleteModalOpen && shouldConfirmDeleteModal) {
 			toggleConfirmDeleteModal();
