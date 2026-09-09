@@ -396,7 +396,8 @@ const Presets = ({
 					? (count: number) => String(count)
 					: undefined
 			}
-			companionGateAllRepeaterActions={true}
+			companionGateAllRepeaterActions={selectable}
+			disableCompanionGate={!selectable}
 			{...props}
 		/>
 		</PresetItemHeaderDraftProvider>
