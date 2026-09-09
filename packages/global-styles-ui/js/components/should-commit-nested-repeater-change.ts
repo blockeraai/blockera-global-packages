@@ -112,7 +112,12 @@ export function didNestedRepeaterLayerClose(
 			continue;
 		}
 
-		if (rowIsOpen(prev[key]) && !rowIsOpen(nextRow)) {
+		// Cleanup strips `isOpen` from onChange. Only an explicit close
+		// (`isOpen: false`) should persist; a missing flag is a field edit.
+		if (
+			rowIsOpen(prev[key]) &&
+			(nextRow as { isOpen?: unknown }).isOpen === false
+		) {
 			return true;
 		}
 	}

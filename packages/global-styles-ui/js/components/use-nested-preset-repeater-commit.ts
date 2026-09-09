@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
  * Internal dependencies
  */
 import { useDeferredPresetItemCommit } from './use-deferred-preset-item-commit';
+import { preserveNestedRepeaterOpenState } from './preserve-nested-repeater-open-state';
 import {
 	didNestedRepeaterLayerClose,
 	shouldCommitNestedRepeaterChange,
@@ -67,8 +68,12 @@ export function useNestedPresetRepeaterCommit({
 			: JSON.stringify(persistedSignature ?? null);
 
 	useEffect(() => {
-		nestedRepeaterRef.current = initialRecord;
-		setLiveRecord(initialRecord);
+		const next = preserveNestedRepeaterOpenState(
+			initialRecord,
+			nestedRepeaterRef.current
+		);
+		nestedRepeaterRef.current = next;
+		setLiveRecord(next);
 		// Reset only when persisted contents change, not on a new object identity.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [signatureKey]);
@@ -79,19 +84,33 @@ export function useNestedPresetRepeaterCommit({
 			patch: Object
 		) => {
 			const previousRecord = nestedRepeaterRef.current;
+			const nextRecord = newValue as Record<string, unknown>;
 			const commitNow = shouldCommitNestedRepeaterChange(
 				previousRecord,
-				newValue as Record<string, unknown>
+				nextRecord
 			);
 			const layerClosed = didNestedRepeaterLayerClose(
 				previousRecord,
-				newValue as Record<string, unknown>
+				nextRecord
 			);
-			nestedRepeaterRef.current = newValue as Record<string, unknown>;
-			setLiveRecord(newValue as Record<string, unknown>);
+			// Repeater onChange is cleaned (`isOpen` stripped). A type-key
+			// rename mounts a new row; keep the editor open on the new key.
+			const next =
+				layerClosed
+					? nextRecord
+					: preserveNestedRepeaterOpenState(
+							nextRecord,
+							previousRecord
+					  );
+			nestedRepeaterRef.current = next;
+			setLiveRecord(next);
 
 			if (commitNow || layerClosed) {
-				commitPatch(patch);
+				// Persist after liveRecord commits so a type-key remount sees
+				// the open editor instead of a cleaned persist echo.
+				queueMicrotask(() => {
+					commitPatch(patch);
+				});
 			} else {
 				stagePatch(patch);
 			}

@@ -152,6 +152,7 @@ function FilterPresetSizeComponent({
 			value={{
 				name: `filter-preset-${slug}`,
 				value: liveRecord,
+				skipSyncValue: true,
 				attribute: 'blockeraFilterPreset',
 				blockName: 'global-styles-filters',
 			}}

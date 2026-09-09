@@ -33,6 +33,8 @@
   create step so the row is no longer marked as still being created.
 - Editing a spacing (or other) preset size and pressing Escape keeps the
   new size instead of reverting to the previous value.
+- Changing a nested filter layer type (for example blur to drop-shadow)
+  keeps the layer editor open.
 
 ### Development Notes
 
