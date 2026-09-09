@@ -37,6 +37,8 @@
 
 - Number and unit fields in the inspector update more smoothly while you type
   and when other settings change.
+- Adding custom variables in Global Styles is not blocked by the companion
+  plugin prompt.
 - Image & Gradient background layers no longer rebuild on every inspector
   paint, so typing a background color stays smoother.
 - Naming a variable (or other repeater row whose id is not a type key) no

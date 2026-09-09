@@ -187,6 +187,12 @@ export type RepeaterControlProps = {
 	 */
 	companionGateAllRepeaterActions?: boolean,
 	/**
+	 * When true, add/clone/delete skip the companion install gate (Global Styles).
+	 *
+	 * @default false
+	 */
+	disableCompanionGate?: boolean,
+	/**
 	 * Specifies the visibility or activation control should be shown for repeater items.
 	 *
 	 * @default true
