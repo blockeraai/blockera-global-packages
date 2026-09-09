@@ -29,6 +29,8 @@
 - Theme.json transform, text-shadow, box-shadow, and filter lists
   (`presets[]`) still appear under Theme variables when WordPress has not
   keyed them as `presets.theme`.
+- Closing a new custom preset (Escape or the close control) finishes the
+  create step so the row is no longer marked as still being created.
 
 ### Development Notes
 

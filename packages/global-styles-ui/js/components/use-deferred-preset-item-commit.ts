@@ -92,6 +92,21 @@ export function useDeferredPresetItemCommit({
 		});
 	}, []);
 
+	const persistEndingCreate = useCallback(() => {
+		if (suppressPersistRef.current) {
+			return;
+		}
+
+		const args = argsRef.current;
+		const next = coalesceDeferredPresetItemValue(
+			args.getItem(),
+			pendingRef.current,
+			{}
+		);
+
+		persist({ ...next, creatingStep: false });
+	}, [persist]);
+
 	const stagePatch = useCallback((
 		patch: Object,
 		headerPatch: Object = patch
@@ -170,7 +185,7 @@ export function useDeferredPresetItemCommit({
 				controlId: args.controlId,
 				repeaterId: args.repeaterId,
 				itemId: args.itemId,
-				value: pending,
+				value: { ...pending, creatingStep: false },
 			});
 		};
 	}, []);
@@ -188,7 +203,7 @@ export function useDeferredPresetItemCommit({
 				target instanceof Element &&
 				target.closest(POPOVER_CLOSE_CONTROL_SELECTOR)
 			) {
-				flushNow();
+				persistEndingCreate();
 			}
 		};
 
@@ -198,21 +213,19 @@ export function useDeferredPresetItemCommit({
 			}, 0);
 		};
 
-		const onKeyDown = (event: KeyboardEvent) => {
+		const onKeyDownCapture = (event: KeyboardEvent) => {
 			if (event.key !== 'Escape') {
 				return;
 			}
 
-			// Bubble after the focused field commits (e.g. UnitInput Escape).
-			// Nested transform/filter layers stay mounted on the first Escape
-			// (only the inner popover closes), so unmount persist does not run —
-			// flush here in the same turn as the key so Cypress/entity reads see items.
-			flushNow();
+			// Capture before Gutenberg preventDefault / popover dismiss so the
+			// row leaves creatingStep even when the editor stays mounted.
+			persistEndingCreate();
 		};
 
 		document.addEventListener('mousedown', onPointerDownCapture, true);
 		document.addEventListener('mouseup', onPointerUp, true);
-		document.addEventListener('keydown', onKeyDown);
+		document.addEventListener('keydown', onKeyDownCapture, true);
 
 		return () => {
 			document.removeEventListener(
@@ -221,9 +234,13 @@ export function useDeferredPresetItemCommit({
 				true
 			);
 			document.removeEventListener('mouseup', onPointerUp, true);
-			document.removeEventListener('keydown', onKeyDown);
+			document.removeEventListener(
+				'keydown',
+				onKeyDownCapture,
+				true
+			);
 		};
-	}, [flushNow]);
+	}, [persistEndingCreate]);
 
 	const clearPending = useCallback(() => {
 		pendingRef.current = null;
