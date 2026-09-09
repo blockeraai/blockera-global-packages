@@ -11,6 +11,9 @@
 
 ### Bug Fixes
 
+- Selecting blocks that have a Content inspector tab (for example Accordion
+  Heading) now opens Styles so background and other style controls are
+  available immediately.
 - Block editor no longer crashes on load when generating canvas CSS.
 - Paragraphs (and other blocks) no longer mix a gradient `background`
   shorthand with `backgroundColor` on the canvas. Saved block markup is
