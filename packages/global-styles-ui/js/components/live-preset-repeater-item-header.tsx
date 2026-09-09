@@ -13,11 +13,12 @@ export function LivePresetRepeaterItemHeader({
 	...props
 }: {
 	Header: ElementType;
-	item: unknown;
-	itemId: string | number;
 	[key: string]: unknown;
 }) {
-	const item = useLivePresetRepeaterHeaderItem(props.item, props.itemId);
+	const item = useLivePresetRepeaterHeaderItem(
+		props.item,
+		props.itemId as string | number
+	);
 
 	return <Header {...props} item={item} />;
 }
