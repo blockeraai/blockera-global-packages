@@ -38,6 +38,8 @@
 - Canvas CSS isolation, style fingerprints, Global Styles skip for blocks
   with no custom styles, BlockBase idle budgets, Font Size typing, and
   background field memo equality.
+- Inspector tab plan defaults to Styles on first open when WordPress also
+  shows a Content tab.
 
 ## [4.0.0] - 2026-09-05
 
