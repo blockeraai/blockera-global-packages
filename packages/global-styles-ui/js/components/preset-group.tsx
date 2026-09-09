@@ -6,7 +6,6 @@ import { __, sprintf } from '@wordpress/i18n';
 import {
 	memo,
 	useCallback,
-	useEffect,
 	useLayoutEffect,
 	useMemo,
 	useRef,
@@ -441,12 +440,6 @@ export const PresetGroup = memo(function PresetGroup({
 	const [creatingStepRevision, setCreatingStepRevision] = useState(0);
 	const creatingStepSlugsRef = useRef<Record<string, true>>({});
 
-	useEffect(() => {
-		if (!isVariablePicker) {
-			creatingStepSlugsRef.current = {};
-		}
-	}, [isVariablePicker]);
-
 	const cleanRepeaterForPersist = useCallback(
 		(raw: Object) => {
 			const cleaned = cleanupRepeater(raw as Record<string, unknown>);
@@ -600,7 +593,7 @@ export const PresetGroup = memo(function PresetGroup({
 
 	const liveRepeaterStoreValue = useSelect(
 		(selectStore) => {
-			if (!usesIndexRepeaterItemIds || !enableCreatingStep) {
+			if (!enableCreatingStep) {
 				return undefined;
 			}
 
@@ -612,7 +605,7 @@ export const PresetGroup = memo(function PresetGroup({
 				}
 			).getControl(repeaterControlName)?.value;
 		},
-		[enableCreatingStep, repeaterControlName, usesIndexRepeaterItemIds]
+		[enableCreatingStep, repeaterControlName]
 	);
 
 	const variablesForRepeater = useMemo((): PresetRepeaterValue => {
@@ -636,7 +629,7 @@ export const PresetGroup = memo(function PresetGroup({
 
 		const normalized = variablesToPresetRepeaterValue(withPickerSelection);
 
-		if (!usesIndexRepeaterItemIds || !enableCreatingStep) {
+		if (!enableCreatingStep) {
 			return normalized;
 		}
 
@@ -815,6 +808,23 @@ export const PresetGroup = memo(function PresetGroup({
 		const storeHasNonIndexKeys = Object.keys(storeRecord).some(
 			(key) => !/^\d+$/.test(key)
 		);
+		const storeHasCreatingStepAheadOfProps =
+			storeRawKeyCount > propKeyCount &&
+			Object.values(storeRecord).some((candidate) => {
+				return (
+					candidate &&
+					typeof candidate === 'object' &&
+					!Array.isArray(candidate) &&
+					(candidate as Record<string, unknown>).creatingStep ===
+						true
+				);
+			});
+
+		// Skip persist on add leaves theme.json empty while the repeater
+		// already has the creating-step row — do not sync that empty list back.
+		if (storeHasCreatingStepAheadOfProps) {
+			return;
+		}
 
 		// Only repair duplicate slug/index keys — not in-flight field edits during create.
 		if (storeRawKeyCount <= propKeyCount && !storeHasNonIndexKeys) {

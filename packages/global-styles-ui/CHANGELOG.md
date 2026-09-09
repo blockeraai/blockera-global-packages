@@ -33,6 +33,7 @@
   keyed them as `presets.theme`.
 - Closing a new custom preset (Escape or the close control) finishes the
   create step so the row is no longer marked as still being created.
+- Adding a custom variable in Global Styles keeps the create editor open.
 - Editing a spacing (or other) preset size and pressing Escape keeps the
   new size instead of reverting to the previous value.
 - Changing a nested filter layer type (for example blur to drop-shadow)
@@ -44,6 +45,8 @@
   repeater header components.
 - Variable screens: save later while typing, keep unchanged lists stable,
   skip extra CSS rebuilds, and keep inner editors attached.
+- In-flight create rows overlay from the repeater store for every creating-step
+  preset group, not only index-keyed lists.
 
 ### Automated Tests
 
