@@ -37,6 +37,8 @@
   and when other settings change.
 - Image & Gradient background layers no longer rebuild on every inspector
   paint, so typing a background color stays smoother.
+- Naming a variable (or other repeater row whose id is not a type key) no
+  longer re-opens the editor as if the layer type changed.
 
 ### Development Notes
 

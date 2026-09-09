@@ -34,7 +34,8 @@ import { getRepeaterActiveItemsCount } from './helpers';
 
 /**
  * True when the repeater row id changed because the item `type` was renamed
- * (`blur-0` → `drop-shadow-0`), not because items were reordered or deleted.
+ * (`blur-0` → `drop-shadow-0`), not because items were reordered, deleted,
+ * or a preset slug/index key changed.
  */
 export function isRepeaterTypeKeyRename(
 	previousItemId: mixed,
@@ -51,24 +52,28 @@ export function isRepeaterTypeKeyRename(
 		return false;
 	}
 
-	const prevSuffix = previousItemId.match(/-(\d+)$/);
-	const nextSuffix = itemId.match(/-(\d+)$/);
-
-	if (!prevSuffix || !nextSuffix || prevSuffix[1] !== nextSuffix[1]) {
-		return false;
-	}
-
 	const type =
 		item && typeof item === 'object' && !Array.isArray(item)
 			? item.type
 			: undefined;
 
-	if ('string' === typeof type && type !== '') {
-		return itemId.startsWith(`${type}-`);
+	if ('string' !== typeof type || type === '') {
+		return false;
 	}
 
-	return (
-		previousItemId.replace(/-\d+$/, '') !== itemId.replace(/-\d+$/, '')
+	if (!itemId.startsWith(`${type}-`)) {
+		return false;
+	}
+
+	if (previousItemId.startsWith(`${type}-`)) {
+		return false;
+	}
+
+	const prevSuffix = previousItemId.match(/-(\d+)$/);
+	const nextSuffix = itemId.match(/-(\d+)$/);
+
+	return Boolean(
+		prevSuffix && nextSuffix && prevSuffix[1] === nextSuffix[1]
 	);
 }
 

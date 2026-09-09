@@ -161,6 +161,8 @@ const RepeaterItem = ({
 
 	const styleRef = useRef(null);
 	const itemRef = useRef(null);
+	const itemValueRef = useRef(item);
+	itemValueRef.current = item;
 	const mainPresetHeaderRef = useRef(null);
 	const [mainPresetHeaderAnchor, setMainPresetHeaderAnchor] =
 		useState(null);
@@ -288,8 +290,9 @@ const RepeaterItem = ({
 		const typeKeyRename = isRepeaterTypeKeyRename(
 			previousItemId,
 			itemId,
-			item
+			itemValueRef.current
 		);
+		const row = itemValueRef.current;
 
 		if (isOpen || typeKeyRename) {
 			suppressAutoOpenRef.current = false;
@@ -302,11 +305,11 @@ const RepeaterItem = ({
 				handleItemOpen({ refreshContent: true });
 			}
 
-			if (item?.isOpen !== true && item?.creatingStep !== true) {
+			if (row?.isOpen !== true && row?.creatingStep !== true) {
 				changeRepeaterItem({
 					itemId,
 					value: {
-						...item,
+						...row,
 						isOpen: true,
 					},
 					controlId,
@@ -321,7 +324,6 @@ const RepeaterItem = ({
 	}, [
 		itemId,
 		isOpen,
-		item,
 		controlId,
 		repeaterId,
 		onChange,
