@@ -34,6 +34,8 @@
 
 ### Development Notes
 
+- Live preset row headers accept React `ElementType` so TypeScript accepts
+  repeater header components.
 - Variable screens: save later while typing, keep unchanged lists stable,
   skip extra CSS rebuilds, and keep inner editors attached.
 

@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import type { ComponentType } from 'react';
+import type { ElementType } from 'react';
 
 /**
  * Internal dependencies
@@ -12,7 +12,7 @@ export function LivePresetRepeaterItemHeader({
 	Header,
 	...props
 }: {
-	Header: ComponentType<Record<string, unknown>>;
+	Header: ElementType;
 	item: unknown;
 	itemId: string | number;
 	[key: string]: unknown;
