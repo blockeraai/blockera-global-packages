@@ -9,6 +9,7 @@ import {
 	setInnerBlock,
 	setParentBlock,
 	openBlockInserter,
+	clickListViewAddPage,
 	redirectToFrontPage,
 } from '@blockera/dev-cypress/js/helpers';
 
@@ -35,17 +36,7 @@ describe(
 
 			cy.getBlock('core/navigation').click();
 
-			// Make sure the tree is visible (Ajax call done)
-			cy.get('.block-editor-list-view-tree').should('be.visible');
-
-			cy.get('.block-editor-list-view-tree')
-				.last()
-				.within(() => {
-					// Open blocks menu
-					cy.get('[aria-label="Add page"]')
-						.first()
-						.click({ force: true });
-				});
+			clickListViewAddPage();
 
 			// wait to open popover
 			cy.wait(100);
