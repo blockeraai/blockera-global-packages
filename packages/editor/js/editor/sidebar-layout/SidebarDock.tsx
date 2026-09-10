@@ -61,7 +61,7 @@ function floatingPaneStyle(drag: ReturnType<typeof useSidebarDrag>) {
 /**
  * Vertical stack of movable sidebar sections for one dock.
  */
-export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
+function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 	const dockRef = useRef<HTMLDivElement | null>(null);
 	const isLargeViewport = useViewportMatch('medium');
 	const isTextEditorMode = useEditorMode() === 'text';
@@ -416,3 +416,5 @@ export default function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 		</div>
 	);
 }
+
+export default memo(SidebarDock);

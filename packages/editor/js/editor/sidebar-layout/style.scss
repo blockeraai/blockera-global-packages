@@ -275,7 +275,9 @@ body.has-blockera-complementary-overlay
 	overflow: hidden !important;
 	display: flex !important;
 	transition: none !important;
-	contain: strict;
+	/* Fixed overlay is already out of flow. Size/style containment restyles
+	   the Global Styles tree on every inspector edit. */
+	contain: layout paint;
 }
 
 .interface-interface-skeleton__sidebar.blockera-complementary-overlay

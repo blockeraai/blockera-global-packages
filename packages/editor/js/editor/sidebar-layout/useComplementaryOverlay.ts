@@ -116,6 +116,53 @@ export function shouldSyncOverlayFromHostResize(
 	return Math.abs(previousWidth - nextWidth) >= epsilon;
 }
 
+type OverlayBoxSnapshot = {
+	top: number;
+	left: number;
+	width: number;
+	height: number;
+	clipPath: string;
+};
+
+/**
+ * Docked idle overlays must not restyle on height or clip ticks. Global Styles
+ * color/preset updates grow the inspector; rewriting overlay geometry forces a
+ * full settings layout during the measured interaction. Open/close, dock move,
+ * and floating panes still write. Clip from a slide animation is cleared once.
+ */
+export function shouldWriteComplementaryOverlay(
+	trackingSlide: boolean,
+	isFloating: boolean,
+	previous: OverlayBoxSnapshot,
+	next: OverlayBoxSnapshot,
+	widthEpsilon = 0.5
+): boolean {
+	if (trackingSlide || isFloating) {
+		return (
+			previous.top !== next.top ||
+			previous.left !== next.left ||
+			previous.width !== next.width ||
+			previous.height !== next.height ||
+			previous.clipPath !== next.clipPath
+		);
+	}
+
+	const nextClip = '';
+	if (previous.clipPath !== nextClip) {
+		return true;
+	}
+
+	if (!Number.isFinite(previous.width)) {
+		return true;
+	}
+
+	return (
+		previous.top !== next.top ||
+		previous.left !== next.left ||
+		Math.abs(previous.width - next.width) >= widthEpsilon
+	);
+}
+
 /** True while the dock wrapper is opening (clip width still growing). */
 export function isSlideHostOpening(host: HTMLElement | null): boolean {
 	if (!host) {
@@ -306,18 +353,32 @@ export function useComplementaryOverlay(
 			if (hostRect) {
 				lastHostWidth = hostRect.width;
 			}
-			const { overlayBox, clipPath } = complementaryOverlayGeometry(
-				anchor,
-				anchorRect,
-				hostRect
-			);
+			const isFloating = anchor.classList.contains('is-floating');
+			const { overlayBox, clipPath: measuredClipPath } =
+				complementaryOverlayGeometry(anchor, anchorRect, hostRect);
+			const clipPath =
+				trackingSlide || isFloating ? measuredClipPath : '';
 			if (
-				overlayBox.top === lastTop &&
-				overlayBox.left === lastLeft &&
-				overlayBox.width === lastWidth &&
-				overlayBox.height === lastHeight &&
-				clipPath === lastClipPath
+				!shouldWriteComplementaryOverlay(
+					trackingSlide,
+					isFloating,
+					{
+						top: lastTop,
+						left: lastLeft,
+						width: lastWidth,
+						height: lastHeight,
+						clipPath: lastClipPath,
+					},
+					{
+						top: overlayBox.top,
+						left: overlayBox.left,
+						width: overlayBox.width,
+						height: overlayBox.height,
+						clipPath,
+					}
+				)
 			) {
+				lastHeight = overlayBox.height;
 				return;
 			}
 
@@ -334,8 +395,10 @@ export function useComplementaryOverlay(
 					? 'left'
 					: '';
 			if (dockSide) {
-				node.dataset.blockeraOverlayDock = dockSide;
-			} else {
+				if (node.dataset.blockeraOverlayDock !== dockSide) {
+					node.dataset.blockeraOverlayDock = dockSide;
+				}
+			} else if (node.dataset.blockeraOverlayDock) {
 				delete node.dataset.blockeraOverlayDock;
 			}
 
@@ -443,11 +506,23 @@ export function useComplementaryOverlay(
 		slideHost?.addEventListener('transitionstart', onTransitionStart);
 		slideHost?.addEventListener('transitionend', onTransitionEnd);
 		slideHost?.addEventListener('transitioncancel', onTransitionEnd);
+		const slideContent = slideHost?.querySelector(SLIDE_CONTENT_SELECTOR);
+		let lastHostClass = slideHost?.className ?? '';
+		let lastContentClass = slideContent?.className ?? '';
 		const classObserver = new MutationObserver(() => {
+			const hostClass = slideHost?.className ?? '';
+			const contentClass = slideContent?.className ?? '';
+			if (
+				hostClass === lastHostClass &&
+				contentClass === lastContentClass
+			) {
+				return;
+			}
+			lastHostClass = hostClass;
+			lastContentClass = contentClass;
 			syncOnFrame();
 			maybeStartTrackingForOpen();
 		});
-		const slideContent = slideHost?.querySelector(SLIDE_CONTENT_SELECTOR);
 		if (slideHost) {
 			classObserver.observe(slideHost, {
 				attributes: true,

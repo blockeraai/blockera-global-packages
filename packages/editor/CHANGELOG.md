@@ -30,11 +30,11 @@
   mutation; dock API bridge listens to interface, editor, and preferences
   stores (complementary hide is a preferences write).
 - Settings overlay observers watch only the dock clip and inserter menu, not
-  the inspector tree. Idle overlays skip clip-path and isolate inspector
-  layout from the canvas.
-- Settings overlay no longer repositions when only the canvas height changes,
-  so inspector edits (for example a Global Styles color) do not restyle the
-  dock. Overlay size is contained so those edits stay off the canvas.
+  the inspector tree. Idle overlays skip clip-path. The overlay is
+  position-fixed so inspector layout stays off the canvas.
+- Settings overlay no longer repositions when only the canvas or inspector
+  height changes, so Global Styles color, duplicate, and preset edits do
+  not restyle the dock.
 - Settings drag handle attaches when the complementary area changes, without
   observing inspector DOM mutations.
 - Enabling the settings sidebar opens its dock even when the previous disable
