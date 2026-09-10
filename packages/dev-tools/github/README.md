@@ -136,7 +136,9 @@ Used by consumer `npm run env:start` (local only). Copies
 `Tests-WordPress.Dockerfile` retarget apt off `deb.debian.org` (Fastly POPs
 404 debian-security pool files such as bullseye `sudo`). Stretch, buster, and
 bullseye (LTS ended 2026-08-31) use `archive.debian.org`; current suites use
-`ftp.debian.org` / `security.debian.org`. Inject also wipes lists, ignores
+`ftp.debian.org` / `security.debian.org`. Inject also inserts bullseye
+`archive.debian.org` source rewrites beside wp-env's stretch/buster archive
+layers (php7.4 / bullseye LTS), wipes lists, ignores
 expired InRelease files (`Acquire::Check-Valid-Until=false`), and refreshes
 indexes on standalone `apt-get update` layers and in the same `RUN` as each
 `apt-get install`. It also prepends

@@ -3,8 +3,10 @@
  * `apt-get install` retargets apt off deb.debian.org (Fastly POPs 404
  * debian-security pool files). EOL Debian suites (stretch, buster,
  * bullseye) use archive.debian.org; current suites use ftp.debian.org /
- * security.debian.org. Wipes lists, ignores expired InRelease files,
- * and refreshes indexes in the same RUN as each install.
+ * security.debian.org. Also inserts bullseye archive.debian.org source
+ * RUNs next to wp-env's stretch/buster archive layers. Wipes lists,
+ * ignores expired InRelease files, and refreshes indexes in the same
+ * RUN as each install.
  *
  * Flags come from this package's `root-configs/.docker/Dockerfile.wordpress`
  * unless BLOCKERA_WP_ENV_DOCKERFILE is set. Host `.docker/` is the bootstrap
@@ -76,10 +78,39 @@ function isWordpressDockerfilePath(filePath) {
 
 function alreadyPatchedAptRun(line) {
 	return (
-		(/security\.debian\.org/.test(line) ||
-			/archive\.debian\.org/.test(line)) &&
-		/\/var\/lib\/apt\/lists/.test(line)
+		/VERSION_CODENAME/.test(line) && /\/var\/lib\/apt\/lists/.test(line)
 	);
+}
+
+/**
+ * wp-env archives stretch/buster sources but not bullseye. After bullseye
+ * LTS (2026-08-31), security.debian.org 404s pool files. Insert matching
+ * archive.debian.org RUNs so apt still works even if an older inject
+ * prefix rewrites remaining deb.debian.org URLs to ftp/security.
+ */
+const BULLSEYE_ARCHIVE_RUNS = [
+	"RUN sed -i 's|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g'",
+	"RUN sed -i 's|deb.debian.org/debian-security bullseye-security|archive.debian.org/debian-security bullseye-security|g'",
+	"RUN sed -i 's|security.debian.org/debian-security bullseye-security|archive.debian.org/debian-security bullseye-security|g'",
+	"RUN sed -i 's|ftp.debian.org/debian bullseye|archive.debian.org/debian bullseye|g'",
+	"RUN sed -i '/bullseye-updates/d'",
+].join('\n');
+
+function insertBullseyeArchiveRuns(contents) {
+	if (contents.includes('archive.debian.org/debian bullseye')) {
+		return contents;
+	}
+
+	const busterUpdates = "RUN sed -i '/buster-updates/d'";
+
+	if (contents.includes(busterUpdates)) {
+		return contents.replace(
+			busterUpdates,
+			`${busterUpdates}\n${BULLSEYE_ARCHIVE_RUNS}`
+		);
+	}
+
+	return contents;
 }
 
 function escapeReplaceReplacement(str) {
@@ -131,11 +162,13 @@ function patchAptGetUpdateRun(line, updatePrefix) {
 function patchWordPressDockerfile(contents, prefix) {
 	const updatePrefix = getAptUpdatePrefix(prefix);
 
-	return contents
-		.split('\n')
-		.map((line) => patchAptGetInstallRun(line, prefix))
-		.map((line) => patchAptGetUpdateRun(line, updatePrefix))
-		.join('\n');
+	return insertBullseyeArchiveRuns(
+		contents
+			.split('\n')
+			.map((line) => patchAptGetInstallRun(line, prefix))
+			.map((line) => patchAptGetUpdateRun(line, updatePrefix))
+			.join('\n')
+	);
 }
 
 function injectWordpressDockerfileWrite(contents) {
@@ -158,6 +191,7 @@ module.exports = {
 	getAptInstallPrefix,
 	getAptUpdatePrefix,
 	injectWordpressDockerfileWrite,
+	insertBullseyeArchiveRuns,
 	isWordpressDockerfilePath,
 	patchWordPressDockerfile,
 	resolveWordpressDockerfilePath,
