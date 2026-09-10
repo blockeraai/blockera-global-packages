@@ -88,12 +88,14 @@ function alreadyPatchedAptRun(line) {
  * archive.debian.org RUNs so apt still works even if an older inject
  * prefix rewrites remaining deb.debian.org URLs to ftp/security.
  */
+const APT_SOURCES_LIST = '/etc/apt/sources.list';
+
 const BULLSEYE_ARCHIVE_RUNS = [
-	"RUN sed -i 's|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g'",
-	"RUN sed -i 's|deb.debian.org/debian-security bullseye-security|archive.debian.org/debian-security bullseye-security|g'",
-	"RUN sed -i 's|security.debian.org/debian-security bullseye-security|archive.debian.org/debian-security bullseye-security|g'",
-	"RUN sed -i 's|ftp.debian.org/debian bullseye|archive.debian.org/debian bullseye|g'",
-	"RUN sed -i '/bullseye-updates/d'",
+	`RUN sed -i 's|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g' ${APT_SOURCES_LIST}`,
+	`RUN sed -i 's|deb.debian.org/debian-security bullseye-security|archive.debian.org/debian-security bullseye-security|g' ${APT_SOURCES_LIST}`,
+	`RUN sed -i 's|security.debian.org/debian-security bullseye-security|archive.debian.org/debian-security bullseye-security|g' ${APT_SOURCES_LIST}`,
+	`RUN sed -i 's|ftp.debian.org/debian bullseye|archive.debian.org/debian bullseye|g' ${APT_SOURCES_LIST}`,
+	`RUN sed -i '/bullseye-updates/d' ${APT_SOURCES_LIST}`,
 ].join('\n');
 
 function insertBullseyeArchiveRuns(contents) {
@@ -101,16 +103,19 @@ function insertBullseyeArchiveRuns(contents) {
 		return contents;
 	}
 
-	const busterUpdates = "RUN sed -i '/buster-updates/d'";
+	const busterUpdatesLine =
+		/^RUN sed -i '\/buster-updates\/d'(?: \/etc\/apt\/sources\.list)?$/m;
+	const match = contents.match(busterUpdatesLine);
 
-	if (contents.includes(busterUpdates)) {
-		return contents.replace(
-			busterUpdates,
-			`${busterUpdates}\n${BULLSEYE_ARCHIVE_RUNS}`
-		);
+	if (!match) {
+		return contents;
 	}
 
-	return contents;
+	const originalLine = match[0].includes(APT_SOURCES_LIST)
+		? match[0]
+		: `${match[0]} ${APT_SOURCES_LIST}`;
+
+	return contents.replace(match[0], `${originalLine}\n${BULLSEYE_ARCHIVE_RUNS}`);
 }
 
 function escapeReplaceReplacement(str) {

@@ -12,9 +12,9 @@
   as `libc6`). Current suites still use `ftp.debian.org` /
   `security.debian.org`.
 - wp-env: insert bullseye `archive.debian.org` source rewrites next to
-  wp-env's stretch/buster archive RUNs, and replace a stale ftp/security
-  apt-get inject so php7.4 images do not 404 `libc6` on
-  security.debian.org.
+  wp-env's stretch/buster archive RUNs (keep `/etc/apt/sources.list` on
+  the `buster-updates` line), and replace a stale ftp/security apt-get
+  inject so php7.4 images do not 404 `libc6` on security.debian.org.
 
 ### Automated Tests
 
