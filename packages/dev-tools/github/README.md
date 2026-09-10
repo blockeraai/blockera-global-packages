@@ -134,8 +134,10 @@ Used by consumer `npm run env:start` (local only). Copies
 `env:start` then runs `run-wp-env-start.js`, which preloads
 `preload-wp-env-docker-patch.js` so wp-env's generated `WordPress.Dockerfile` /
 `Tests-WordPress.Dockerfile` retarget apt off `deb.debian.org` (Fastly POPs
-404 debian-security pool files such as bullseye `sudo`), wipe lists, and
-refresh indexes in the same `RUN` as each `apt-get install`. It also prepends
+404 debian-security pool files such as bullseye `sudo`), wipe lists, ignore
+expired InRelease files (`Acquire::Check-Valid-Until=false`), and refresh
+indexes on standalone `apt-get update` layers and in the same `RUN` as each
+`apt-get install`. It also prepends
 `node_modules/.bin` and `@wordpress/env/bin` to `PATH` so `lifecycleScripts.afterStart`
 hooks that call `wp-env run cli` work (spawning `node …/bin/wp-env` does not).
 Flags come from this package's `root-configs/.docker/Dockerfile.wordpress` unless

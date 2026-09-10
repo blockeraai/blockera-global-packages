@@ -4,6 +4,9 @@
 
 - Webpack intercepts `react-color` Checkboard with a pitch loader so
   Alpha's relative `./Checkboard` import uses the controls implementation.
+- wp-env: ignore expired Debian InRelease files and retarget standalone
+  `apt-get update` layers the same way as `apt-get install` (bullseye-security
+  `Release file is expired` during image build).
 
 ## [4.0.0] - 2026-09-05
 

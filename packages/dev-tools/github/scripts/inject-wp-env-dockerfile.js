@@ -1,7 +1,8 @@
 /**
- * Rewrite wp-env WordPress Dockerfiles so every `apt-get install` retargets
- * apt off deb.debian.org (Fastly POPs 404 debian-security pool files),
- * wipes lists, and refreshes indexes in the same RUN.
+ * Rewrite wp-env WordPress Dockerfiles so every `apt-get update` and
+ * `apt-get install` retargets apt off deb.debian.org (Fastly POPs 404
+ * debian-security pool files), wipes lists, ignores expired InRelease
+ * files, and refreshes indexes in the same RUN as each install.
  *
  * Flags come from this package's `root-configs/.docker/Dockerfile.wordpress`
  * unless BLOCKERA_WP_ENV_DOCKERFILE is set. Host `.docker/` is the bootstrap
@@ -55,11 +56,23 @@ function getAptInstallPrefix(dockerfileContents) {
 	return runMatch[1].trim();
 }
 
+function getAptUpdatePrefix(installPrefix) {
+	const installIdx = installPrefix.lastIndexOf('apt-get -qy install');
+
+	if (installIdx === -1) {
+		throw new Error(
+			'inject-wp-env-dockerfile: install prefix needs apt-get -qy install'
+		);
+	}
+
+	return installPrefix.slice(0, installIdx).replace(/&&\s*$/, '').trim();
+}
+
 function isWordpressDockerfilePath(filePath) {
 	return WORDPRESS_DOCKERFILE_NAMES.has(path.basename(String(filePath)));
 }
 
-function alreadyPatchedAptInstallRun(line) {
+function alreadyPatchedAptRun(line) {
 	return (
 		/security\.debian\.org/.test(line) &&
 		/\/var\/lib\/apt\/lists/.test(line)
@@ -75,7 +88,7 @@ function patchAptGetInstallRun(line, prefix) {
 		return line;
 	}
 
-	if (alreadyPatchedAptInstallRun(line)) {
+	if (alreadyPatchedAptRun(line)) {
 		return line;
 	}
 
@@ -85,10 +98,33 @@ function patchAptGetInstallRun(line, prefix) {
 	);
 }
 
+function patchAptGetUpdateRun(line, updatePrefix) {
+	if (!/^\s*RUN\s+/.test(line)) {
+		return line;
+	}
+
+	if (!/\bapt-get\b/.test(line) || !/\bupdate\b/.test(line)) {
+		return line;
+	}
+
+	if (/\binstall\b/.test(line)) {
+		return line;
+	}
+
+	if (alreadyPatchedAptRun(line)) {
+		return line;
+	}
+
+	return line.replace(/^(\s*RUN\s+).*/, `$1${updatePrefix}`);
+}
+
 function patchWordPressDockerfile(contents, prefix) {
+	const updatePrefix = getAptUpdatePrefix(prefix);
+
 	return contents
 		.split('\n')
 		.map((line) => patchAptGetInstallRun(line, prefix))
+		.map((line) => patchAptGetUpdateRun(line, updatePrefix))
 		.join('\n');
 }
 
@@ -110,6 +146,7 @@ module.exports = {
 	WORDPRESS_DOCKERFILE_NAMES,
 	bundledWordpressDockerfilePath,
 	getAptInstallPrefix,
+	getAptUpdatePrefix,
 	injectWordpressDockerfileWrite,
 	isWordpressDockerfilePath,
 	patchWordPressDockerfile,
