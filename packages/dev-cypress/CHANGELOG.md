@@ -3,7 +3,8 @@
 ### Development Notes
 - `setColorControlValue` scrolls the control into view, commits the CSS
   field with a DOM blur, and waits until the labeled color control or the
-  minimal color swatch (Border) shows the new value.
+  minimal color swatch (Border) shows the new value. Hex comparison
+  ignores a leading `#` and surrounding whitespace.
 - Add `switchBlockTab` Cypress command (`styles` | `settings`) for the block
   inspector tabs. Skips the click when that tab is already active.
 - Variable picker and companion helpers use `switchBlockTab`. Drop

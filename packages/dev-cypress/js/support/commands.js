@@ -620,7 +620,10 @@ export const registerCommands = () => {
 	);
 
 	Cypress.Commands.add('setColorControlValue', (label, value) => {
-		const hexNeedle = String(value).replace(/^#/, '').toLowerCase();
+		const hexNeedle = String(value)
+			.replace(/^#/, '')
+			.trim()
+			.toLowerCase();
 
 		cy.getParentContainer(label)
 			.last()
@@ -656,7 +659,7 @@ export const registerCommands = () => {
 
 				if ($label.length) {
 					expect(
-						$label.text().replace(/^#/, '').toLowerCase()
+						$label.text().replace(/^#/, '').trim().toLowerCase()
 					).to.include(hexNeedle);
 					return;
 				}
@@ -673,6 +676,7 @@ export const registerCommands = () => {
 				expect(
 					`${primary} ${indicatorBackground}`
 						.replace(/#/g, '')
+						.replace(/\s+/g, '')
 						.toLowerCase()
 				).to.include(hexNeedle);
 			});
