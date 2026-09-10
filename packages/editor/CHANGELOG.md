@@ -65,7 +65,8 @@
 - Assert snackbars after deleting a style variation and sharing a variation
   with two blocks.
 - Complementary overlay: unit coverage that height-only dock resizes do not
-  reposition settings while the sidebar is idle.
+  reposition settings while the sidebar is idle, including inspector
+  height and leftover open-animation clip.
 - Sidebars: e2e coverage that dragging primary and secondary resize handles
   changes dock width in Post Editor and Site Editor canvas=edit, including
   when the settings overlay is on the right dock.

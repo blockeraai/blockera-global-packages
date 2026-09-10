@@ -6,6 +6,7 @@ import {
 	findComplementaryHandleHost,
 	isSlideHostOpening,
 	shouldSyncOverlayFromHostResize,
+	shouldWriteComplementaryOverlay,
 } from '../useComplementaryOverlay';
 
 describe('complementary overlay host', () => {
@@ -57,6 +58,80 @@ describe('shouldSyncOverlayFromHostResize', () => {
 
 	it('syncs when the dock width changes for open/close or category columns', () => {
 		expect(shouldSyncOverlayFromHostResize(300, 580, false)).toBe(true);
+	});
+});
+
+describe('shouldWriteComplementaryOverlay', () => {
+	const docked = {
+		top: 80,
+		left: 900,
+		width: 300,
+		height: 500,
+		clipPath: '',
+	};
+
+	it('skips docked idle updates that only change inspector height', () => {
+		expect(
+			shouldWriteComplementaryOverlay(false, false, docked, {
+				...docked,
+				height: 720,
+			})
+		).toBe(false);
+	});
+
+	it('skips docked idle clip ticks that come from height', () => {
+		expect(
+			shouldWriteComplementaryOverlay(false, false, docked, {
+				...docked,
+				height: 720,
+				clipPath: 'inset(0px 0px 20px 0px)',
+			})
+		).toBe(false);
+	});
+
+	it('clears leftover slide clip once after the dock finishes opening', () => {
+		expect(
+			shouldWriteComplementaryOverlay(false, false, {
+				...docked,
+				clipPath: 'inset(0px 180px 0px 0px)',
+			}, docked)
+		).toBe(true);
+	});
+
+	it('writes while the dock clip is animating even if size is unchanged', () => {
+		expect(
+			shouldWriteComplementaryOverlay(true, false, docked, docked)
+		).toBe(false);
+		expect(
+			shouldWriteComplementaryOverlay(true, false, docked, {
+				...docked,
+				left: 720,
+			})
+		).toBe(true);
+	});
+
+	it('writes floating pane height and position', () => {
+		expect(
+			shouldWriteComplementaryOverlay(false, true, docked, {
+				...docked,
+				height: 480,
+			})
+		).toBe(true);
+	});
+
+	it('writes docked idle updates when the overlay width or left changes', () => {
+		expect(
+			shouldWriteComplementaryOverlay(false, false, docked, {
+				...docked,
+				width: 580,
+			})
+		).toBe(true);
+		expect(
+			shouldWriteComplementaryOverlay(false, false, docked, {
+				...docked,
+				left: 620,
+			})
+		).toBe(true);
 	});
 });
 
