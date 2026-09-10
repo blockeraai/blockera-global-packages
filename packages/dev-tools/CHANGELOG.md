@@ -24,7 +24,8 @@
   suites (bullseye / buster / stretch) and keeps `$` in that prefix
   (`$'` must not be treated as a String.replace special).
 - wp-env Dockerfile inject inserts bullseye archive seds after wp-env
-  buster archive RUNs and upgrades a stale ftp/security apt-get prefix.
+  buster archive RUNs without stripping `/etc/apt/sources.list`, and
+  upgrades a stale ftp/security apt-get prefix.
 
 ## [4.0.0] - 2026-09-05
 

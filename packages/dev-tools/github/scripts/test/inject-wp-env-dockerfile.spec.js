@@ -88,26 +88,42 @@ RUN apt-get install -qy zlib1g-dev
 
 	it('inserts bullseye archive.debian.org seds after wp-env buster archive RUNs', () => {
 		const generated = `FROM wordpress:php7.4
-RUN sed -i 's|deb.debian.org/debian buster|archive.debian.org/debian buster|g'
-RUN sed -i '/buster-updates/d'
+RUN sed -i 's|deb.debian.org/debian buster|archive.debian.org/debian buster|g' /etc/apt/sources.list
+RUN sed -i '/buster-updates/d' /etc/apt/sources.list
 RUN apt-get -qy install sudo
 `;
 		const patched = patchWordPressDockerfile(generated, prefix);
 
 		expect(patched).toContain(
-			"s|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g"
+			"RUN sed -i '/buster-updates/d' /etc/apt/sources.list"
+		);
+		expect(patched).not.toMatch(/^RUN sed -i '\/buster-updates\/d'$/m);
+		expect(patched).toContain(
+			"s|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g' /etc/apt/sources.list"
 		);
 		expect(patched).toContain(
-			"s|security.debian.org/debian-security bullseye-security|archive.debian.org/debian-security bullseye-security|g"
+			"s|security.debian.org/debian-security bullseye-security|archive.debian.org/debian-security bullseye-security|g' /etc/apt/sources.list"
 		);
 		expect(patched.indexOf('/buster-updates/d')).toBeLessThan(
 			patched.indexOf('archive.debian.org/debian bullseye')
 		);
 	});
 
-	it('does not insert bullseye archive seds twice', () => {
+	it('restores /etc/apt/sources.list when wp-env omitted it on buster-updates', () => {
 		const generated = `RUN sed -i '/buster-updates/d'
-RUN sed -i 's|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g'
+RUN apt-get -qy install sudo
+`;
+		const patched = patchWordPressDockerfile(generated, prefix);
+
+		expect(patched).toContain(
+			"RUN sed -i '/buster-updates/d' /etc/apt/sources.list"
+		);
+		expect(patched).not.toMatch(/^RUN sed -i '\/buster-updates\/d'$/m);
+	});
+
+	it('does not insert bullseye archive seds twice', () => {
+		const generated = `RUN sed -i '/buster-updates/d' /etc/apt/sources.list
+RUN sed -i 's|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g' /etc/apt/sources.list
 `;
 		expect(patchWordPressDockerfile(generated, prefix)).toBe(generated);
 	});
