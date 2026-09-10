@@ -7,6 +7,10 @@
 - wp-env: ignore expired Debian InRelease files and retarget standalone
   `apt-get update` layers the same way as `apt-get install` (bullseye-security
   `Release file is expired` during image build).
+- wp-env: send stretch/buster/bullseye apt sources to `archive.debian.org`
+  (bullseye LTS ended 2026-08-31; security.debian.org 404s pool files such
+  as `libc6`). Current suites still use `ftp.debian.org` /
+  `security.debian.org`.
 
 ### Automated Tests
 

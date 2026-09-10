@@ -1,8 +1,10 @@
 /**
  * Rewrite wp-env WordPress Dockerfiles so every `apt-get update` and
  * `apt-get install` retargets apt off deb.debian.org (Fastly POPs 404
- * debian-security pool files), wipes lists, ignores expired InRelease
- * files, and refreshes indexes in the same RUN as each install.
+ * debian-security pool files). EOL Debian suites (stretch, buster,
+ * bullseye) use archive.debian.org; current suites use ftp.debian.org /
+ * security.debian.org. Wipes lists, ignores expired InRelease files,
+ * and refreshes indexes in the same RUN as each install.
  *
  * Flags come from this package's `root-configs/.docker/Dockerfile.wordpress`
  * unless BLOCKERA_WP_ENV_DOCKERFILE is set. Host `.docker/` is the bootstrap
@@ -74,9 +76,14 @@ function isWordpressDockerfilePath(filePath) {
 
 function alreadyPatchedAptRun(line) {
 	return (
-		/security\.debian\.org/.test(line) &&
+		(/security\.debian\.org/.test(line) ||
+			/archive\.debian\.org/.test(line)) &&
 		/\/var\/lib\/apt\/lists/.test(line)
 	);
+}
+
+function escapeReplaceReplacement(str) {
+	return String(str).replace(/\$/g, '$$$$');
 }
 
 function patchAptGetInstallRun(line, prefix) {
@@ -94,7 +101,7 @@ function patchAptGetInstallRun(line, prefix) {
 
 	return line.replace(
 		/^(\s*RUN\s+).*?\bapt-get(?:\s+\S+)*\s+install(?:\s+(?:-o\s+\S+|--\S+|-\S+))*/,
-		`$1${prefix}`
+		`$1${escapeReplaceReplacement(prefix)}`
 	);
 }
 
@@ -115,7 +122,10 @@ function patchAptGetUpdateRun(line, updatePrefix) {
 		return line;
 	}
 
-	return line.replace(/^(\s*RUN\s+).*/, `$1${updatePrefix}`);
+	return line.replace(
+		/^(\s*RUN\s+).*/,
+		`$1${escapeReplaceReplacement(updatePrefix)}`
+	);
 }
 
 function patchWordPressDockerfile(contents, prefix) {

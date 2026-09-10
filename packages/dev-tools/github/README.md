@@ -134,8 +134,10 @@ Used by consumer `npm run env:start` (local only). Copies
 `env:start` then runs `run-wp-env-start.js`, which preloads
 `preload-wp-env-docker-patch.js` so wp-env's generated `WordPress.Dockerfile` /
 `Tests-WordPress.Dockerfile` retarget apt off `deb.debian.org` (Fastly POPs
-404 debian-security pool files such as bullseye `sudo`), wipe lists, ignore
-expired InRelease files (`Acquire::Check-Valid-Until=false`), and refresh
+404 debian-security pool files such as bullseye `sudo`). Stretch, buster, and
+bullseye (LTS ended 2026-08-31) use `archive.debian.org`; current suites use
+`ftp.debian.org` / `security.debian.org`. Inject also wipes lists, ignores
+expired InRelease files (`Acquire::Check-Valid-Until=false`), and refreshes
 indexes on standalone `apt-get update` layers and in the same `RUN` as each
 `apt-get install`. It also prepends
 `node_modules/.bin` and `@wordpress/env/bin` to `PATH` so `lifecycleScripts.afterStart`
