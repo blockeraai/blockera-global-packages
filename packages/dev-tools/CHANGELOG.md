@@ -16,6 +16,9 @@
 
 - wp-env Dockerfile inject covers standalone `apt-get update` and expired
   InRelease flags.
+- wp-env Dockerfile inject covers `archive.debian.org` for EOL Debian
+  suites (bullseye / buster / stretch) and keeps `$` in that prefix
+  (`$'` must not be treated as a String.replace special).
 
 ## [4.0.0] - 2026-09-05
 
