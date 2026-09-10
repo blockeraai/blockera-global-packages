@@ -50,6 +50,9 @@
 
 ### Automated Tests
 
+- Border and radius WP compatibility: open the Styles tab before looking
+  for Border / Radius (inspector defaults to Settings; compacted borders
+  have no native `aria-label="Border"`).
 - Width compatibility: open the Styles tab before asserting Button Width so
   the control is in the DOM (inspector defaults to Settings).
 - Inner-blocks bootstrap: wait until the inner-block Text Color shows the

@@ -8,6 +8,18 @@ import {
 	assertBlockData,
 } from '@blockera/dev-cypress/js/helpers';
 
+/**
+ * Headless runs can exit code editor with Settings selected. Open Styles
+ * before looking for Blockera Border / Radius (native inspector has no
+ * compacted Border aria-label).
+ */
+function selectButtonBlockForBorderAndRadius() {
+	cy.getBlock('core/button').click();
+	cy.switchBlockTab('styles');
+	cy.getParentContainer('Border').as('border');
+	cy.getParentContainer('Radius').as('radius');
+}
+
 describe('Border & Border Radius Together → WP Compatibility', () => {
 	beforeEach(() => {
 		createPost();
@@ -23,12 +35,7 @@ describe('Border & Border Radius Together → WP Compatibility', () => {
 						<!-- /wp:buttons -->`
 				);
 
-				// Select target block
-				cy.getBlock('core/button').click();
-
-				// add alias to the feature container
-				cy.getParentContainer('Border').as('border');
-				cy.getParentContainer('Radius').as('radius');
+				selectButtonBlockForBorderAndRadius();
 
 				cy.addNewTransition();
 
@@ -158,12 +165,7 @@ describe('Border & Border Radius Together → WP Compatibility', () => {
 						<!-- /wp:buttons -->`
 				);
 
-				// Select target block
-				cy.getBlock('core/button').click();
-
-				// add alias to the feature container
-				cy.getParentContainer('Border').as('border');
-				cy.getParentContainer('Radius').as('radius');
+				selectButtonBlockForBorderAndRadius();
 
 				cy.addNewTransition();
 
