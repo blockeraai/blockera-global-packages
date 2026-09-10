@@ -8,6 +8,11 @@
   `apt-get update` layers the same way as `apt-get install` (bullseye-security
   `Release file is expired` during image build).
 
+### Automated Tests
+
+- wp-env Dockerfile inject covers standalone `apt-get update` and expired
+  InRelease flags.
+
 ## [4.0.0] - 2026-09-05
 
 ### Development Notes

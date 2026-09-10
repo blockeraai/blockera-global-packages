@@ -6,6 +6,7 @@ const path = require('path');
 const {
 	bundledWordpressDockerfilePath,
 	getAptInstallPrefix,
+	getAptUpdatePrefix,
 	isWordpressDockerfilePath,
 	patchWordPressDockerfile,
 	resolveWordpressDockerfilePath,
@@ -19,11 +20,16 @@ describe('inject-wp-env-dockerfile', () => {
 		expect(prefix).toContain('security.debian.org');
 		expect(prefix).toContain('ftp.debian.org');
 		expect(prefix).toContain('rm -rf /var/lib/apt/lists/*');
-		expect(prefix).toContain('apt-get update --allow-releaseinfo-change');
+		expect(prefix).toContain('Acquire::Check-Valid-Until=false');
+		expect(prefix).toContain('--allow-releaseinfo-change');
 		expect(prefix).toContain('Apt::Get::AllowUnauthenticated=true');
 		expect(prefix).toContain('Acquire::Retries=5');
 		expect(prefix).not.toContain('--fix-missing');
 		expect(prefix).not.toContain('$PHPIZE_DEPS');
+		expect(getAptUpdatePrefix(prefix)).toContain(
+			'Acquire::Check-Valid-Until=false'
+		);
+		expect(getAptUpdatePrefix(prefix)).not.toContain('apt-get -qy install');
 	});
 
 	it('wipes lists and refreshes indexes in the same RUN as each apt-get install', () => {
@@ -45,7 +51,8 @@ RUN apt-get install -qy zlib1g-dev
 		expect(patched).toContain(`RUN ${prefix} git`);
 		expect(patched).toContain(`RUN ${prefix} sudo`);
 		expect(patched).toContain(`RUN ${prefix} zlib1g-dev`);
-		expect(patched).toContain('RUN apt-get -qy update');
+		expect(patched).not.toContain('RUN apt-get -qy update');
+		expect(patched).toContain(`RUN ${getAptUpdatePrefix(prefix)}`);
 		expect(patched).toMatch(/RUN .*security\.debian\.org.* sudo/);
 	});
 
@@ -61,6 +68,20 @@ RUN apt-get install -qy zlib1g-dev
 		const line = `RUN ${prefix} sudo`;
 
 		expect(patchWordPressDockerfile(line, prefix)).toBe(line);
+	});
+
+	it('retargets a standalone apt-get update so expired InRelease files do not fail the build', () => {
+		const generated = `RUN apt-get clean
+RUN apt-get -qy update
+RUN apt-get -qy install sudo
+`;
+		const patched = patchWordPressDockerfile(generated, prefix);
+		const updatePrefix = getAptUpdatePrefix(prefix);
+
+		expect(patched).toContain('RUN apt-get clean');
+		expect(patched).toContain(`RUN ${updatePrefix}`);
+		expect(patched).toContain(`RUN ${prefix} sudo`);
+		expect(patched).not.toMatch(/^RUN apt-get -qy update$/m);
 	});
 
 	it('only matches wp-env WordPress Dockerfiles', () => {
@@ -79,6 +100,7 @@ RUN apt-get install -qy zlib1g-dev
 		expect(template).toContain('rm -rf /var/lib/apt/lists/*');
 		expect(template).toContain('security.debian.org');
 		expect(template).toContain('ftp.debian.org');
+		expect(template).toContain('Acquire::Check-Valid-Until=false');
 	});
 });
 
