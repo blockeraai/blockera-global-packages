@@ -19,6 +19,9 @@ describe('inject-wp-env-dockerfile', () => {
 	it('parses wipe-lists, mirror rewrite, update, and install flags from the template', () => {
 		expect(prefix).toContain('security.debian.org');
 		expect(prefix).toContain('ftp.debian.org');
+		expect(prefix).toContain('archive.debian.org');
+		expect(prefix).toContain('VERSION_CODENAME');
+		expect(prefix).toContain('bullseye');
 		expect(prefix).toContain('rm -rf /var/lib/apt/lists/*');
 		expect(prefix).toContain('Acquire::Check-Valid-Until=false');
 		expect(prefix).toContain('--allow-releaseinfo-change');
@@ -51,6 +54,10 @@ RUN apt-get install -qy zlib1g-dev
 		expect(patched).toContain(`RUN ${prefix} git`);
 		expect(patched).toContain(`RUN ${prefix} sudo`);
 		expect(patched).toContain(`RUN ${prefix} zlib1g-dev`);
+		expect(patched).toContain(
+			"grep -Eq '^(stretch|buster|bullseye)$'"
+		);
+		expect(patched).toContain('${VERSION_CODENAME}');
 		expect(patched).not.toContain('RUN apt-get -qy update');
 		expect(patched).toContain(`RUN ${getAptUpdatePrefix(prefix)}`);
 		expect(patched).toMatch(/RUN .*security\.debian\.org.* sudo/);
@@ -98,6 +105,7 @@ RUN apt-get -qy install sudo
 		expect(template).toMatch(/ARG PHP_VERSION=8\.2/);
 		expect(template).toMatch(/FROM wordpress:php\$\{PHP_VERSION\}/);
 		expect(template).toContain('rm -rf /var/lib/apt/lists/*');
+		expect(template).toContain('archive.debian.org');
 		expect(template).toContain('security.debian.org');
 		expect(template).toContain('ftp.debian.org');
 		expect(template).toContain('Acquire::Check-Valid-Until=false');
