@@ -95,6 +95,25 @@ function setDockOpen(dock: SidebarDockId, open: boolean): void {
 	storeDispatch.setPrimarySidebarOpen(open);
 }
 
+/**
+ * Gutenberg inserter / list view / complementary APIs are unchanged during
+ * typical Global Styles edits. Skip dock open/close work on those ticks.
+ */
+export function shouldSkipEditorSidebarApiSync(
+	primed: boolean,
+	inserterOpened: boolean,
+	listViewOpened: boolean,
+	complementary: string | null | undefined,
+	previousComplementary: string | null | undefined
+): boolean {
+	return (
+		primed &&
+		!inserterOpened &&
+		!listViewOpened &&
+		complementary === previousComplementary
+	);
+}
+
 function shouldOpenComplementaryDock(
 	complementary: string | null | undefined,
 	previous: string | null | undefined
@@ -265,13 +284,27 @@ export function subscribeEditorSidebarApis(): () => void {
 			const interfaceSelect = select('core/interface') as InterfaceSelect;
 			const complementary =
 				interfaceSelect.getActiveComplementaryArea?.('core') ?? null;
+			const inserterOpened = !!editorSelect?.isInserterOpened?.();
+			const listViewOpened = !!editorSelect?.isListViewOpened?.();
 
-			if (editorSelect?.isInserterOpened?.()) {
+			if (
+				shouldSkipEditorSidebarApiSync(
+					primedComplementary,
+					inserterOpened,
+					listViewOpened,
+					complementary,
+					prevComplementary
+				)
+			) {
+				return;
+			}
+
+			if (inserterOpened) {
 				openSection('inserter');
 				editorDispatch.setIsInserterOpened?.(false);
 			}
 
-			if (editorSelect?.isListViewOpened?.()) {
+			if (listViewOpened) {
 				openSection('listView');
 				editorDispatch.setIsListViewOpened?.(false);
 			}
