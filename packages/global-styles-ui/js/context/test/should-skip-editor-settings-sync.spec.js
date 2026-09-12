@@ -1,4 +1,5 @@
 import {
+	mutationsAddedIframe,
 	resolveIframeMountObserverRoot,
 	shouldSkipGlobalStylesEditorSettingsUpdate,
 } from '../should-skip-editor-settings-sync';
@@ -43,7 +44,31 @@ describe('shouldSkipGlobalStylesEditorSettingsUpdate', () => {
 });
 
 describe('resolveIframeMountObserverRoot', () => {
-	it('prefers the interface skeleton over document.body', () => {
+	it('prefers the visual editor over the interface skeleton', () => {
+		const doc = document.implementation.createHTMLDocument('');
+		const skeleton = doc.createElement('div');
+		skeleton.className = 'interface-interface-skeleton';
+		const visual = doc.createElement('div');
+		visual.className = 'edit-site-visual-editor';
+		skeleton.appendChild(visual);
+		doc.body.appendChild(skeleton);
+
+		expect(resolveIframeMountObserverRoot(doc)).toBe(visual);
+	});
+
+	it('prefers canvas content over the full skeleton', () => {
+		const doc = document.implementation.createHTMLDocument('');
+		const skeleton = doc.createElement('div');
+		skeleton.className = 'interface-interface-skeleton';
+		const content = doc.createElement('div');
+		content.className = 'interface-interface-skeleton__content';
+		skeleton.appendChild(content);
+		doc.body.appendChild(skeleton);
+
+		expect(resolveIframeMountObserverRoot(doc)).toBe(content);
+	});
+
+	it('falls back to the interface skeleton over document.body', () => {
 		const doc = document.implementation.createHTMLDocument('');
 		const skeleton = doc.createElement('div');
 		skeleton.className = 'interface-interface-skeleton';
@@ -56,5 +81,27 @@ describe('resolveIframeMountObserverRoot', () => {
 		const doc = document.implementation.createHTMLDocument('');
 
 		expect(resolveIframeMountObserverRoot(doc)).toBe(doc.body);
+	});
+});
+
+describe('mutationsAddedIframe', () => {
+	it('detects a direct iframe node without querying descendants', () => {
+		const iframe = document.createElement('iframe');
+		const mutation = {
+			addedNodes: [iframe],
+		};
+
+		expect(mutationsAddedIframe([mutation])).toBe(true);
+	});
+
+	it('ignores inspector nodes that do not include an iframe', () => {
+		const panel = document.createElement('div');
+		panel.className = 'components-panel';
+		panel.appendChild(document.createElement('input'));
+		const mutation = {
+			addedNodes: [panel],
+		};
+
+		expect(mutationsAddedIframe([mutation])).toBe(false);
 	});
 });
