@@ -48,6 +48,9 @@
   skip extra CSS rebuilds, and keep inner editors attached.
 - In-flight create rows overlay from the repeater store for every creating-step
   preset group, not only index-keyed lists.
+- Skip theme.json persist when the repeater only added a creating-step row;
+  overlay the in-flight row from the last repeater value so the create
+  editor stays open.
 
 ### Automated Tests
 

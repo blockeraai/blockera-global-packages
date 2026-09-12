@@ -60,6 +60,7 @@ import {
 	isPresetRepeaterObjectValue,
 	normalizePresetRepeaterValueToIndexKeys,
 	overlayCreatingStepRowsFromRepeaterStore,
+	isOnlyNewCreatingStepRow,
 	variablesToPresetRepeaterValue,
 } from './preset-repeater-value-utils';
 import { PresetStateContainer } from './preset-state-container';
@@ -440,6 +441,7 @@ export const PresetGroup = memo(function PresetGroup({
 
 	const [creatingStepRevision, setCreatingStepRevision] = useState(0);
 	const creatingStepSlugsRef = useRef<Record<string, true>>({});
+	const lastCreatingRepeaterRawRef = useRef<unknown>(undefined);
 
 	const cleanRepeaterForPersist = useCallback(
 		(raw: Object) => {
@@ -495,6 +497,8 @@ export const PresetGroup = memo(function PresetGroup({
 					: newValue;
 
 			if (enableCreatingStep) {
+				lastCreatingRepeaterRawRef.current = raw;
+
 				const prevCreatingStepSlugs = creatingStepSlugsRef.current;
 				const nextCreatingStepSlugs =
 					syncVariablePickerCreatingStepSlugs(
@@ -512,11 +516,21 @@ export const PresetGroup = memo(function PresetGroup({
 				) {
 					setCreatingStepRevision((revision) => revision + 1);
 				}
+
+				if (
+					isOnlyNewCreatingStepRow(
+						variablesToPresetRepeaterValue(variables),
+						raw
+					)
+				) {
+					setCreatingStepRevision((revision) => revision + 1);
+					return;
+				}
 			}
 
 			onChange(cleanRepeaterForPersist(raw));
 		},
-		[onChange, cleanRepeaterForPersist, enableCreatingStep]
+		[onChange, cleanRepeaterForPersist, enableCreatingStep, variables]
 	);
 
 	const handleSelectableItemActivate = useCallback(
@@ -634,9 +648,14 @@ export const PresetGroup = memo(function PresetGroup({
 			return normalized;
 		}
 
-		return overlayCreatingStepRowsFromRepeaterStore(
+		const withStore = overlayCreatingStepRowsFromRepeaterStore(
 			normalized,
 			liveRepeaterStoreValue
+		);
+
+		return overlayCreatingStepRowsFromRepeaterStore(
+			withStore,
+			lastCreatingRepeaterRawRef.current
 		);
 	}, [
 		isVariablePicker,
