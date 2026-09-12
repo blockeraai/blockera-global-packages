@@ -71,6 +71,9 @@
   CSS variables unless the dock is opening, moving, resizing, or the
   inserter category column changes. Dock API sync skips store ticks that
   do not open or close inserter, list view, or settings.
+- Sidebar open, resize, and inserter category layout use dock classes
+  instead of matching nested inserter markup, so Global Styles inspector
+  edits do not restyle those wrappers.
 - Settings drag handle attaches when the complementary area changes, without
   observing inspector DOM mutations.
 - Enabling the settings sidebar opens its dock even when the previous disable

@@ -23,6 +23,10 @@ import { DEFAULT_SIDEBAR_LAYOUT, SIDEBAR_CLIP_TRANSITION_MS } from '../sidebar-l
 import { getDockSections } from '../sidebar-layout/layout';
 import { useSidebarDrag } from '../sidebar-layout/useSidebarDrag';
 import { toggleDock } from '../sidebar-layout/dock-bridge';
+import {
+	findSecondarySlideHost,
+	syncSlideHostOpenClass,
+} from '../sidebar-layout/slide-host-open-class';
 import type { SidebarLayout } from '../sidebar-layout/types';
 import './style.scss';
 import '../shared/style.scss';
@@ -175,6 +179,15 @@ function SecondarySidebarContentUI() {
 		}
 	}, [isLeftDockActive]);
 
+	const leftHostOpen = shouldRenderContent && isContentVisible;
+
+	useEffect(() => {
+		syncSlideHostOpenClass(findSecondarySlideHost(), leftHostOpen);
+		return () => {
+			syncSlideHostOpenClass(findSecondarySlideHost(), false);
+		};
+	}, [leftHostOpen]);
+
 	// Initialize default sidebar reference and body class (runs once)
 	// Also set CSS variables early to ensure they're available for animations
 	useEffect(() => {
@@ -266,7 +279,7 @@ function SecondarySidebarContentUI() {
 			</Fill>
 
 			<Fill name="blockera/slots/editor-secondary-sidebar">
-				{/* Wrapper width animates via :has(.is-visible); inner stays full width. */}
+				{/* Wrapper width animates via host is-open; inner stays full width. */}
 				{/* On initial mount: render with is-visible if sidebar should be visible (no animation) */}
 				{/* On toggle open: render with is-hidden first, then ref callback sets is-visible */}
 				{shouldRenderContent && (

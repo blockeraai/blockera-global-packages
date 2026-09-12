@@ -30,6 +30,7 @@ import {
 } from './layout';
 import { countDockRender, logSidebarPerf } from './sidebar-perf';
 import { useSidebarDrag } from './useSidebarDrag';
+import { useInserterCategoryPanelClass } from './inserter-category-panel-class';
 import { openDock } from './dock-bridge';
 import type { SidebarDockId, SidebarLayout, SidebarSectionId } from './types';
 import './style.scss';
@@ -120,6 +121,10 @@ function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 		layout,
 		dock,
 		isComplementaryOpen
+	);
+	useInserterCategoryPanelClass(
+		dockRef,
+		isDockOpen && sections.includes('inserter')
 	);
 	const visibleSections = drag
 		? sections.filter((id) => id !== drag.sectionId)

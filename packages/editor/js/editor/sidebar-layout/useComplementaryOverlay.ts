@@ -8,6 +8,7 @@ import type { RefObject } from 'react';
  * Internal dependencies
  */
 import { subscribeSidebarDrag } from './drag-session';
+import { INSERTER_CATEGORY_PANEL_CLASS } from './inserter-category-panel-class';
 import { countSidebarPerf } from './sidebar-perf';
 
 const SIDEBAR_SELECTOR = '.interface-interface-skeleton__sidebar';
@@ -38,7 +39,7 @@ function overlayRectForCategoryPanel(
 
 	if (
 		!dock ||
-		!sidebarContent?.querySelector('.block-editor-inserter__menu.show-panel')
+		!sidebarContent?.classList.contains(INSERTER_CATEGORY_PANEL_CLASS)
 	) {
 		return rect;
 	}

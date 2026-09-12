@@ -19,11 +19,10 @@
 	--sidebar-width-raw: var(--blockera-secondary-sidebar-width, 350px);
 	--sidebar-pattern-inserter-width: 280px;
 
-	&:has(.blockera-secondary-sidebar-content.is-visible) {
+	&.is-open {
 		width: var(--sidebar-width);
 	}
 
-	&:has(.is-resizing),
 	&.is-resizing {
 		/* stylelint-disable-next-line declaration-no-important */
 		transition: none !important;
@@ -120,9 +119,7 @@
 	position: static;
 }
 
-.interface-interface-skeleton__secondary-sidebar-blockera:has(
-	.block-editor-inserter__menu.show-panel
-) {
+.interface-interface-skeleton__secondary-sidebar-blockera.has-inserter-category-panel {
 	--sidebar-width: calc(
 		var(--sidebar-width-raw) + var(--sidebar-pattern-inserter-width)
 	);
@@ -236,7 +233,7 @@
 		bottom: 0;
 		z-index: 999999;
 
-		&:has(.blockera-secondary-sidebar-content.is-visible) {
+		&.is-open {
 			width: 100vw;
 		}
 	}

@@ -46,6 +46,17 @@ export default function ComplementaryAnchor({
 	const [handleHost, setHandleHost] = useState<HTMLElement | null>(null);
 	useComplementaryOverlay(paneRef, isActive);
 	useLayoutEffect(() => {
+		document.body.classList.toggle(
+			'is-blockera-complementary-floating',
+			!!isFloating
+		);
+		return () => {
+			document.body.classList.remove(
+				'is-blockera-complementary-floating'
+			);
+		};
+	}, [isFloating]);
+	useLayoutEffect(() => {
 		if (isFloating) {
 			applyFloatingPaneFromDrag();
 		}

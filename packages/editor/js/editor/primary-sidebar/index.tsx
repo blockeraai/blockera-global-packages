@@ -30,6 +30,10 @@ import { DEFAULT_SIDEBAR_LAYOUT, SIDEBAR_CLIP_TRANSITION_MS } from '../sidebar-l
 import { getDockSections } from '../sidebar-layout/layout';
 import { useSidebarDrag } from '../sidebar-layout/useSidebarDrag';
 import { useIsCanvasEditMode } from '../secondary-sidebar/hooks/useIsCanvasEditMode';
+import {
+	findPrimarySlideHost,
+	syncSlideHostOpenClass,
+} from '../sidebar-layout/slide-host-open-class';
 import type { SidebarLayout } from '../sidebar-layout/types';
 
 /**
@@ -407,6 +411,13 @@ export default function PrimarySidebarController() {
 
 	// Wrapper clip is only open when store says dock has content AND visibility allows it.
 	const wrapperVisible = hasRightDockContent && isContentVisible;
+
+	useEffect(() => {
+		syncSlideHostOpenClass(findPrimarySlideHost(), wrapperVisible);
+		return () => {
+			syncSlideHostOpenClass(findPrimarySlideHost(), false);
+		};
+	}, [wrapperVisible]);
 
 	useEffect(() => {
 		if (closeAnimationTimeoutRef.current) {
