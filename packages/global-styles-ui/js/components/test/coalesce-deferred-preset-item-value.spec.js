@@ -1,5 +1,6 @@
 import {
 	coalesceDeferredPresetItemValue,
+	coalesceEndingCreateValue,
 	shouldPersistEndingCreate,
 } from '../coalesce-deferred-preset-item-value';
 
@@ -51,5 +52,45 @@ describe('shouldPersistEndingCreate', () => {
 				size: '20px',
 			})
 		).toBe(false);
+	});
+});
+
+describe('coalesceEndingCreateValue', () => {
+	it('keeps staged field values and overlays header name and slug drafts', () => {
+		expect(
+			coalesceEndingCreateValue(
+				{
+					slug: 'font-size-1',
+					name: 'Font Size 1',
+					size: '16px',
+					creatingStep: true,
+				},
+				{ size: '24px' },
+				{ name: 'E2E Font Size', slug: 'e-2-e-font-size' }
+			)
+		).toEqual({
+			slug: 'e-2-e-font-size',
+			name: 'E2E Font Size',
+			size: '24px',
+			creatingStep: false,
+		});
+	});
+
+	it('applies header drafts when no field patch was staged', () => {
+		expect(
+			coalesceEndingCreateValue(
+				{
+					slug: 'border-1',
+					name: 'Border 1',
+					creatingStep: true,
+				},
+				null,
+				{ name: 'E2E Border', slug: 'e-2-e-border' }
+			)
+		).toEqual({
+			slug: 'e-2-e-border',
+			name: 'E2E Border',
+			creatingStep: false,
+		});
 	});
 });
