@@ -17,6 +17,7 @@ import {
 	BLOCKERA_SUPPLEMENTAL_PRESET_VARIABLES_STYLE_KEY,
 } from './blockera-supplemental-preset-variables-constants';
 import {
+	mutationsAddedIframe,
 	resolveIframeMountObserverRoot,
 	shouldSkipGlobalStylesEditorSettingsUpdate,
 } from './should-skip-editor-settings-sync';
@@ -132,14 +133,7 @@ export function BlockEditorExperimentalFeaturesSync() {
 
 		let frame = 0;
 		const scheduleApply = (mutations: MutationRecord[]) => {
-			const iframeMounted = mutations.some((mutation) =>
-				[...mutation.addedNodes].some(
-					(node) =>
-						node instanceof HTMLIFrameElement ||
-						(node instanceof Element &&
-							node.querySelector('iframe'))
-				)
-			);
+			const iframeMounted = mutationsAddedIframe(mutations);
 
 			if (
 				!iframeMounted &&

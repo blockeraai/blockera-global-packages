@@ -23,13 +23,16 @@ export function shouldSkipGlobalStylesEditorSettingsUpdate(
 }
 
 const IFRAME_MOUNT_ROOT_SELECTORS = [
-	'.interface-interface-skeleton',
-	'.editor-visual-editor',
 	'.edit-site-visual-editor',
+	'.editor-visual-editor',
+	'.interface-interface-skeleton__content',
+	'.interface-interface-skeleton',
 ];
 
 /**
- * Watch the editor chrome for iframe mount, not the whole document (inspector).
+ * Watch the canvas for iframe mount, not the inspector or sidebar docks.
+ * `.interface-interface-skeleton` includes Global Styles; prefer the visual
+ * editor so inspector color/preset mutations do not walk added nodes.
  */
 export function resolveIframeMountObserverRoot(
 	doc: Document = document
@@ -42,4 +45,33 @@ export function resolveIframeMountObserverRoot(
 	}
 
 	return doc.body ?? doc.documentElement;
+}
+
+function nodeAddedIframe(node: Node): boolean {
+	if (node.nodeName === 'IFRAME') {
+		return true;
+	}
+
+	if (node.nodeType !== 1) {
+		return false;
+	}
+
+	return (node as Element).getElementsByTagName('iframe').length > 0;
+}
+
+/**
+ * True when a childList observer saw a canvas iframe mount. Avoids
+ * spreading `addedNodes` and `querySelector` on inspector ticks.
+ */
+export function mutationsAddedIframe(mutations: MutationRecord[]): boolean {
+	for (let i = 0; i < mutations.length; i++) {
+		const nodes = mutations[i].addedNodes;
+		for (let j = 0; j < nodes.length; j++) {
+			if (nodeAddedIframe(nodes[j])) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }

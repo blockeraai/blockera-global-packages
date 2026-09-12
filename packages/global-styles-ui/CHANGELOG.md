@@ -1,3 +1,15 @@
+## Unreleased
+
+### Improvements
+- Global Styles color, duplicate, and preset edits no longer walk the
+  inspector DOM looking for canvas iframe remounts. The watcher stays on
+  the canvas.
+
+### Development Notes
+- Iframe preset CSS observer prefers `.edit-site-visual-editor` /
+  `.editor-visual-editor` / skeleton content over the full interface
+  skeleton, and checks `addedNodes` without spreading or `querySelector`.
+
 ## [4.0.0] - 2026-09-12
 
 ### Improvements
