@@ -46,6 +46,12 @@ export const SLOTS_CONFIG: SlotConfig[] = [
 		],
 		placement: 'end',
 	},
+	{
+		id: 'blockera/slots/editor-below-workspace-tabs',
+		selectors: ['.interface-interface-skeleton__content'],
+		placement: 'after',
+		placementSelector: '.blockera-tabs-wrapper',
+	},
 ];
 
 /**

@@ -46,3 +46,7 @@ export * from './utils';
 // Zoom (auto-registers plugin when imported)
 export * from './zoom';
 export { bootstrapZoom } from './zoom';
+
+// Search and replace (auto-registers plugin when imported)
+export * from './search-replace';
+export { bootstrapSearchReplace } from './search-replace';

@@ -23,7 +23,7 @@ packages/editor/
 │   ├── editor/                    # Breakpoints, canvas, plugins, …
 │   ├── observer/
 │   ├── command-bar/ preview-mode/ scrollbar/
-│   ├── shortcuts/ slots/ tabs/ zoom/
+│   ├── shortcuts/ slots/ tabs/ zoom/ search-replace/
 │   └── ...
 ├── php/
 │   ├── StyleEngine.php
@@ -50,6 +50,7 @@ import {
 	bootstrapTabs,
 	bootstrapPreviewMode,
 	bootstrapZoom,
+	bootstrapSearchReplace,
 	bootstrapShortcuts,
 	bootstrapScrollbar,
 	bootstrapSlots,

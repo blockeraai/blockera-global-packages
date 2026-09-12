@@ -85,6 +85,11 @@
 	order: 100;
 }
 
+.blockera-elements-editor-header-settings
+	.blockera-search-replace-header-button-wrapper {
+	order: 0;
+}
+
 /* Editor header toolbar */
 .blockera-elements-editor-header-toolbar:not(:empty) {
 	margin-right: 16px !important;

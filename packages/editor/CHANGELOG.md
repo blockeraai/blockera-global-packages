@@ -1,3 +1,37 @@
+## Unreleased
+
+### New Features
+- Search and replace in the block editor: a header search button opens a live find/replace bar under the workspace tabs, with match case, whole word, regular expressions, result navigation, canvas highlights, and a result toolbar. Free includes Visible Content; searching Attributes and All is Pro.
+
+### Bug Fixes
+- Search result toolbar uses Gutenberg’s block toolbar LastItem slot (before More options) instead of a DOM portal.
+- Search result toolbar now uses the core block toolbar (same positioning as Gutenberg’s block tools) instead of a separate popover.
+- While search is open, a matching block keeps the core toolbar’s first and last groups and shows the result toolbar between them. Clicking a block with no match shows the full core toolbar again.
+- Match case, whole word, and regex can be combined; regex replace applies capture groups such as `$1`.
+
+### Improvements
+- Search result toolbar matches the four mock states: text find, text replace, attribute find, and attribute replace.
+- On a matching block, the result toolbar sits in the core block toolbar between the first and last groups (switcher/movers and More options stay); formatting tools in between are hidden.
+- The find field is focused when search opens from the header button or
+  Ctrl/Cmd+F, and Ctrl/Cmd+F focuses it again if the panel is already open.
+- Next/previous search buttons are labeled Next match and Previous match.
+- Toolbar Replace applies the replacement and then moves to the next match.
+- The find bar Replace button also replaces and then moves to the next match.
+- Clicking a canvas search highlight selects that block and makes that hit
+  the current match.
+- Enter in the find field moves to the next match, and Shift+Enter moves to
+  the previous match. Enter in the replace field replaces and moves next;
+  Shift+Enter replaces and moves previous.
+- The find bar matches the two-row mock: match options sit inside the find
+  field, native input clear controls are removed, and next is before previous.
+- With regex enabled, the find field placeholder shows a price-pattern example.
+- In the find bar and result toolbar, the word “of” in the match count is lighter than the numbers.
+- “No results” turns red when a find query is entered and nothing matches.
+
+### Development Notes
+- Document search lives in `@blockera/editor` (`search-replace`), with `blockera.editor.searchReplace.scopes` for Pro to unlock attribute scopes. Replace always writes block attributes.
+
+
 ## [5.0.0] - 2026-09-12
 
 ### Improvements
