@@ -84,9 +84,24 @@ export const registerComponentCommands = () => {
 				.map((label) => `[aria-label="${label}"]`)
 				.join(',');
 
+			const findContainer = () =>
+				cy
+					.get(selector, { timeout: 20000 })
+					.closest(`[data-cy=${parentsDataCy}]`);
+
+			// Clipping lives on the Styles tab; inspector defaults to Settings.
+			if (!labels.includes('Clipping')) {
+				return findContainer();
+			}
+
 			return cy
-				.get(selector, { timeout: 20000 })
-				.closest(`[data-cy=${parentsDataCy}]`);
+				.get('body')
+				.then(($body) => {
+					if ($body.find('[aria-controls="styles-view"]').length) {
+						cy.switchBlockTab('styles');
+					}
+				})
+				.then(() => findContainer());
 		}
 	);
 

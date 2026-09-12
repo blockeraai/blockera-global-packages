@@ -1,5 +1,10 @@
 ## Unreleased
 
+### Automated Tests
+- `getParentContainer('Clipping')` opens the block Styles tab when that
+  inspector tab exists, so functionality specs still find Clipping while
+  Settings is the default.
+
 ### Development Notes
 - `setColorControlValue` scrolls the control into view, commits the CSS
   field with a DOM blur, and waits until the labeled color control or the
