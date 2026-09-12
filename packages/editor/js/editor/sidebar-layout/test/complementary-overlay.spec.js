@@ -5,8 +5,12 @@ import {
 	complementaryOverlayGeometry,
 	findComplementaryHandleHost,
 	isSlideHostOpening,
+	overlayContentClassTokens,
+	overlayHostClassTokens,
+	shouldMeasureComplementaryOverlay,
 	shouldSyncOverlayFromHostResize,
 	shouldWriteComplementaryOverlay,
+	strongerOverlaySyncReason,
 } from '../useComplementaryOverlay';
 
 describe('complementary overlay host', () => {
@@ -132,6 +136,139 @@ describe('shouldWriteComplementaryOverlay', () => {
 				left: 620,
 			})
 		).toBe(true);
+	});
+});
+
+describe('shouldMeasureComplementaryOverlay', () => {
+	it('skips layout reads on idle Global Styles ticks after the first layout', () => {
+		expect(
+			shouldMeasureComplementaryOverlay(
+				false,
+				false,
+				true,
+				false,
+				'idle'
+			)
+		).toBe(false);
+	});
+
+	it('measures the first layout, leftover clip, slide, drag, width, viewport, inserter, and class ticks', () => {
+		expect(
+			shouldMeasureComplementaryOverlay(
+				false,
+				false,
+				false,
+				false,
+				'idle'
+			)
+		).toBe(true);
+		expect(
+			shouldMeasureComplementaryOverlay(
+				false,
+				false,
+				true,
+				true,
+				'idle'
+			)
+		).toBe(true);
+		expect(
+			shouldMeasureComplementaryOverlay(
+				true,
+				false,
+				true,
+				false,
+				'idle'
+			)
+		).toBe(true);
+		expect(
+			shouldMeasureComplementaryOverlay(
+				false,
+				true,
+				true,
+				false,
+				'idle'
+			)
+		).toBe(true);
+		expect(
+			shouldMeasureComplementaryOverlay(
+				false,
+				false,
+				true,
+				false,
+				'resize-width'
+			)
+		).toBe(true);
+		expect(
+			shouldMeasureComplementaryOverlay(
+				false,
+				false,
+				true,
+				false,
+				'window-resize'
+			)
+		).toBe(true);
+		expect(
+			shouldMeasureComplementaryOverlay(
+				false,
+				false,
+				true,
+				false,
+				'inserter'
+			)
+		).toBe(true);
+		expect(
+			shouldMeasureComplementaryOverlay(
+				false,
+				false,
+				true,
+				false,
+				'class'
+			)
+		).toBe(true);
+		expect(
+			shouldMeasureComplementaryOverlay(
+				false,
+				false,
+				true,
+				false,
+				'drag'
+			)
+		).toBe(true);
+	});
+});
+
+describe('overlay class tokens and sync reason rank', () => {
+	it('ignores inspector class names that are not open, close, or resize', () => {
+		expect(
+			overlayHostClassTokens(
+				'interface-interface-skeleton__primary-sidebar-blockera extra'
+			)
+		).toBe('');
+		expect(
+			overlayHostClassTokens(
+				'interface-interface-skeleton__primary-sidebar-blockera is-resizing'
+			)
+		).toBe('is-resizing');
+		expect(
+			overlayContentClassTokens(
+				'blockera-primary-sidebar-content is-visible wp-something'
+			)
+		).toBe('is-visible');
+		expect(
+			overlayContentClassTokens(
+				'blockera-primary-sidebar-content is-hidden'
+			)
+		).toBe('is-hidden');
+	});
+
+	it('keeps a width or drag tick when coalesced with an idle inspector frame', () => {
+		expect(strongerOverlaySyncReason('idle', 'resize-width')).toBe(
+			'resize-width'
+		);
+		expect(strongerOverlaySyncReason('resize-width', 'idle')).toBe(
+			'resize-width'
+		);
+		expect(strongerOverlaySyncReason('drag', 'slide')).toBe('slide');
 	});
 });
 

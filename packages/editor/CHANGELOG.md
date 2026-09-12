@@ -69,7 +69,9 @@
   with two blocks.
 - Complementary overlay: unit coverage that height-only dock resizes do not
   reposition settings while the sidebar is idle, including inspector
-  height and leftover open-animation clip.
+  height and leftover open-animation clip. Idle Global Styles ticks skip
+  layout reads; only open/close, resize, drag, viewport, and inserter
+  category tokens schedule a measure.
 - Sidebar dock APIs: unit coverage that Global Styles store ticks skip
   inserter, list view, and settings open/close when those panels did not
   change.
