@@ -130,6 +130,94 @@ type OverlayBoxSnapshot = {
  * full settings layout during the measured interaction. Open/close, dock move,
  * and floating panes still write. Clip from a slide animation is cleared once.
  */
+export type ComplementaryOverlaySyncReason =
+	| 'idle'
+	| 'init'
+	| 'slide'
+	| 'drag'
+	| 'resize-width'
+	| 'window-resize'
+	| 'inserter'
+	| 'class';
+
+const MEASURE_REASON_RANK: Record<ComplementaryOverlaySyncReason, number> = {
+	idle: 0,
+	class: 1,
+	'resize-width': 2,
+	inserter: 3,
+	'window-resize': 4,
+	drag: 5,
+	slide: 6,
+	init: 7,
+};
+
+/**
+ * Coalesce overlay rAF callbacks so a width/drag tick is not dropped for an
+ * idle inspector frame that queued first.
+ */
+export function strongerOverlaySyncReason(
+	current: ComplementaryOverlaySyncReason,
+	next: ComplementaryOverlaySyncReason
+): ComplementaryOverlaySyncReason {
+	return MEASURE_REASON_RANK[next] > MEASURE_REASON_RANK[current]
+		? next
+		: current;
+}
+
+const OVERLAY_HOST_CLASS_TOKENS = ['is-resizing'];
+const OVERLAY_CONTENT_CLASS_TOKENS = ['is-hidden', 'is-visible'];
+
+/**
+ * Dock class mutations that are not open/close or resize must not schedule a
+ * layout read. Global Styles does not toggle these tokens.
+ */
+export function overlayClassTokens(
+	className: string,
+	tokens: readonly string[]
+): string {
+	if (!className) {
+		return '';
+	}
+
+	const present: string[] = [];
+	const parts = className.split(/\s+/);
+	for (let i = 0; i < tokens.length; i++) {
+		const token = tokens[i];
+		if (parts.includes(token)) {
+			present.push(token);
+		}
+	}
+
+	return present.join(' ');
+}
+
+export function overlayHostClassTokens(className: string): string {
+	return overlayClassTokens(className, OVERLAY_HOST_CLASS_TOKENS);
+}
+
+export function overlayContentClassTokens(className: string): string {
+	return overlayClassTokens(className, OVERLAY_CONTENT_CLASS_TOKENS);
+}
+
+/**
+ * Idle Global Styles edits must not call getBoundingClientRect. Measure only
+ * for the first layout, slide/drag, dock width, viewport, inserter column,
+ * visibility class, leftover clip, or a floating pane.
+ */
+export function shouldMeasureComplementaryOverlay(
+	trackingSlide: boolean,
+	isFloating: boolean,
+	hasLaidOut: boolean,
+	leftoverClip: boolean,
+	reason: ComplementaryOverlaySyncReason
+): boolean {
+	if (trackingSlide || isFloating || leftoverClip || !hasLaidOut) {
+		return true;
+	}
+
+	return reason !== 'idle';
+}
+
 export function shouldWriteComplementaryOverlay(
 	trackingSlide: boolean,
 	isFloating: boolean,
@@ -212,20 +300,24 @@ function clipPathFromIntersection(
 
 function overlayClipRectFromSlideHost(
 	anchor: HTMLElement,
-	anchorRect: DOMRect
+	anchorRect: DOMRect,
+	hostRect: DOMRect | null | undefined,
+	categoryPanelOpen: boolean
 ): DOMRect {
-	const slideHost = findSlideHost(anchor);
-	if (!slideHost) {
+	if (!hostRect) {
 		return anchorRect;
 	}
 
-	const hostRect = slideHost.getBoundingClientRect();
 	const clipRect = new DOMRect(
 		hostRect.left,
 		anchorRect.top,
 		hostRect.width,
 		anchorRect.height
 	);
+
+	if (!categoryPanelOpen) {
+		return clipRect;
+	}
 
 	return overlayRectForCategoryPanel(anchor, clipRect);
 }
@@ -238,7 +330,8 @@ function overlayClipRectFromSlideHost(
 export function complementaryOverlayGeometry(
 	anchor: HTMLElement,
 	anchorRect: DOMRect,
-	hostRect: DOMRect | null | undefined
+	hostRect: DOMRect | null | undefined,
+	categoryPanelOpen = false
 ): { overlayBox: DOMRect; clipPath: string } {
 	if (anchor.classList.contains('is-floating')) {
 		return {
@@ -264,7 +357,12 @@ export function complementaryOverlayGeometry(
 		overlayBox,
 		clipPath: clipPathFromIntersection(
 			overlayBox,
-			overlayClipRectFromSlideHost(anchor, overlayBox)
+			overlayClipRectFromSlideHost(
+				anchor,
+				overlayBox,
+				hostRect,
+				categoryPanelOpen
+			)
 		),
 	};
 }
@@ -339,23 +437,53 @@ export function useComplementaryOverlay(
 		let lastHeight = Number.NaN;
 		let lastClipPath = '';
 		let lastHostWidth = Number.NaN;
+		let pendingReason: ComplementaryOverlaySyncReason = 'idle';
+		let overlayNode = sidebar;
+		let categoryPanelOpen = false;
 
-		const sync = () => {
+		const getOverlayNode = (): HTMLElement | null => {
+			if (overlayNode?.isConnected) {
+				return overlayNode;
+			}
+			overlayNode = findSidebar();
+			return overlayNode;
+		};
+
+		const sync = (reason: ComplementaryOverlaySyncReason = 'idle') => {
 			const anchor = anchorRef.current;
-			const node = findSidebar();
+			const node = getOverlayNode();
 			if (!anchor || !node) {
 				return;
 			}
 
+			const isFloating = anchor.classList.contains('is-floating');
+			if (
+				!shouldMeasureComplementaryOverlay(
+					trackingSlide,
+					isFloating,
+					Number.isFinite(lastWidth),
+					lastClipPath !== '',
+					reason
+				)
+			) {
+				return;
+			}
+
 			const anchorRect = anchor.getBoundingClientRect();
-			const slideHost = findSlideHost(anchor);
-			const hostRect = slideHost?.getBoundingClientRect();
+			const slideHostForAnchor = findSlideHost(anchor);
+			const hostRect = isFloating
+				? undefined
+				: slideHostForAnchor?.getBoundingClientRect();
 			if (hostRect) {
 				lastHostWidth = hostRect.width;
 			}
-			const isFloating = anchor.classList.contains('is-floating');
 			const { overlayBox, clipPath: measuredClipPath } =
-				complementaryOverlayGeometry(anchor, anchorRect, hostRect);
+				complementaryOverlayGeometry(
+					anchor,
+					anchorRect,
+					hostRect,
+					categoryPanelOpen
+				);
 			const clipPath =
 				trackingSlide || isFloating ? measuredClipPath : '';
 			if (
@@ -403,7 +531,9 @@ export function useComplementaryOverlay(
 			}
 
 			countSidebarPerf('overlaySyncs');
-			node.classList.add(OVERLAY_CLASS);
+			if (!node.classList.contains(OVERLAY_CLASS)) {
+				node.classList.add(OVERLAY_CLASS);
+			}
 			node.style.removeProperty('visibility');
 			node.style.setProperty('top', `${overlayBox.top}px`, 'important');
 			node.style.setProperty('left', `${overlayBox.left}px`, 'important');
@@ -418,15 +548,20 @@ export function useComplementaryOverlay(
 			}
 		};
 
-		const syncOnFrame = () => {
+		const syncOnFrame = (
+			reason: ComplementaryOverlaySyncReason = 'idle'
+		) => {
+			pendingReason = strongerOverlaySyncReason(pendingReason, reason);
 			if (frame) {
 				return;
 			}
 			frame = window.requestAnimationFrame(() => {
 				frame = 0;
-				sync();
+				const nextReason = pendingReason;
+				pendingReason = 'idle';
+				sync(nextReason);
 				if (trackingSlide) {
-					syncOnFrame();
+					syncOnFrame('slide');
 				}
 			});
 		};
@@ -436,12 +571,12 @@ export function useComplementaryOverlay(
 				return;
 			}
 			trackingSlide = true;
-			syncOnFrame();
+			syncOnFrame('slide');
 		};
 
 		const stopSlideTracking = () => {
 			trackingSlide = false;
-			sync();
+			sync('slide');
 		};
 
 		const slideHost = anchorRef.current
@@ -458,7 +593,6 @@ export function useComplementaryOverlay(
 		const observer = new ResizeObserver((entries) => {
 			const entry = entries[0];
 			if (!entry) {
-				syncOnFrame();
 				return;
 			}
 
@@ -480,7 +614,7 @@ export function useComplementaryOverlay(
 			}
 
 			lastHostWidth = nextWidth;
-			syncOnFrame();
+			syncOnFrame(trackingSlide ? 'slide' : 'resize-width');
 		});
 
 		const onTransitionStart = (event: TransitionEvent) => {
@@ -497,7 +631,7 @@ export function useComplementaryOverlay(
 			stopSlideTracking();
 		};
 
-		sync();
+		sync('init');
 		maybeStartTrackingForOpen();
 
 		if (slideHost) {
@@ -507,21 +641,31 @@ export function useComplementaryOverlay(
 		slideHost?.addEventListener('transitionend', onTransitionEnd);
 		slideHost?.addEventListener('transitioncancel', onTransitionEnd);
 		const slideContent = slideHost?.querySelector(SLIDE_CONTENT_SELECTOR);
-		let lastHostClass = slideHost?.className ?? '';
-		let lastContentClass = slideContent?.className ?? '';
+		let lastHostClassTokens = overlayHostClassTokens(
+			slideHost?.className ?? ''
+		);
+		let lastContentClassTokens = overlayContentClassTokens(
+			slideContent?.className ?? ''
+		);
 		const classObserver = new MutationObserver(() => {
-			const hostClass = slideHost?.className ?? '';
-			const contentClass = slideContent?.className ?? '';
+			const hostTokens = overlayHostClassTokens(
+				slideHost?.className ?? ''
+			);
+			const contentTokens = overlayContentClassTokens(
+				slideContent?.className ?? ''
+			);
 			if (
-				hostClass === lastHostClass &&
-				contentClass === lastContentClass
+				hostTokens === lastHostClassTokens &&
+				contentTokens === lastContentClassTokens
 			) {
 				return;
 			}
-			lastHostClass = hostClass;
-			lastContentClass = contentClass;
-			syncOnFrame();
-			maybeStartTrackingForOpen();
+			lastHostClassTokens = hostTokens;
+			lastContentClassTokens = contentTokens;
+			syncOnFrame('class');
+			if (contentTokens.includes('is-hidden')) {
+				maybeStartTrackingForOpen();
+			}
 		});
 		if (slideHost) {
 			classObserver.observe(slideHost, {
@@ -536,7 +680,19 @@ export function useComplementaryOverlay(
 			});
 		}
 		const dock = anchorRef.current?.closest('.blockera-sidebar-dock');
-		const showPanelObserver = new MutationObserver(syncOnFrame);
+		const readCategoryPanelOpen = (): boolean =>
+			!!dock
+				?.querySelector('.block-editor-inserter__menu')
+				?.classList.contains('show-panel');
+		categoryPanelOpen = readCategoryPanelOpen();
+		const showPanelObserver = new MutationObserver(() => {
+			const nextOpen = readCategoryPanelOpen();
+			if (nextOpen === categoryPanelOpen) {
+				return;
+			}
+			categoryPanelOpen = nextOpen;
+			syncOnFrame('inserter');
+		});
 		const attachInserterMenuObserver = () => {
 			const menu = dock?.querySelector('.block-editor-inserter__menu');
 			if (menu) {
@@ -558,16 +714,22 @@ export function useComplementaryOverlay(
 		}
 		const onSlideScroll = () => {
 			if (trackingSlide) {
-				syncOnFrame();
+				syncOnFrame('slide');
 			}
 		};
-		window.addEventListener('resize', syncOnFrame);
+		const onWindowResize = () => {
+			syncOnFrame('window-resize');
+		};
+		window.addEventListener('resize', onWindowResize);
 		window.addEventListener('scroll', onSlideScroll, true);
 		const unsubscribePosition = subscribeSidebarDrag(
-			syncOnFrame,
+			() => syncOnFrame('drag'),
 			'position'
 		);
-		const unsubscribeLayout = subscribeSidebarDrag(sync, 'layout');
+		const unsubscribeLayout = subscribeSidebarDrag(
+			() => sync('drag'),
+			'layout'
+		);
 
 		return () => {
 			trackingSlide = false;
@@ -581,7 +743,7 @@ export function useComplementaryOverlay(
 			slideHost?.removeEventListener('transitionstart', onTransitionStart);
 			slideHost?.removeEventListener('transitionend', onTransitionEnd);
 			slideHost?.removeEventListener('transitioncancel', onTransitionEnd);
-			window.removeEventListener('resize', syncOnFrame);
+			window.removeEventListener('resize', onWindowResize);
 			window.removeEventListener('scroll', onSlideScroll, true);
 			unsubscribePosition();
 			unsubscribeLayout();

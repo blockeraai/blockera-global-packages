@@ -34,8 +34,10 @@
   position-fixed so inspector layout stays off the canvas.
 - Settings overlay no longer repositions when only the canvas or inspector
   height changes, so Global Styles color, duplicate, and preset edits do
-  not restyle the dock. Dock API sync skips store ticks that do not open
-  or close inserter, list view, or settings.
+  not restyle the dock. Idle overlay sync does not read layout or write
+  CSS variables unless the dock is opening, moving, resizing, or the
+  inserter category column changes. Dock API sync skips store ticks that
+  do not open or close inserter, list view, or settings.
 - Settings drag handle attaches when the complementary area changes, without
   observing inspector DOM mutations.
 - Enabling the settings sidebar opens its dock even when the previous disable
