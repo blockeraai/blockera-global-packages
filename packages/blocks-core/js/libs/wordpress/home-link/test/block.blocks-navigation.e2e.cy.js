@@ -8,6 +8,7 @@ import {
 	openInserter,
 	setInnerBlock,
 	openBlockInserter,
+	clickListViewAddPage,
 	redirectToFrontPage,
 } from '@blockera/dev-cypress/js/helpers';
 
@@ -34,17 +35,7 @@ describe(
 
 			cy.getBlock('core/navigation').click();
 
-			// Make sure the tree is visible (Ajax call done)
-			cy.get('.block-editor-list-view-tree').should('be.visible');
-
-			cy.get('.block-editor-list-view-tree')
-				.last()
-				.within(() => {
-					// Open blocks menu
-					cy.get('[aria-label="Add page"]')
-						.first()
-						.click({ force: true });
-				});
+			clickListViewAddPage();
 
 			// click on add block button
 			cy.get('.components-popover')
@@ -124,16 +115,14 @@ describe(
 			//
 			// 1.0. Block Styles
 			//
-			cy.getBlock('core/home-link')
-				.last()
-				.should('not.have.css', 'background-clip', 'padding-box');
+			cy.getBlock('core/home-link').first().click({ force: true });
 
 			cy.getParentContainer('Clipping').within(() => {
 				cy.customSelect('Clip to Padding');
 			});
 
 			cy.getBlock('core/home-link')
-				.last()
+				.first()
 				.should('have.css', 'background-clip', 'padding-box');
 
 			//
@@ -144,7 +133,7 @@ describe(
 			cy.setColorControlValue('BG Color', 'ff0000');
 
 			cy.getBlock('core/home-link')
-				.last()
+				.first()
 				.within(() => {
 					cy.get('a').should(
 						'have.css',

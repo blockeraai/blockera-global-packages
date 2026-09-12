@@ -407,7 +407,7 @@ export const SharedBlockExtension: ComponentType<Props> = ({
 	const { searchQuery, activeSearchMode } = useFeatureSearch();
 	// Filter settings based on search query
 	const filteredSettings = useMemo(
-		() => filterSettingsBySearch(cloneObject(settings), searchQuery),
+		() => filterSettingsBySearch(settings, searchQuery),
 		[settings, searchQuery]
 	);
 

@@ -3,7 +3,6 @@
 /**
  * External dependencies
  */
-import { useSelect } from '@wordpress/data';
 import { type MixedElement, type ComponentType } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { memo, useState, useMemo } from '@wordpress/element';
@@ -21,6 +20,7 @@ import { sanitizeDefaultAttributes } from '../hooks/utils';
 import { ErrorBoundaryFallback } from '../hooks/block-settings';
 import { prepareBlockeraDefaultAttributesValues } from './utils';
 import { BlockStyle } from '../../style-engine/components/block-style';
+import { getBaseBreakpoint } from '../../editor/header-ui/components/breakpoints/helpers';
 
 export const GlobalStylesRenderer: ComponentType<any> = memo(
 	(blockType: Object): MixedElement => {
@@ -80,12 +80,6 @@ export const GlobalStylesRenderer: ComponentType<any> = memo(
 			);
 		}, [defaultAttributes]);
 
-		// Use useSelect hook instead of direct select() to prevent re-renders
-		const activeDeviceType = useSelect((select) => {
-			const { getDeviceType } = select('blockera/editor');
-			return getDeviceType();
-		}, []);
-
 		// Memoize client ID to avoid repeated string operations
 		const clientId = useMemo(() => name.replace('/', '-'), [name]);
 
@@ -124,9 +118,15 @@ export const GlobalStylesRenderer: ComponentType<any> = memo(
 				isGlobalStylesWrapper: true,
 				defaultAttributes: defaultStyles,
 				clientId,
-				activeDeviceType,
+				// GS CSS already walks every breakpoint. Pin device so canvas
+				// breakpoint switches do not bust BlockStyle / selector caches.
+				activeDeviceType: getBaseBreakpoint(),
 				attributes: currentAttributes,
 				currentAttributes,
+				currentBlock: 'master',
+				currentState: 'normal',
+				currentBreakpoint: getBaseBreakpoint(),
+				currentInnerBlockState: 'normal',
 			}),
 			[
 				supports,
@@ -137,14 +137,12 @@ export const GlobalStylesRenderer: ComponentType<any> = memo(
 				variationClassPrefix,
 				defaultStyles,
 				clientId,
-				activeDeviceType,
 				currentAttributes,
 			]
 		);
 
 		// Early return if no styles to render
-		const hasBlockeraPropsId =
-			defaultAttributes.hasOwnProperty('blockeraId');
+		const hasBlockeraPropsId = 'blockeraId' in defaultAttributes;
 		const hasSanitizedStyles =
 			sanitizedBlockGlobalStyles &&
 			Object.keys(sanitizedBlockGlobalStyles).length > 0;

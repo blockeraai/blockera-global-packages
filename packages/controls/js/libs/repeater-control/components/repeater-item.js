@@ -33,6 +33,7 @@ import {
 	INSPECTOR_REPEATER_POPOVER_CLOSE_EVENT,
 	isClickInsideOpenInspectorRepeaterPopover,
 	isOpenPopoverEvent,
+	shouldPersistRepeaterItemAfterIdChange,
 	isRepeaterPromoActive,
 	shouldApplyRepeaterItemNativeStyle,
 	shouldGateRepeaterItemHeaderForPromo,
@@ -160,8 +161,13 @@ const RepeaterItem = ({
 
 	const styleRef = useRef(null);
 	const itemRef = useRef(null);
+	const itemValueRef = useRef(item);
+	itemValueRef.current = item;
 	const mainPresetHeaderRef = useRef(null);
+	const [mainPresetHeaderAnchor, setMainPresetHeaderAnchor] =
+		useState(null);
 	const prevItemIdRef = useRef(itemId);
+	const prevControlIdRef = useRef(controlId);
 	const scrollBehavior = useReducedMotion() ? 'auto' : 'smooth';
 	const [draggingIndex, setDraggingIndex] = useState(null);
 	const [variationsAccordionOpen, setVariationsAccordionOpen] =
@@ -273,24 +279,41 @@ const RepeaterItem = ({
 		isCreatingStepPopoverCloseGuarded,
 	]);
 
-	// Rename-by-type changes itemId while the edit popover is open — keep it open.
+	// Rename-by-type changes itemId (and may dismiss the popover via a native
+	// select). Keep or reopen the editor on the new key. Skip when controlId
+	// changed: that is a state/breakpoint switch, not a user type rename.
 	useEffect(() => {
 		const previousItemId = prevItemIdRef.current;
+		const previousControlId = prevControlIdRef.current;
+		prevControlIdRef.current = controlId;
 
-		if (previousItemId === itemId) {
-			return;
-		}
+		const row = itemValueRef.current;
 
-		if (isOpen) {
+		if (
+			shouldPersistRepeaterItemAfterIdChange({
+				previousControlId,
+				controlId,
+				previousItemId,
+				itemId,
+				item: row,
+				isOpen,
+			})
+		) {
+			suppressAutoOpenRef.current = false;
+
 			if ('function' === typeof reparentPendingOpenItemId) {
 				reparentPendingOpenItemId(previousItemId, itemId);
 			}
 
-			if (item?.isOpen !== true && item?.creatingStep !== true) {
+			if (!isOpen) {
+				handleItemOpen({ refreshContent: true });
+			}
+
+			if (row?.isOpen !== true && row?.creatingStep !== true) {
 				changeRepeaterItem({
 					itemId,
 					value: {
-						...item,
+						...row,
 						isOpen: true,
 					},
 					controlId,
@@ -305,13 +328,13 @@ const RepeaterItem = ({
 	}, [
 		itemId,
 		isOpen,
-		item,
 		controlId,
 		repeaterId,
 		onChange,
 		valueCleanup,
 		changeRepeaterItem,
 		reparentPendingOpenItemId,
+		handleItemOpen,
 	]);
 
 	// Stable row keys survive delete/reorder — close when this itemId is gone.
@@ -569,7 +592,12 @@ const RepeaterItem = ({
 		</div>
 	) : (
 		<div
-			ref={mainPresetHeaderRef}
+			ref={(node) => {
+				mainPresetHeaderRef.current = node;
+				if (node !== mainPresetHeaderAnchor) {
+					setMainPresetHeaderAnchor(node);
+				}
+			}}
 			className={controlInnerClassNames('repeater-item-header-holder')}
 			style={{ width: '100%' }}
 			onClickCapture={(e) => {
@@ -791,8 +819,8 @@ const RepeaterItem = ({
 					)
 				}
 				anchor={
-					mainPresetHeaderRef.current instanceof HTMLElement
-						? mainPresetHeaderRef.current
+					mainPresetHeaderAnchor instanceof HTMLElement
+						? mainPresetHeaderAnchor
 						: undefined
 				}
 				onClose={handleItemPopoverClose}

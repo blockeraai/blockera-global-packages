@@ -633,8 +633,8 @@ export const registerCommands = () => {
 				cy.getByDataCy('color-picker-css-value').then(($input) => {
 					cy.wrap($input).setControlledInputValue(value);
 				});
-				cy.getByDataCy('color-picker-css-value').blur();
-
+				// Close commits the hex field (`commitColorValue`). `cy.blur()`
+				// fails when the inspector re-renders and replaces the input.
 				cy.getByDataTest('close-popover').click({ force: true });
 			});
 	});

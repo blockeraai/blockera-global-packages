@@ -14,6 +14,7 @@ export * from './helpers/preset-variables-view';
 export * from './helpers/variable-picker';
 export * from './helpers/missing-variable';
 export * from './helpers/storage';
+export * from './helpers/render-debug';
 export * from './helpers/companion-plugin';
 export * from './helpers/site-editor-main-panel';
 export * from './helpers/site-editor-reset';

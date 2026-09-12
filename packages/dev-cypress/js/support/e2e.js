@@ -119,11 +119,28 @@ Cypress.Commands.add('addNewUser', (user, pass, role) => {
 });
 
 Cypress.Commands.add('getIframeBody', () => {
-	// get the iframe > document > body
-	// and retry until the body element is not empty
-	// wraps "body" DOM element to allow
-	// chaining more Cypress commands, like ".find(...)
-	return cy.get('iframe[name="editor-canvas"]').its('0.contentDocument.body');
+	// After reload the canvas iframe can exist with an empty about:blank
+	// document. `.its('0.contentDocument.body')` would then pin a dead body
+	// so `.find()` never sees hydrated blocks. Retry against the live iframe.
+	return cy
+		.get('iframe[name="editor-canvas"]', { timeout: 30000 })
+		.should(($iframe) => {
+			const body = $iframe[0]?.contentDocument?.body;
+
+			expect(body, 'editor canvas document body').to.exist;
+			expect(body.childNodes.length, 'editor canvas body children').to.be.greaterThan(
+				0
+			);
+
+			const hasEditorRoot = Boolean(
+				body.querySelector(
+					'[data-type], .is-root-container, .block-editor-block-list__layout'
+				)
+			);
+
+			expect(hasEditorRoot, 'editor canvas content').to.equal(true);
+		})
+		.then(($iframe) => cy.wrap($iframe[0].contentDocument.body));
 });
 
 Cypress.Commands.add('getBlockeraStylesWrapper', (options = {}) => {

@@ -125,6 +125,7 @@ export default function RepeaterControl(
 		enablePromoCountOnRepeaterItemHeader = true,
 		onRegisterAddNewAction,
 		companionGateAllRepeaterActions = false,
+		disableCompanionGate = false,
 		...additionalPropsForRepeaterContext
 	} = applyFilters(`blockera.controls.${props.id}.props`, props);
 
@@ -303,6 +304,11 @@ export default function RepeaterControl(
 
 	const runRepeaterCompanionGatedAction = useCallback(
 		(onAllowed: () => void): void => {
+			if (disableCompanionGate) {
+				onAllowed();
+				return;
+			}
+
 			if (
 				isRepeaterCompanionGateActive(
 					repeaterItems,
@@ -316,7 +322,11 @@ export default function RepeaterControl(
 
 			onAllowed();
 		},
-		[repeaterItems, companionGateAllRepeaterActions]
+		[
+			repeaterItems,
+			companionGateAllRepeaterActions,
+			disableCompanionGate,
+		]
 	);
 
 	const disabledAddNewItemForRegister =

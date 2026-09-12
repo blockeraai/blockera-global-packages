@@ -6,6 +6,7 @@ import {
 	getCSSUnits,
 	getUnitByValue,
 	extractNumberAndUnit,
+	combineNumericInputWithUnit,
 	getFirstUnit,
 } from '../utils';
 
@@ -3038,6 +3039,39 @@ describe('Util functions', () => {
 					unit: 'func',
 				});
 			});
+		});
+	});
+
+	describe('combineNumericInputWithUnit', () => {
+		test('appends the selected unit to a bare number', () => {
+			expect(combineNumericInputWithUnit('33', 'px')).toBe('33px');
+		});
+
+		test('does not double a unit already typed into the field', () => {
+			expect(combineNumericInputWithUnit('33px', 'px')).toBe('33px');
+		});
+
+		test('keeps a typed unit that differs from the selected unit', () => {
+			expect(combineNumericInputWithUnit('2rem', 'px')).toBe('2rem');
+		});
+
+		test('appends the func suffix used for CSS expressions', () => {
+			expect(combineNumericInputWithUnit('12px', 'func')).toBe(
+				'12pxfunc'
+			);
+			expect(
+				combineNumericInputWithUnit('min(10%, 100px)', 'func')
+			).toBe('min(10%, 100px)func');
+		});
+
+		test('does not double an existing func suffix', () => {
+			expect(combineNumericInputWithUnit('12pxfunc', 'func')).toBe(
+				'12pxfunc'
+			);
+		});
+
+		test('leaves a bare number unchanged when the unit is empty', () => {
+			expect(combineNumericInputWithUnit('12', '')).toBe('12');
 		});
 	});
 

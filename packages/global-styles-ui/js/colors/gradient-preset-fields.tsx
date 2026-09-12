@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useCallback, memo, useContext } from '@wordpress/element';
+import { memo, useContext } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -18,7 +18,13 @@ import {
 /**
  * Internal dependencies
  */
-import { SharedPresetControls } from '../components';
+import {
+	PresetEditorFields,
+	SharedPresetControls,
+	useDeferredPresetItemCommit,
+	useDeferredScalarPresetField,
+	useLatestPresetItem,
+} from '../components';
 import { type VariableType } from '../components/types';
 import { getAllVariableSlugs as getAllGradientSlugs } from '../components/utils';
 import GradientPreview from './gradient-preview';
@@ -36,6 +42,7 @@ function GradientPresetFieldsComponent({
 	gradientType,
 	gradientItem,
 }: GradientPresetFieldsProps) {
+	const getItem = useLatestPresetItem(gradientItem);
 	const { slug } = gradientItem;
 
 	const {
@@ -55,34 +62,26 @@ function GradientPresetFieldsComponent({
 		getControlId?: (itemId: string | number, key: string) => string;
 	};
 
-	const updateGradientViaRepeater = useCallback(
-		(updates: Record<string, any>) => {
-			changeRepeaterItem({
-				onChange,
-				valueCleanup,
-				controlId,
-				repeaterId,
-				itemId: presetId,
-				value: { ...gradientItem, ...updates },
-			});
-		},
-		[
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			presetId,
-			gradientItem,
-		]
-	);
+	const { stagePatch, flush } = useDeferredPresetItemCommit({
+		changeRepeaterItem,
+		onChange,
+		valueCleanup,
+		controlId,
+		repeaterId,
+		itemId: presetId,
+		getItem,
+	});
 
-	const handleGradientChange = useCallback(
-		(newValue: string | undefined) => {
-			updateGradientViaRepeater({ gradient: newValue });
-		},
-		[updateGradientViaRepeater]
-	);
+	const {
+		draft,
+		onChange: handleGradientChange,
+		onFieldsBlur,
+	} = useDeferredScalarPresetField<string | undefined>({
+		persistedValue: gradientItem.gradient,
+		fieldKey: 'gradient',
+		stagePatch,
+		flush,
+	});
 
 	if (!origin || !slug) {
 		return null;
@@ -95,26 +94,26 @@ function GradientPresetFieldsComponent({
 
 	const gradientValueControls = (
 		<ControlContextProvider
-			value={{
-				name: `gradient-value-${slug}`,
-				value: gradientItem.gradient,
-				attribute: 'blockeraGradient',
-				blockName: 'global-styles',
-			}}
-		>
-			<GradientBarControl
-				label={label}
-				field="gradient-bar"
-				height={40}
-				columns="1.2fr 3fr"
-				onChange={handleGradientChange}
-			/>
-		</ControlContextProvider>
+				value={{
+					name: `gradient-value-${slug}`,
+					value: draft,
+					attribute: 'blockeraGradient',
+					blockName: 'global-styles',
+				}}
+			>
+				<GradientBarControl
+					label={label}
+					field="gradient-bar"
+					height={40}
+					columns="1.2fr 3fr"
+					onChange={handleGradientChange}
+				/>
+			</ControlContextProvider>
 	);
 
 	return (
 		<Flex direction="column" gap={15}>
-			<GradientPreview gradient={gradientItem.gradient} />
+			<GradientPreview gradient={draft} />
 
 			<SharedPresetControls
 				itemId={presetId}
@@ -122,8 +121,11 @@ function GradientPresetFieldsComponent({
 				name={gradientItem.name}
 				slug={gradientItem.slug}
 				allSlugs={getAllGradientSlugs(gradients as any)}
+				onValueFieldsBlur={onFieldsBlur}
 			>
-				{gradientValueControls}
+				<PresetEditorFields signature={{ slug, draft, gradientType }}>
+					{gradientValueControls}
+				</PresetEditorFields>
 			</SharedPresetControls>
 		</Flex>
 	);

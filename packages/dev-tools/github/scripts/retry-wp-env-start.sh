@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # wp-env Docker builds hit transient registry errors: Alpine `apk add` against
-# dl-cdn.alpinelinux.org, and Debian `apt-get install` 404s when a cached layer
-# still points at an old debian-security package. Retries `run-wp-env-start.js`
-# (apt-get update injected into generated WordPress Dockerfiles).
+# dl-cdn.alpinelinux.org, Debian `apt-get update` rejecting expired InRelease
+# files, and `apt-get install` 404s when a cached layer still points at an old
+# debian-security package, and EOL bullseye pool 404s on security.debian.org
+# after LTS. Retries `run-wp-env-start.js` (apt-get update and install
+# injected into generated WordPress Dockerfiles).
 set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

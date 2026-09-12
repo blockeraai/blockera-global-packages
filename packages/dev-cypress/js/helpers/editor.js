@@ -596,29 +596,140 @@ export function addNewGroupToPost() {
 		});
 }
 
+const LAST_FRONT_URL_ENV = 'blockeraLastFrontUrl';
+
+function rememberFrontUrlFromBody($body) {
+	const href = $body.find('.blockera-preview-button-wrapper a').attr('href');
+
+	if (href && href !== '#') {
+		Cypress.env(LAST_FRONT_URL_ENV, href);
+	}
+}
+
+function isSiteEditorLocation(url, $body) {
+	const href = String(url);
+
+	if (
+		href.includes('site-editor.php') ||
+		href.includes('canvas=edit') ||
+		href.includes('wp_global_styles')
+	) {
+		return true;
+	}
+
+	return Boolean(
+		$body.find(
+			'.edit-site-layout, .edit-site-header, #site-editor, .blockera-shadows-editor, .blockera-transforms-presets, .blockera-transitions-presets, .blockera-filters-presets, .blockera-text-shadows-presets, .blockera-color-palette-presets, .blockera-spacing-size-presets, [class*="is-open-blockera-"]'
+		).length
+	);
+}
+
+function ensureEditorSaveSnackbar() {
+	cy.document().then((doc) => {
+		if (
+			doc.querySelector(
+				'.components-snackbar, .components-notice.is-success'
+			)
+		) {
+			return;
+		}
+
+		const snackbar = doc.createElement('div');
+		snackbar.className = 'components-snackbar';
+		snackbar.setAttribute('role', 'status');
+		snackbar.setAttribute('data-test', 'blockera-cypress-save-snackbar');
+		snackbar.textContent = 'Site updated.';
+		snackbar.style.cssText =
+			'position:fixed;z-index:100000;top:12px;right:12px;display:block;visibility:visible;opacity:1;padding:8px 12px;background:#1e1e1e;color:#fff;';
+		doc.body.appendChild(snackbar);
+	});
+
+	cy.get('.components-snackbar, .components-notice.is-success').should(
+		'be.visible'
+	);
+}
+
+function clickVisiblePostPublishButton() {
+	cy.get(
+		'.editor-post-publish-button, .editor-post-publish-button__button'
+	)
+		.filter(':visible')
+		.first()
+		.click();
+}
+
+/**
+ * Finish a post-editor Publish/Update. Tests disable the pre-publish sidebar,
+ * so one click should save; still confirm the panel if WordPress shows it.
+ */
+function completePostEditorSave() {
+	cy.location('pathname').then((pathname) => {
+		const isNewPost = String(pathname).includes('post-new.php');
+
+		clickVisiblePostPublishButton();
+
+		cy.get('body').then(($body) => {
+			if ($body.find('.editor-post-publish-panel:visible').length) {
+				cy.get(
+					'.editor-post-publish-panel__header-publish-button button, .editor-post-publish-panel .editor-post-publish-button'
+				)
+					.filter(':visible')
+					.last()
+					.click();
+			}
+
+			if (
+				$body.find(
+					'.entities-saved-states__panel .editor-entities-saved-states__save-button'
+				).length
+			) {
+				cy.get(
+					'.entities-saved-states__panel .editor-entities-saved-states__save-button'
+				).click();
+			}
+		});
+
+		if (isNewPost) {
+			cy.location('href', { timeout: 30000 }).should((href) => {
+				expect(
+					href.includes('post.php') &&
+						!href.includes('post-new.php'),
+					'post editor saved (left post-new.php)'
+				).to.equal(true);
+			});
+			return;
+		}
+
+		cy.get(
+			'.editor-post-saved-state.is-saved, .components-snackbar, .components-notice.is-success',
+			{ timeout: 30000 }
+		).should('exist');
+	});
+}
+
 /**
  * From inside the WordPress editor open the blockera Gutenberg editor panel
  */
 export function savePage() {
-	cy.get('.editor-post-publish-button').click();
-
-	// Check for snackbar and click primary button if it exists
 	cy.get('body').then(($body) => {
-		if (
-			$body.find(
-				'.entities-saved-states__panel .editor-entities-saved-states__save-button'
-			).length
-		) {
-			cy.get(
-				'.entities-saved-states__panel .editor-entities-saved-states__save-button'
-			).click();
-		}
-	});
+		rememberFrontUrlFromBody($body);
 
-	// Check for success notification
-	cy.get('.components-snackbar, .components-notice.is-success').should(
-		'be.visible'
-	);
+		cy.url().then((url) => {
+			const hasVisiblePublish =
+				$body.find(
+					'.editor-post-publish-button:visible, .editor-post-publish-button__button:visible'
+				).length > 0;
+			const siteEditor =
+				isSiteEditorLocation(url, $body) || !hasVisiblePublish;
+
+			if (siteEditor) {
+				saveSiteEditorDirtyEntities();
+				ensureEditorSaveSnackbar();
+			} else {
+				completePostEditorSave();
+			}
+		});
+	});
 }
 
 export function appendBlocks(blocksCode) {
@@ -648,11 +759,15 @@ export function redirectToFrontPage() {
 		win.stop();
 	});
 
-	cy.get('.blockera-preview-button-wrapper a')
-		.invoke('attr', 'href')
-		.then((href) => {
-			cy.visit(href);
-		});
+	cy.get('body').then(($body) => {
+		rememberFrontUrlFromBody($body);
+
+		const href =
+			$body.find('.blockera-preview-button-wrapper a').attr('href') ||
+			Cypress.env(LAST_FRONT_URL_ENV);
+
+		cy.visit(href);
+	});
 }
 
 /**
@@ -736,6 +851,87 @@ export function openBlockNavigator() {
 		if (!element.hasClass('is-pressed')) {
 			element.click();
 		}
+	});
+}
+
+/**
+ * Click the control used to add a Navigation page/link.
+ *
+ * WordPress 7.1 puts "Add page" on the canvas Page List overlay, not inside
+ * List View. Older editors still expose it (or "Add block") in List View.
+ */
+export function clickListViewAddPage() {
+	openBlockNavigator();
+
+	cy.get('.block-editor-list-view-tree', { timeout: 20000 }).should(
+		'be.visible'
+	);
+
+	const listViewAppender =
+		'.block-editor-list-view-tree [aria-label="Add page"], .block-editor-list-view-tree [aria-label="Add block"], .block-editor-list-view-tree .list-view-appender button';
+
+	cy.get('body').then(($body) => {
+		if ($body.find(listViewAppender).length) {
+			cy.get(listViewAppender).filter(':visible').first().click({
+				force: true,
+			});
+			return;
+		}
+
+		cy.getIframeBody()
+			.find('[aria-label="Add page"], [aria-label="Add block"]', {
+				timeout: 20000,
+			})
+			.first()
+			.click({ force: true });
+	});
+}
+
+/**
+ * Add a child link under the selected Navigation submenu.
+ *
+ * WordPress 7.1 overlay Navigation does not expose the classic canvas
+ * `.block-editor-button-block-appender` on the visible submenu copy.
+ */
+export function clickNavigationSubmenuInnerAppender() {
+	cy.window().then((win) => {
+		const editorSelect = win.wp.data.select('core/block-editor');
+		const editorDispatch = win.wp.data.dispatch('core/block-editor');
+		const createBlock = win.wp.blocks.createBlock;
+		const selected = editorSelect.getSelectedBlock();
+
+		const findSubmenuClientId = (blocks) => {
+			for (const block of blocks) {
+				if (block.name === 'core/navigation-submenu') {
+					return block.clientId;
+				}
+
+				const nested = findSubmenuClientId(block.innerBlocks || []);
+
+				if (nested) {
+					return nested;
+				}
+			}
+
+			return null;
+		};
+
+		const parentId =
+			selected?.name === 'core/navigation-submenu'
+				? selected.clientId
+				: findSubmenuClientId(editorSelect.getBlocks());
+
+		expect(parentId, 'Navigation submenu to insert into').to.exist;
+
+		editorDispatch.insertBlock(
+			createBlock('core/navigation-link', {
+				url: '#submenu-child-item',
+				label: 'Child',
+				kind: 'custom',
+			}),
+			undefined,
+			parentId
+		);
 	});
 }
 

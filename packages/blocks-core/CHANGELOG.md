@@ -1,6 +1,12 @@
 ## Unreleased
 
 ### Automated Tests
+- Navigation List View e2e uses the WordPress 7.1 appender helper instead of
+  a hard-coded “Add page” label.
+- Navigation submenu e2e adds a child via the WordPress 7.1 submenu
+  appender helper.
+- Home Link e2e skips the pre-clip canvas default on WordPress 7.1, where
+  overlay copies already use `padding-box`.
 - Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
 - Rename global-styles compatibility e2e specs to `.gs-compatibility.e2e.cy.js`.
 - Rename global-styles e2e specs to `.gs.e2e.cy.js`.

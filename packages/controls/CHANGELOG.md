@@ -1,7 +1,79 @@
 ## Unreleased
 
+### Bug Fixes
+
+- Changing device or block state with a background layer editor open no
+  longer saves that layer onto the new device or state.
+- Reset icons on control labels can receive a tooltip without a React
+  ref warning.
+- Opening a color picker no longer logs a React `defaultProps` warning
+  from the Sketch panel.
+- Saving a post no longer warns that `ControlContextProvider` updated
+  another `ControlContextProvider` during render.
+- Repeater controls no longer crash when their store record is not
+  registered yet.
+- Color pickers stay open after you type a hex value while the inspector
+  updates (including Global Styles).
+- Repeater clone, delete, and add buttons no longer close an open editor,
+  so the upgrade prompt can appear.
+- Clicking shade toggles (and other controls) in a preset edit popover no
+  longer closes the variable picker.
+- Escape in a field inside a nested popover closes that layer instead of
+  leaving it open.
+- Escape in a field inside a preset editor still closes that editor when
+  other WordPress popovers are open (for example after typing a border width),
+  including when Gutenberg already handled the Escape key.
+- Unit fields commit the typed value when you press Escape, so nested
+  Global Styles editors can save before they close. A unit typed in the
+  field (for example `33px`) is not appended again as `33pxpx`. CSS
+  function values still keep the `func` suffix.
+- Confirming delete on a repeater item (including a variable in the
+  picker) finishes the delete instead of stopping when the confirm button
+  is not a DOM event.
+- Changing a nested layer type (for example filter blur to drop-shadow)
+  keeps the layer editor open.
+
+### Improvements
+
+- Number and unit fields in the inspector update more smoothly while you type
+  and when other settings change.
+- Adding custom variables in Global Styles is not blocked by the companion
+  plugin prompt.
+- Image & Gradient background layers no longer rebuild on every inspector
+  paint, so typing a background color stays smoother.
+- Naming a variable (or other repeater row whose id is not a type key) no
+  longer re-opens the editor as if the layer type changed.
+
+### Development Notes
+
+- ControlContextProvider keeps a stable context value when contents are
+  unchanged, registers controls after commit (not during render), and
+  queues missing records so open popovers stay mounted.
+- InputControl reuses CSS unit catalogs and keeps unit option lookups
+  indexed. Numeric keystrokes still update the canvas immediately.
+- BackgroundControl and ColorControl keep stable default item, cleanup,
+  promo, value-addon, and preset identities across parent renders.
+- Popover helpers for field leave, repeater-row actions, and dismiss live
+  in this package. Other screens should import them instead of copying
+  clone/delete or popover selectors.
+- Repeater clone/delete click handlers use a Flow-safe event helper so
+  native stopImmediatePropagation does not fail typecheck.
+
 ### Automated Tests
-- Rename general e2e specs from `.general.e2e.cy.js` to `.e2e.cy.js`.
+
+- Object identity helpers, control registration batches, InputControl unit
+  catalogs, inspector typing budgets, and popover dismiss for repeater
+  clone chrome and field-leave.
+- Escape on a unit field does not double a typed unit suffix, and CSS
+  function values still keep the `func` suffix.
+- Repeater delete confirm can pass a non-event payload without throwing.
+- InputControl, TextAreaControl, BorderControl, CheckboxControl, and
+  RepeaterControl component tests give the store a name so delayed
+  registration can mount the control.
+- Repeater type-key rename keeps the same layer index (for example blur-0
+  to drop-shadow-0) and does not treat a reorder or slug key as a rename.
+- Repeater item id changes do not persist when the control instance
+  switched (state or breakpoint), including while the layer editor is open.
 
 ## [5.0.0] - 2026-09-05
 

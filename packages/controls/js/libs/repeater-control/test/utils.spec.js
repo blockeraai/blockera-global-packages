@@ -2,6 +2,8 @@ import {
 	prepValueForHeader,
 	getArialLabelSuffix,
 	isClickInsideOpenInspectorRepeaterPopover,
+	isRepeaterTypeKeyRename,
+	shouldPersistRepeaterItemAfterIdChange,
 	isRepeaterPromoActive,
 	isRepeaterCompanionGateActive,
 	shouldApplyRepeaterItemNativeStyle,
@@ -94,6 +96,68 @@ describe('Util functions', () => {
 			expect(getArialLabelSuffix('this-is-test')).toStrictEqual(
 				'this is test'
 			);
+		});
+	});
+
+	describe('isRepeaterTypeKeyRename', () => {
+		test('blur to drop-shadow with the same index', () => {
+			expect(
+				isRepeaterTypeKeyRename('blur-0', 'drop-shadow-0', {
+					type: 'drop-shadow',
+				})
+			).toBe(true);
+		});
+
+		test('different indexes are not a type rename', () => {
+			expect(
+				isRepeaterTypeKeyRename('blur-1', 'blur-0', {
+					type: 'blur',
+				})
+			).toBe(false);
+		});
+
+		test('slug or index key changes without a type are not a type rename', () => {
+			expect(
+				isRepeaterTypeKeyRename('custom-0', 'perf-border-0', {})
+			).toBe(false);
+		});
+
+		test('new id must start with the item type', () => {
+			expect(
+				isRepeaterTypeKeyRename('blur-0', 'custom-0', {
+					type: 'drop-shadow',
+				})
+			).toBe(false);
+		});
+	});
+
+	describe('shouldPersistRepeaterItemAfterIdChange', () => {
+		const typeRenameArgs = {
+			previousControlId: 'block/background/id-master-hover-desktop',
+			controlId: 'block/background/id-master-hover-desktop',
+			previousItemId: 'image-0',
+			itemId: 'linear-gradient-0',
+			item: { type: 'linear-gradient' },
+			isOpen: false,
+		};
+
+		test('persists a type rename on the same control', () => {
+			expect(shouldPersistRepeaterItemAfterIdChange(typeRenameArgs)).toBe(
+				true
+			);
+		});
+
+		test('does not persist inherit swaps when the control instance changes', () => {
+			expect(
+				shouldPersistRepeaterItemAfterIdChange({
+					...typeRenameArgs,
+					controlId: 'block/background/id-master-hover-tablet',
+					previousItemId: 'linear-gradient-0',
+					itemId: 'image-0',
+					item: { type: 'image' },
+					isOpen: true,
+				})
+			).toBe(false);
 		});
 	});
 });

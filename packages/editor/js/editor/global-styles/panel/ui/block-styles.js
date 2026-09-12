@@ -52,7 +52,7 @@ import {
 import { AddNewStyleButton } from './add-new-style-button';
 import { useBlockStylesCounter } from './use-block-styles-counter';
 import { blockDynamicStylesCount } from './use-block-styles-picker-value';
-import { useBlockContext } from '../../../../extensions/components';
+import { useBlockIdentityContext } from '../../../../extensions/components';
 import { StyleVariationsManager } from './style-variations-manager';
 import { default as BlockStylesPreviewPanel } from './preview-panel';
 import { PromoteGlobalStylesPremiumFeature } from './promote-global-styles-premium-feature';
@@ -99,7 +99,7 @@ function BlockStyles({
 		VARIATION_SURFACE_SIZE
 	);
 
-	const blockContext = useBlockContext() || {};
+	const blockContext = useBlockIdentityContext() || {};
 	const isNormalState =
 		typeof blockContext.isNormalState === 'function'
 			? blockContext.isNormalState

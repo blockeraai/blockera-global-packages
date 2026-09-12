@@ -3,7 +3,8 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import type { MixedElement } from 'react';
+import { memo } from '@wordpress/element';
+import type { ComponentType, MixedElement } from 'react';
 
 /**
  * Blockera dependencies
@@ -17,21 +18,24 @@ import { renderSelectOptionChangesetPreview } from '../../../../components';
 import type { TBlockProps, THandleOnChangeAttributes } from '../../types';
 import { generateExtensionId } from '../../utils';
 import { blendModeFieldOptions } from '../utils';
+import { areBackgroundFieldPropsEqual } from './are-background-field-props-equal';
 
-export const Blending = ({
+type BlendingProps = {
+	blendMode: string | void,
+	block: TBlockProps,
+	handleOnChangeAttributes: THandleOnChangeAttributes,
+	defaultValue: string,
+	labelProps?: Object,
+};
+
+const BlendingView = ({
 	blendMode,
 	block,
 	handleOnChangeAttributes,
 	defaultValue,
 	labelProps: labelPropsFromExtension,
 	...props
-}: {
-	blendMode: string | void,
-	block: TBlockProps,
-	handleOnChangeAttributes: THandleOnChangeAttributes,
-	defaultValue: string,
-	labelProps?: Object,
-}): MixedElement => {
+}: BlendingProps): MixedElement => {
 	return (
 		<ControlContextProvider
 			value={{
@@ -207,3 +211,8 @@ export const Blending = ({
 		</ControlContextProvider>
 	);
 };
+
+export const Blending: ComponentType<BlendingProps> = memo(
+	BlendingView,
+	areBackgroundFieldPropsEqual
+);

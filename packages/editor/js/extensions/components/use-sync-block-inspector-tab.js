@@ -32,8 +32,9 @@ import { isInnerBlock } from './utils';
  * | WP tabs   | First open (no saved tab)     | Re-select same block type | User changes tab |
  * |-----------|-------------------------------|---------------------------|------------------|
  * | 2         | Default Styles + request WP   | Restore saved + request WP| Persist + request|
- * | >2        | Follow WP active tab only     | Restore saved + request WP| Persist (+ WP if |
- * |           | (no requestInspectorTab)      |                           |  user via Blockera)|
+ * | >2        | Default Styles + request WP   | Restore saved + request WP| Persist (+ WP if |
+ * |           | (Content/Settings stay        |                           |  user via Blockera)|
+ * |           |  available; user can switch)  |                           |                  |
  * | Inner blk | Force Styles + request WP     | —                         | —                |
  */
 
@@ -139,7 +140,19 @@ export const getInspectorTabActivationPlan = ({
 	}
 
 	if (hasMoreThanTwoWordPressInspectorTabs(inspector)) {
-		if (isFirstBlockTypeSelection && !allowMultiTabDomRead) {
+		// Blocks with a Content tab (rich-text `role: content`, e.g.
+		// core/accordion-heading) expose Settings + Styles + Content.
+		// First open still lands on Styles so Blockera controls mount;
+		// following WP's default (often Settings/Content) left Styles empty.
+		if (isFirstBlockTypeSelection) {
+			return {
+				tab: DEFAULT_BLOCKERA_INSPECTOR_TAB,
+				syncWordPress: true,
+				mode: 'two-tab-default',
+			};
+		}
+
+		if (!allowMultiTabDomRead) {
 			return null;
 		}
 

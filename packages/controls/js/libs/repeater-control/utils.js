@@ -32,6 +32,84 @@ import {
 } from '../popover/utils';
 import { getRepeaterActiveItemsCount } from './helpers';
 
+/**
+ * True when the repeater row id changed because the item `type` was renamed
+ * (`blur-0` → `drop-shadow-0`), not because items were reordered, deleted,
+ * or a preset slug/index key changed.
+ */
+export function isRepeaterTypeKeyRename(
+	previousItemId: mixed,
+	itemId: mixed,
+	item: mixed
+): boolean {
+	if (
+		previousItemId === itemId ||
+		'string' !== typeof previousItemId ||
+		'string' !== typeof itemId ||
+		!previousItemId ||
+		!itemId
+	) {
+		return false;
+	}
+
+	const type =
+		item && typeof item === 'object' && !Array.isArray(item)
+			? item.type
+			: undefined;
+
+	if ('string' !== typeof type || type === '') {
+		return false;
+	}
+
+	if (!itemId.startsWith(`${type}-`)) {
+		return false;
+	}
+
+	if (previousItemId.startsWith(`${type}-`)) {
+		return false;
+	}
+
+	const prevSuffix = previousItemId.match(/-(\d+)$/);
+	const nextSuffix = itemId.match(/-(\d+)$/);
+
+	return Boolean(
+		prevSuffix && nextSuffix && prevSuffix[1] === nextSuffix[1]
+	);
+}
+
+/**
+ * Persist (and reopen) after an itemId change only inside the same control
+ * instance. Rows stay mounted across type renames (`order` keys) AND across
+ * state/breakpoint switches (`controlId` includes those). Treating inherit
+ * swaps (`linear-gradient-0` → `image-0`) as type renames wrote the inherited
+ * value into the new state.
+ */
+export function shouldPersistRepeaterItemAfterIdChange({
+	previousControlId,
+	controlId,
+	previousItemId,
+	itemId,
+	item,
+	isOpen,
+}: {
+	previousControlId: mixed,
+	controlId: mixed,
+	previousItemId: mixed,
+	itemId: mixed,
+	item: mixed,
+	isOpen: boolean,
+}): boolean {
+	if (previousControlId !== controlId) {
+		return false;
+	}
+
+	if (previousItemId === itemId) {
+		return false;
+	}
+
+	return isOpen || isRepeaterTypeKeyRename(previousItemId, itemId, item);
+}
+
 export const isOpenPopoverEvent = (
 	event: Object,
 	excludedTargetWrapper?: string
@@ -496,6 +574,29 @@ export function shouldPreserveRepeaterPopoverForNestedOpen(
 	}
 
 	return false;
+}
+
+export function stopRepeaterItemClick(event: Object): void {
+	if (!event || typeof event !== 'object') {
+		return;
+	}
+
+	if (typeof event.stopPropagation === 'function') {
+		event.stopPropagation();
+	}
+
+	if (typeof event.preventDefault === 'function') {
+		event.preventDefault();
+	}
+
+	const nativeEvent: ?Object = event.nativeEvent;
+
+	if (
+		nativeEvent &&
+		typeof nativeEvent.stopImmediatePropagation === 'function'
+	) {
+		nativeEvent.stopImmediatePropagation();
+	}
 }
 
 /** Ask all repeater rows to close any open local edit popovers. */

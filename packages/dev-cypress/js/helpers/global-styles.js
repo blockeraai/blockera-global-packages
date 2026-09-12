@@ -15,6 +15,7 @@ import {
 	saveSiteEditorDirtyEntities,
 } from './editor';
 import { openSiteEditor } from './site-navigation';
+import { openSiteEditorWithRenderDebug } from './render-debug';
 
 const COLORS_OVERRIDE_CLASS = 'is-open-blockera-colors-navigation-override';
 const SHADOWS_OVERRIDE_CLASS = 'is-open-blockera-shadows-navigation-override';
@@ -319,19 +320,14 @@ export function getEditedGlobalStylesSetting(dotPath) {
 
 /**
  * Opens Site Editor, Blockera global styles Colors list, and the Color variables screen.
+ *
+ * @param {{ reset?: boolean, renderDebug?: boolean | 'all' | 'blockBase' }} options
  */
-export function openGlobalStylesColorPaletteScreen(
-	{ reset } = { reset: true }
-) {
-	openSiteEditor();
-
-	if (reset) {
-		resetGlobalStylesEntityRecord();
-	}
-
-	cy.openGlobalStylesPanel();
-
-	closeWelcomeGuide();
+export function openGlobalStylesColorPaletteScreen({
+	reset = true,
+	renderDebug,
+} = {}) {
+	openSiteEditorGlobalStylesBase({ reset, renderDebug });
 
 	cy.get('button[id="/colors"]').eq(1).should('exist').click({ force: true });
 
@@ -348,19 +344,28 @@ export function openGlobalStylesColorPaletteScreen(
 
 	cy.getByDataTest('global-styles-nav-colors-palette').click({ force: true });
 
-	cy.getByDataTest('global-styles-color-palette-screen', {
-		timeout: 20000,
-	}).should('be.visible');
+	return cy
+		.get('.blockera-color-palette-presets', { timeout: 20000 })
+		.should('be.visible');
 }
 
 /**
  * Shared Site Editor + Global Styles open; does not navigate into a design-system panel.
  *
- * @param {{ reset?: boolean }} options
+ * @param {{ reset?: boolean, renderDebug?: boolean | 'all' | 'blockBase' }} options
  * @return {Cypress.Chainable} The global styles sidebar screen.
  */
-function openSiteEditorGlobalStylesBase({ reset } = { reset: true }) {
-	openSiteEditor();
+function openSiteEditorGlobalStylesBase({
+	reset = true,
+	renderDebug,
+} = {}) {
+	if (renderDebug) {
+		openSiteEditorWithRenderDebug({
+			mode: renderDebug === true ? 'all' : renderDebug,
+		});
+	} else {
+		openSiteEditor();
+	}
 
 	if (reset) {
 		resetGlobalStylesEntityRecord();
@@ -380,15 +385,16 @@ function openSiteEditorGlobalStylesBase({ reset } = { reset: true }) {
 /**
  * Clicks a Blockera Design System nav button (`#spacing-panel`, `#borders-panel`, …) and waits for the preset shell.
  *
- * @param {{ panelButtonId: string, waitSelector: string, reset?: boolean }} options
+ * @param {{ panelButtonId: string, waitSelector: string, reset?: boolean, renderDebug?: boolean | 'all' | 'blockBase' }} options
  * @return {Cypress.Chainable} The global styles sidebar screen.
  */
 export function openGlobalStylesDesignSystemPresetScreen({
 	panelButtonId,
 	waitSelector,
 	reset = true,
+	renderDebug,
 }) {
-	openSiteEditorGlobalStylesBase({ reset });
+	openSiteEditorGlobalStylesBase({ reset, renderDebug });
 
 	cy.get(`button[id="/${panelButtonId}"]`, { timeout: 20000 })
 		.should('exist')
@@ -401,17 +407,24 @@ export function openGlobalStylesDesignSystemPresetScreen({
 }
 
 /** Spacing variables (`settings.spacing.spacingSizes.custom`). */
-export function openGlobalStylesSpacingScreen({ reset } = { reset: true }) {
+export function openGlobalStylesSpacingScreen({
+	reset,
+	renderDebug,
+} = { reset: true }) {
 	return openGlobalStylesDesignSystemPresetScreen({
 		panelButtonId: 'spacing',
 		waitSelector: '.blockera-spacing-presets',
 		reset,
+		renderDebug,
 	});
 }
 
 /** Box shadow presets (`settings.shadow.presets.custom`). Clicks WP `/shadows` via Blockera handler. */
-export function openGlobalStylesShadowsScreen({ reset } = { reset: true }) {
-	openSiteEditorGlobalStylesBase({ reset });
+export function openGlobalStylesShadowsScreen({
+	reset,
+	renderDebug,
+} = { reset: true }) {
+	openSiteEditorGlobalStylesBase({ reset, renderDebug });
 
 	cy.get('button[id="/shadows"]')
 		.eq(1)
@@ -429,11 +442,15 @@ export function openGlobalStylesShadowsScreen({ reset } = { reset: true }) {
 }
 
 /** Border box presets (`settings.border.blockeraBorder.presets.custom`). */
-export function openGlobalStylesBordersScreen({ reset } = { reset: true }) {
+export function openGlobalStylesBordersScreen({
+	reset,
+	renderDebug,
+} = { reset: true }) {
 	return openGlobalStylesDesignSystemPresetScreen({
 		panelButtonId: 'borders',
 		waitSelector: '.blockera-borders-presets',
 		reset,
+		renderDebug,
 	});
 }
 
@@ -449,20 +466,28 @@ export function openGlobalStylesBorderRadiusScreen(
 }
 
 /** Text shadow presets (`settings.textShadow.presets.custom`). */
-export function openGlobalStylesTextShadowsScreen({ reset } = { reset: true }) {
+export function openGlobalStylesTextShadowsScreen({
+	reset,
+	renderDebug,
+} = { reset: true }) {
 	return openGlobalStylesDesignSystemPresetScreen({
 		panelButtonId: 'text-shadows',
 		waitSelector: '.blockera-text-shadows-presets',
 		reset,
+		renderDebug,
 	});
 }
 
 /** Transform presets (`settings.transform.presets.custom`). */
-export function openGlobalStylesTransformsScreen({ reset } = { reset: true }) {
+export function openGlobalStylesTransformsScreen({
+	reset,
+	renderDebug,
+} = { reset: true }) {
 	return openGlobalStylesDesignSystemPresetScreen({
 		panelButtonId: 'transforms',
 		waitSelector: '.blockera-transforms-presets',
 		reset,
+		renderDebug,
 	});
 }
 
@@ -476,21 +501,28 @@ export function openGlobalStylesTransitionsScreen({ reset } = { reset: true }) {
 }
 
 /** Filter presets (`settings.filter.presets.custom`). */
-export function openGlobalStylesFiltersScreen({ reset } = { reset: true }) {
+export function openGlobalStylesFiltersScreen({
+	reset,
+	renderDebug,
+} = { reset: true }) {
 	return openGlobalStylesDesignSystemPresetScreen({
 		panelButtonId: 'filters',
 		waitSelector: '.blockera-filters-presets',
 		reset,
+		renderDebug,
 	});
 }
 
 /**
  * Global Styles → Typography list (font size presets entry + Blockera typography override).
  *
- * @param {{ reset?: boolean }} options Pass `reset: true` to discard in-memory global styles edits before navigation (default false matches legacy typography panel specs).
+ * @param {{ reset?: boolean, renderDebug?: boolean | 'all' | 'blockBase' }} options Pass `reset: true` to discard in-memory global styles edits before navigation (default false matches legacy typography panel specs).
  */
-export function openGlobalStylesTypographyFlow({ reset } = { reset: false }) {
-	openSiteEditorGlobalStylesBase({ reset });
+export function openGlobalStylesTypographyFlow({
+	reset = false,
+	renderDebug,
+} = {}) {
+	openSiteEditorGlobalStylesBase({ reset, renderDebug });
 
 	cy.get('button[id="/typography"]', { timeout: 20000 })
 		.eq(1)
@@ -511,10 +543,11 @@ export function openGlobalStylesTypographyFlow({ reset } = { reset: false }) {
  *
  * @param {{ reset?: boolean }} options
  */
-export function openGlobalStylesFontSizesVariablesScreen(
-	{ reset } = { reset: true }
-) {
-	openGlobalStylesTypographyFlow({ reset });
+export function openGlobalStylesFontSizesVariablesScreen({
+	reset = true,
+	renderDebug,
+} = {}) {
+	openGlobalStylesTypographyFlow({ reset, renderDebug });
 
 	// eslint-disable-next-line cypress/no-unnecessary-waiting
 	cy.wait(500);
@@ -534,10 +567,11 @@ export function openGlobalStylesFontSizesVariablesScreen(
  *
  * @param {{ reset?: boolean }} options
  */
-export function openGlobalStylesLineHeightsVariablesScreen(
-	{ reset } = { reset: true }
-) {
-	openGlobalStylesTypographyFlow({ reset });
+export function openGlobalStylesLineHeightsVariablesScreen({
+	reset = true,
+	renderDebug,
+} = {}) {
+	openGlobalStylesTypographyFlow({ reset, renderDebug });
 
 	// eslint-disable-next-line cypress/no-unnecessary-waiting
 	cy.wait(500);

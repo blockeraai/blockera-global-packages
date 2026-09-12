@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { useMemo, useCallback } from '@wordpress/element';
+import { useMemo, useCallback, useRef } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -11,27 +11,35 @@ import { omit, setImmutably } from '@blockera/utils';
 /**
  * Internal dependencies
  */
+import { retainEqualSubtrees } from './global-styles-config';
 import { useGlobalStylesContext } from './global-styles-provider';
 import {
 	getValueFromObjectPath,
 	getValueFromVariable,
 } from '../theme-json-utils';
 
+const EMPTY_DEFAULT_STYLES: Record<string, unknown> = {};
+
 export function useGlobalSetting<T = unknown>(
 	propertyPath: string,
 	blockName = '',
 	source = 'all'
 ): [T, (newValue: T) => void] {
-	const { setUserConfig, ...configs } = useGlobalStylesContext();
+	const { setUserConfig, merged, user, base } = useGlobalStylesContext();
 	const appendedBlockPath = blockName ? '.blocks.' + blockName : '';
 	const appendedPropertyPath = propertyPath ? '.' + propertyPath : '';
 	const contextualPath = `settings${appendedBlockPath}${appendedPropertyPath}`;
 	const globalPath = `settings${appendedPropertyPath}`;
-	const sourceKey = source === 'all' ? 'merged' : source;
+	const configToUse =
+		source === 'all' || source === 'merged'
+			? merged
+			: source === 'base'
+				? base
+				: source === 'user'
+					? user
+					: undefined;
 
 	const settingValue = useMemo(() => {
-		const configToUse = configs[sourceKey] as
-			Record<string, unknown> | undefined;
 		if (!configToUse) {
 			throw 'Unsupported source';
 		}
@@ -48,14 +56,27 @@ export function useGlobalSetting<T = unknown>(
 			getValueFromObjectPath(configToUse, 'settings') ??
 			{}
 		);
-	}, [configs, sourceKey, globalPath, propertyPath, contextualPath]);
+	}, [configToUse, globalPath, propertyPath, contextualPath]);
 
-	const setSetting = (newValue: unknown): void => {
-		setUserConfig((currentConfig: Record<string, unknown>) =>
-			setImmutably(currentConfig, contextualPath.split('.'), newValue)
+	const retainedSettingValueRef = useRef(settingValue);
+	const retainedSettingValue = useMemo(() => {
+		const retained = retainEqualSubtrees(
+			retainedSettingValueRef.current,
+			settingValue
 		);
-	};
-	return [settingValue as T, setSetting as (newValue: T) => void];
+		retainedSettingValueRef.current = retained;
+		return retained;
+	}, [settingValue]);
+
+	const setSetting = useCallback(
+		(newValue: unknown): void => {
+			setUserConfig((currentConfig: Record<string, unknown>) =>
+				setImmutably(currentConfig, contextualPath.split('.'), newValue)
+			);
+		},
+		[setUserConfig, contextualPath]
+	);
+	return [retainedSettingValue as T, setSetting as (newValue: T) => void];
 }
 
 export function useGlobalStyle(
@@ -64,7 +85,7 @@ export function useGlobalStyle(
 	source = 'all',
 	{
 		shouldDecodeEncode = true,
-		defaultStylesValue = {},
+		defaultStylesValue = EMPTY_DEFAULT_STYLES,
 	}: {
 		shouldDecodeEncode?: boolean;
 		defaultStylesValue?: Record<string, unknown>;

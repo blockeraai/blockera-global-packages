@@ -112,8 +112,8 @@ function ConfirmDeleteModal({
 						onMouseDown={(event: MouseEvent) => {
 							event.stopPropagation();
 						}}
-						onClick={() => {
-							handleRemoveItem(item);
+						onClick={(event: MouseEvent) => {
+							handleRemoveItem(event);
 						}}
 					>
 						{deleteButtonLabel}

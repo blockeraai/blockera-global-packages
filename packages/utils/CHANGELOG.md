@@ -1,3 +1,15 @@
+## Unreleased
+
+### Development Notes
+
+- Optional window flags let Cypress count component paints and named save
+  events in the production editor. Unset flags do nothing.
+
+### Automated Tests
+
+- Render and save counters stay off without the window flag and count when
+  it is set.
+
 ## [2.0.0] - 2026-09-01
 
 ### Changed

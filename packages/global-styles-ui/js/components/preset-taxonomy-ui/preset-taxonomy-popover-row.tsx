@@ -39,6 +39,7 @@ import { isTaxonomyPopoverOpenEvent } from './is-taxonomy-popover-open-event';
 import { PresetTaxonomyPresetFields } from './taxonomy-preset-fields';
 import { isPresetTaxonomyInterfaceSizeSmall } from './preset-taxonomy-utils';
 import { usePresetTaxonomyEditSessionActionsOptional } from '../preset-taxonomy/preset-taxonomy-edit-session-context';
+import { useLivePresetRepeaterHeaderItem } from '../preset-item-header-draft-context';
 
 type TaxonomyRepeaterCtx = {
 	popoverTitle?: string;
@@ -168,7 +169,7 @@ export const PresetTaxonomyPopoverRow = memo(function PresetTaxonomyPopoverRow({
 		return { ...item, ...storeRow };
 	}, [item, storeRow]);
 
-	const itemForHeader = useMemo(() => {
+	const itemWithStore = useMemo(() => {
 		const base = storeRow ? { ...item, ...storeRow } : item;
 		if (!selectableRow) {
 			return base;
@@ -179,6 +180,11 @@ export const PresetTaxonomyPopoverRow = memo(function PresetTaxonomyPopoverRow({
 			isSelected,
 		};
 	}, [item, storeRow, selectableRow, isSelected]);
+
+	const itemForHeader = useLivePresetRepeaterHeaderItem(
+		itemWithStore,
+		itemId
+	);
 
 	let headerVariableSlug: string | undefined;
 	if (!selectableRow) {

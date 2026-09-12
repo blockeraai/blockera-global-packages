@@ -61,9 +61,8 @@ export function meshGradientProvider(
 	};
 }
 
-export default function BackgroundControl({
-	defaultValue = {},
-	defaultRepeaterItemValue = meshGradientProvider({
+const DEFAULT_BACKGROUND_REPEATER_ITEM: TDefaultRepeaterItemValue =
+	meshGradientProvider({
 		type: 'image',
 		image: '',
 		'image-size': 'custom',
@@ -93,7 +92,113 @@ export default function BackgroundControl({
 		'mesh-gradient-colors': {},
 		'mesh-gradient-attachment': 'scroll',
 		isVisible: true,
-	}),
+	});
+
+const EMPTY_BACKGROUND_VALUE: Object = {};
+
+function cleanupBackgroundRepeaterValue(value: any | Object): any | Object {
+	if (!isObject(value)) {
+		return value;
+	}
+
+	const cleanedValue: { [string]: Object } = {};
+
+	for (const [itemId, item] of Object.entries(value)) {
+		const cleanedItem: Object = cleanupRepeaterItem({ ...item });
+
+		// Preserve all type-specific fields so users can switch back from none.
+		if (item?.type === 'none') {
+			cleanedValue[itemId] = cleanedItem;
+			continue;
+		}
+
+		if (item?.type !== 'image') {
+			delete cleanedItem.image;
+			delete cleanedItem['image-size'];
+			delete cleanedItem['image-size-width'];
+			delete cleanedItem['image-size-height'];
+			delete cleanedItem['image-position'];
+			delete cleanedItem['image-repeat'];
+			delete cleanedItem['image-attachment'];
+		}
+
+		if (item?.type !== 'mesh-gradient') {
+			delete cleanedItem['mesh-gradient'];
+			delete cleanedItem['mesh-gradient-colors'];
+			delete cleanedItem['mesh-gradient-attachment'];
+		} else if (cleanedItem['mesh-gradient-colors']) {
+			const cleanedMeshGradientColors: { [string]: any } = {};
+			for (const [colorId, color] of Object.entries(
+				cleanedItem['mesh-gradient-colors']
+			)) {
+				cleanedMeshGradientColors[colorId] = cleanupRepeaterItem(color);
+			}
+			cleanedItem['mesh-gradient-colors'] = cleanedMeshGradientColors;
+		}
+
+		if (item?.type !== 'linear-gradient') {
+			delete cleanedItem['linear-gradient'];
+			delete cleanedItem['linear-gradient-angel'];
+			delete cleanedItem['linear-gradient-repeat'];
+			delete cleanedItem['linear-gradient-attachment'];
+		}
+
+		if (item?.type !== 'radial-gradient') {
+			delete cleanedItem['radial-gradient'];
+			delete cleanedItem['radial-gradient-position'];
+			delete cleanedItem['radial-gradient-size'];
+			delete cleanedItem['radial-gradient-repeat'];
+			delete cleanedItem['radial-gradient-attachment'];
+		}
+
+		cleanedValue[itemId] = cleanedItem;
+	}
+
+	return cleanedValue;
+}
+
+function BackgroundLayersPromo({
+	items,
+	onClose = () => {},
+	isOpen = false,
+}: {
+	items: Object,
+	onClose?: () => void,
+	isOpen?: boolean,
+}): MixedElement | null {
+	if (getRepeaterActiveItemsCount(items) < 1) {
+		return null;
+	}
+
+	return (
+		<UpgradePrompt
+			lockedFeature={{
+				icon: <Icon icon="layers" iconSize={26} />,
+				title: __('Multiple Background Layers', 'blockera'),
+				description: (
+					<Flex direction="column" gap="6px">
+						{__('Stack unlimited background layers', 'blockera')}
+						<Flex direction="row" gap="6px">
+							<span className="blockera-free-plan-hint">
+								{__('Free: 1 layer', 'blockera')}
+							</span>
+							<span className="blockera-pro-plan-hint">
+								{__('Pro: Unlimited layers', 'blockera')}
+							</span>
+						</Flex>
+					</Flex>
+				),
+			}}
+			isOpen={isOpen}
+			onClose={onClose}
+			type="modal"
+		/>
+	);
+}
+
+export default function BackgroundControl({
+	defaultValue = EMPTY_BACKGROUND_VALUE,
+	defaultRepeaterItemValue = DEFAULT_BACKGROUND_REPEATER_ITEM,
 	popoverTitle = __('Background', 'blockera'),
 	label,
 	labelPopoverTitle,
@@ -101,111 +206,10 @@ export default function BackgroundControl({
 	className = '',
 	...props
 }: TBackgroundControlProps): MixedElement {
-	function valueCleanup(value: any | Object): any | Object {
-		if (!isObject(value)) {
-			return value;
-		}
-
-		const cleanedValue: { [string]: Object } = {};
-
-		for (const [itemId, item] of Object.entries(value)) {
-			const cleanedItem: Object = cleanupRepeaterItem({ ...item });
-
-			// Preserve all type-specific fields so users can switch back from none.
-			if (item?.type === 'none') {
-				cleanedValue[itemId] = cleanedItem;
-				continue;
-			}
-
-			if (item?.type !== 'image') {
-				delete cleanedItem.image;
-				delete cleanedItem['image-size'];
-				delete cleanedItem['image-size-width'];
-				delete cleanedItem['image-size-height'];
-				delete cleanedItem['image-position'];
-				delete cleanedItem['image-repeat'];
-				delete cleanedItem['image-attachment'];
-			}
-
-			if (item?.type !== 'mesh-gradient') {
-				delete cleanedItem['mesh-gradient'];
-				delete cleanedItem['mesh-gradient-colors'];
-				delete cleanedItem['mesh-gradient-attachment'];
-			} else if (cleanedItem['mesh-gradient-colors']) {
-				const cleanedMeshGradientColors: { [string]: any } = {};
-				for (const [colorId, color] of Object.entries(
-					cleanedItem['mesh-gradient-colors']
-				)) {
-					cleanedMeshGradientColors[colorId] =
-						cleanupRepeaterItem(color);
-				}
-				cleanedItem['mesh-gradient-colors'] = cleanedMeshGradientColors;
-			}
-
-			if (item?.type !== 'linear-gradient') {
-				delete cleanedItem['linear-gradient'];
-				delete cleanedItem['linear-gradient-angel'];
-				delete cleanedItem['linear-gradient-repeat'];
-				delete cleanedItem['linear-gradient-attachment'];
-			}
-
-			if (item?.type !== 'radial-gradient') {
-				delete cleanedItem['radial-gradient'];
-				delete cleanedItem['radial-gradient-position'];
-				delete cleanedItem['radial-gradient-size'];
-				delete cleanedItem['radial-gradient-repeat'];
-				delete cleanedItem['radial-gradient-attachment'];
-			}
-
-			cleanedValue[itemId] = cleanedItem;
-		}
-
-		return cleanedValue;
-	}
-
 	return (
 		<RepeaterControl
 			id={'background'}
-			PromoComponent={({
-				items,
-				onClose = () => {},
-				isOpen = false,
-			}): MixedElement | null => {
-				if (getRepeaterActiveItemsCount(items) < 1) {
-					return null;
-				}
-
-				return (
-					<UpgradePrompt
-						lockedFeature={{
-							icon: <Icon icon="layers" iconSize={26} />,
-							title: __('Multiple Background Layers', 'blockera'),
-							description: (
-								<Flex direction="column" gap="6px">
-									{__(
-										'Stack unlimited background layers',
-										'blockera'
-									)}
-									<Flex direction="row" gap="6px">
-										<span className="blockera-free-plan-hint">
-											{__('Free: 1 layer', 'blockera')}
-										</span>
-										<span className="blockera-pro-plan-hint">
-											{__(
-												'Pro: Unlimited layers',
-												'blockera'
-											)}
-										</span>
-									</Flex>
-								</Flex>
-							),
-						}}
-						isOpen={isOpen}
-						onClose={onClose}
-						type="modal"
-					/>
-				);
-			}}
+			PromoComponent={BackgroundLayersPromo}
 			defaultValue={defaultValue}
 			className={controlClassNames('background', className)}
 			popoverTitle={popoverTitle}
@@ -220,7 +224,7 @@ export default function BackgroundControl({
 			}
 			labelDescription={labelDescription || <LabelDescription />}
 			{...props}
-			valueCleanup={valueCleanup}
+			valueCleanup={cleanupBackgroundRepeaterValue}
 		/>
 	);
 }

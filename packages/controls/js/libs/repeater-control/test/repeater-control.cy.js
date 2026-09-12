@@ -509,35 +509,34 @@ describe('repeater control component testing', () => {
 							}}
 						/>
 					),
-					value: {},
+					value: {
+						'first-0': { type: 'first', order: 0 },
+						'first-1': { type: 'first', order: 1 },
+						'first-2': { type: 'first', order: 2 },
+						'first-3': { type: 'first', order: 3 },
+						'first-4': { type: 'first', order: 4 },
+					},
 					store: STORE_NAME,
 					name,
 				});
 
-				cy.multiClick(`[aria-label="Add New Item"]`, 5);
-
-				// change type
+				// change type of the second row (first-1 → second-0)
 				cy.getByDataCy('repeater-item').eq(1).click();
-				cy.getByAriaLabel('Second').click({ multiple: true });
+				cy.getByAriaLabel('Second').click({ force: true });
 
-				// open repeater item popover
-				cy.getByDataCy('repeater-item').eq(2).click();
-
-				//remove second one
+				// Remove the next first-type row (first-1). Add/delete chrome
+				// does not dismiss an open editor, so do not require popovers gone.
 				cy.getByDataCy('repeater-item').eq(2).realHover();
 				cy.getByDataCy('repeater-item')
 					.eq(2)
 					.within(() => {
-						cy.getByAriaLabel('Delete second 1').should(
+						cy.getByAriaLabel('Delete first 1').should(
 							'be.visible'
 						);
-						cy.getByAriaLabel('Delete second 1').click({
+						cy.getByAriaLabel('Delete first 1').click({
 							force: true,
 						});
 					});
-
-				// repeater item popover should be removed
-				cy.get('.components-popover').should('not.exist');
 
 				// Check Control
 				cy.getByDataCy('repeater-item').should('have.length', 4);
@@ -1669,6 +1668,7 @@ describe('repeater control component testing', () => {
 
 		it('should when repeater control value is changed, then context data provider value to changed!', () => {
 			const onChangeMock = cy.stub().as('onChangeMock');
+			const name = nanoid();
 
 			cy.withDataProvider({
 				component: (

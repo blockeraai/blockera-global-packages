@@ -3,7 +3,8 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { cloneElement, type MixedElement } from 'react';
+import { memo } from '@wordpress/element';
+import { cloneElement, type ComponentType, type MixedElement } from 'react';
 
 /**
  * Blockera dependencies
@@ -22,6 +23,18 @@ import { Icon } from '@blockera/icons';
 import { renderSelectOptionChangesetPreview } from '../../../../components';
 import { generateExtensionId } from '../../utils';
 import type { TBlockProps, THandleOnChangeAttributes } from '../../types';
+import { areBackgroundFieldPropsEqual } from './are-background-field-props-equal';
+
+type BackgroundClippingProps = {
+	block: TBlockProps,
+	value: string | void,
+	backgroundItems: mixed,
+	backgroundColor: mixed,
+	onChange: THandleOnChangeAttributes,
+	defaultValue: string,
+	options?: any,
+	labelProps?: Object,
+};
 
 function mapBackgroundClipOptionsForPreview(
 	options: void | any,
@@ -45,7 +58,7 @@ function mapBackgroundClipOptionsForPreview(
 	return out;
 }
 
-export const BackgroundClipping = ({
+const BackgroundClippingView = ({
 	block,
 	value,
 	backgroundItems,
@@ -55,17 +68,7 @@ export const BackgroundClipping = ({
 	options,
 	labelProps: labelPropsFromExtension,
 	...props
-}: {
-	block: TBlockProps,
-	value: string | void,
-	backgroundItems: mixed,
-	backgroundColor: mixed,
-	onChange: THandleOnChangeAttributes,
-	defaultValue: string,
-	/** From `blockeraBackgroundClip.config.options` (feature config). */
-	options?: any,
-	labelProps?: Object,
-}): MixedElement => {
+}: BackgroundClippingProps): MixedElement => {
 	return (
 		<ControlContextProvider
 			value={{
@@ -181,3 +184,8 @@ export const BackgroundClipping = ({
 		</ControlContextProvider>
 	);
 };
+
+export const BackgroundClipping: ComponentType<BackgroundClippingProps> = memo(
+	BackgroundClippingView,
+	areBackgroundFieldPropsEqual
+);

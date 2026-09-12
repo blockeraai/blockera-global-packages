@@ -15,7 +15,12 @@ import { mergeObject, cloneObject } from '@blockera/utils';
 /**
  * Internal dependencies
  */
-import { getStableMergedBlockStyles, retainStableSnapshot } from './utils';
+import {
+	getStableMergedBlockStyles,
+	retainStableSnapshot,
+	iframeBlockTypesSchemaFingerprint,
+	isEmptyGlobalStylesSlice,
+} from './utils';
 import { StyleDefaultRenderer } from './style-default-renderer';
 import { getBlockAttributes } from '../global-styles/panel/context/index';
 import { getBlockeraGlobalStylesMetaData } from '../global-styles/helpers';
@@ -58,46 +63,9 @@ function areGlobalStylesPropsEqual(
 }
 
 /**
- * Canonical string for iframe bundle cache invalidation — attributes schema + WP variation names.
+ * Canonical string for iframe bundle cache invalidation — attribute keys + WP variation names.
  * Any change here must rebuild iframe `compat` args passed into {@see getCompatibleStyles}.
  */
-function getIframeBlockTypeSchemaSignature(blockType: Object): string {
-	const attrs = blockType?.attributes;
-	let attrPart = '';
-	if (attrs && typeof attrs === 'object') {
-		const keys = Object.keys(attrs).sort();
-		attrPart =
-			keys
-				.map((key) => {
-					try {
-						return `${key}:${JSON.stringify(attrs[key])}`;
-					} catch (_e) {
-						return `${key}:!`;
-					}
-				})
-				.join('|') || '_';
-	}
-	let varPart = '';
-	if (Array.isArray(blockType?.variations)) {
-		const names = [...blockType.variations]
-			.map((v) => (v && typeof v.name === 'string' ? v.name : ''))
-			.sort();
-		try {
-			varPart = JSON.stringify(names);
-		} catch (_e) {
-			varPart = '';
-		}
-	}
-	return `${blockType?.name ?? ''}:${attrPart}::${varPart}`;
-}
-
-function iframeBlockTypesSchemaFingerprint(blockTypes: Array<Object>): string {
-	return blockTypes
-		.map((b) => getIframeBlockTypeSchemaSignature(b))
-		.sort()
-		.join(';');
-}
-
 type IframeSelectorsShape = {
 	getActiveBlockVariation: Function,
 	_getActiveBlockVariation: Function,
@@ -194,22 +162,38 @@ function GlobalStylesComponent({
 				: {};
 
 		const { variations: rawVariations, ...rootWithoutVariations } = raw;
-
-		const compatibleRoot = getCompatibleStyles({
-			args,
-			isActive: true,
-			availableAttributes: blockType.attributes,
-			defaultAttributes: originDefaultAttributes,
-			attributes: cloneObject(rootWithoutVariations),
-		});
-
 		const sourceVariations =
 			rawVariations && typeof rawVariations === 'object'
 				? rawVariations
 				: {};
 
+		if (
+			isEmptyGlobalStylesSlice(rootWithoutVariations) &&
+			isEmptyGlobalStylesSlice(sourceVariations)
+		) {
+			cache.args = args;
+			cache.rawStylesForBlock = rawStylesForBlock;
+			cache.styles = EMPTY_BLOCKS_STYLES;
+			return EMPTY_BLOCKS_STYLES;
+		}
+
+		const compatibleRoot = isEmptyGlobalStylesSlice(rootWithoutVariations)
+			? {}
+			: getCompatibleStyles({
+					args,
+					isActive: true,
+					availableAttributes: blockType.attributes,
+					defaultAttributes: originDefaultAttributes,
+					attributes: cloneObject(rootWithoutVariations),
+				});
+
 		const compatibleVariations: Object = {};
 		for (const [slug, variationSlice] of Object.entries(sourceVariations)) {
+			if (isEmptyGlobalStylesSlice(variationSlice)) {
+				compatibleVariations[slug] = {};
+				continue;
+			}
+
 			compatibleVariations[slug] = getCompatibleStyles({
 				args,
 				isActive: true,
@@ -267,6 +251,7 @@ export const GlobalStyles: ComponentType<GlobalStylesProps> = memo(
 const GlobalStylesIframeBundle: ComponentType<{}> = memo((): MixedElement => {
 	const iframeCompatArgsBundleCacheRef = useRef({
 		schemaFingerprint: '',
+		extensionsFingerprint: '',
 		args: (null: null | Object),
 	});
 
@@ -289,7 +274,7 @@ const GlobalStylesIframeBundle: ComponentType<{}> = memo((): MixedElement => {
 	const blockSchemaFingerprint = useSelect((select) => {
 		const { getBlockTypes } = select('core/blocks');
 		const filtered = getBlockTypes().filter((blockType: Object) =>
-			blockType.attributes.hasOwnProperty('blockeraId')
+			Boolean(blockType?.attributes && 'blockeraId' in blockType.attributes)
 		);
 		const fingerprint = iframeBlockTypesSchemaFingerprint(filtered);
 		const cached = blockTypesCacheRef.current;
@@ -333,9 +318,11 @@ const GlobalStylesIframeBundle: ComponentType<{}> = memo((): MixedElement => {
 		[storeBlockeraMetaData]
 	);
 
-	useSelect((select) => {
+	const extensionsInnerBlocksFingerprint = useSelect((select) => {
 		const { getActiveBlockVariation } = select('core/blocks');
-		const { getBlockExtensionBy } = select('blockera/extensions');
+		const { getBlockExtensionBy, getBlockExtensions } = select(
+			'blockera/extensions'
+		);
 		iframeSelectorsRef.current = {
 			getActiveBlockVariation,
 			selectSnapshot: {
@@ -343,7 +330,17 @@ const GlobalStylesIframeBundle: ComponentType<{}> = memo((): MixedElement => {
 				_getActiveBlockVariation: () => null,
 			},
 		};
-		return getBlockExtensionBy;
+		const list = getBlockExtensions() || [];
+		return list
+			.map((ext: Object): string => {
+				const target = ext?.targetBlock || ext?.name || '';
+				const inner = ext?.blockeraInnerBlocks
+					? Object.keys(ext.blockeraInnerBlocks).join(',')
+					: '';
+				return `${target}:${inner}`;
+			})
+			.sort()
+			.join(';');
 	}, []);
 
 	const stableUserBlockStyles = retainStableSnapshot(
@@ -369,7 +366,8 @@ const GlobalStylesIframeBundle: ComponentType<{}> = memo((): MixedElement => {
 		const cached = iframeCompatArgsBundleCacheRef.current;
 		if (
 			cached.args !== null &&
-			cached.schemaFingerprint === blockSchemaFingerprint
+			cached.schemaFingerprint === blockSchemaFingerprint &&
+			cached.extensionsFingerprint === extensionsInnerBlocksFingerprint
 		) {
 			return cached.args;
 		}
@@ -381,9 +379,14 @@ const GlobalStylesIframeBundle: ComponentType<{}> = memo((): MixedElement => {
 		);
 
 		cached.schemaFingerprint = blockSchemaFingerprint;
+		cached.extensionsFingerprint = extensionsInnerBlocksFingerprint;
 		cached.args = nextArgs;
 		return nextArgs;
-	}, [blockSchemaFingerprint, blockTypes]);
+	}, [
+		blockSchemaFingerprint,
+		blockTypes,
+		extensionsInnerBlocksFingerprint,
+	]);
 
 	return (
 		<>

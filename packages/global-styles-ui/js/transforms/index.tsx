@@ -29,6 +29,7 @@ import {
 	PresetTaxonomyGroupLayout,
 	PresetVariablesScreenToolbar,
 	buildVisiblePresetOriginSets,
+	coerceThemeJsonPresetOriginList,
 } from '../components';
 import { useGlobalSetting } from '../context/global-style-hooks';
 import { BLOCKERA_GLOBAL_SETTING_PATH } from '@blockera/data';
@@ -132,12 +133,19 @@ const TransformPresetGroup = memo(TransformPresetGroupComponent);
  * array storing transform rows (move, scale, rotate, skew fields per row).
  */
 export function TransformsPresetContent() {
+	const [rawPresetsGroup] = useGlobalSetting('blockeraTransform.presets');
+
 	const [rawThemePresets, setThemePresets] = useGlobalSetting(
 		BLOCKERA_GLOBAL_SETTING_PATH.TRANSFORM_PRESETS_THEME
 	);
 
 	const [baseThemePresets] = useGlobalSetting(
 		BLOCKERA_GLOBAL_SETTING_PATH.TRANSFORM_PRESETS_THEME,
+		'',
+		'base'
+	);
+	const [basePresetsGroup] = useGlobalSetting(
+		'blockeraTransform.presets',
 		'',
 		'base'
 	);
@@ -160,8 +168,14 @@ export function TransformsPresetContent() {
 	);
 
 	const themePresets = useMemo(
-		() => sanitizeTransformPresets(rawThemePresets),
-		[rawThemePresets]
+		() =>
+			sanitizeTransformPresets(
+				coerceThemeJsonPresetOriginList(
+					rawThemePresets,
+					rawPresetsGroup
+				)
+			),
+		[rawThemePresets, rawPresetsGroup]
 	);
 	const defaultPresets = useMemo(
 		() => sanitizeTransformPresets(rawDefaultPresets),
@@ -170,6 +184,17 @@ export function TransformsPresetContent() {
 	const customPresets = useMemo(
 		() => sanitizeTransformPresets(rawCustomPresets),
 		[rawCustomPresets]
+	);
+
+	const baseThemeSizes = useMemo(
+		() =>
+			sanitizeTransformPresets(
+				coerceThemeJsonPresetOriginList(
+					baseThemePresets,
+					basePresetsGroup
+				)
+			),
+		[baseThemePresets, basePresetsGroup]
 	);
 
 	const convertRepeaterValueToArray = useCallback(
@@ -212,8 +237,8 @@ export function TransformsPresetContent() {
 	);
 
 	const resetThemeToBase = useCallback(() => {
-		setThemePresets(sanitizeTransformPresets(baseThemePresets));
-	}, [setThemePresets, baseThemePresets]);
+		setThemePresets(baseThemeSizes);
+	}, [setThemePresets, baseThemeSizes]);
 
 	const resetDefaultToBase = useCallback(() => {
 		setDefaultPresets(sanitizeTransformPresets(baseDefaultPresets));
@@ -227,12 +252,12 @@ export function TransformsPresetContent() {
 		if (!themePresets?.length) {
 			return undefined;
 		}
-		const base = sanitizeTransformPresets(baseThemePresets ?? []);
+		const base = baseThemeSizes;
 		if (isEquals(themePresets, base)) {
 			return undefined;
 		}
 		return resetThemeToBase;
-	}, [themePresets, baseThemePresets, resetThemeToBase]);
+	}, [themePresets, baseThemeSizes, resetThemeToBase]);
 
 	const defaultResetHandler = useMemo(() => {
 		if (!defaultPresets?.length) {
@@ -260,11 +285,6 @@ export function TransformsPresetContent() {
 		defaultLayerOn,
 		themePresets.length,
 		defaultPresets.length
-	);
-
-	const baseThemeSizes = useMemo(
-		() => sanitizeTransformPresets(baseThemePresets),
-		[baseThemePresets]
 	);
 
 	const baseDefaultSizes = useMemo(
