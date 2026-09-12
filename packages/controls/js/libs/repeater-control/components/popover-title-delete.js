@@ -23,6 +23,7 @@ import {
 	getArialLabelSuffix,
 	isRepeaterPromoActive,
 	closeInspectorRepeaterPopovers,
+	stopRepeaterItemClick,
 } from '../utils';
 
 type Props = {
@@ -69,9 +70,7 @@ export default function RepeaterPopoverTitleDelete({
 	} = useControlContext();
 
 	function deleteFunction(event: MouseEvent) {
-		if (event && event?.hasOwnProperty('stopPropagation')) {
-			event.stopPropagation();
-		}
+		stopRepeaterItemClick(event);
 
 		if (!isConfirmDeleteModalOpen && shouldConfirmDeleteModal) {
 			toggleConfirmDeleteModal();
@@ -143,6 +142,10 @@ export default function RepeaterPopoverTitleDelete({
 			<Button
 				size="extra-small"
 				align="center"
+				className="blockera-control-btn-delete"
+				onMouseDown={(event: MouseEvent) => {
+					event.stopPropagation();
+				}}
 				onClick={(event: MouseEvent) => {
 					event.stopPropagation();
 					deleteFunction(event);

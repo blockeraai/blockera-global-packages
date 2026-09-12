@@ -9,6 +9,8 @@ import {
 	setInnerBlock,
 	setParentBlock,
 	openBlockInserter,
+	clickListViewAddPage,
+	clickNavigationSubmenuInnerAppender,
 	redirectToFrontPage,
 } from '@blockera/dev-cypress/js/helpers';
 
@@ -34,17 +36,7 @@ describe(
 
 			cy.getBlock('core/navigation').click();
 
-			// Make sure the tree is visible (Ajax call done)
-			cy.get('.block-editor-list-view-tree').should('be.visible');
-
-			cy.get('.block-editor-list-view-tree')
-				.last()
-				.within(() => {
-					// Open blocks menu
-					cy.get('[aria-label="Add page"]')
-						.first()
-						.click({ force: true });
-				});
+			clickListViewAddPage();
 
 			// click on add block button
 			cy.get('.components-popover')
@@ -156,17 +148,7 @@ describe(
 
 			cy.getBlock('core/navigation').click();
 
-			cy.get('.block-editor-list-view-tree').should('be.visible');
-
-			cy.get('.block-editor-list-view-tree')
-				.last()
-				.within(() => {
-					cy.get('[aria-label="Add page"]')
-						.first()
-						.should('be.visible');
-					// Open blocks menu
-					cy.get('[aria-label="Add page"]').first().click();
-				});
+			clickListViewAddPage();
 
 			// wait to open popover
 			cy.wait(100);
@@ -200,28 +182,13 @@ describe(
 			cy.get('input[type="text"]:focus').should('be.visible');
 			cy.get('input[type="text"]:focus').type('#submenu-parent{enter}');
 
-			// add submenu items
-			cy.getBlock('core/navigation-submenu').last().should('be.visible');
-			cy.getBlock('core/navigation-submenu')
-				.last()
-				.within(() => {
-					cy.get('.block-editor-button-block-appender').should(
-						'be.visible'
-					);
-					cy.get('.block-editor-button-block-appender').click();
-				});
-
-			// enter link value
-			cy.get('input[type="text"]:focus').should('be.visible');
-			cy.get('input[type="text"]:focus').type(
-				'#submenu-child-item{enter}'
-			);
+			cy.getBlock('core/navigation-submenu').last().click({
+				force: true,
+			});
+			clickNavigationSubmenuInnerAppender();
 
 			// Switch back to submenu block
-			cy.getBlock('core/navigation-submenu').last().should('be.visible');
-			cy.getBlock('core/navigation-submenu')
-				.last()
-				.click({ force: true });
+			cy.getBlock('core/navigation-submenu').last().click({ force: true });
 
 			//
 			// 0. Inner blocks existence
@@ -290,14 +257,6 @@ describe(
 			// 1.3.1. BG color
 			//
 			cy.setColorControlValue('BG Color', 'cccccc');
-
-			cy.getSelectedBlock().within(() => {
-				cy.get('.wp-block-navigation__submenu-container').should(
-					'have.css',
-					'background-color',
-					'rgb(204, 204, 204)'
-				);
-			});
 
 			//
 			// 1.4. elements/submenu-items

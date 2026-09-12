@@ -77,6 +77,12 @@ Major surfaces:
 - Panel override selectors and CSS target WordPress 7.1+ `global-styles-ui-*` / `editor-global-styles-sidebar*` classes only.
 - Depends on `@blockera/env` for experimental gating where used.
 - PHP has no library API — do not invent server exports here.
+- **UI freeze:** do not change variable-screen layout, copy, chrome, or
+  persist/header timing for performance work.
+  [`003-gs-preset-ui-freeze.md`](../dev-tools/ai/decisions/003-gs-preset-ui-freeze.md).
+- Popover dismiss, field-leave, and repeater clone/delete/add belong in
+  `@blockera/controls`. Import those helpers; do not copy their selectors
+  into this package.
 
 ---
 

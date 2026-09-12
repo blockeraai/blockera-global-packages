@@ -243,3 +243,45 @@ export function overlayCreatingStepRowsFromRepeaterStore(
 
 	return changed ? out : propsValue;
 }
+
+function isRepeaterRowRecord(
+	value: unknown
+): value is Record<string, unknown> {
+	return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * True when `next` only added a creating-step row. Skip theme.json persist so
+ * Global Styles does not remount the editor before the create popover opens.
+ */
+export function isOnlyNewCreatingStepRow(
+	previous: unknown,
+	next: unknown
+): boolean {
+	if (!isRepeaterRowRecord(next)) {
+		return false;
+	}
+
+	if (!isRepeaterRowRecord(previous)) {
+		return Object.values(next).some(
+			(row) => isRepeaterRowRecord(row) && row.creatingStep === true
+		);
+	}
+
+	const previousIds = Object.keys(previous);
+	const nextIds = Object.keys(next);
+
+	if (nextIds.length !== previousIds.length + 1) {
+		return false;
+	}
+
+	const addedId = nextIds.find((itemId) => !previous.hasOwnProperty(itemId));
+
+	if (!addedId) {
+		return false;
+	}
+
+	const addedRow = next[addedId];
+
+	return isRepeaterRowRecord(addedRow) && addedRow.creatingStep === true;
+}

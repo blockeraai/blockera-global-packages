@@ -3,7 +3,8 @@
 /**
  * External dependencies
  */
-import type { MixedElement } from 'react';
+import type { ComponentType, MixedElement } from 'react';
+import { memo } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -20,10 +21,9 @@ import { isBlockeraEngineSkippedForClient } from '../../extensions/components/is
  */
 import type { BlockStyleProps } from './types';
 import { StateStyle } from '..';
-import {
-	useExtensionsStore,
-	getExtensionConfig,
-} from '../../hooks/use-extensions-store';
+import { getExtensionConfig } from '../../hooks/use-extensions-store';
+import { getBaseBreakpoint } from '../../editor/header-ui/components/breakpoints/helpers';
+import { getBlockeraStyleFingerprint } from '../blockera-style-fingerprint';
 
 /**
  * Whether BlockStyle should emit per-block CSS.
@@ -68,10 +68,47 @@ export function shouldPrintBlockeraBlockStyles({
 	);
 }
 
-export const BlockStyle = ({
+/**
+ * Skip BlockStyle commits when CSS inputs are unchanged.
+ * Does not subscribe to the global extensions UI store — callers pass current*.
+ *
+ * @param {BlockStyleProps} prev
+ * @param {BlockStyleProps} next
+ * @return {boolean} True when props are equal (React.memo skip).
+ */
+export function areBlockStylePropsEqual(
+	prev: BlockStyleProps,
+	next: BlockStyleProps
+): boolean {
+	return (
+		prev.clientId === next.clientId &&
+		prev.blockName === next.blockName &&
+		prev.customCss === next.customCss &&
+		prev.activeDeviceType === next.activeDeviceType &&
+		prev.hasPresetPreviewPatch === next.hasPresetPreviewPatch &&
+		prev.isGlobalStylesWrapper === next.isGlobalStylesWrapper &&
+		(prev.currentBlock ?? 'master') === (next.currentBlock ?? 'master') &&
+		(prev.currentState ?? 'normal') === (next.currentState ?? 'normal') &&
+		(prev.currentBreakpoint ?? getBaseBreakpoint()) ===
+			(next.currentBreakpoint ?? getBaseBreakpoint()) &&
+		(prev.currentInnerBlockState ?? 'normal') ===
+			(next.currentInnerBlockState ?? 'normal') &&
+		prev.supports === next.supports &&
+		prev.selectors === next.selectors &&
+		prev.additional === next.additional &&
+		prev.defaultAttributes === next.defaultAttributes &&
+		getBlockeraStyleFingerprint(prev.attributes, prev.inlineStyles) ===
+			getBlockeraStyleFingerprint(next.attributes, next.inlineStyles)
+	);
+}
+
+const BlockStyleComponent = ({
 	customCss,
 	isGlobalStylesWrapper = false,
 	hasPresetPreviewPatch = false,
+	currentBlock = 'master',
+	currentState = 'normal',
+	currentInnerBlockState = 'normal',
 	...props
 }: BlockStyleProps): MixedElement => {
 	const previewInjectable = usePreviewInjectableStyles();
@@ -80,15 +117,8 @@ export const BlockStyle = ({
 			? previewInjectable.extraPreviewCss.trim()
 			: '';
 
-	const {
-		currentBlock,
-		currentState,
-		currentBreakpoint,
-		currentInnerBlockState,
-	} = useExtensionsStore({
-		name: props.blockName,
-		clientId: props.clientId,
-	});
+	const currentBreakpoint =
+		props.currentBreakpoint ?? getBaseBreakpoint();
 
 	const hasBlockeraProps = shouldPrintBlockeraBlockStyles({
 		attributes: props?.attributes,
@@ -142,3 +172,8 @@ export const BlockStyle = ({
 		</>
 	);
 };
+
+export const BlockStyle: ComponentType<BlockStyleProps> = memo(
+	BlockStyleComponent,
+	areBlockStylePropsEqual
+);

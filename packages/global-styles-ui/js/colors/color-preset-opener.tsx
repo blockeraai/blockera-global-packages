@@ -348,11 +348,9 @@ export function ColorPresetOpener({
 				String(c.slug ?? '') === slugForMainLookup
 		);
 		const storedRaw =
-			(typeof main?.color === 'string' ? main.color : '') ||
-			(typeof palettePaintSource === 'string'
-				? palettePaintSource
-				: '') ||
-			(typeof colorItem.color === 'string' ? colorItem.color : '');
+			typeof main?.color === 'string' && main.color !== ''
+				? main.color
+				: '';
 		const mainAsRecord = main as Color & Record<string, unknown>;
 		let variablePickerType: string | undefined;
 		if (
@@ -371,9 +369,7 @@ export function ColorPresetOpener({
 	}, [
 		fullItems,
 		slugForMainLookup,
-		colorItem.color,
 		colorItem.type,
-		palettePaintSource,
 	]);
 
 	const baselineHexByStep = useMemo(

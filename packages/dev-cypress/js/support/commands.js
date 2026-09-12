@@ -649,6 +649,8 @@ export const registerCommands = () => {
 					cy.wrap($input).setControlledInputValue(value);
 					$input[0].blur();
 				});
+				// Close commits the hex field (`commitColorValue`). `cy.blur()`
+				// fails when the inspector re-renders and replaces the input.
 				cy.getByDataTest('close-popover').click({ force: true });
 			});
 

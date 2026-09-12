@@ -1,5 +1,6 @@
 import { CheckboxControl } from '../..';
 import { getControlValue } from '../../../store/selectors';
+import { nanoid } from 'nanoid';
 
 describe('checkbox control', () => {
 	beforeEach(() => {
@@ -37,6 +38,7 @@ describe('checkbox control', () => {
 	context('Functional Tests', () => {
 		it('user can check and uncheck the checkbox by clicking on checkbox', () => {
 			const checkboxLabel = 'Checkbox Label';
+			const name = nanoid();
 			cy.withDataProvider({
 				component: <CheckboxControl checkboxLabel={checkboxLabel} />,
 				name,
@@ -69,6 +71,7 @@ describe('checkbox control', () => {
 
 		it('user can check and uncheck the checkbox by clicking on label', () => {
 			const checkboxLabel = 'Checkbox Label';
+			const name = nanoid();
 			cy.withDataProvider({
 				component: <CheckboxControl checkboxLabel={checkboxLabel} />,
 				name,

@@ -2,7 +2,14 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useCallback, memo, useContext, useMemo } from '@wordpress/element';
+import {
+	memo,
+	useCallback,
+	useContext,
+	useMemo,
+	useState,
+	useEffect,
+} from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -20,7 +27,12 @@ import {
  * Internal dependencies
  */
 import TextShadowPresetPreview from './text-shadow-preset-preview';
-import { SharedPresetControls } from '../components';
+import {
+	PresetEditorFields,
+	SharedPresetControls,
+	useLatestPresetItem,
+	useNestedPresetRepeaterCommit,
+} from '../components';
 import { type VariableType } from '../components/types';
 import { getAllVariableSlugs as getAllTextShadowSlugs } from '../components/utils';
 import {
@@ -40,6 +52,14 @@ export type TextShadowDefaultPresetValue = {
 	visibilitySupport: boolean;
 };
 
+const TEXT_SHADOW_PRESET_REPEATER_DEFAULT = {
+	x: '1px',
+	y: '1px',
+	blur: '1px',
+	color: '#000000ab',
+	isVisible: true,
+};
+
 function TextShadowPresetSizeComponent({
 	origin,
 	textShadowPreset,
@@ -51,6 +71,7 @@ function TextShadowPresetSizeComponent({
 		WpTextShadowPreset;
 	presetId: string | number;
 }) {
+	const getItem = useLatestPresetItem(textShadowPreset);
 	const { slug } = textShadowPreset;
 
 	const {
@@ -83,32 +104,59 @@ function TextShadowPresetSizeComponent({
 	const repeaterItems = useMemo(() => {
 		const raw = textShadowPreset as unknown as Record<string, unknown>;
 		return textShadowItemsToRepeaterRecord(textShadowItemsFromRaw(raw));
-	}, [textShadowPreset]);
+	}, [textShadowPreset.shadow]);
+
+	const buildPersistPatch = useCallback(
+		(record: Record<string, unknown>) => ({
+			shadow: textShadowPresetItemsToCss(
+				repeaterRecordToTextShadowItems(
+					record as Record<string, Record<string, unknown>>
+				)
+			),
+		}),
+		[]
+	);
+
+	const { commitNestedChange, liveRecord } = useNestedPresetRepeaterCommit({
+		changeRepeaterItem,
+		onChange,
+		valueCleanup,
+		controlId,
+		repeaterId,
+		itemId: presetId,
+		getItem,
+		initialRecord: repeaterItems as unknown as Record<string, unknown>,
+		persistedSignature: textShadowPreset.shadow,
+		buildPersistPatch,
+	});
+
+	const [draftShadow, setDraftShadow] = useState(() =>
+		textShadowCssFromPreset(
+			textShadowPreset as unknown as Record<string, unknown>
+		)
+	);
+
+	useEffect(() => {
+		setDraftShadow(
+			textShadowCssFromPreset(
+				textShadowPreset as unknown as Record<string, unknown>
+			)
+		);
+	}, [textShadowPreset.shadow]);
 
 	const handleTextShadowChange = useCallback(
 		(newValue: Record<string, Record<string, unknown>>) => {
 			const items = repeaterRecordToTextShadowItems(newValue);
 			const shadow = textShadowPresetItemsToCss(items);
-			queueMicrotask(() => {
-				changeRepeaterItem({
-					onChange,
-					valueCleanup,
-					controlId,
-					repeaterId,
-					itemId: presetId,
-					value: { ...textShadowPreset, shadow },
-				});
-			});
+			setDraftShadow(shadow);
+			commitNestedChange(newValue, { shadow });
 		},
-		[
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			presetId,
-			textShadowPreset,
-		]
+		[commitNestedChange]
+	);
+
+	const editorSignature = useMemo(
+		() => ({ slug, liveRecord }),
+		[slug, liveRecord]
 	);
 
 	if (!origin || !slug) {
@@ -119,7 +167,7 @@ function TextShadowPresetSizeComponent({
 		<ControlContextProvider
 			value={{
 				name: `text-shadow-preset-${slug}`,
-				value: repeaterItems,
+				value: liveRecord,
 				attribute: 'blockeraTextShadowPreset',
 				blockName: 'global-styles-text-shadows',
 			}}
@@ -133,13 +181,7 @@ function TextShadowPresetSizeComponent({
 					key={slug}
 					withoutValueAddons
 					id={`text-shadow-preset-${slug}`}
-					defaultRepeaterItemValue={{
-						x: '1px',
-						y: '1px',
-						blur: '1px',
-						color: '#000000ab',
-						isVisible: true,
-					}}
+					defaultRepeaterItemValue={TEXT_SHADOW_PRESET_REPEATER_DEFAULT}
 					label={__('Text shadow', 'blockera')}
 					labelDescription={
 						<>
@@ -157,7 +199,7 @@ function TextShadowPresetSizeComponent({
 							</p>
 						</>
 					}
-					defaultValue={repeaterItems}
+					defaultValue={liveRecord}
 					onChange={handleTextShadowChange}
 				/>
 			</BaseControl>
@@ -166,11 +208,7 @@ function TextShadowPresetSizeComponent({
 
 	return (
 		<Flex direction="column" gap="15px">
-			<TextShadowPresetPreview
-				shadow={textShadowCssFromPreset(
-					textShadowPreset as unknown as Record<string, unknown>
-				)}
-			/>
+			<TextShadowPresetPreview shadow={draftShadow} />
 
 			<SharedPresetControls
 				itemId={presetId}
@@ -179,7 +217,9 @@ function TextShadowPresetSizeComponent({
 				slug={textShadowPreset.slug}
 				allSlugs={getAllTextShadowSlugs(presets)}
 			>
-				{textShadowPresetValueControls}
+				<PresetEditorFields signature={editorSignature}>
+					{textShadowPresetValueControls}
+				</PresetEditorFields>
 			</SharedPresetControls>
 		</Flex>
 	);

@@ -6,6 +6,7 @@ const path = require('path');
 const {
 	bundledWordpressDockerfilePath,
 	getAptInstallPrefix,
+	getAptUpdatePrefix,
 	isWordpressDockerfilePath,
 	patchWordPressDockerfile,
 	resolveWordpressDockerfilePath,
@@ -18,12 +19,21 @@ describe('inject-wp-env-dockerfile', () => {
 	it('parses wipe-lists, mirror rewrite, update, and install flags from the template', () => {
 		expect(prefix).toContain('security.debian.org');
 		expect(prefix).toContain('ftp.debian.org');
+		expect(prefix).toContain('archive.debian.org');
+		expect(prefix).toContain('VERSION_CODENAME');
+		expect(prefix).toContain('bullseye');
+		expect(prefix).toContain("/bullseye-security/d");
 		expect(prefix).toContain('rm -rf /var/lib/apt/lists/*');
-		expect(prefix).toContain('apt-get update --allow-releaseinfo-change');
+		expect(prefix).toContain('Acquire::Check-Valid-Until=false');
+		expect(prefix).toContain('--allow-releaseinfo-change');
 		expect(prefix).toContain('Apt::Get::AllowUnauthenticated=true');
 		expect(prefix).toContain('Acquire::Retries=5');
 		expect(prefix).not.toContain('--fix-missing');
 		expect(prefix).not.toContain('$PHPIZE_DEPS');
+		expect(getAptUpdatePrefix(prefix)).toContain(
+			'Acquire::Check-Valid-Until=false'
+		);
+		expect(getAptUpdatePrefix(prefix)).not.toContain('apt-get -qy install');
 	});
 
 	it('wipes lists and refreshes indexes in the same RUN as each apt-get install', () => {
@@ -45,7 +55,12 @@ RUN apt-get install -qy zlib1g-dev
 		expect(patched).toContain(`RUN ${prefix} git`);
 		expect(patched).toContain(`RUN ${prefix} sudo`);
 		expect(patched).toContain(`RUN ${prefix} zlib1g-dev`);
-		expect(patched).toContain('RUN apt-get -qy update');
+		expect(patched).toContain(
+			"grep -Eq '^(stretch|buster|bullseye)$'"
+		);
+		expect(patched).toContain('${VERSION_CODENAME}');
+		expect(patched).not.toContain('RUN apt-get -qy update');
+		expect(patched).toContain(`RUN ${getAptUpdatePrefix(prefix)}`);
 		expect(patched).toMatch(/RUN .*security\.debian\.org.* sudo/);
 	});
 
@@ -63,6 +78,74 @@ RUN apt-get install -qy zlib1g-dev
 		expect(patchWordPressDockerfile(line, prefix)).toBe(line);
 	});
 
+	it('replaces a stale ftp/security inject prefix with the current template', () => {
+		const stale =
+			"RUN find /etc/apt -type f \\( -name '*.list' -o -name '*.sources' \\) -exec sed -i -e 's|https\\?://deb.debian.org/debian-security|http://security.debian.org/debian-security|g' -e 's|https\\?://deb.debian.org/debian|http://ftp.debian.org/debian|g' {} + && rm -rf /var/lib/apt/lists/* && apt-get -o Acquire::Check-Valid-Until=false update --allow-releaseinfo-change && apt-get -qy install -o Apt::Get::AllowUnauthenticated=true -o Acquire::Retries=5 $PHPIZE_DEPS && touch /usr/local/etc/php/php.ini";
+		const patched = patchWordPressDockerfile(stale, prefix);
+
+		expect(patched).toContain(`RUN ${prefix} $PHPIZE_DEPS`);
+		expect(patched).toContain('VERSION_CODENAME');
+	});
+
+	it('inserts bullseye archive.debian.org seds after wp-env buster archive RUNs', () => {
+		const generated = `FROM wordpress:php7.4
+RUN sed -i 's|deb.debian.org/debian buster|archive.debian.org/debian buster|g' /etc/apt/sources.list
+RUN sed -i '/buster-updates/d' /etc/apt/sources.list
+RUN apt-get -qy install sudo
+`;
+		const patched = patchWordPressDockerfile(generated, prefix);
+
+		expect(patched).toContain(
+			"RUN sed -i '/buster-updates/d' /etc/apt/sources.list"
+		);
+		expect(patched).not.toMatch(/^RUN sed -i '\/buster-updates\/d'$/m);
+		expect(patched).toContain(
+			"s|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g' /etc/apt/sources.list"
+		);
+		expect(patched).toContain(
+			"RUN sed -i '/bullseye-security/d' /etc/apt/sources.list"
+		);
+		expect(patched).not.toContain(
+			'archive.debian.org/debian-security bullseye-security'
+		);
+		expect(patched.indexOf('/buster-updates/d')).toBeLessThan(
+			patched.indexOf('archive.debian.org/debian bullseye')
+		);
+	});
+
+	it('restores /etc/apt/sources.list when wp-env omitted it on buster-updates', () => {
+		const generated = `RUN sed -i '/buster-updates/d'
+RUN apt-get -qy install sudo
+`;
+		const patched = patchWordPressDockerfile(generated, prefix);
+
+		expect(patched).toContain(
+			"RUN sed -i '/buster-updates/d' /etc/apt/sources.list"
+		);
+		expect(patched).not.toMatch(/^RUN sed -i '\/buster-updates\/d'$/m);
+	});
+
+	it('does not insert bullseye archive seds twice', () => {
+		const generated = `RUN sed -i '/buster-updates/d' /etc/apt/sources.list
+RUN sed -i 's|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g' /etc/apt/sources.list
+`;
+		expect(patchWordPressDockerfile(generated, prefix)).toBe(generated);
+	});
+
+	it('retargets a standalone apt-get update so expired InRelease files do not fail the build', () => {
+		const generated = `RUN apt-get clean
+RUN apt-get -qy update
+RUN apt-get -qy install sudo
+`;
+		const patched = patchWordPressDockerfile(generated, prefix);
+		const updatePrefix = getAptUpdatePrefix(prefix);
+
+		expect(patched).toContain('RUN apt-get clean');
+		expect(patched).toContain(`RUN ${updatePrefix}`);
+		expect(patched).toContain(`RUN ${prefix} sudo`);
+		expect(patched).not.toMatch(/^RUN apt-get -qy update$/m);
+	});
+
 	it('only matches wp-env WordPress Dockerfiles', () => {
 		expect(isWordpressDockerfilePath('/tmp/WordPress.Dockerfile')).toBe(
 			true
@@ -77,8 +160,10 @@ RUN apt-get install -qy zlib1g-dev
 		expect(template).toMatch(/ARG PHP_VERSION=8\.2/);
 		expect(template).toMatch(/FROM wordpress:php\$\{PHP_VERSION\}/);
 		expect(template).toContain('rm -rf /var/lib/apt/lists/*');
+		expect(template).toContain('archive.debian.org');
 		expect(template).toContain('security.debian.org');
 		expect(template).toContain('ftp.debian.org');
+		expect(template).toContain('Acquire::Check-Valid-Until=false');
 	});
 });
 

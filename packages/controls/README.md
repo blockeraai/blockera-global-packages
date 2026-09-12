@@ -62,6 +62,7 @@ import {
 | Group | Examples |
 |-------|----------|
 | Foundation | `Flex`, `Grid`, `Button`, `Modal`, `Popover`, `Tooltip`, `Tabs`, `BaseControl`, `Snackbar`, `SnackbarNotices` |
+| Popover / repeater | `isFocusLeavingElement`, `isRepeaterActionTarget`, `isElementInsideRepeaterChrome`, `POPOVER_CLOSE_CONTROL_SELECTOR` |
 | Inputs | `InputControl`, `StepperControl`, `TextAreaControl`, `SelectControl`, `ToggleControl`, `RangeControl`, `ColorControl`, `MediaUploader` |
 | Style | `BackgroundControl`, `BorderControl`, `BoxBorderControl`, `BorderRadiusControl`, `BoxShadowControl`, `TextShadowControl`, `TransformControl`, `TransitionControl`, `FilterControl`, `MaskControl`, `LayoutMatrixControl` |
 | Composite | `RepeaterControl`, `ValueAddonControl`, `FeatureWrapper`, `UpgradePrompt`, `Promoter`, `RendererControl`, `CodeControl` |
@@ -79,6 +80,9 @@ Use `createSnackbarNotice({ content, id })` with `<SnackbarNotices />` (notices 
 - Importing `libs` can register the repeater data store as a **side effect**.
 - Preserve controlled-component props and existing value-addon value shapes.
 - Prefer root public exports; do not deep-import private internal files unless already done elsewhere.
+- Field-leave, repeater clone/delete/add, and popover dismiss belong here.
+  Feature packages (including `@blockera/global-styles-ui`) import these
+  helpers; do not copy chrome or popover selectors into those packages.
 - Composer maps `Blockera\Controls\` but PHP is a stub — do not invent PHP control classes here.
 
 ---

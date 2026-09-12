@@ -2,9 +2,11 @@
 /**
  * External dependencies
  */
-import SketchPicker from 'react-color/lib/Sketch';
 import type { MixedElement } from 'react';
 import { useMemo } from '@wordpress/element';
+
+import '../utils/silence-react-color-default-props';
+import SketchPicker from 'react-color/lib/Sketch';
 
 /**
  * Blockera dependencies

@@ -18,7 +18,11 @@ import type {
 	BreakpointTypes,
 } from '../libs/block-card/block-states/types';
 
-const BlockEditContext: Object = createContext({});
+const BlockEditIdentityContext: Object = createContext({});
+const BlockEditAttributesContext: Object = createContext({});
+
+/** Public context object: identity slice. Prefer useBlockContext for full data. */
+const BlockEditContext: Object = BlockEditIdentityContext;
 
 const BlockEditContextProvider = ({
 	children,
@@ -32,9 +36,47 @@ const BlockEditContextProvider = ({
 		currentBreakpoint,
 		currentInnerBlockState,
 		block,
+		attributes,
+		blockeraInnerBlocks,
+		currentInnerBlock,
+		args,
+		isActive,
+		additional,
+		isNormalState,
+		setAttributes,
+		getAttributes,
+		blockVariations,
+		defaultAttributes,
+		availableAttributes,
+		masterIsNormalState,
+		activeBlockVariation,
+		getActiveBlockVariation,
+		handleOnChangeAttributes,
+		updateBlockEditorSettings,
+		BlockComponent,
+		activeDeviceType,
+		getBlockType,
 	} = value || {};
 
-	const memoizedValue: {
+	const identityBlock = useMemo(() => {
+		if (!block) {
+			return block;
+		}
+
+		return {
+			blockName: block.blockName,
+			clientId: block.clientId,
+			handleOnChangeAttributes: block.handleOnChangeAttributes,
+			storeName: block.storeName,
+		};
+	}, [
+		block?.blockName,
+		block?.clientId,
+		block?.handleOnChangeAttributes,
+		block?.storeName,
+	]);
+
+	const memoizedIdentity: {
 		currentTab: string,
 		getBlockType: string,
 		blockStateId: number,
@@ -48,10 +90,8 @@ const BlockEditContextProvider = ({
 		switchBlockState: (state: string) => void,
 		handleOnChangeAttributes: THandleOnChangeAttributes,
 	} = useMemo(() => {
-		const {
-			updatePickedDeviceType,
-			updateDeviceIndicator,
-		} = select('blockera/editor') || {};
+		const { updatePickedDeviceType, updateDeviceIndicator } =
+			select('blockera/editor') || {};
 		const {
 			setBlockClientInnerState,
 			setBlockClientMasterState,
@@ -60,7 +100,29 @@ const BlockEditContextProvider = ({
 		} = dispatch('blockera/extensions') || {};
 
 		return {
-			...value,
+			args,
+			isActive,
+			block: identityBlock,
+			currentTab,
+			additional,
+			currentBlock,
+			currentState,
+			isNormalState,
+			setAttributes,
+			getAttributes,
+			blockVariations,
+			currentBreakpoint,
+			defaultAttributes,
+			availableAttributes,
+			masterIsNormalState,
+			activeBlockVariation,
+			currentInnerBlockState,
+			getActiveBlockVariation,
+			handleOnChangeAttributes,
+			updateBlockEditorSettings,
+			BlockComponent,
+			activeDeviceType,
+			getBlockType,
 			switchBlockState: (
 				state: TStates,
 				breakpoint: TBreakpoint
@@ -72,15 +134,15 @@ const BlockEditContextProvider = ({
 					setBlockClientInnerState({
 						currentState: state,
 						innerBlockType: currentBlock,
-						clientId: block?.clientId,
+						clientId: identityBlock?.clientId,
 					});
 					return setCurrentInnerBlockState(state);
 				}
 
 				setBlockClientMasterState({
 					currentState: state,
-					name: block?.blockName,
-					clientId: block?.clientId,
+					name: identityBlock?.blockName,
+					clientId: identityBlock?.clientId,
 				});
 
 				setCurrentState(state);
@@ -104,25 +166,72 @@ const BlockEditContextProvider = ({
 			},
 		};
 	}, [
-		value,
-		block,
+		args,
+		isActive,
+		identityBlock,
 		currentTab,
+		additional,
 		currentBlock,
 		currentState,
-		setCurrentTab,
+		isNormalState,
+		setAttributes,
+		getAttributes,
+		blockVariations,
 		currentBreakpoint,
+		defaultAttributes,
+		availableAttributes,
+		masterIsNormalState,
+		activeBlockVariation,
 		currentInnerBlockState,
+		getActiveBlockVariation,
+		handleOnChangeAttributes,
+		updateBlockEditorSettings,
+		BlockComponent,
+		activeDeviceType,
+		getBlockType,
+		setCurrentTab,
 	]);
 
+	const memoizedAttributes = useMemo(
+		() => ({
+			attributes,
+			blockeraInnerBlocks,
+			currentInnerBlock,
+			block,
+		}),
+		[attributes, blockeraInnerBlocks, currentInnerBlock, block]
+	);
+
 	return (
-		<BlockEditContext.Provider value={memoizedValue}>
-			{children}
-		</BlockEditContext.Provider>
+		<BlockEditIdentityContext.Provider value={memoizedIdentity}>
+			<BlockEditAttributesContext.Provider value={memoizedAttributes}>
+				{children}
+			</BlockEditAttributesContext.Provider>
+		</BlockEditIdentityContext.Provider>
 	);
 };
 
-const useBlockContext = (): Object => {
-	return useContext(BlockEditContext);
+const useBlockIdentityContext = (): Object => {
+	return useContext(BlockEditIdentityContext);
 };
 
-export { BlockEditContext, useBlockContext, BlockEditContextProvider };
+const useBlockContext = (): Object => {
+	const identity = useContext(BlockEditIdentityContext);
+	const attrSlice = useContext(BlockEditAttributesContext);
+
+	return {
+		...identity,
+		...attrSlice,
+		block: {
+			...(identity?.block || {}),
+			...(attrSlice?.block || {}),
+		},
+	};
+};
+
+export {
+	BlockEditContext,
+	useBlockContext,
+	useBlockIdentityContext,
+	BlockEditContextProvider,
+};

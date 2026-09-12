@@ -4,20 +4,39 @@
  * External dependencies
  */
 import type { MixedElement } from 'react';
-import { useDispatch, useSelect, select as dataSelect } from '@wordpress/data';
-import { createContext } from '@wordpress/element';
+import {
+	useDispatch,
+	useSelect,
+	useRegistry,
+	select as dataSelect,
+} from '@wordpress/data';
+import {
+	createContext,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+} from '@wordpress/element';
 
 /**
  * Blockera dependencies
  */
-import { isEquals, isUndefined } from '@blockera/utils';
+import {
+	isEquals,
+	shouldTrackComponentRender,
+	trackComponentRender,
+} from '@blockera/utils';
 
 /**
  * Internal dependencies
  */
-import { registerControl } from '../api';
 import { STORE_NAME } from '../store/constants';
 import type { ControlContextProviderProps } from './types';
+import { retainIfEqual } from './retain-if-equal';
+import { resolveControlSelectResult } from './resolve-control-select-result';
+import {
+	enqueueControlRegistration,
+	flushQueuedControlRegistrations,
+} from './enqueue-control-registration';
 
 export const ControlContext: Object = createContext({
 	controlInfo: {
@@ -38,60 +57,96 @@ export const ControlContextProvider = ({
 	storeName = STORE_NAME,
 	...props
 }: ControlContextProviderProps): MixedElement | null => {
-	if (!dataSelect(storeName).getControl(controlInfo.name)) {
-		// $FlowFixMe
-		registerControl({
-			...controlInfo,
+	// Isolated debug block: no-op unless window.__BLOCKERA_RENDER_DEBUG__.
+	if (shouldTrackComponentRender()) {
+		trackComponentRender('ControlContextProvider', {
+			id: controlInfo?.name,
+			name: controlInfo?.name,
+		});
+	}
+
+	const controlInfoRef = useRef(controlInfo);
+	const stableControlInfo = retainIfEqual(
+		controlInfoRef.current,
+		controlInfo,
+		isEquals
+	);
+	controlInfoRef.current = stableControlInfo;
+
+	const registry = useRegistry();
+
+	// Queue during render (no dispatch). Flush after commit so opening the
+	// inspector is one store update, not one per control.
+	if (
+		stableControlInfo?.name &&
+		!dataSelect(storeName).getControl(stableControlInfo.name)
+	) {
+		enqueueControlRegistration({
+			...stableControlInfo,
 			type: storeName,
 		});
 	}
 
-	//Prepare control status and value!
-	const { status, value } = useSelect(
+	// Flush even when the provider stays mounted: control names can change
+	// (inner block / Global Styles) without remounting. A missed flush left
+	// getControl empty and tore down open pickers.
+	useLayoutEffect(() => {
+		const batch =
+			registry && typeof registry.batch === 'function'
+				? registry.batch.bind(registry)
+				: null;
+		flushQueuedControlRegistrations(batch);
+	}, [registry, stableControlInfo.name]);
+
+	const hasStoreRecord = useSelect(
+		(select) =>
+			Boolean(
+				stableControlInfo?.name &&
+					select(storeName).getControl(stableControlInfo.name)
+			),
+		[stableControlInfo.name, storeName]
+	);
+
+	const selectResult = useSelect(
 		(select) => {
 			const { getControl } = select(storeName);
+			const control = getControl(stableControlInfo.name);
 
-			const control = getControl(controlInfo.name);
-
-			const skipSyncValue =
-				controlInfo.hasOwnProperty('skipSyncValue') &&
-				true === controlInfo.skipSyncValue;
-
-			/**
-			 * If the control skipSyncValue is defined and true, we skip the value update based on control name.
-			 */
-			if (skipSyncValue) {
-				return control;
-			}
-
-			if (
-				!isUndefined(controlInfo.value) &&
-				!isEquals(control?.value, controlInfo.value)
-			) {
-				return {
-					...control,
-					value: controlInfo.value,
-				};
-			}
-
-			return control;
+			return resolveControlSelectResult(
+				control,
+				stableControlInfo,
+				isEquals
+			);
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[controlInfo]
+		[stableControlInfo, storeName]
 	);
-	//control dispatch for available actions
+
 	const dispatch = useDispatch(storeName);
 
-	//You can to enable||disable current control with status column!
-	if (!status) {
+	const providerValue = useMemo(
+		() => ({
+			controlInfo: stableControlInfo,
+			value: selectResult?.value,
+			dispatch,
+			STORE_NAME,
+		}),
+		[stableControlInfo, selectResult?.value, dispatch]
+	);
+
+	// First paint waits for addControl so Repeater can see a store record.
+	// After that, keep children mounted even if the name is briefly missing
+	// (GS inner-block updates) so open pickers are not torn down.
+	const hasRenderedChildrenRef = useRef(false);
+	if (hasStoreRecord) {
+		hasRenderedChildrenRef.current = true;
+	}
+
+	if (!hasRenderedChildrenRef.current) {
 		return null;
 	}
 
 	return (
-		<ControlContext.Provider
-			{...props}
-			value={{ controlInfo, value, dispatch, STORE_NAME }}
-		>
+		<ControlContext.Provider {...props} value={providerValue}>
 			{children}
 		</ControlContext.Provider>
 	);

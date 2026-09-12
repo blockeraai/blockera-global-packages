@@ -40,7 +40,7 @@ describe('Global Styles UI → spacing presets (theme.json + UI)', () => {
 			.last()
 			.within(() => {
 				cy.getByDataTest('spacing-size-input').clear({ force: true });
-				cy.getByDataTest('spacing-size-input').type('24px', {
+				cy.getByDataTest('spacing-size-input').type('24', {
 					delay: 0,
 					force: true,
 				});

@@ -36,7 +36,7 @@ import {
 	registerPopoverOpen,
 	shouldDismissPopoverFromPointerDown,
 	shouldIgnorePopoverFocusOutside,
-	hasNestedOverlayOpenAsideFrom,
+	shouldClosePopoverOnEscape,
 	unregisterPopoverRoot,
 } from './utils';
 import type { TPopoverProps } from './types';
@@ -148,51 +148,28 @@ export const PopoverCore: React$AbstractComponent<TPopoverCoreProps, mixed> =
 
 			useEffect(() => {
 				const handleEscape = (event: KeyboardEvent) => {
-					if (event.key !== 'Escape' || event.defaultPrevented) {
-						return;
-					}
-
-					const eventTarget = event.target;
-
-					if (
-						eventTarget instanceof HTMLElement &&
-						eventTarget.closest(
-							'input, textarea, select, [contenteditable="true"]'
-						)
-					) {
-						return;
-					}
-
-					const isBodyOrRoot =
-						eventTarget === document.body ||
-						eventTarget === document.documentElement ||
-						eventTarget === document;
-
-					// Leave focused popover Escape to Gutenberg. This path only
-					// covers `cy.get('body').type('{esc}')` / unfocused body events.
-					if (!isBodyOrRoot) {
-						return;
-					}
-
 					const popoverRoot = normalizePopoverRoot(
 						popoverRef.current
 					);
 
-					if (!(popoverRoot instanceof HTMLElement)) {
+					if (
+						!shouldClosePopoverOnEscape(popoverRoot, event)
+					) {
 						return;
 					}
 
-					if (hasNestedOverlayOpenAsideFrom(popoverRoot)) {
-						return;
-					}
-
+					event.preventDefault();
 					dismissPopover({ skipMountGuard: true });
 				};
 
-				document.addEventListener('keydown', handleEscape);
+				document.addEventListener('keydown', handleEscape, true);
 
 				return () => {
-					document.removeEventListener('keydown', handleEscape);
+					document.removeEventListener(
+						'keydown',
+						handleEscape,
+						true
+					);
 				};
 			}, [dismissPopover]);
 
@@ -235,6 +212,10 @@ export const PopoverCore: React$AbstractComponent<TPopoverCoreProps, mixed> =
 					'btn-pick-color',
 					// Handles repeater item cases when displayed in accordion mode within a popover.
 					'blockera-control-btn-toggle',
+					'blockera-control-btn-clone',
+					'blockera-control-btn-delete',
+					'blockera-control-btn-add',
+					'blockera-control-btn-visibility',
 				];
 
 				const focusTarget = e.target;

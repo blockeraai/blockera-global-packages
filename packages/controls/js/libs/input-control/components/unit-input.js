@@ -3,8 +3,15 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import type { MixedElement } from 'react';
-import { useState, Fragment, useRef, useEffect } from '@wordpress/element';
+import type { ComponentType, MixedElement } from 'react';
+import {
+	useState,
+	Fragment,
+	useRef,
+	useEffect,
+	useMemo,
+	memo,
+} from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -13,7 +20,13 @@ import {
 	controlClassNames,
 	controlInnerClassNames,
 } from '@blockera/classnames';
-import { isUndefined, isEmpty, useDragValue } from '@blockera/utils';
+import {
+	isUndefined,
+	isEmpty,
+	useDragValue,
+	shouldTrackComponentRender,
+	trackComponentRender,
+} from '@blockera/utils';
 import { Icon } from '@blockera/icons';
 
 /**
@@ -29,7 +42,14 @@ import { RangeControl } from '../../index';
 import { isSpecialUnit, getUnitByValue, extractNumberAndUnit } from '../utils';
 import { InputArrows } from './input-arrows';
 
-export function UnitInput({
+type UnitInputProps = {
+	...InputControlProps,
+	inputValue: string,
+	unitValue: Object,
+	onVariableShortcut: () => void,
+};
+
+export const UnitInput: ComponentType<UnitInputProps> = memo(function UnitInput({
 	defaultValue,
 	range,
 	noBorder,
@@ -48,12 +68,17 @@ export function UnitInput({
 	isValidValue,
 	onVariableShortcut,
 	...props
-}: {
-	...InputControlProps,
-	inputValue: string,
-	unitValue: Object,
-	onVariableShortcut: () => void,
-}): MixedElement {
+}: UnitInputProps): MixedElement {
+	// Isolated debug block: no-op unless window.__BLOCKERA_RENDER_DEBUG__.
+	if (shouldTrackComponentRender()) {
+		trackComponentRender('UnitInput', {
+			id:
+				typeof unitValue?.value === 'string'
+					? unitValue.value
+					: 'unit',
+		});
+	}
+
 	const [isMaximizeVisible, setIsMaximizeVisible] = useState(false);
 	const [typedValue, setTypedValue] = useState(inputValue);
 	const unitUpdateTimeout = useRef(null);
@@ -61,7 +86,7 @@ export function UnitInput({
 
 	useEffect(() => {
 		setTypedValue(inputValue);
-	}, [inputValue, unitValue]);
+	}, [inputValue]);
 
 	const handleInputChange = (e: { target: { value: string } }) => {
 		const value = e.target.value;
@@ -236,6 +261,26 @@ export function UnitInput({
 
 	const unitSelectValue =
 		typeof unitValue?.value === 'string' ? unitValue.value : '';
+
+	const unitSelectOptions = useMemo(
+		() =>
+			units.map((unit, key) => (
+				<Fragment key={`${unit.label}-${key}`}>
+					{!isUndefined(unit?.options) ? (
+						<optgroup label={unit.label}>
+							{unit?.options.map((_unit, _key) => (
+								<option key={_key} value={_unit?.value}>
+									{_unit?.label}
+								</option>
+							))}
+						</optgroup>
+					) : (
+						<option value={unit?.value}>{unit?.label}</option>
+					)}
+				</Fragment>
+			)),
+		[units]
+	);
 
 	const evaluateCalculation = (value: string) => {
 		if (!isSpecialUnit(unitValue?.value) && unitValue.value !== 'func') {
@@ -456,6 +501,39 @@ export function UnitInput({
 			return;
 		}
 
+		if (event.key === 'Escape') {
+			if (unitUpdateTimeout.current) {
+				clearTimeout(unitUpdateTimeout.current);
+				unitUpdateTimeout.current = null;
+			}
+
+			const value = String(typedValue ?? '');
+			const match = value.match(/^(-?\d*\.?\d*)([a-zA-Z%]+)?$/);
+
+			if (match) {
+				const [, numericValue = '', unit = ''] = match;
+
+				applyParsedNumericAndUnit(numericValue, unit, value);
+
+				if (!unit && typeof onChange === 'function') {
+					onChange({
+						unitValue,
+						inputValue: numericValue,
+					});
+				}
+
+				return;
+			}
+
+			if (typeof onChange === 'function') {
+				onChange({
+					unitValue,
+					inputValue: value,
+				});
+			}
+			return;
+		}
+
 		// Handle calculations on Enter key
 		if (event.key === 'Enter') {
 			event.preventDefault();
@@ -652,26 +730,7 @@ export function UnitInput({
 						)}
 						aria-label={__('Select Unit', 'blockera')}
 					>
-						{units.map((unit, key) => (
-							<Fragment key={`${unit.label}-${key}`}>
-								{!isUndefined(unit?.options) ? (
-									<optgroup label={unit.label}>
-										{unit?.options.map((_unit, _key) => (
-											<option
-												key={_key}
-												value={_unit?.value}
-											>
-												{_unit?.label}
-											</option>
-										))}
-									</optgroup>
-								) : (
-									<option value={unit?.value}>
-										{unit?.label}
-									</option>
-								)}
-							</Fragment>
-						))}
+						{unitSelectOptions}
 					</select>
 				</ConditionalWrapper>
 
@@ -934,4 +993,4 @@ export function UnitInput({
 			{children}
 		</div>
 	);
-}
+});

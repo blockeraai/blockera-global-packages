@@ -24,7 +24,7 @@ import { generateExtensionId } from '../utils';
 import { EditorFeatureWrapper } from '../../..';
 import { getBaseBreakpoint } from '../../../editor/header-ui';
 import type { CustomStyleExtensionProps } from './types/props';
-import { useBlockContext, useBlockSection } from '../../components';
+import { useBlockIdentityContext, useBlockSection } from '../../components';
 
 export const CustomStyleExtension: ComponentType<CustomStyleExtensionProps> = ({
 	block,
@@ -38,7 +38,7 @@ export const CustomStyleExtension: ComponentType<CustomStyleExtensionProps> = ({
 	const {
 		getCurrentState = () => 'normal',
 		getBreakpoint = () => getBaseBreakpoint(),
-	} = useBlockContext();
+	} = useBlockIdentityContext();
 
 	if (!isActiveExtension(extensionConfig)) {
 		return <></>;

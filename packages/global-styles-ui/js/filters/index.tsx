@@ -29,6 +29,7 @@ import {
 	PresetTaxonomyGroupLayout,
 	PresetVariablesScreenToolbar,
 	buildVisiblePresetOriginSets,
+	coerceThemeJsonPresetOriginList,
 } from '../components';
 import { useGlobalSetting } from '../context/global-style-hooks';
 import { BLOCKERA_GLOBAL_SETTING_PATH } from '@blockera/data';
@@ -130,12 +131,19 @@ const FilterPresetGroup = memo(FilterPresetGroupComponent);
  * array storing filter rows (blur, drop-shadow, color adjustments, etc.).
  */
 export function FiltersPresetContent() {
+	const [rawPresetsGroup] = useGlobalSetting('blockeraFilter.presets');
+
 	const [rawThemePresets, setThemePresets] = useGlobalSetting(
 		BLOCKERA_GLOBAL_SETTING_PATH.FILTER_PRESETS_THEME
 	);
 
 	const [baseThemePresets] = useGlobalSetting(
 		BLOCKERA_GLOBAL_SETTING_PATH.FILTER_PRESETS_THEME,
+		'',
+		'base'
+	);
+	const [basePresetsGroup] = useGlobalSetting(
+		'blockeraFilter.presets',
 		'',
 		'base'
 	);
@@ -158,8 +166,25 @@ export function FiltersPresetContent() {
 	);
 
 	const themePresets = useMemo(
-		() => sanitizeFilterPresets(rawThemePresets),
-		[rawThemePresets]
+		() =>
+			sanitizeFilterPresets(
+				coerceThemeJsonPresetOriginList(
+					rawThemePresets,
+					rawPresetsGroup
+				)
+			),
+		[rawThemePresets, rawPresetsGroup]
+	);
+
+	const baseThemeSizes = useMemo(
+		() =>
+			sanitizeFilterPresets(
+				coerceThemeJsonPresetOriginList(
+					baseThemePresets,
+					basePresetsGroup
+				)
+			),
+		[baseThemePresets, basePresetsGroup]
 	);
 	const defaultPresets = useMemo(
 		() => sanitizeFilterPresets(rawDefaultPresets),
@@ -210,8 +235,8 @@ export function FiltersPresetContent() {
 	);
 
 	const resetThemeToBase = useCallback(() => {
-		setThemePresets(sanitizeFilterPresets(baseThemePresets));
-	}, [setThemePresets, baseThemePresets]);
+		setThemePresets(baseThemeSizes);
+	}, [setThemePresets, baseThemeSizes]);
 
 	const resetDefaultToBase = useCallback(() => {
 		setDefaultPresets(sanitizeFilterPresets(baseDefaultPresets));
@@ -225,12 +250,12 @@ export function FiltersPresetContent() {
 		if (!themePresets?.length) {
 			return undefined;
 		}
-		const base = sanitizeFilterPresets(baseThemePresets ?? []);
+		const base = baseThemeSizes;
 		if (isEquals(themePresets, base)) {
 			return undefined;
 		}
 		return resetThemeToBase;
-	}, [themePresets, baseThemePresets, resetThemeToBase]);
+	}, [themePresets, baseThemeSizes, resetThemeToBase]);
 
 	const defaultResetHandler = useMemo(() => {
 		if (!defaultPresets?.length) {
@@ -258,11 +283,6 @@ export function FiltersPresetContent() {
 		defaultLayerOn,
 		themePresets.length,
 		defaultPresets.length
-	);
-
-	const baseThemeSizes = useMemo(
-		() => sanitizeFilterPresets(baseThemePresets),
-		[baseThemePresets]
 	);
 
 	const baseDefaultSizes = useMemo(

@@ -51,24 +51,28 @@ useLayoutEffect(() => {
 
 ## Architecture: how dismiss works
 
-Blockera popovers can dismiss from two paths:
+Blockera popovers can dismiss from three paths:
 
 1. **Pointer down (capture phase)** — `document` listener in `PopoverCore` → `shouldDismissPopoverFromPointerDown` → `dismissPopover({ skipMountGuard: true })`
 2. **Focus outside** — WordPress `onFocusOutside` → `shouldIgnorePopoverFocusOutside` → `dismissPopover()` (respects 100ms mount guard)
+3. **WordPress `onClose`** — ignored for Blockera inspector popovers. Gutenberg also emits this for repeater clone/delete. Dismiss is handled by paths 1–2 and the header close button.
 
-Both paths ask the same question: **should this interaction keep the popover open?** That is centralized in `isPopoverDismissIgnoredTarget(popoverRoot, target)`.
+All three paths ask the same question: **should this interaction keep the popover open?** That is centralized in `isPopoverDismissIgnoredTarget(popoverRoot, target)` plus repeater-row/anchor checks.
 
 ### Decision order (`isPopoverDismissIgnoredTarget`)
 
 ```
 1. Target inside popoverRoot DOM          → ignore dismiss (stay open)
-2. Variable picker interaction          → see "Var-picker rules" below
-3. Value-addon pointer click            → see "Value-addon rules" below
-4. Modal / media modal from this popover  → ignore dismiss
-5. Registered nested popover              → ignore dismiss (isPopoverNestedChildOf)
-6. SelectControl dropdown content         → ignore dismiss
-7. Otherwise                            → allow dismiss
+2. Repeater clone/delete/add chrome       → ignore dismiss
+3. Variable picker interaction          → see "Var-picker rules" below
+4. Value-addon pointer click            → ignore dismiss
+5. Modal / media modal from this popover  → ignore dismiss
+6. Registered nested popover              → ignore dismiss (isPopoverNestedChildOf)
+7. SelectControl dropdown content         → ignore dismiss
+8. Otherwise                            → allow dismiss
 ```
+
+Pointer-down also keeps the popover open when the target is on the same `[data-cy="repeater-item"]` row as the popover anchor (color/shade editors anchor the header holder, not the clone/delete buttons).
 
 ---
 
@@ -110,7 +114,7 @@ Edit-variable / preset repeater popovers may use `blockera-control-popover-varia
 |-------------|----------------|----------------------------|
 | Click value-addon **pointer** (open var) | Stay open | May close |
 | Click **variable item** / row inside var-picker | Stay open | Stays open until selection completes |
-| Click inside **edit-variable popover** (non-pointer) | Normal dismiss rules | Normal dismiss rules |
+| Click inside **edit-variable popover** (non-pointer) | Stay open when parent is a var-picker | Stays open |
 
 Helpers:
 
@@ -158,7 +162,8 @@ Modal ignore is scoped to modals opened **from** the popover:
 |-----|---------|
 | `markPopoverClosing(root)` | Parent popovers ignore dismiss/focus-outside while a child closes (100ms window) |
 | `isOtherPopoverClosing(root)` | Guard in dismiss handlers |
-| `hasNestedOverlayOpenAsideFrom(root)` | Escape key — let innermost overlay handle first |
+| `hasNestedOverlayOpenAsideFrom(root)` | True when another popover/modal exists (body-level Escape defers). |
+| `shouldClosePopoverOnEscape(root, event)` | Escape from a field inside this popover closes it even if sibling WordPress popovers are open. Nested Blockera children still receive Escape first. |
 
 ---
 
@@ -241,9 +246,11 @@ npm run build
 
 **Dismiss:** `isPopoverDismissIgnoredTarget`, `shouldDismissPopoverFromPointerDown`, `shouldIgnorePopoverFocusOutside`
 
+**Repeater / field leave:** `isElementInsideRepeaterChrome`, `isRepeaterActionTarget`, `isFocusLeavingElement`, `POPOVER_CLOSE_CONTROL_SELECTOR`
+
 **Nested registry:** `registerPopoverOpen`, `unregisterPopoverRoot`, `linkNestedPopoverToParent`, `isPopoverNestedChildOf`
 
-**Closing guards:** `markPopoverClosing`, `isOtherPopoverClosing`, `hasNestedOverlayOpenAsideFrom`
+**Closing guards:** `markPopoverClosing`, `isOtherPopoverClosing`, `hasNestedOverlayOpenAsideFrom`, `shouldClosePopoverOnEscape`
 
 **DOM helpers:** `getPopoverRoot`, `normalizePopoverRoot`, `POPOVER_ROOT_SELECTOR`
 

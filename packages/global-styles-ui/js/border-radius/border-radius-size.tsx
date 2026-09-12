@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useCallback, memo, useContext } from '@wordpress/element';
+import { memo, useContext } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -19,7 +19,13 @@ import {
  * Internal dependencies
  */
 import BorderRadiusPresetPreview from './border-radius-preset-preview';
-import { SharedPresetControls } from '../components';
+import {
+	PresetEditorFields,
+	SharedPresetControls,
+	useDeferredPresetItemCommit,
+	useDeferredScalarPresetField,
+	useLatestPresetItem,
+} from '../components';
 import { type VariableType } from '../components/types';
 import { getAllVariableSlugs as getAllBorderRadiusSlugs } from '../components/utils';
 
@@ -40,6 +46,7 @@ function BorderRadiusSizeComponent({
 	presetId: string | number;
 	borderRadiusSize: VariableType & BorderRadiusDefaultPresetValue;
 }) {
+	const getItem = useLatestPresetItem(borderRadiusSize);
 	const { slug } = borderRadiusSize;
 
 	const {
@@ -65,87 +72,76 @@ function BorderRadiusSizeComponent({
 		itemIdGenerator?: (itemId: string | number) => string;
 	};
 
-	const updatePresetViaRepeater = useCallback(
-		(key: string, value: any) => {
-			changeRepeaterItem({
-				onChange,
-				valueCleanup,
-				controlId,
-				repeaterId,
-				itemId: presetId,
-				value: { ...borderRadiusSize, [key]: value },
-			});
-		},
-		[
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			presetId,
-			borderRadiusSize,
-		]
-	);
+	const { stagePatch, flush } = useDeferredPresetItemCommit({
+		changeRepeaterItem,
+		onChange,
+		valueCleanup,
+		controlId,
+		repeaterId,
+		itemId: presetId,
+		getItem,
+	});
 
-	const radiusInputValue =
+	const persistedSize =
 		typeof borderRadiusSize.size === 'number'
 			? String(borderRadiusSize.size)
 			: borderRadiusSize.size;
 
-	const handleRadiusChange = useCallback(
-		(newValue: string | undefined) => {
-			updatePresetViaRepeater('size', newValue ?? '');
-		},
-		[updatePresetViaRepeater]
-	);
+	const {
+		draft,
+		onChange: handleRadiusChange,
+		onFieldsBlur,
+	} = useDeferredScalarPresetField({
+		persistedValue: persistedSize,
+		fieldKey: 'size',
+		stagePatch,
+		flush,
+	});
 
 	if (!origin || !slug) {
 		return null;
 	}
 
-	const sizeForPreview =
-		typeof borderRadiusSize.size === 'number'
-			? borderRadiusSize.size
-			: (borderRadiusSize.size ?? '');
+	const sizeForPreview = draft ?? '';
 
 	const borderRadiusValueControls = (
 		<ControlContextProvider
-			value={{
-				name: `border-radius-size-${slug}`,
-				value: radiusInputValue,
-				attribute: 'blockeraBorderRadiusSize',
-				blockName: 'global-styles',
-			}}
-		>
-			<InputControl
-				data-test="border-radius-size-input"
-				label={__('Radius', 'blockera')}
-				controlAddonTypes={[]}
-				columns="1.2fr 3fr"
-				min={0}
-				unitType="essential"
-				placeholder="0"
-				labelDescription={
-					<>
-						<p>
-							{__(
-								'Sets the border radius preset value used in border controls across the site.',
-								'blockera'
-							)}
-						</p>
-						<p>
-							{__(
-								'Stored in theme.json as border.radiusSizes (size field). Use lengths such as px, rem, %, or fluid values like clamp().',
-								'blockera'
-							)}
-						</p>
-					</>
-				}
-				onChange={(newValue: string | undefined) =>
-					handleRadiusChange(newValue)
-				}
-			/>
-		</ControlContextProvider>
+				value={{
+					name: `border-radius-size-${slug}`,
+					value: draft,
+					attribute: 'blockeraBorderRadiusSize',
+					blockName: 'global-styles',
+				}}
+			>
+				<InputControl
+					data-test="border-radius-size-input"
+					label={__('Radius', 'blockera')}
+					controlAddonTypes={[]}
+					columns="1.2fr 3fr"
+					min={0}
+					unitType="essential"
+					placeholder="0"
+					labelDescription={
+						<>
+							<p>
+								{__(
+									'Sets the border radius preset value used in border controls across the site.',
+									'blockera'
+								)}
+							</p>
+							<p>
+								{__(
+									'Stored in theme.json as border.radiusSizes (size field). Use lengths such as px, rem, %, or fluid values like clamp().',
+									'blockera'
+								)}
+							</p>
+						</>
+					}
+					onChange={(newValue: string | undefined) =>
+						handleRadiusChange(newValue ?? '')
+					}
+				/>
+			</ControlContextProvider>
 	);
 
 	return (
@@ -158,8 +154,11 @@ function BorderRadiusSizeComponent({
 				name={borderRadiusSize.name}
 				slug={borderRadiusSize.slug}
 				allSlugs={getAllBorderRadiusSlugs(sizes)}
+				onValueFieldsBlur={onFieldsBlur}
 			>
-				{borderRadiusValueControls}
+				<PresetEditorFields signature={{ slug, draft }}>
+					{borderRadiusValueControls}
+				</PresetEditorFields>
 			</SharedPresetControls>
 		</Flex>
 	);

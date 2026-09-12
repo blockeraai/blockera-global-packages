@@ -69,6 +69,7 @@ describe('input control component testing', () => {
 		});
 
 		it('should control data value equal with expected defaultValue when id was not provided for InputControl', () => {
+			const name = nanoid();
 			cy.withDataProvider({
 				component: (
 					<InputControl defaultValue={'default value'} id="invalid" />
@@ -779,6 +780,24 @@ describe('input control component testing', () => {
 				cy.get('[aria-label="Select Unit"]').should('have.value', '%');
 				cy.then(() => {
 					return expect(getControlValue(name)).to.eq('20%');
+				});
+			});
+
+			it('should not double the unit when Escape commits a typed unit suffix', () => {
+				const name = nanoid();
+				cy.withDataProvider({
+					component: <InputControl unitType="general" />,
+					name,
+					value: '20px',
+				});
+
+				cy.get('input').focus();
+				cy.get('input').clear();
+				cy.get('input').type('33px', { delay: 0 });
+				cy.get('input').type('{esc}');
+
+				cy.then(() => {
+					return expect(getControlValue(name)).to.eq('33px');
 				});
 			});
 

@@ -23,6 +23,7 @@ import ConfirmResetPresetDialog from './confirm-reset-preset-dialog';
 import { usePresetResetDialogState } from './preset-origin-utils';
 import { PresetTaxonomyBridge } from './preset-taxonomy-ui/preset-taxonomy-bridge';
 import { PresetTaxonomyEditSessionProvider } from './preset-taxonomy/preset-taxonomy-edit-session-context';
+import { PresetItemHeaderDraftProvider } from './preset-item-header-draft-context';
 import { usePresetTaxonomyGroupUi } from './preset-taxonomy/use-preset-taxonomy-group-ui';
 import { PresetTaxonomyGroupBridge } from './preset-taxonomy/preset-taxonomy-group-bridge';
 import { PresetVariationsContext } from '../context/preset-variations-context';
@@ -93,6 +94,7 @@ function PresetTaxonomyGroupLayoutInner<
 	});
 
 	return (
+		<PresetItemHeaderDraftProvider>
 		<>
 			{handleReset && isResetDialogOpen && (
 				<ConfirmResetPresetDialog
@@ -133,6 +135,7 @@ function PresetTaxonomyGroupLayoutInner<
 				/>
 			</PresetVariationsContext.Provider>
 		</>
+		</PresetItemHeaderDraftProvider>
 	);
 }
 

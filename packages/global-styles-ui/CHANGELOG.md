@@ -1,4 +1,62 @@
-## Unreleased
+## [4.0.0] - 2026-09-12
+
+### Improvements
+
+- Global Styles variables (colors, fonts, shadows, filters, and the rest)
+  stay smoother while you edit. Theme and default lists stay put, extra CSS
+  variables update only when a preset actually changes, and row headers
+  follow the value as you type.
+- Typing in a variable editor no longer saves on every keystroke. The value
+  saves when you leave the field or close the editor.
+- Naming a new custom variable no longer saves Global Styles on every
+  letter. The name is saved when you close the editor. The variable id
+  still updates as you type so the picker can find the new row.
+
+### Bug Fixes
+
+- Opening Color variables no longer crashes the editor.
+- Duplicating a custom variable (or a nested shadow or filter layer) keeps
+  the editor open so the upgrade prompt can still appear.
+- Closing a nested shadow or filter layer (Escape or the close control)
+  saves the value you typed, instead of leaving it unsaved.
+- Leaving a nested transition (or similar) field with Escape saves the
+  typed value to Global Styles before the editor closes.
+- Editing a nested transform layer (for example Move-X) and pressing Escape
+  saves the items array on the theme variable.
+- Editing a nested text shadow layer (blur) and pressing Escape saves the
+  CSS shadow string on the theme variable.
+- Editing a nested box shadow layer (offset) and pressing Escape saves the
+  CSS shadow string on the theme variable.
+- Editing a nested filter layer (blur) and pressing Escape saves the items
+  array on the theme variable.
+- Theme.json transform, text-shadow, box-shadow, and filter lists
+  (`presets[]`) still appear under Theme variables when WordPress has not
+  keyed them as `presets.theme`.
+- Closing a new custom preset (Escape or the close control) finishes the
+  create step so the row is no longer marked as still being created.
+- Closing a new custom variable keeps the name you typed, so the picker
+  can still find it.
+- Adding a custom variable in Global Styles keeps the create editor open.
+- Editing a spacing (or other) preset size and pressing Escape keeps the
+  new size instead of reverting to the previous value.
+- Changing a nested filter layer type (for example blur to drop-shadow)
+  keeps the layer editor open.
+
+### Development Notes
+
+- Live preset row headers accept React `ElementType` so TypeScript accepts
+  repeater header components.
+- Variable screens: save later while typing, keep unchanged lists stable,
+  skip extra CSS rebuilds, and keep inner editors attached.
+- In-flight create rows overlay from the repeater store for every creating-step
+  preset group, not only index-keyed lists.
+- Adding a creating-step row still persists theme.json so picker and Global
+  Styles lists keep the new row.
+- Creating-step name and id write the repeater store in the variable picker
+  only; Global Styles keeps those drafts in the header until close.
+- Header draft patches that do not change stored fields skip subscriber notify.
+- Ending create merges header name/id drafts into the persist payload so
+  Global Styles can skip per-keystroke store writes without losing the typed slug.
 
 ### Development Notes
 - Target WordPress 7.1 Global Styles DOM classes only
@@ -6,10 +64,20 @@
   `edit-site-global-styles-*` selectors are no longer used.
 
 ### Automated Tests
+
 - Cover WordPress 7.1 Global Styles panel selectors only.
 - Switch the block inspector with `switchBlockTab` instead of clicking
   `styles-view` directly.
 - Rename global-styles e2e specs to `.gs.e2e.cy.js`.
+- Overlay keeps an in-flight create row when theme.json has not persisted it yet.
+- Header draft store skips notify when a patch does not change stored fields.
+- Closing a creating-step row persists header name/id drafts with staged fields.
+- Variable editors: typing does not save until leave or close; color, shadow,
+  and filter keep their pickers attached.
+- Creating a custom border variable does not persist on each name keystroke.
+- Escape persist from a name-only hook does not overwrite a sibling size
+  (or other field) persist.
+- Nested layer persist echo keeps an open filter (or similar) editor open.
 
 ## [3.0.0] - 2026-09-05
 

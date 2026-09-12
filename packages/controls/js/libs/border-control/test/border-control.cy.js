@@ -312,7 +312,7 @@ describe('border-control component testing', () => {
 							/>
 						),
 						value: { width: '0px', style: 'solid', color: '' },
-						name,
+						name: nanoid(),
 					});
 
 					// CustomSelectControl renders a trailing VisuallyHidden sibling; `is-focused` is on the select root.
@@ -331,7 +331,7 @@ describe('border-control component testing', () => {
 							/>
 						),
 						value: { width: '0px', style: 'solid', color: '' },
-						name,
+						name: nanoid(),
 					});
 
 					cy.getByDataTest('border-control-component')

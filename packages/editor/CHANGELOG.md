@@ -1,4 +1,37 @@
-## Unreleased
+## [5.0.0] - 2026-09-12
+
+### Improvements
+
+- Switching the editor between Desktop, Tablet, and Mobile no longer makes
+  Global Styles feel slow.
+- Blocks you have not customized in Global Styles no longer add extra lag in
+  the background while you work.
+- Editing a block’s background color stays responsive while Image & Gradient
+  layers are on the same panel.
+
+### Bug Fixes
+
+- Selecting blocks that have a Content inspector tab (for example Accordion
+  Heading) now opens Styles so background and other style controls are
+  available immediately.
+- Block editor no longer crashes on load when generating canvas CSS.
+- Paragraphs (and other blocks) no longer mix a gradient `background`
+  shorthand with `backgroundColor` on the canvas. Saved block markup is
+  unchanged.
+
+### Development Notes
+
+- Unselected canvas blocks no longer regenerate CSS when another block’s
+  inner target or breakpoint changes.
+- Inspector typing skips unchanged style slices; feature search no longer
+  deep-clones settings before filtering.
+- Style generation walks empty unsaved states less, reuses fingerprints when
+  nested values are unchanged, and splits colliding background styles only
+  on the canvas (saved HTML is unchanged).
+- Workspace tabs and missing-document entity reads keep stable identities so
+  WordPress does not warn about `useSelect` returning new functions or objects.
+- Background panel splits Image & Gradient from solid color so a color edit
+  does not rebuild the layers list.
 
 ### New Features
 
@@ -177,8 +210,14 @@
 - Assert editor Global Styles targets use WordPress 7.1 selectors only.
 
 ### Development Notes
+
 - Style the Global Styles sidebar header title with the WordPress 7.1
   `editor-global-styles-sidebar__header-title` class only.
+- Canvas CSS isolation, style fingerprints, Global Styles skip for blocks
+  with no custom styles, BlockBase idle budgets, Font Size typing, and
+  background field memo equality.
+- Inspector tab plan defaults to Styles on first open when WordPress also
+  shows a Content tab.
 
 ## [4.0.0] - 2026-09-05
 

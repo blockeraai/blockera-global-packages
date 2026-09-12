@@ -32,6 +32,7 @@ import {
 	Tooltip,
 	TextAreaControl,
 	useVarPickerPresetContext,
+	isFocusLeavingElement,
 } from '@blockera/controls';
 
 /**
@@ -43,6 +44,7 @@ import {
 	buildPresetWithDescriptionUpdate,
 	getPresetDescription,
 } from './preset-meta-utils';
+import { useDeferredPresetItemCommit } from './use-deferred-preset-item-commit';
 import {
 	useCanEditGlobalStyles,
 	useCanEditCustomPresetFieldsInVariablePicker,
@@ -51,6 +53,7 @@ import { usePresetVariationsStorageOptional } from '../context/preset-variations
 import { isNameBasedTaxonomyPreset } from './preset-taxonomy/parse-preset-name-taxonomy';
 import { resolvePresetTaxonomyEditName } from './preset-taxonomy/taxonomy-meta';
 import { usePresetTaxonomyEditSessionActionsOptional } from './preset-taxonomy/preset-taxonomy-edit-session-context';
+import { usePresetItemHeaderDraftStore } from './preset-item-header-draft-context';
 
 export interface SharedPresetControlsProps<
 	T extends VariableType = VariableType,
@@ -61,6 +64,10 @@ export interface SharedPresetControlsProps<
 	variable: T;
 	allSlugs: Array<string>;
 	children?: ReactNode;
+	onValueFieldsBlur?: (event: {
+		currentTarget: EventTarget;
+		relatedTarget: EventTarget | null;
+	}) => void;
 }
 
 function SharedPresetControlsComponent<T extends VariableType>({
@@ -70,6 +77,7 @@ function SharedPresetControlsComponent<T extends VariableType>({
 	variable,
 	allSlugs,
 	children,
+	onValueFieldsBlur,
 }: SharedPresetControlsProps<T>) {
 	const canEditGlobalStyles = useCanEditGlobalStyles();
 	const canEditCustomPresetFieldsInPicker =
@@ -103,8 +111,9 @@ function SharedPresetControlsComponent<T extends VariableType>({
 
 	const persistedName = committedTaxonomyName ?? name;
 	const itemIdKey = String(itemId);
+	const headerDraftStore = usePresetItemHeaderDraftStore();
 	const isCreating = variable.creatingStep === true;
-	// Local drafts during creatingStep keep inputs stable; repeater rows still sync via changeRepeaterItem.
+	// Local drafts during creatingStep keep inputs and headers stable; persist on close.
 	const deferFieldEdits = Boolean(editSessionActions) && !isCreating;
 	const deferNameEdits = deferFieldEdits;
 	// Description stays in a local draft during create to avoid textarea/store sync fights in the picker.
@@ -217,8 +226,7 @@ function SharedPresetControlsComponent<T extends VariableType>({
 	]);
 
 	// ID display: while creating, follow name until the user edits the ID directly.
-	const nameForSlugPreview =
-		deferNameEdits || isCreating ? draftName : persistedName;
+	const nameForSlugPreview = draftName;
 	let displayedSlug = slug;
 	if (isCreating) {
 		displayedSlug = hasManualSlugDuringCreating
@@ -250,6 +258,8 @@ function SharedPresetControlsComponent<T extends VariableType>({
 		) => void;
 	};
 
+	const persistLiveIdentity = !isCreating && !deferNameEdits;
+
 	const creatingNamePersistTimeoutRef = useRef<ReturnType<
 		typeof setTimeout
 	> | null>(null);
@@ -260,9 +270,19 @@ function SharedPresetControlsComponent<T extends VariableType>({
 	repeaterItemsRef.current = repeaterItems;
 	const variableRef = useRef(variable);
 	variableRef.current = variable;
+
+	const { stagePatch: stageIdentityPatch, flush: flushIdentityPatch } =
+		useDeferredPresetItemCommit({
+			changeRepeaterItem,
+			onChange,
+			valueCleanup,
+			controlId,
+			repeaterId,
+			itemId,
+			getItem: () => variableRef.current as Object,
+		});
 	const persistedDescriptionRef = useRef(persistedDescription);
 	persistedDescriptionRef.current = persistedDescription;
-	const CREATING_NAME_PERSIST_MS = 200;
 
 	const clearCreatingNamePersistTimeout = useCallback(() => {
 		if (creatingNamePersistTimeoutRef.current) {
@@ -394,6 +414,24 @@ function SharedPresetControlsComponent<T extends VariableType>({
 		]
 	);
 
+	const stageLiveIdentityPatch = useCallback(() => {
+		if (!persistLiveIdentity) {
+			return;
+		}
+
+		stageIdentityPatch(
+			buildPresetWithDescriptionUpdate(
+				buildPresetNameUpdateValue(draftNameRef.current) as T,
+				draftDescriptionRef.current
+			) as Object,
+			{ name: draftNameRef.current }
+		);
+	}, [
+		persistLiveIdentity,
+		stageIdentityPatch,
+		buildPresetNameUpdateValue,
+	]);
+
 	const syncCreatingNameToRepeaterStore = useCallback(
 		(nextName: string, { syncCreatingSlug = true } = {}) => {
 			const updatedRow = buildPresetNameUpdateValue(nextName, {
@@ -403,7 +441,7 @@ function SharedPresetControlsComponent<T extends VariableType>({
 			modifyControlValue({
 				controlId,
 				value: {
-					...repeaterItems,
+					...repeaterItemsRef.current,
 					[itemId]: updatedRow,
 				},
 			});
@@ -418,7 +456,6 @@ function SharedPresetControlsComponent<T extends VariableType>({
 			itemId,
 			modifyControlValue,
 			notifyPresetFeatureBinding,
-			repeaterItems,
 		]
 	);
 
@@ -433,7 +470,7 @@ function SharedPresetControlsComponent<T extends VariableType>({
 			modifyControlValue({
 				controlId,
 				value: {
-					...repeaterItems,
+					...repeaterItemsRef.current,
 					[itemId]: updatedRow,
 				},
 			});
@@ -446,7 +483,6 @@ function SharedPresetControlsComponent<T extends VariableType>({
 			itemId,
 			modifyControlValue,
 			notifyPresetFeatureBinding,
-			repeaterItems,
 			variable,
 		]
 	);
@@ -706,11 +742,8 @@ function SharedPresetControlsComponent<T extends VariableType>({
 		};
 	}, [editSessionActions, editSessionKey, isCreating]);
 
-	const displayedName =
-		deferNameEdits || isCreating ? draftName : persistedName;
-	const displayedDescription = deferDescriptionEdits
-		? draftDescription
-		: persistedDescription;
+	const displayedName = draftName;
+	const displayedDescription = draftDescription;
 
 	const slugChanged = !isCreating && isIdEditable && variableSlug !== slug;
 	const slugIsValid = isSlugValid(displayedSlug, allSlugs, slug);
@@ -841,49 +874,43 @@ function SharedPresetControlsComponent<T extends VariableType>({
 
 			if (isCreating) {
 				setDraftName(newValue);
+				draftNameRef.current = newValue;
 				const shouldSyncSlugFromName =
 					!hasManualSlugDuringCreatingRef.current;
 				const derivedSlug = normalizeVariablePresetSlug(newValue);
+				const headerPatch: Record<string, unknown> = {
+					name: newValue,
+				};
+
 				if (shouldSyncSlugFromName && derivedSlug) {
 					setVariableSlug(derivedSlug);
+					variableSlugRef.current = derivedSlug;
+					headerPatch.slug = derivedSlug;
 				}
 
-				syncCreatingNameToRepeaterStore(newValue, {
-					syncCreatingSlug: shouldSyncSlugFromName,
-				});
-				clearCreatingNamePersistTimeout();
-				creatingNamePersistTimeoutRef.current = setTimeout(() => {
-					persistCreatingNameToTheme(draftNameRef.current, {
+				headerDraftStore?.patch(itemIdKey, headerPatch);
+
+				if (isVariablePicker) {
+					syncCreatingNameToRepeaterStore(newValue, {
 						syncCreatingSlug: shouldSyncSlugFromName,
 					});
-				}, CREATING_NAME_PERSIST_MS);
-
+				}
 				return;
 			}
 
-			changeRepeaterItem({
-				onChange,
-				valueCleanup,
-				controlId,
-				repeaterId,
-				itemId,
-				value: buildPresetNameUpdateValue(newValue),
-			});
+			setDraftName(newValue);
+			draftNameRef.current = newValue;
+			stageLiveIdentityPatch();
 		},
 		[
 			presetLocked,
 			deferNameEdits,
+			headerDraftStore,
 			isCreating,
-			clearCreatingNamePersistTimeout,
-			persistCreatingNameToTheme,
+			isVariablePicker,
+			itemIdKey,
 			syncCreatingNameToRepeaterStore,
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			itemId,
-			buildPresetNameUpdateValue,
+			stageLiveIdentityPatch,
 		]
 	);
 
@@ -899,17 +926,18 @@ function SharedPresetControlsComponent<T extends VariableType>({
 
 			setHasManualSlugDuringCreating(true);
 			hasManualSlugDuringCreatingRef.current = true;
-			syncCreatingSlugToRepeaterStore(normalized);
-			clearCreatingSlugPersistTimeout();
-			creatingSlugPersistTimeoutRef.current = setTimeout(() => {
-				persistCreatingSlugToTheme(normalized);
-			}, CREATING_NAME_PERSIST_MS);
+			headerDraftStore?.patch(itemIdKey, { slug: normalized });
+
+			if (isVariablePicker) {
+				syncCreatingSlugToRepeaterStore(normalized);
+			}
 		},
 		[
+			headerDraftStore,
 			isCreating,
+			isVariablePicker,
+			itemIdKey,
 			syncCreatingSlugToRepeaterStore,
-			clearCreatingSlugPersistTimeout,
-			persistCreatingSlugToTheme,
 		]
 	);
 
@@ -922,26 +950,29 @@ function SharedPresetControlsComponent<T extends VariableType>({
 				setDraftDescription(newValue);
 				return;
 			}
-			changeRepeaterItem({
-				onChange,
-				valueCleanup,
-				controlId,
-				repeaterId,
-				itemId,
-				value: buildPresetWithDescriptionUpdate(variable, newValue),
-			});
+			setDraftDescription(newValue);
+			draftDescriptionRef.current = newValue;
+			stageLiveIdentityPatch();
 		},
-		[
-			presetLocked,
-			deferDescriptionEdits,
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			itemId,
-			variable,
-		]
+		[presetLocked, deferDescriptionEdits, stageLiveIdentityPatch]
+	);
+
+	const handleIdentityFieldsBlur = useCallback(
+		(event: {
+			currentTarget: EventTarget;
+			relatedTarget: EventTarget | null;
+		}) => {
+			if (!persistLiveIdentity) {
+				return;
+			}
+
+			if (!isFocusLeavingElement(event)) {
+				return;
+			}
+
+			flushIdentityPatch();
+		},
+		[persistLiveIdentity, flushIdentityPatch]
 	);
 
 	const handleConfirmSlugChange = useCallback((newValue: boolean) => {
@@ -977,7 +1008,11 @@ function SharedPresetControlsComponent<T extends VariableType>({
 
 	return (
 		<Flex direction="column" gap={20}>
-			<Flex direction="column" gap={20}>
+			<Flex
+				direction="column"
+				gap={20}
+				onBlur={handleIdentityFieldsBlur}
+			>
 				<ControlContextProvider
 					value={{
 						name: `font-size-name-${itemIdKey}`,
@@ -1162,6 +1197,7 @@ function SharedPresetControlsComponent<T extends VariableType>({
 					}
 					disabled={presetLocked}
 					onChange={handleDescriptionChange}
+					onBlur={handleIdentityFieldsBlur}
 					columns="1.2fr 3fr"
 					data-test="global-styles-preset-description-field"
 					height={'auto'}
@@ -1169,7 +1205,11 @@ function SharedPresetControlsComponent<T extends VariableType>({
 			</ControlContextProvider>
 
 			{children ? (
-				<Flex direction="column" gap={16}>
+				<Flex
+					direction="column"
+					gap={16}
+					onBlur={onValueFieldsBlur}
+				>
 					{children}
 				</Flex>
 			) : null}

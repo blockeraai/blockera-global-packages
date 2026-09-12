@@ -6,7 +6,13 @@ import type {
 	FluidTypographySettings,
 	FluidTypographyConfig,
 } from '@wordpress/global-styles-engine';
-import { useCallback, memo, useContext } from '@wordpress/element';
+import {
+	useCallback,
+	memo,
+	useContext,
+	useEffect,
+	useState,
+} from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -18,14 +24,21 @@ import {
 	RepeaterContext,
 	useControlContext,
 	ControlContextProvider,
+	isFocusLeavingElement,
 } from '@blockera/controls';
+import { shouldTrackComponentRender, trackComponentRender } from '@blockera/utils';
 
 /**
  * Internal dependencies
  */
 import type { DefaultPresetValue } from '.';
 import FontSizePreview from './font-size-preview';
-import { SharedPresetControls } from '../../components';
+import {
+	PresetEditorFields,
+	SharedPresetControls,
+	useDeferredPresetItemCommit,
+	useLatestPresetItem,
+} from '../../components';
 import { useGlobalSetting } from '../../context/global-style-hooks';
 import { type VariableType } from '../../components/types';
 import { getAllVariableSlugs as getAllFontSizeSlugs } from '../../components/utils';
@@ -39,6 +52,14 @@ function FontSizeComponent({
 	presetId: string | number;
 	fontSize: VariableType & DefaultPresetValue;
 }) {
+	if (shouldTrackComponentRender()) {
+		trackComponentRender('FontSizePresetFields', {
+			id: fontSize?.slug,
+			name: fontSize?.slug,
+		});
+	}
+
+	const getItem = useLatestPresetItem(fontSize);
 	const { slug } = fontSize;
 
 	const [globalFluid] = useGlobalSetting<
@@ -73,33 +94,63 @@ function FontSizeComponent({
 		itemIdGenerator?: (itemId: string | number) => string;
 	};
 
-	const updateFontSizeViaRepeater = useCallback(
-		(key: string, value: any) => {
-			changeRepeaterItem({
-				onChange,
-				valueCleanup,
-				controlId,
-				repeaterId,
-				itemId: presetId,
-				value: { ...fontSize, [key]: value },
-			});
-		},
-		[
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			presetId,
-			fontSize,
-		]
-	);
+	const { stagePatch, commitPatch, flush } = useDeferredPresetItemCommit({
+		changeRepeaterItem,
+		onChange,
+		valueCleanup,
+		controlId,
+		repeaterId,
+		itemId: presetId,
+		getItem,
+	});
+
+	const [draftSize, setDraftSize] = useState(fontSize.size);
+	const persistedFluidMin =
+		typeof fontSize.fluid === 'object' ? fontSize.fluid?.min : undefined;
+	const persistedFluidMax =
+		typeof fontSize.fluid === 'object' ? fontSize.fluid?.max : undefined;
+	const [draftFluidMin, setDraftFluidMin] = useState(persistedFluidMin);
+	const [draftFluidMax, setDraftFluidMax] = useState(persistedFluidMax);
+
+	useEffect(() => {
+		setDraftSize(fontSize.size);
+	}, [fontSize.size]);
+
+	useEffect(() => {
+		setDraftFluidMin(persistedFluidMin);
+	}, [persistedFluidMin]);
+
+	useEffect(() => {
+		setDraftFluidMax(persistedFluidMax);
+	}, [persistedFluidMax]);
 
 	const handleFontSizeChange = useCallback(
 		(value: string | undefined) => {
-			updateFontSizeViaRepeater('size', value);
+			setDraftSize(value);
+			stagePatch({ size: value });
 		},
-		[updateFontSizeViaRepeater]
+		[stagePatch]
+	);
+
+	const handleFontSizeFieldsBlur = useCallback(
+		(event: {
+			currentTarget: EventTarget;
+			relatedTarget: EventTarget | null;
+		}) => {
+			if (!isFocusLeavingElement(event)) {
+				return;
+			}
+
+			flush();
+		},
+		[flush]
+	);
+
+	const updateFontSizeViaRepeater = useCallback(
+		(key: string, value: any) => {
+			commitPatch({ [key]: value });
+		},
+		[commitPatch]
 	);
 
 	const handleFluidChange = useCallback(
@@ -111,34 +162,39 @@ function FontSizeComponent({
 
 	const handleCustomFluidValues = useCallback(
 		(value: boolean) => {
+			const current = getItem();
 			if (value) {
 				updateFontSizeViaRepeater('fluid', {
-					min: fontSize.size,
-					max: fontSize.size,
+					min: current.size,
+					max: current.size,
 				});
 			} else {
 				updateFontSizeViaRepeater('fluid', true);
 			}
 		},
-		[updateFontSizeViaRepeater, fontSize.size]
+		[updateFontSizeViaRepeater, getItem]
 	);
 
 	const handleMinChange = useCallback(
 		(value: string | undefined) => {
+			const current = getItem();
 			const fluid: FluidTypographyConfig =
-				typeof fontSize.fluid === 'object' ? fontSize.fluid : {};
-			updateFontSizeViaRepeater('fluid', { ...fluid, min: value });
+				typeof current.fluid === 'object' ? current.fluid : {};
+			setDraftFluidMin(value);
+			stagePatch({ fluid: { ...fluid, min: value } });
 		},
-		[updateFontSizeViaRepeater, fontSize.fluid]
+		[stagePatch, getItem]
 	);
 
 	const handleMaxChange = useCallback(
 		(value: string | undefined) => {
+			const current = getItem();
 			const fluid: FluidTypographyConfig =
-				typeof fontSize.fluid === 'object' ? fontSize.fluid : {};
-			updateFontSizeViaRepeater('fluid', { ...fluid, max: value });
+				typeof current.fluid === 'object' ? current.fluid : {};
+			setDraftFluidMax(value);
+			stagePatch({ fluid: { ...fluid, max: value } });
 		},
-		[updateFontSizeViaRepeater, fontSize.fluid]
+		[stagePatch, getItem]
 	);
 
 	if (!origin || !slug) {
@@ -150,7 +206,7 @@ function FontSizeComponent({
 			<ControlContextProvider
 				value={{
 					name: `font-size-size-${slug}`,
-					value: !isCustomFluid ? fontSize.size : undefined,
+					value: !isCustomFluid ? draftSize : undefined,
 					attribute: 'blockeraFontSize',
 					blockName: 'global-styles',
 				}}
@@ -219,10 +275,7 @@ function FontSizeComponent({
 							<ControlContextProvider
 								value={{
 									name: `font-size-min-${slug}`,
-									value:
-										typeof fontSize?.fluid === 'object'
-											? fontSize.fluid?.min
-											: undefined,
+									value: draftFluidMin,
 									attribute: 'blockeraFontSize',
 									blockName: 'global-styles',
 								}}
@@ -243,10 +296,7 @@ function FontSizeComponent({
 							<ControlContextProvider
 								value={{
 									name: `font-size-max-${slug}`,
-									value:
-										typeof fontSize?.fluid === 'object'
-											? fontSize.fluid?.max
-											: undefined,
+									value: draftFluidMax,
 									attribute: 'blockeraFontSize',
 									blockName: 'global-styles',
 								}}
@@ -272,7 +322,7 @@ function FontSizeComponent({
 
 	return (
 		<Flex direction="column" gap={15}>
-			<FontSizePreview fontSize={fontSize} />
+			<FontSizePreview fontSize={{ ...fontSize, size: draftSize }} />
 
 			<SharedPresetControls
 				itemId={presetId}
@@ -280,8 +330,20 @@ function FontSizeComponent({
 				name={fontSize.name}
 				slug={fontSize.slug}
 				allSlugs={getAllFontSizeSlugs(sizes)}
+				onValueFieldsBlur={handleFontSizeFieldsBlur}
 			>
-				{fontSizeValueControls}
+				<PresetEditorFields
+					signature={{
+						slug,
+						draftSize,
+						draftFluidMin,
+						draftFluidMax,
+						isFluid,
+						isCustomFluid,
+					}}
+				>
+					{fontSizeValueControls}
+				</PresetEditorFields>
 			</SharedPresetControls>
 		</Flex>
 	);

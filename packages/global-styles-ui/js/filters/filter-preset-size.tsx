@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useCallback, memo, useContext, useMemo } from '@wordpress/element';
+import { memo, useCallback, useContext, useMemo } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -14,11 +14,17 @@ import {
 	useControlContext,
 	ControlContextProvider,
 } from '@blockera/controls';
+import { shouldTrackComponentRender, trackComponentRender } from '@blockera/utils';
 
 /**
  * Internal dependencies
  */
-import { SharedPresetControls } from '../components';
+import {
+	PresetEditorFields,
+	SharedPresetControls,
+	useLatestPresetItem,
+	useNestedPresetRepeaterCommit,
+} from '../components';
 import { type VariableType } from '../components/types';
 import { getAllVariableSlugs as getAllFilterSlugs } from '../components/utils';
 import {
@@ -62,6 +68,14 @@ function FilterPresetSizeComponent({
 	filterPreset: VariableType & FilterDefaultPresetValue & WpFilterPreset;
 	presetId: string | number;
 }) {
+	if (shouldTrackComponentRender()) {
+		trackComponentRender('FilterPresetFields', {
+			id: filterPreset?.slug,
+			name: filterPreset?.slug,
+		});
+	}
+
+	const getItem = useLatestPresetItem(filterPreset);
 	const { slug } = filterPreset;
 
 	const {
@@ -94,31 +108,39 @@ function FilterPresetSizeComponent({
 		[filterPreset.items]
 	);
 
+	const buildPersistPatch = useCallback(
+		(record: Record<string, unknown>) => ({
+			items: repeaterRecordToItems(
+				record as Record<string, Record<string, unknown>>
+			),
+		}),
+		[]
+	);
+
+	const { commitNestedChange, liveRecord } = useNestedPresetRepeaterCommit({
+		changeRepeaterItem,
+		onChange,
+		valueCleanup,
+		controlId,
+		repeaterId,
+		itemId: presetId,
+		getItem,
+		initialRecord: repeaterItems as unknown as Record<string, unknown>,
+		persistedSignature: filterPreset.items,
+		buildPersistPatch,
+	});
+
 	const handleFilterChange = useCallback(
 		(newValue: Record<string, Record<string, unknown>>) => {
 			const items = repeaterRecordToItems(newValue);
-			// Defer: inner repeater can dispatch in the same tick; updating the outer preset list
-			// synchronously would trigger Redux “getState during reducer” (same as transform / transition presets).
-			queueMicrotask(() => {
-				changeRepeaterItem({
-					onChange,
-					valueCleanup,
-					controlId,
-					repeaterId,
-					itemId: presetId,
-					value: { ...filterPreset, items },
-				});
-			});
+			commitNestedChange(newValue, { items });
 		},
-		[
-			changeRepeaterItem,
-			onChange,
-			valueCleanup,
-			controlId,
-			repeaterId,
-			presetId,
-			filterPreset,
-		]
+		[commitNestedChange]
+	);
+
+	const editorSignature = useMemo(
+		() => ({ slug, liveRecord }),
+		[slug, liveRecord]
 	);
 
 	if (!origin || !slug) {
@@ -129,7 +151,8 @@ function FilterPresetSizeComponent({
 		<ControlContextProvider
 			value={{
 				name: `filter-preset-${slug}`,
-				value: repeaterItems,
+				value: liveRecord,
+				skipSyncValue: true,
 				attribute: 'blockeraFilterPreset',
 				blockName: 'global-styles-filters',
 			}}
@@ -161,7 +184,7 @@ function FilterPresetSizeComponent({
 						</>
 					}
 					defaultRepeaterItemValue={FILTER_PRESET_REPEATER_DEFAULT}
-					defaultValue={repeaterItems}
+					defaultValue={liveRecord}
 					onChange={handleFilterChange}
 				/>
 			</BaseControl>
@@ -176,7 +199,9 @@ function FilterPresetSizeComponent({
 			slug={filterPreset.slug}
 			allSlugs={getAllFilterSlugs(presets)}
 		>
-			{filterPresetValueControls}
+			<PresetEditorFields signature={editorSignature}>
+				{filterPresetValueControls}
+			</PresetEditorFields>
 		</SharedPresetControls>
 	);
 }

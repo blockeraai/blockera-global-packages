@@ -25,6 +25,7 @@ import {
 	getArialLabelSuffix,
 	isRepeaterPromoActive,
 	closeInspectorRepeaterPopovers,
+	stopRepeaterItemClick,
 } from '../utils';
 
 export default function RepeaterItemActions({
@@ -82,6 +83,10 @@ export default function RepeaterItemActions({
 	} = useControlContext();
 
 	function closeMenu(event: MouseEvent) {
+		if (actionButtonsType !== 'menu') {
+			return;
+		}
+
 		const escEvent = new KeyboardEvent('keydown', {
 			key: 'Escape',
 			code: 'Escape',
@@ -124,9 +129,7 @@ export default function RepeaterItemActions({
 	}
 
 	function deleteFunction(event: MouseEvent) {
-		if (event && event?.hasOwnProperty('stopPropagation')) {
-			event.stopPropagation();
-		}
+		stopRepeaterItemClick(event);
 
 		// Try to open the confirm delete modal if it is not open and shouldConfirmDeleteModal is true
 		if (!isConfirmDeleteModalOpen && shouldConfirmDeleteModal) {
@@ -228,7 +231,7 @@ export default function RepeaterItemActions({
 	}
 
 	function cloneFunction(event: MouseEvent) {
-		event.stopPropagation();
+		stopRepeaterItemClick(event);
 		closeMenu(event);
 
 		const performClone = (): void => {
@@ -436,6 +439,9 @@ export default function RepeaterItemActions({
 								className={controlInnerClassNames('btn-clone')}
 								noBorder={true}
 								icon={<Icon icon="clone" iconSize={20} />}
+								onMouseDown={(event: MouseEvent) => {
+									event.stopPropagation();
+								}}
 								onClick={cloneFunction}
 								aria-label={sprintf(
 									// translators: %s is the repeater item id. It's aria label for cloning repeater item

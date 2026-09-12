@@ -113,8 +113,8 @@ function ConfirmDeleteModal({
 						onMouseDown={(event: MouseEvent) => {
 							event.stopPropagation();
 						}}
-						onClick={() => {
-							handleRemoveItem(item);
+						onClick={(event: MouseEvent) => {
+							handleRemoveItem(event);
 							const variableName =
 								item?.label || item?.name || '';
 							createSnackbarNotice({

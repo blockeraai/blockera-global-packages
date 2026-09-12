@@ -34,6 +34,7 @@ export {
 	isInnerBlock,
 	BlockEditContext,
 	useBlockContext,
+	useBlockIdentityContext,
 	BlockEditContextProvider,
 	bootstrapBlockAppSettings,
 } from './components';

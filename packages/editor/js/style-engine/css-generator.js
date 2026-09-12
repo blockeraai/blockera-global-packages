@@ -21,6 +21,24 @@ export default class CssGenerator {
 		blockProps: Object,
 		pickedSelector: string
 	) {
+		this.configure(name, { type, options, properties, function: callback }, blockProps, pickedSelector);
+	}
+
+	/**
+	 * Reuse one instance across definitions in a single computedCssDeclarations pass.
+	 *
+	 * @param {string} name
+	 * @param {Object} definition
+	 * @param {Object} blockProps
+	 * @param {string} pickedSelector
+	 * @return {void}
+	 */
+	configure(
+		name: string,
+		{ type, options, properties, function: callback }: Object,
+		blockProps: Object,
+		pickedSelector: string
+	): void {
 		this.name = name;
 		this.type = type;
 		this.function = callback;

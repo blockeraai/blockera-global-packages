@@ -2,6 +2,7 @@ import {
 	getPresetRepeaterItemsFromVariable,
 	isPresetRepeaterObjectValue,
 	normalizePresetRepeaterValueToIndexKeys,
+	overlayCreatingStepRowsFromRepeaterStore,
 	variablesToPresetRepeaterValue,
 } from '../preset-repeater-value-utils';
 
@@ -102,6 +103,29 @@ describe('variablesToPresetRepeaterValue', () => {
 		).toEqual({
 			0: { name: 'Draft 1', order: 1 },
 			1: { name: 'Draft 2', order: 2 },
+		});
+	});
+});
+
+describe('overlayCreatingStepRowsFromRepeaterStore', () => {
+	it('keeps an in-flight create row when theme.json has not persisted it yet', () => {
+		expect(
+			overlayCreatingStepRowsFromRepeaterStore(
+				{},
+				{
+					0: {
+						slug: 'border-1',
+						name: 'Border 1',
+						creatingStep: true,
+					},
+				}
+			)
+		).toEqual({
+			0: {
+				slug: 'border-1',
+				name: 'Border 1',
+				creatingStep: true,
+			},
 		});
 	});
 });

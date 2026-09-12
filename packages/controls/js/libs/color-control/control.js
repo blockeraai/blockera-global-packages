@@ -4,7 +4,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import type { MixedElement } from 'react';
-import { useState } from '@wordpress/element';
+import { useCallback, useMemo, useState } from '@wordpress/element';
 
 /**
  * Blockera dependencies
@@ -72,6 +72,27 @@ export default function ColorControl({
 
 	const [isOpen, setOpen] = useState(false);
 
+	const handleAddonSetValue = useCallback(
+		(newValue: any): void => {
+			setValueAddon(newValue, setValue, defaultValue);
+		},
+		[setValue, defaultValue]
+	);
+
+	const presetInterface = useMemo(() => {
+		if (
+			!Array.isArray(normalizedVariableTypes) ||
+			!normalizedVariableTypes.includes('color')
+		) {
+			return undefined;
+		}
+
+		return {
+			variableTypes: normalizedVariableTypes,
+			attribute,
+		};
+	}, [normalizedVariableTypes, attribute]);
+
 	const {
 		valueAddonClassNames,
 		isSetValueAddon,
@@ -80,19 +101,11 @@ export default function ColorControl({
 	} = useValueAddon({
 		types: controlAddonTypes,
 		value,
-		setValue: (newValue: any): void =>
-			setValueAddon(newValue, setValue, defaultValue),
+		setValue: handleAddonSetValue,
 		variableTypes,
 		onChange: setValue,
 		size,
-		presetInterface:
-			Array.isArray(normalizedVariableTypes) &&
-			normalizedVariableTypes.includes('color')
-				? {
-						variableTypes: normalizedVariableTypes,
-						attribute,
-					}
-				: undefined,
+		presetInterface,
 	});
 
 	const labelProps = {

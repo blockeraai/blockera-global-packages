@@ -1,7 +1,14 @@
 /**
- * Rewrite wp-env WordPress Dockerfiles so every `apt-get install` retargets
- * apt off deb.debian.org (Fastly POPs 404 debian-security pool files),
- * wipes lists, and refreshes indexes in the same RUN.
+ * Rewrite wp-env WordPress Dockerfiles so every `apt-get update` and
+ * `apt-get install` retargets apt off deb.debian.org (Fastly POPs 404
+ * debian-security pool files). stretch/buster use archive.debian.org
+ * for debian and debian-security; bullseye uses archive.debian.org for
+ * debian only and drops the security pocket (not on archive yet; live
+ * security.debian.org 404s pool files). Current suites use ftp.debian.org /
+ * security.debian.org. Also inserts bullseye archive.debian.org source
+ * RUNs next to wp-env's stretch/buster archive layers. Wipes lists,
+ * ignores expired InRelease files, and refreshes indexes in the same
+ * RUN as each install.
  *
  * Flags come from this package's `root-configs/.docker/Dockerfile.wordpress`
  * unless BLOCKERA_WP_ENV_DOCKERFILE is set. Host `.docker/` is the bootstrap
@@ -55,15 +62,66 @@ function getAptInstallPrefix(dockerfileContents) {
 	return runMatch[1].trim();
 }
 
+function getAptUpdatePrefix(installPrefix) {
+	const installIdx = installPrefix.lastIndexOf('apt-get -qy install');
+
+	if (installIdx === -1) {
+		throw new Error(
+			'inject-wp-env-dockerfile: install prefix needs apt-get -qy install'
+		);
+	}
+
+	return installPrefix.slice(0, installIdx).replace(/&&\s*$/, '').trim();
+}
+
 function isWordpressDockerfilePath(filePath) {
 	return WORDPRESS_DOCKERFILE_NAMES.has(path.basename(String(filePath)));
 }
 
-function alreadyPatchedAptInstallRun(line) {
+function alreadyPatchedAptRun(line) {
 	return (
-		/security\.debian\.org/.test(line) &&
-		/\/var\/lib\/apt\/lists/.test(line)
+		/VERSION_CODENAME/.test(line) && /\/var\/lib\/apt\/lists/.test(line)
 	);
+}
+
+/**
+ * wp-env archives stretch/buster sources but not bullseye. After bullseye
+ * LTS (2026-08-31), security.debian.org still publishes Release metadata
+ * but 404s pool files, and archive.debian.org/debian-security has no
+ * bullseye dist. Point main at archive.debian.org/debian and drop
+ * bullseye-security / bullseye-updates so apt-get update does not 404.
+ */
+const APT_SOURCES_LIST = '/etc/apt/sources.list';
+
+const BULLSEYE_ARCHIVE_RUNS = [
+	`RUN sed -i 's|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g' ${APT_SOURCES_LIST}`,
+	`RUN sed -i '/bullseye-security/d' ${APT_SOURCES_LIST}`,
+	`RUN sed -i 's|ftp.debian.org/debian bullseye|archive.debian.org/debian bullseye|g' ${APT_SOURCES_LIST}`,
+	`RUN sed -i '/bullseye-updates/d' ${APT_SOURCES_LIST}`,
+].join('\n');
+
+function insertBullseyeArchiveRuns(contents) {
+	if (contents.includes('archive.debian.org/debian bullseye')) {
+		return contents;
+	}
+
+	const busterUpdatesLine =
+		/^RUN sed -i '\/buster-updates\/d'(?: \/etc\/apt\/sources\.list)?$/m;
+	const match = contents.match(busterUpdatesLine);
+
+	if (!match) {
+		return contents;
+	}
+
+	const originalLine = match[0].includes(APT_SOURCES_LIST)
+		? match[0]
+		: `${match[0]} ${APT_SOURCES_LIST}`;
+
+	return contents.replace(match[0], `${originalLine}\n${BULLSEYE_ARCHIVE_RUNS}`);
+}
+
+function escapeReplaceReplacement(str) {
+	return String(str).replace(/\$/g, '$$$$');
 }
 
 function patchAptGetInstallRun(line, prefix) {
@@ -75,21 +133,49 @@ function patchAptGetInstallRun(line, prefix) {
 		return line;
 	}
 
-	if (alreadyPatchedAptInstallRun(line)) {
+	if (alreadyPatchedAptRun(line)) {
 		return line;
 	}
 
 	return line.replace(
 		/^(\s*RUN\s+).*?\bapt-get(?:\s+\S+)*\s+install(?:\s+(?:-o\s+\S+|--\S+|-\S+))*/,
-		`$1${prefix}`
+		`$1${escapeReplaceReplacement(prefix)}`
+	);
+}
+
+function patchAptGetUpdateRun(line, updatePrefix) {
+	if (!/^\s*RUN\s+/.test(line)) {
+		return line;
+	}
+
+	if (!/\bapt-get\b/.test(line) || !/\bupdate\b/.test(line)) {
+		return line;
+	}
+
+	if (/\binstall\b/.test(line)) {
+		return line;
+	}
+
+	if (alreadyPatchedAptRun(line)) {
+		return line;
+	}
+
+	return line.replace(
+		/^(\s*RUN\s+).*/,
+		`$1${escapeReplaceReplacement(updatePrefix)}`
 	);
 }
 
 function patchWordPressDockerfile(contents, prefix) {
-	return contents
-		.split('\n')
-		.map((line) => patchAptGetInstallRun(line, prefix))
-		.join('\n');
+	const updatePrefix = getAptUpdatePrefix(prefix);
+
+	return insertBullseyeArchiveRuns(
+		contents
+			.split('\n')
+			.map((line) => patchAptGetInstallRun(line, prefix))
+			.map((line) => patchAptGetUpdateRun(line, updatePrefix))
+			.join('\n')
+	);
 }
 
 function injectWordpressDockerfileWrite(contents) {
@@ -110,7 +196,9 @@ module.exports = {
 	WORDPRESS_DOCKERFILE_NAMES,
 	bundledWordpressDockerfilePath,
 	getAptInstallPrefix,
+	getAptUpdatePrefix,
 	injectWordpressDockerfileWrite,
+	insertBullseyeArchiveRuns,
 	isWordpressDockerfilePath,
 	patchWordPressDockerfile,
 	resolveWordpressDockerfilePath,

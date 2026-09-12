@@ -32,6 +32,7 @@ import {
 	PresetTaxonomyGroupBridge,
 	usePresetTaxonomyGroupUi,
 } from '../components';
+import { PresetItemHeaderDraftProvider } from '../components/preset-item-header-draft-context';
 import { PresetVariationsContext } from '../context/preset-variations-context';
 import {
 	convertRepeaterValueToColors,
@@ -223,7 +224,7 @@ function ColorGroupInner({
 	);
 
 	return (
-		<>
+		<PresetItemHeaderDraftProvider>
 			{handleResetColors && isResetDialogOpen && (
 				<ConfirmResetPresetDialog
 					text={resetDialogText}
@@ -278,7 +279,7 @@ function ColorGroupInner({
 					}
 				/>
 			</PresetVariationsContext.Provider>
-		</>
+		</PresetItemHeaderDraftProvider>
 	);
 }
 

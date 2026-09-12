@@ -5,6 +5,11 @@
 - Switch the block inspector with `switchBlockTab` in the Blocksy compatibility
   spec.
 
+## [3.0.0] - 2026-09-12
+
+### Bug Fixes
+- Prevent a PHP fatal when theme JSON helper properties are empty (PHP 7.4 and later).
+
 ## [2.0.0] - 2026-08-31
 
 ### Fixed

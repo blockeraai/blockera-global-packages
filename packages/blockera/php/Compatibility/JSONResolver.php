@@ -104,16 +104,16 @@ class JSONResolver extends \WP_Theme_JSON_Resolver {
 	/**
 	 * Store the default WordPress provided data from theme.
 	 *
-	 * @var \WP_Theme_JSON_Data $default_theme_data the provided from theme data by WordPress.
+	 * @var \WP_Theme_JSON_Data|null $default_theme_data the provided from theme data by WordPress.
 	 */
-	public static \WP_Theme_JSON_Data $default_theme_data;
+	public static $default_theme_data = null;
 
 	/**
 	 * Store the default WordPress provided data from blocks.
 	 *
-	 * @var \WP_Theme_JSON_Data $default_blocks_data the provided from blocks data by WordPress.
+	 * @var \WP_Theme_JSON_Data|null $default_blocks_data the provided from blocks data by WordPress.
 	 */
-	public static \WP_Theme_JSON_Data $default_blocks_data;
+	public static $default_blocks_data = null;
 
 	/**
 	 * Export the combined (and flattened) THEME and CUSTOM data.

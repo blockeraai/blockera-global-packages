@@ -9,7 +9,7 @@ import {
 	createPortal,
 	useRef,
 } from '@wordpress/element';
-import { useSelect, useDispatch } from '@wordpress/data';
+import { useSelect, useDispatch, useRegistry } from '@wordpress/data';
 import { __, sprintf } from '@wordpress/i18n';
 import fastDeepEqual from 'fast-deep-equal/es6';
 import { store as coreStore } from '@wordpress/core-data';
@@ -63,6 +63,7 @@ import type {
  */
 type CloseAction = 'single' | 'others' | 'toRight' | null;
 const ENABLE_IMMEDIATE_LOCK_CHECK_ON_SWITCH = false;
+const EMPTY_TAB_DIRTY_FLAGS: { [key: string]: boolean } = {};
 
 /**
  * Main Tabs Manager component
@@ -124,6 +125,7 @@ export default function TabsManager(): React.ReactElement | null {
 	});
 
 	const switchDocument = useSwitchDocument();
+	const registry = useRegistry();
 
 	const { set: setPreference } = useDispatch(preferencesStore);
 
@@ -192,21 +194,6 @@ export default function TabsManager(): React.ReactElement | null {
 		clearLockState,
 	} = useTabsLockState();
 
-	// Get function to check if entity is dirty
-	const hasEditsForEntityRecord = useSelect(
-		(select) =>
-			(
-				select(coreStore) as {
-					hasEditsForEntityRecord: (
-						kind: string,
-						name: string,
-						id: string | number
-					) => boolean;
-				}
-			).hasEditsForEntityRecord,
-		[]
-	);
-
 	// Get save functions and actions
 	const { saveEntityRecord, editEntityRecord } = useDispatch(coreStore) as {
 		saveEntityRecord: (
@@ -227,32 +214,6 @@ export default function TabsManager(): React.ReactElement | null {
 		updatePostLock: (lock: { isLocked: boolean }) => void;
 	};
 	const { removeNotice } = useDispatch(noticesStore);
-	const getEditedEntityRecord = useSelect(
-		(select) =>
-			(
-				select(coreStore) as {
-					getEditedEntityRecord: (
-						kind: string,
-						name: string,
-						id: string | number
-					) => Record<string, unknown> | undefined;
-				}
-			).getEditedEntityRecord,
-		[]
-	);
-	const getRawEntityRecord = useSelect(
-		(select) =>
-			(
-				select(coreStore) as {
-					getRawEntityRecord: (
-						kind: string,
-						name: string,
-						id: string | number
-					) => Record<string, unknown> | undefined;
-				}
-			).getRawEntityRecord,
-		[]
-	);
 	const currentPostId = useSelect(
 		(select) =>
 			(
@@ -303,20 +264,45 @@ export default function TabsManager(): React.ReactElement | null {
 		);
 	}, []);
 
-	// Helper function to check if a tab is dirty
+	/*
+	 * Subscribe to dirty flags per tab. Returning store methods from useSelect
+	 * creates a new function identity on every call (WordPress warns and
+	 * re-renders). Booleans stay shallow-equal when edits have not changed.
+	 */
+	const tabDirtyFlags = useSelect(
+		(select) => {
+			if (!tabs.length) {
+				return EMPTY_TAB_DIRTY_FLAGS;
+			}
+
+			const hasEdits = (
+				select(coreStore) as {
+					hasEditsForEntityRecord: (
+						kind: string,
+						name: string,
+						id: string | number
+					) => boolean;
+				}
+			).hasEditsForEntityRecord;
+			const flags: { [key: string]: boolean } = {};
+
+			for (let i = 0; i < tabs.length; i++) {
+				const tab = tabs[i];
+				flags[tab.key] = Boolean(
+					hasEdits('postType', tab.type, tab.id)
+				);
+			}
+
+			return flags;
+		},
+		[tabs]
+	);
+
 	const getIsDirty = useCallback(
 		(tabPostType: string, tabPostId: string | number): boolean => {
-			try {
-				return hasEditsForEntityRecord(
-					'postType',
-					tabPostType,
-					tabPostId
-				);
-			} catch {
-				return false;
-			}
+			return Boolean(tabDirtyFlags[`${tabPostType}-${tabPostId}`]);
 		},
-		[hasEditsForEntityRecord]
+		[tabDirtyFlags]
 	);
 
 	/*
@@ -720,12 +706,24 @@ export default function TabsManager(): React.ReactElement | null {
 	const clearEntityEdits = useCallback(
 		(tabPostType: string, tabPostId: string | number): void => {
 			try {
-				const editedRecord = getEditedEntityRecord(
+				const coreSelect = registry.select(coreStore) as {
+					getEditedEntityRecord: (
+						kind: string,
+						name: string,
+						id: string | number
+					) => Record<string, unknown> | undefined;
+					getRawEntityRecord: (
+						kind: string,
+						name: string,
+						id: string | number
+					) => Record<string, unknown> | undefined;
+				};
+				const editedRecord = coreSelect.getEditedEntityRecord(
 					'postType',
 					tabPostType,
 					tabPostId
 				);
-				const rawRecord = getRawEntityRecord(
+				const rawRecord = coreSelect.getRawEntityRecord(
 					'postType',
 					tabPostType,
 					tabPostId
@@ -757,7 +755,7 @@ export default function TabsManager(): React.ReactElement | null {
 				// Entity might not be loaded
 			}
 		},
-		[getEditedEntityRecord, getRawEntityRecord, editEntityRecord]
+		[registry, editEntityRecord]
 	);
 
 	const handleDocumentInaccessible = useCallback(
