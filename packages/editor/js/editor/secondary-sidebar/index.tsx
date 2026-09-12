@@ -318,7 +318,7 @@ function SecondarySidebarContentUI() {
 							defaultValue={defaultSecondarySidebarWidth}
 							onResize={handleResize}
 						/>
-						<SecondarySidebar isDockOpen={shouldRenderContent} />
+						<SecondarySidebar isDockOpen={isContentVisible} />
 					</div>
 				)}
 			</Fill>

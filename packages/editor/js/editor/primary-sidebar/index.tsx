@@ -528,7 +528,7 @@ export default function PrimarySidebarController() {
 							/>
 							<SidebarDock
 								dock="right"
-								isDockOpen={shouldRenderContent}
+								isDockOpen={wrapperVisible}
 							/>
 						</div>
 					)}

@@ -3,10 +3,18 @@
 ### Improvements
 - Global Styles color and preset edits no longer re-read settings dock APIs
   on editor-settings sync ticks that do not open inserter or list view.
+- Closed sidebar docks unmount inserter and list view while the clip host is
+  hidden, so leftover search fields do not sit under the settings overlay.
+- Opening Global Styles (or any settings tab) remeasures the settings overlay
+  so it stays on the dock and does not cover the inserter search field.
+- The settings overlay on the right dock is pinned to the viewport’s right
+  edge so it cannot cover the left inserter.
 
 ### Development Notes
 - Dock `core/editor` subscriber returns before complementary-area selects
   when inserter and list view stay closed.
+- Primary and secondary docks pass `isDockOpen` from the visible clip class,
+  not from “still mounted for the close animation”.
 
 ## [5.0.0] - 2026-09-12
 
