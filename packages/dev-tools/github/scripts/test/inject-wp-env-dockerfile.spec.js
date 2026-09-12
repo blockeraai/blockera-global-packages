@@ -22,6 +22,7 @@ describe('inject-wp-env-dockerfile', () => {
 		expect(prefix).toContain('archive.debian.org');
 		expect(prefix).toContain('VERSION_CODENAME');
 		expect(prefix).toContain('bullseye');
+		expect(prefix).toContain("/bullseye-security/d");
 		expect(prefix).toContain('rm -rf /var/lib/apt/lists/*');
 		expect(prefix).toContain('Acquire::Check-Valid-Until=false');
 		expect(prefix).toContain('--allow-releaseinfo-change');
@@ -102,7 +103,10 @@ RUN apt-get -qy install sudo
 			"s|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g' /etc/apt/sources.list"
 		);
 		expect(patched).toContain(
-			"s|security.debian.org/debian-security bullseye-security|archive.debian.org/debian-security bullseye-security|g' /etc/apt/sources.list"
+			"RUN sed -i '/bullseye-security/d' /etc/apt/sources.list"
+		);
+		expect(patched).not.toContain(
+			'archive.debian.org/debian-security bullseye-security'
 		);
 		expect(patched.indexOf('/buster-updates/d')).toBeLessThan(
 			patched.indexOf('archive.debian.org/debian bullseye')
