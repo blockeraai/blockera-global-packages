@@ -51,6 +51,8 @@
 - Skip theme.json persist when the repeater only added a creating-step row;
   overlay the in-flight row from the last repeater value so the create
   editor stays open.
+- Creating-step name and id write the repeater store in the variable picker
+  only; Global Styles keeps those drafts in the header until close.
 
 ### Automated Tests
 

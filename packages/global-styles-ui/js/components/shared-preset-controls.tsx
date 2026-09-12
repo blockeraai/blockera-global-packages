@@ -889,9 +889,12 @@ function SharedPresetControlsComponent<T extends VariableType>({
 				}
 
 				headerDraftStore?.patch(itemIdKey, headerPatch);
-				syncCreatingNameToRepeaterStore(newValue, {
-					syncCreatingSlug: shouldSyncSlugFromName,
-				});
+
+				if (isVariablePicker) {
+					syncCreatingNameToRepeaterStore(newValue, {
+						syncCreatingSlug: shouldSyncSlugFromName,
+					});
+				}
 				return;
 			}
 
@@ -904,6 +907,7 @@ function SharedPresetControlsComponent<T extends VariableType>({
 			deferNameEdits,
 			headerDraftStore,
 			isCreating,
+			isVariablePicker,
 			itemIdKey,
 			syncCreatingNameToRepeaterStore,
 			stageLiveIdentityPatch,
@@ -923,11 +927,15 @@ function SharedPresetControlsComponent<T extends VariableType>({
 			setHasManualSlugDuringCreating(true);
 			hasManualSlugDuringCreatingRef.current = true;
 			headerDraftStore?.patch(itemIdKey, { slug: normalized });
-			syncCreatingSlugToRepeaterStore(normalized);
+
+			if (isVariablePicker) {
+				syncCreatingSlugToRepeaterStore(normalized);
+			}
 		},
 		[
 			headerDraftStore,
 			isCreating,
+			isVariablePicker,
 			itemIdKey,
 			syncCreatingSlugToRepeaterStore,
 		]
