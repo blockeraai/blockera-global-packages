@@ -995,6 +995,22 @@ export const registerCommands = () => {
 	);
 
 	Cypress.Commands.add('openGlobalStylesPanel', () => {
+		cy.window().then((win) => {
+			win.wp?.data
+				?.dispatch?.('blockera/editor-persistence')
+				?.setSecondarySidebarOpen?.(false);
+		});
+		cy.get('body').then(($body) => {
+			if (
+				$body.find('[data-test="blockera-sidebar-pane-inserter"]')
+					.length
+			) {
+				cy.get('[data-test="blockera-sidebar-pane-inserter"]').should(
+					'not.exist'
+				);
+			}
+		});
+
 		return cy
 			.get(
 				'.interface-pinned-items button[aria-controls="edit-site:global-styles"]',

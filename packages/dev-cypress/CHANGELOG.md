@@ -6,6 +6,8 @@
   functionality specs still find those controls while Settings is default.
 - `switchBlockTab` prefers tabs inside the settings overlay and force-clicks
   by default so a covered Gutenberg tab does not steal the click.
+- `openGlobalStylesPanel` closes the left dock first so the inserter
+  search is unmounted and Global Styles search is the first field.
 
 ### Development Notes
 - `setColorControlValue` scrolls the control into view, commits the CSS
