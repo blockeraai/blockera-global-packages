@@ -108,6 +108,8 @@
   height and leftover open-animation clip. Idle Global Styles ticks skip
   layout reads; only open/close, resize, drag, viewport, and inserter
   category tokens schedule a measure.
+- Sidebar docks: unit coverage that open and inserter category classes are
+  set on the slide host without matching nested inserter markup.
 - Sidebar dock APIs: unit coverage that Global Styles store ticks skip
   inserter, list view, and settings open/close when those panels did not
   change.
