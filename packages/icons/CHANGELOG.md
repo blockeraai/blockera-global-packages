@@ -1,3 +1,8 @@
+## Unreleased
+
+### Improvements
+- Added search-replace icons for match case, whole word, regex, and replace.
+
 ## [3.0.0] - 2026-09-12
 
 ### Automated Tests
