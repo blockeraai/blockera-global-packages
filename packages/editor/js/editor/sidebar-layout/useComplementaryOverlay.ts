@@ -415,7 +415,8 @@ export function findComplementaryHandleHost(): HTMLElement | null {
  */
 export function useComplementaryOverlay(
 	anchorRef: RefObject<HTMLElement | null>,
-	enabled: boolean
+	enabled: boolean,
+	layoutKey: string | null = null
 ): void {
 	useLayoutEffect(() => {
 		const sidebar = findSidebar();
@@ -537,11 +538,33 @@ export function useComplementaryOverlay(
 			}
 			node.style.removeProperty('visibility');
 			node.style.setProperty('top', `${overlayBox.top}px`, 'important');
-			node.style.setProperty('left', `${overlayBox.left}px`, 'important');
-			node.style.setProperty('width', `${overlayBox.width}px`, 'important');
+			const cssDockWidth = parsePx(
+				getComputedStyle(document.body).getPropertyValue(
+					dockSide === 'left'
+						? '--blockera-secondary-sidebar-width'
+						: '--blockera-primary-sidebar-width'
+				),
+				300
+			);
+			const overlayWidth =
+				dockSide === 'right' || dockSide === 'left'
+					? cssDockWidth
+					: overlayBox.width;
+			if (dockSide === 'right') {
+				node.style.removeProperty('left');
+				node.style.setProperty('right', '0', 'important');
+			} else {
+				node.style.removeProperty('right');
+				node.style.setProperty(
+					'left',
+					`${overlayBox.left}px`,
+					'important'
+				);
+			}
+			node.style.setProperty('width', `${overlayWidth}px`, 'important');
 			node.style.setProperty('height', `${overlayBox.height}px`, 'important');
-			node.style.setProperty('--sidebar-width', `${overlayBox.width}px`);
-			node.style.setProperty('--sidebar-width-raw', `${overlayBox.width}px`);
+			node.style.setProperty('--sidebar-width', `${overlayWidth}px`);
+			node.style.setProperty('--sidebar-width-raw', `${overlayWidth}px`);
 			if (clipPath) {
 				node.style.setProperty('clip-path', clipPath, 'important');
 			} else {
@@ -753,5 +776,5 @@ export function useComplementaryOverlay(
 				'has-blockera-complementary-overlay'
 			);
 		};
-	}, [anchorRef, enabled]);
+	}, [anchorRef, enabled, layoutKey]);
 }

@@ -44,7 +44,7 @@ export default function ComplementaryAnchor({
 }: ComplementaryAnchorProps) {
 	const paneRef = useRef<HTMLDivElement | null>(null);
 	const [handleHost, setHandleHost] = useState<HTMLElement | null>(null);
-	useComplementaryOverlay(paneRef, isActive);
+	useComplementaryOverlay(paneRef, isActive, complementaryAreaId ?? null);
 	useLayoutEffect(() => {
 		document.body.classList.toggle(
 			'is-blockera-complementary-floating',

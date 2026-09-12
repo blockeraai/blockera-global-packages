@@ -286,6 +286,8 @@ body.has-blockera-complementary-overlay
 
 .interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock="right"] {
 	justify-content: flex-start;
+	left: auto !important;
+	right: 0 !important;
 }
 
 .interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock="left"] {
