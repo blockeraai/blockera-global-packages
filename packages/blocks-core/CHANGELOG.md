@@ -1,4 +1,4 @@
-## Unreleased
+## [6.0.0] - 2026-09-12
 
 ### Automated Tests
 - Navigation List View e2e uses the WordPress 7.1 appender helper instead of
