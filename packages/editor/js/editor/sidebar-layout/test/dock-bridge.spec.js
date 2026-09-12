@@ -1,7 +1,10 @@
 /**
  * Internal dependencies
  */
-import { shouldSkipEditorSidebarApiSync } from '../dock-bridge';
+import {
+	shouldSkipEditorSidebarApiSync,
+	shouldSkipEditorStoreSidebarSync,
+} from '../dock-bridge';
 
 describe('shouldSkipEditorSidebarApiSync', () => {
 	it('runs the first tick so complementary state can prime', () => {
@@ -67,6 +70,29 @@ describe('shouldSkipEditorSidebarApiSync', () => {
 				'edit-post/document',
 				null
 			)
+		).toBe(false);
+	});
+});
+
+describe('shouldSkipEditorStoreSidebarSync', () => {
+	it('skips primed editor-store ticks that are not inserter or list view', () => {
+		expect(
+			shouldSkipEditorStoreSidebarSync(true, false, false)
+		).toBe(true);
+	});
+
+	it('still handles Gutenberg inserter or list view open requests', () => {
+		expect(shouldSkipEditorStoreSidebarSync(true, true, false)).toBe(
+			false
+		);
+		expect(shouldSkipEditorStoreSidebarSync(true, false, true)).toBe(
+			false
+		);
+	});
+
+	it('runs the first tick so complementary state can prime', () => {
+		expect(
+			shouldSkipEditorStoreSidebarSync(false, false, false)
 		).toBe(false);
 	});
 });
