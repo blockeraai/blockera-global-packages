@@ -31,6 +31,15 @@
 ### Development Notes
 - Document search lives in `@blockera/editor` (`search-replace`), with `blockera.editor.searchReplace.scopes` for Pro to unlock attribute scopes. Replace always writes block attributes.
 
+### Automated Tests
+- Cypress covers opening the panel, shortcut focus, live find, first-match
+  selection, result toolbar, match navigation, canvas highlight click,
+  replace then next, replace all, match case, whole word, regex (including
+  capture-group replace and combined options), locked Pro scopes, Enter
+  / Shift+Enter navigation and replace, and the find field layout.
+- Jest covers the core-block search map, matcher options, regex replace,
+  locked-scope defaults, and current-match highlight sources.
+
 
 ## [5.0.0] - 2026-09-12
 
