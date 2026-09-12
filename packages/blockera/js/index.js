@@ -37,6 +37,7 @@ import {
 	bootstrapTabs,
 	bootstrapPreviewMode,
 	bootstrapZoom,
+	bootstrapSearchReplace,
 	bootstrapShortcuts,
 	bootstrapScrollbar,
 	bootstrapSlots,
@@ -140,6 +141,9 @@ addFilter('blockera.bootstrapper', 'blockera.bootstrap', () => {
 
 			// Bootstrap zoom controls
 			bootstrapZoom();
+
+			// Bootstrap search and replace
+			bootstrapSearchReplace();
 
 			// Bootstrap keyboard shortcuts extension
 			bootstrapShortcuts();

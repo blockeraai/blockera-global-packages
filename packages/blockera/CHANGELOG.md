@@ -1,3 +1,8 @@
+## Unreleased
+
+### Development Notes
+- Bootstraps editor search and replace with the other editor chrome modules.
+
 ## [3.0.0] - 2026-09-12
 
 ### Bug Fixes
