@@ -45,7 +45,7 @@ Config highlights:
 - Tests under `packages/**` matching `test/**/*.spec.js` or `tests/**/*.spec.js`
 - Maps `@blockera/experimental-config`
 - Ignores `source-code-block-editor` and `source-code-wordpress` trees
-- Compatibility mappings for WordPress theme ESM and `uuid` CJS
+- Compatibility mappings for WordPress theme ESM, `@wordpress/annotations`, and `uuid` CJS
 
 ---
 

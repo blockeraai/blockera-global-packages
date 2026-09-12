@@ -118,6 +118,10 @@ module.exports = {
 			rootDir,
 			'experimental.config.json'
 		),
+		'^@wordpress/annotations$': path.join(
+			DEV_JEST_JS,
+			'__mocks__/wordpress-annotations.js'
+		),
 		'^@wordpress/theme/build-module/index\\.mjs$': path.join(
 			DEV_JEST_JS,
 			'__mocks__/wordpress-theme.js'
