@@ -27,6 +27,17 @@ describe('preset item header draft store', () => {
 		expect(store.get('0')).toEqual({ size: '16px', name: 'Large' });
 	});
 
+	it('does not notify when the merged draft is unchanged', () => {
+		const store = createPresetItemHeaderDraftStore();
+		const listener = jest.fn();
+
+		store.subscribe('0', listener);
+		store.patch('0', { size: '22px' });
+		store.patch('0', { size: '22px' });
+
+		expect(listener).toHaveBeenCalledTimes(1);
+	});
+
 	it('overlays draft fields onto the repeater item', () => {
 		expect(
 			mergePresetItemWithHeaderDraft(

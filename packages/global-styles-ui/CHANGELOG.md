@@ -58,6 +58,7 @@
 ### Automated Tests
 
 - Overlay keeps an in-flight create row when theme.json has not persisted it yet.
+- Header draft store skips notify when a patch does not change stored fields.
 - Variable editors: typing does not save until leave or close; color, shadow,
   and filter keep their pickers attached.
 - Creating a custom border variable does not persist on each name keystroke.
