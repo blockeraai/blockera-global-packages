@@ -53,6 +53,7 @@
   editor stays open.
 - Creating-step name and id write the repeater store in the variable picker
   only; Global Styles keeps those drafts in the header until close.
+- Header draft patches that do not change stored fields skip subscriber notify.
 
 ### Automated Tests
 

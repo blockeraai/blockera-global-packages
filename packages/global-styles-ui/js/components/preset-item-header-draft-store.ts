@@ -26,6 +26,19 @@ export function createPresetItemHeaderDraftStore(): PresetItemHeaderDraftStore {
 		patch(itemId, next) {
 			const prev = drafts.get(itemId);
 			const merged = { ...(prev || {}), ...next };
+
+			if (prev) {
+				const mergedKeys = Object.keys(merged);
+				const prevKeys = Object.keys(prev);
+
+				if (
+					mergedKeys.length === prevKeys.length &&
+					mergedKeys.every((key) => prev[key] === merged[key])
+				) {
+					return;
+				}
+			}
+
 			drafts.set(itemId, merged);
 			notify(itemId);
 		},
