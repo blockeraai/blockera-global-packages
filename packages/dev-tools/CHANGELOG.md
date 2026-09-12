@@ -7,14 +7,16 @@
 - wp-env: ignore expired Debian InRelease files and retarget standalone
   `apt-get update` layers the same way as `apt-get install` (bullseye-security
   `Release file is expired` during image build).
-- wp-env: send stretch/buster/bullseye apt sources to `archive.debian.org`
-  (bullseye LTS ended 2026-08-31; security.debian.org 404s pool files such
-  as `libc6`). Current suites still use `ftp.debian.org` /
-  `security.debian.org`.
-- wp-env: insert bullseye `archive.debian.org` source rewrites next to
-  wp-env's stretch/buster archive RUNs (keep `/etc/apt/sources.list` on
-  the `buster-updates` line), and replace a stale ftp/security apt-get
-  inject so php7.4 images do not 404 `libc6` on security.debian.org.
+- wp-env: send stretch/buster apt sources to `archive.debian.org` (debian
+  and debian-security). bullseye (LTS ended 2026-08-31) uses
+  `archive.debian.org` for debian only and drops `*-security` /
+  `*-updates` (`archive.debian.org/debian-security` has no bullseye dist;
+  `security.debian.org` still 404s pool files such as `libc6`). Current
+  suites still use `ftp.debian.org` / `security.debian.org`.
+- wp-env: insert bullseye `archive.debian.org` main rewrites and drop
+  `bullseye-security` next to wp-env's stretch/buster archive RUNs (keep
+  `/etc/apt/sources.list` on the `buster-updates` line), and replace a
+  stale ftp/security apt-get inject so php7.4 images do not 404.
 
 ### Automated Tests
 

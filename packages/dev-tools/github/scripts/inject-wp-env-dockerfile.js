@@ -1,8 +1,10 @@
 /**
  * Rewrite wp-env WordPress Dockerfiles so every `apt-get update` and
  * `apt-get install` retargets apt off deb.debian.org (Fastly POPs 404
- * debian-security pool files). EOL Debian suites (stretch, buster,
- * bullseye) use archive.debian.org; current suites use ftp.debian.org /
+ * debian-security pool files). stretch/buster use archive.debian.org
+ * for debian and debian-security; bullseye uses archive.debian.org for
+ * debian only and drops the security pocket (not on archive yet; live
+ * security.debian.org 404s pool files). Current suites use ftp.debian.org /
  * security.debian.org. Also inserts bullseye archive.debian.org source
  * RUNs next to wp-env's stretch/buster archive layers. Wipes lists,
  * ignores expired InRelease files, and refreshes indexes in the same
@@ -84,16 +86,16 @@ function alreadyPatchedAptRun(line) {
 
 /**
  * wp-env archives stretch/buster sources but not bullseye. After bullseye
- * LTS (2026-08-31), security.debian.org 404s pool files. Insert matching
- * archive.debian.org RUNs so apt still works even if an older inject
- * prefix rewrites remaining deb.debian.org URLs to ftp/security.
+ * LTS (2026-08-31), security.debian.org still publishes Release metadata
+ * but 404s pool files, and archive.debian.org/debian-security has no
+ * bullseye dist. Point main at archive.debian.org/debian and drop
+ * bullseye-security / bullseye-updates so apt-get update does not 404.
  */
 const APT_SOURCES_LIST = '/etc/apt/sources.list';
 
 const BULLSEYE_ARCHIVE_RUNS = [
 	`RUN sed -i 's|deb.debian.org/debian bullseye|archive.debian.org/debian bullseye|g' ${APT_SOURCES_LIST}`,
-	`RUN sed -i 's|deb.debian.org/debian-security bullseye-security|archive.debian.org/debian-security bullseye-security|g' ${APT_SOURCES_LIST}`,
-	`RUN sed -i 's|security.debian.org/debian-security bullseye-security|archive.debian.org/debian-security bullseye-security|g' ${APT_SOURCES_LIST}`,
+	`RUN sed -i '/bullseye-security/d' ${APT_SOURCES_LIST}`,
 	`RUN sed -i 's|ftp.debian.org/debian bullseye|archive.debian.org/debian bullseye|g' ${APT_SOURCES_LIST}`,
 	`RUN sed -i '/bullseye-updates/d' ${APT_SOURCES_LIST}`,
 ].join('\n');
