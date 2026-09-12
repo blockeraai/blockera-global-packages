@@ -29,3 +29,22 @@ export function shouldPersistEndingCreate(
 
 	return (item as { creatingStep?: boolean }).creatingStep === true;
 }
+
+/**
+ * Close/Escape persist: keep staged fields and overlay header name/id drafts
+ * so Global Styles creating-step identity survives without per-keystroke store writes.
+ */
+export function coalesceEndingCreateValue(
+	current: Object,
+	pending: Object | null,
+	headerDraft: Object | null | undefined
+): Object {
+	return {
+		...coalesceDeferredPresetItemValue(
+			current,
+			pending,
+			headerDraft && typeof headerDraft === 'object' ? headerDraft : {}
+		),
+		creatingStep: false,
+	};
+}

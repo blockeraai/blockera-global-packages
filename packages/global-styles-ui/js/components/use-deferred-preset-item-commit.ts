@@ -28,6 +28,7 @@ import {
 import { usePresetItemHeaderDraftStore } from './preset-item-header-draft-context';
 import {
 	coalesceDeferredPresetItemValue,
+	coalesceEndingCreateValue,
 	shouldPersistEndingCreate,
 } from './coalesce-deferred-preset-item-value';
 
@@ -107,13 +108,15 @@ export function useDeferredPresetItemCommit({
 			return;
 		}
 
-		const next = coalesceDeferredPresetItemValue(
-			current,
-			pendingRef.current,
-			{}
-		);
+		const headerDraft = args.headerDraftStore?.get(String(args.itemId));
 
-		persist({ ...next, creatingStep: false });
+		persist(
+			coalesceEndingCreateValue(
+				current,
+				pendingRef.current,
+				headerDraft
+			)
+		);
 	}, [persist]);
 
 	const stagePatch = useCallback((
@@ -188,13 +191,20 @@ export function useDeferredPresetItemCommit({
 
 			pendingRef.current = null;
 			const args = argsRef.current;
+			const headerDraft = args.headerDraftStore?.get(
+				String(args.itemId)
+			);
 			args.changeRepeaterItem({
 				onChange: args.onChange,
 				valueCleanup: args.valueCleanup,
 				controlId: args.controlId,
 				repeaterId: args.repeaterId,
 				itemId: args.itemId,
-				value: { ...pending, creatingStep: false },
+				value: coalesceEndingCreateValue(
+					args.getItem(),
+					pending,
+					headerDraft
+				),
 			});
 		};
 	}, []);

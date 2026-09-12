@@ -34,6 +34,8 @@
   keyed them as `presets.theme`.
 - Closing a new custom preset (Escape or the close control) finishes the
   create step so the row is no longer marked as still being created.
+- Closing a new custom variable keeps the name you typed, so the picker
+  can still find it.
 - Adding a custom variable in Global Styles keeps the create editor open.
 - Editing a spacing (or other) preset size and pressing Escape keeps the
   new size instead of reverting to the previous value.
@@ -53,6 +55,8 @@
 - Creating-step name and id write the repeater store in the variable picker
   only; Global Styles keeps those drafts in the header until close.
 - Header draft patches that do not change stored fields skip subscriber notify.
+- Ending create merges header name/id drafts into the persist payload so
+  Global Styles can skip per-keystroke store writes without losing the typed slug.
 
 ### Automated Tests
 
