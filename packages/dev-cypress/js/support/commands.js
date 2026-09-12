@@ -1032,15 +1032,21 @@ export const registerCommands = () => {
 			);
 		}
 
-		const { timeout = 30000, force = false } = options;
+		const { timeout = 30000, force = true } = options;
 
 		return cy
 			.getByAriaControls(viewIds[tab], { timeout })
 			.then(($buttons) => {
-				const $visible = $buttons.filter(':visible');
+				const $inOverlay = $buttons.filter((_, el) =>
+					Boolean(
+						el.closest('.blockera-complementary-overlay')
+					)
+				);
+				const $pool = $inOverlay.length ? $inOverlay : $buttons;
+				const $visible = $pool.filter(':visible');
 				const $button = $visible.length
 					? $visible.first()
-					: $buttons.first();
+					: $pool.first();
 				const el = $button[0];
 
 				if (!el) {

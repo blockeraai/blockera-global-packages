@@ -33,6 +33,24 @@ export const registerComponentCommands = () => {
 		return cy.get(`[test-id="${selector}"]`, ...args);
 	});
 
+	const BLOCK_STYLES_ARIA_LABELS = new Set([
+		'Clipping',
+		'Add New Background',
+	]);
+
+	const maybeOpenBlockStylesTab = (ariaLabel) => {
+		const labels = Array.isArray(ariaLabel) ? ariaLabel : [ariaLabel];
+		if (!labels.some((label) => BLOCK_STYLES_ARIA_LABELS.has(label))) {
+			return cy.wrap(null);
+		}
+
+		return cy.get('body').then(($body) => {
+			if ($body.find('[aria-controls="styles-view"]').length) {
+				cy.switchBlockTab('styles', { force: true });
+			}
+		});
+	};
+
 	Cypress.Commands.add('getByAriaLabel', (selector, ...args) => {
 		// Second arg may be a string fallback label or Cypress options (e.g. { timeout }).
 		// Only treat strings as fallback labels — objects must pass through as options.
@@ -42,9 +60,12 @@ export const registerComponentCommands = () => {
 		const options = hasFallbackLabel ? args.slice(1) : args;
 
 		if (fallbackLabel) {
-			return cy.get(
-				`[aria-label="${selector}"], [aria-label="${fallbackLabel}"]`,
-				...options
+			return maybeOpenBlockStylesTab([selector, fallbackLabel]).then(
+				() =>
+					cy.get(
+						`[aria-label="${selector}"], [aria-label="${fallbackLabel}"]`,
+						...options
+					)
 			);
 		}
 
@@ -70,7 +91,9 @@ export const registerComponentCommands = () => {
 			);
 		}
 
-		return cy.get(`[aria-label="${selector}"]`, ...options);
+		return maybeOpenBlockStylesTab(selector).then(() =>
+			cy.get(`[aria-label="${selector}"]`, ...options)
+		);
 	});
 
 	// get parent container to have isolate aria for testing
@@ -89,19 +112,7 @@ export const registerComponentCommands = () => {
 					.get(selector, { timeout: 20000 })
 					.closest(`[data-cy=${parentsDataCy}]`);
 
-			// Clipping lives on the Styles tab; inspector defaults to Settings.
-			if (!labels.includes('Clipping')) {
-				return findContainer();
-			}
-
-			return cy
-				.get('body')
-				.then(($body) => {
-					if ($body.find('[aria-controls="styles-view"]').length) {
-						cy.switchBlockTab('styles');
-					}
-				})
-				.then(() => findContainer());
+			return maybeOpenBlockStylesTab(labels).then(() => findContainer());
 		}
 	);
 

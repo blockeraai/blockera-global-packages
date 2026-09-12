@@ -1,9 +1,11 @@
 ## Unreleased
 
 ### Automated Tests
-- `getParentContainer('Clipping')` opens the block Styles tab when that
-  inspector tab exists, so functionality specs still find Clipping while
-  Settings is the default.
+- `getParentContainer` and `getByAriaLabel` open the block Styles tab for
+  Clipping and Add New Background when that inspector tab exists, so
+  functionality specs still find those controls while Settings is default.
+- `switchBlockTab` prefers tabs inside the settings overlay and force-clicks
+  by default so a covered Gutenberg tab does not steal the click.
 
 ### Development Notes
 - `setColorControlValue` scrolls the control into view, commits the CSS
