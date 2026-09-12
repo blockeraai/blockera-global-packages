@@ -114,6 +114,18 @@ export function shouldSkipEditorSidebarApiSync(
 	);
 }
 
+/**
+ * `updateEditorSettings` from Global Styles hits `core/editor` without
+ * opening inserter or list view. Skip complementary reads on those ticks.
+ */
+export function shouldSkipEditorStoreSidebarSync(
+	primed: boolean,
+	inserterOpened: boolean,
+	listViewOpened: boolean
+): boolean {
+	return primed && !inserterOpened && !listViewOpened;
+}
+
 function shouldOpenComplementaryDock(
 	complementary: string | null | undefined,
 	previous: string | null | undefined
@@ -332,10 +344,29 @@ export function subscribeEditorSidebarApis(): () => void {
 		}
 	};
 
+	const syncEditorRequests = () => {
+		try {
+			const editorSelect = select(editorStore) as EditorSelect;
+			if (
+				shouldSkipEditorStoreSidebarSync(
+					primedComplementary,
+					!!editorSelect?.isInserterOpened?.(),
+					!!editorSelect?.isListViewOpened?.()
+				)
+			) {
+				return;
+			}
+			sync();
+		} catch {
+			// Editor stores may be unavailable outside canvas edit.
+		}
+	};
+
 	// Interface + editor + preferences: complementary hide is a preferences
 	// write, not an interface reducer update. Skip blockera/editor and core-data.
+	// Editor-store ticks from Global Styles settings sync skip complementary reads.
 	const unsubscribeInterface = subscribe(sync, 'core/interface');
-	const unsubscribeEditor = subscribe(sync, 'core/editor');
+	const unsubscribeEditor = subscribe(syncEditorRequests, 'core/editor');
 	const unsubscribePreferences = subscribe(sync, 'core/preferences');
 	sync();
 

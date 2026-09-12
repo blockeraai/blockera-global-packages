@@ -1,3 +1,13 @@
+## Unreleased
+
+### Improvements
+- Global Styles color and preset edits no longer re-read settings dock APIs
+  on editor-settings sync ticks that do not open inserter or list view.
+
+### Development Notes
+- Dock `core/editor` subscriber returns before complementary-area selects
+  when inserter and list view stay closed.
+
 ## [5.0.0] - 2026-09-12
 
 ### Improvements
