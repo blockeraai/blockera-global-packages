@@ -48,9 +48,8 @@
   skip extra CSS rebuilds, and keep inner editors attached.
 - In-flight create rows overlay from the repeater store for every creating-step
   preset group, not only index-keyed lists.
-- Skip theme.json persist when the repeater only added a creating-step row;
-  overlay the in-flight row from the last repeater value so the create
-  editor stays open.
+- Adding a creating-step row still persists theme.json so picker and Global
+  Styles lists keep the new row.
 - Creating-step name and id write the repeater store in the variable picker
   only; Global Styles keeps those drafts in the header until close.
 - Header draft patches that do not change stored fields skip subscriber notify.

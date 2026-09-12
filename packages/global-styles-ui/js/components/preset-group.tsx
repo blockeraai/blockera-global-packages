@@ -60,7 +60,6 @@ import {
 	isPresetRepeaterObjectValue,
 	normalizePresetRepeaterValueToIndexKeys,
 	overlayCreatingStepRowsFromRepeaterStore,
-	isOnlyNewCreatingStepRow,
 	variablesToPresetRepeaterValue,
 } from './preset-repeater-value-utils';
 import { PresetStateContainer } from './preset-state-container';
@@ -441,7 +440,6 @@ export const PresetGroup = memo(function PresetGroup({
 
 	const [creatingStepRevision, setCreatingStepRevision] = useState(0);
 	const creatingStepSlugsRef = useRef<Record<string, true>>({});
-	const lastCreatingRepeaterRawRef = useRef<unknown>(undefined);
 
 	const cleanRepeaterForPersist = useCallback(
 		(raw: Object) => {
@@ -497,8 +495,6 @@ export const PresetGroup = memo(function PresetGroup({
 					: newValue;
 
 			if (enableCreatingStep) {
-				lastCreatingRepeaterRawRef.current = raw;
-
 				const prevCreatingStepSlugs = creatingStepSlugsRef.current;
 				const nextCreatingStepSlugs =
 					syncVariablePickerCreatingStepSlugs(
@@ -516,21 +512,11 @@ export const PresetGroup = memo(function PresetGroup({
 				) {
 					setCreatingStepRevision((revision) => revision + 1);
 				}
-
-				if (
-					isOnlyNewCreatingStepRow(
-						variablesToPresetRepeaterValue(variables),
-						raw
-					)
-				) {
-					setCreatingStepRevision((revision) => revision + 1);
-					return;
-				}
 			}
 
 			onChange(cleanRepeaterForPersist(raw));
 		},
-		[onChange, cleanRepeaterForPersist, enableCreatingStep, variables]
+		[onChange, cleanRepeaterForPersist, enableCreatingStep]
 	);
 
 	const handleSelectableItemActivate = useCallback(
@@ -648,14 +634,9 @@ export const PresetGroup = memo(function PresetGroup({
 			return normalized;
 		}
 
-		const withStore = overlayCreatingStepRowsFromRepeaterStore(
+		return overlayCreatingStepRowsFromRepeaterStore(
 			normalized,
 			liveRepeaterStoreValue
-		);
-
-		return overlayCreatingStepRowsFromRepeaterStore(
-			withStore,
-			lastCreatingRepeaterRawRef.current
 		);
 	}, [
 		isVariablePicker,
@@ -840,8 +821,7 @@ export const PresetGroup = memo(function PresetGroup({
 				);
 			});
 
-		// Skip persist on add leaves theme.json empty while the repeater
-		// already has the creating-step row — do not sync that empty list back.
+		// Do not overwrite a live creating-step row with an empty parent list.
 		if (storeHasCreatingStepAheadOfProps) {
 			return;
 		}
