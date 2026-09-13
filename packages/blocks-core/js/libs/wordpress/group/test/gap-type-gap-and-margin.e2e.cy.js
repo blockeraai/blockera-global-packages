@@ -3,6 +3,7 @@ import {
 	createPost,
 	appendBlocks,
 	redirectToFrontPage,
+	getFlexDirectionToggle,
 } from '@blockera/dev-cypress/js/helpers';
 
 /**
@@ -206,7 +207,7 @@ describe('Gap → Functionality (Type: gap-and-margin)', () => {
 			});
 
 			cy.getParentContainer('Flex Layout').within(() => {
-				cy.getByAriaLabel('flex-direction: row').click();
+				getFlexDirectionToggle('row').click();
 			});
 
 			cy.getByDataTest('matrix-top-left-normal').click();
@@ -296,7 +297,7 @@ describe('Gap → Functionality (Type: gap-and-margin)', () => {
 			});
 
 			cy.getParentContainer('Flex Layout').within(() => {
-				cy.getByAriaLabel('flex-direction: row').click();
+				getFlexDirectionToggle('row').click();
 			});
 
 			cy.getByDataTest('matrix-top-left-normal').click();
@@ -404,7 +405,7 @@ describe('Gap → Functionality (Type: gap-and-margin)', () => {
 			});
 
 			cy.getParentContainer('Flex Layout').within(() => {
-				cy.getByAriaLabel('flex-direction: row').click();
+				getFlexDirectionToggle('row').click();
 			});
 
 			cy.getByDataTest('matrix-top-left-normal').click();
@@ -453,7 +454,7 @@ describe('Gap → Functionality (Type: gap-and-margin)', () => {
 			});
 
 			cy.getParentContainer('Flex Layout').within(() => {
-				cy.getByAriaLabel('flex-direction: row').click();
+				getFlexDirectionToggle('row').click();
 			});
 
 			cy.getByDataTest('matrix-top-right-normal').click();
@@ -572,7 +573,7 @@ describe('Gap → Functionality (Type: gap-and-margin)', () => {
 			});
 
 			cy.getParentContainer('Flex Layout').within(() => {
-				cy.getByAriaLabel('flex-direction: column').click();
+				getFlexDirectionToggle('column').click();
 			});
 
 			cy.getByDataTest('matrix-top-left-normal').click();
@@ -663,7 +664,7 @@ describe('Gap → Functionality (Type: gap-and-margin)', () => {
 			});
 
 			cy.getParentContainer('Flex Layout').within(() => {
-				cy.getByAriaLabel('flex-direction: column').click();
+				getFlexDirectionToggle('column').click();
 			});
 
 			cy.getByDataTest('matrix-top-left-normal').click();

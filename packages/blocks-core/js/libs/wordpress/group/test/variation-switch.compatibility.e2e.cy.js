@@ -9,6 +9,7 @@ import {
 	setBlockState,
 	addBlockState,
 	createPost,
+	getFlexDirectionToggle,
 } from '@blockera/dev-cypress/js/helpers';
 
 const testContent = `<!-- wp:group {"layout":{"type":"constrained"}} -->
@@ -119,7 +120,7 @@ describe('Group Block → Variation Switch Compatibility', () => {
 		cy.getParentContainer('Flex Layout')
 			.first()
 			.within(() => {
-				cy.getByAriaLabel('flex-direction: row')
+				getFlexDirectionToggle('row')
 					.invoke('attr', 'aria-checked')
 					.should('eq', 'true');
 			});
@@ -177,7 +178,7 @@ describe('Group Block → Variation Switch Compatibility', () => {
 		cy.getParentContainer('Flex Layout')
 			.first()
 			.within(() => {
-				cy.getByAriaLabel('flex-direction: column')
+				getFlexDirectionToggle('column')
 					.invoke('attr', 'aria-checked')
 					.should('eq', 'true');
 			});
@@ -333,7 +334,7 @@ describe('Group Block → Variation Switch Compatibility', () => {
 		});
 
 		cy.getParentContainer('Flex Layout').within(() => {
-			cy.getByAriaLabel('flex-direction: row').click();
+			getFlexDirectionToggle('row').click();
 		});
 
 		// assert current variation
@@ -364,7 +365,7 @@ describe('Group Block → Variation Switch Compatibility', () => {
 		//
 
 		cy.getParentContainer('Flex Layout').within(() => {
-			cy.getByAriaLabel('flex-direction: column').click();
+			getFlexDirectionToggle('column').click();
 		});
 
 		cy.checkActiveBlockVariation('group-stack');
@@ -394,7 +395,7 @@ describe('Group Block → Variation Switch Compatibility', () => {
 		//
 
 		cy.getParentContainer('Flex Layout').within(() => {
-			cy.getByAriaLabel('flex-direction: row').click();
+			getFlexDirectionToggle('row').click();
 		});
 
 		cy.checkActiveBlockVariation('group-row');
@@ -569,7 +570,7 @@ describe('Group Block → Variation Switch Compatibility', () => {
 
 				if (item === 'Flex') {
 					cy.getParentContainer('Flex Layout').within(() => {
-						cy.getByAriaLabel('flex-direction: row').click();
+						getFlexDirectionToggle('row').click();
 					});
 				}
 

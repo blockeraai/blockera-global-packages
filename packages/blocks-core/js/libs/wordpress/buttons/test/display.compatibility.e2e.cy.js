@@ -6,6 +6,7 @@ import {
 	getSelectedBlock,
 	assertBlockData,
 	createPost,
+	getFlexDirectionToggle,
 } from '@blockera/dev-cypress/js/helpers';
 
 describe('Buttons Block → Display → WP Data Compatibility', () => {
@@ -54,7 +55,7 @@ describe('Buttons Block → Display → WP Data Compatibility', () => {
 		//
 
 		cy.getParentContainer('Flex Layout').within(() => {
-			cy.getByAriaLabel('flex-direction: column').click();
+			getFlexDirectionToggle('column').click();
 		});
 
 		assertBlockData((data) => {
@@ -127,7 +128,7 @@ describe('Buttons Block → Display → WP Data Compatibility', () => {
 		//
 
 		cy.getParentContainer('Flex Layout').within(() => {
-			cy.getByAriaLabel('flex-direction: column').click();
+			getFlexDirectionToggle('column').click();
 		});
 
 		assertBlockData((data) => {
@@ -200,7 +201,7 @@ describe('Buttons Block → Display → WP Data Compatibility', () => {
 		//
 
 		cy.getParentContainer('Flex Layout').within(() => {
-			cy.getByAriaLabel('flex-direction: row').click();
+			getFlexDirectionToggle('row').click();
 		});
 
 		assertBlockData((data) => {

@@ -307,9 +307,7 @@ function matchesScreenAxes(
 ): boolean {
 	const layout = flexLayoutFromScreenAxes(direction, vertical, horizontal);
 
-	return (
-		flexAlign === layout.flexAlign && flexJustify === layout.flexJustify
-	);
+	return flexAlign === layout.flexAlign && flexJustify === layout.flexJustify;
 }
 
 export default function LayoutMatrixControl({
@@ -414,12 +412,8 @@ export default function LayoutMatrixControl({
 	}
 
 	const isRowDirection = direction === 'row';
-	const xAxisKey: FlexAxisKey = isRowDirection
-		? 'flexJustify'
-		: 'flexAlign';
-	const yAxisKey: FlexAxisKey = isRowDirection
-		? 'flexAlign'
-		: 'flexJustify';
+	const xAxisKey: FlexAxisKey = isRowDirection ? 'flexJustify' : 'flexAlign';
+	const yAxisKey: FlexAxisKey = isRowDirection ? 'flexAlign' : 'flexJustify';
 
 	const clickTimerRef = useRef<?TimeoutID>();
 
@@ -507,11 +501,27 @@ export default function LayoutMatrixControl({
 								label: __('Row', 'blockera'),
 								'aria-label': 'flex-direction: row',
 								value: 'row',
+								icon: (
+									<Icon
+										library="wp"
+										icon="row"
+										iconSize="20"
+										data-test="layout-matrix-direction-row"
+									/>
+								),
 							},
 							{
 								label: __('Column', 'blockera'),
 								'aria-label': 'flex-direction: column',
 								value: 'column',
+								icon: (
+									<Icon
+										library="wp"
+										icon="stack"
+										iconSize="20"
+										data-test="layout-matrix-direction-column"
+									/>
+								),
 							},
 						]}
 						defaultValue={direction}

@@ -52,6 +52,21 @@ export const registerComponentCommands = () => {
 		});
 	};
 
+	/**
+	 * Sidebar + complementary overlay can both mount inspector controls.
+	 * `.within()` requires a single subject, so prefer overlay (same as
+	 * `switchBlockTab`), then a visible node, then the last match.
+	 */
+	const pickUniqueInspectorSubject = ($els) => {
+		const $inOverlay = $els.filter((_, el) =>
+			Boolean(el.closest('.blockera-complementary-overlay'))
+		);
+		const $pool = $inOverlay.length ? $inOverlay : $els;
+		const $visible = $pool.filter(':visible');
+
+		return $visible.length ? $visible.last() : $pool.last();
+	};
+
 	Cypress.Commands.add('getByAriaLabel', (selector, ...args) => {
 		// Second arg may be a string fallback label or Cypress options (e.g. { timeout }).
 		// Only treat strings as fallback labels — objects must pass through as options.
@@ -111,7 +126,10 @@ export const registerComponentCommands = () => {
 			const findContainer = () =>
 				cy
 					.get(selector, { timeout: 20000 })
-					.closest(`[data-cy=${parentsDataCy}]`);
+					.closest(`[data-cy=${parentsDataCy}]`)
+					.then(($containers) =>
+						cy.wrap(pickUniqueInspectorSubject($containers))
+					);
 
 			return maybeOpenBlockStylesTab(labels).then(() => findContainer());
 		}

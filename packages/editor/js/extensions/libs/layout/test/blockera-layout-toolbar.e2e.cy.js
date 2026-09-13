@@ -7,6 +7,7 @@ import {
 	assertBlockData,
 	getSelectedBlock,
 	setDeviceType,
+	getFlexDirectionToggle,
 } from '@blockera/dev-cypress/js/helpers';
 
 const TOOLBAR_SCOPE = '[data-test="data-blockera-layout-toolbar"]';
@@ -243,7 +244,7 @@ describe('Blockera layout toolbar', () => {
 
 		it('remaps toolbar values when flex direction is column', () => {
 			cy.getParentContainer('Flex Layout').within(() => {
-				cy.getByAriaLabel('flex-direction: column').click();
+				getFlexDirectionToggle('column').click();
 			});
 
 			clickHorizontalToolbarOption(0);
@@ -265,7 +266,7 @@ describe('Blockera layout toolbar', () => {
 
 		it('supports space-between and space-around on vertical align when column', () => {
 			cy.getParentContainer('Flex Layout').within(() => {
-				cy.getByAriaLabel('flex-direction: column').click();
+				getFlexDirectionToggle('column').click();
 			});
 
 			clickVerticalToolbarOption(4);

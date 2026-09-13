@@ -4,6 +4,7 @@ import { modifyControlValue } from '../../../store/actions';
 import { controlReducer } from '../../../store/reducers/control-reducer';
 import { getControlValue } from '../../../store/selectors';
 import { nanoid } from 'nanoid';
+import { getFlexDirectionToggle } from '@blockera/dev-cypress/js/helpers/controls';
 //dense
 
 describe('Layout Matrix Control component testing', () => {
@@ -26,6 +27,12 @@ describe('Layout Matrix Control component testing', () => {
 			cy.getByDataTest('layout-matrix').should('exist');
 			cy.getByDataTest('layout-matrix-axis-controls').should('exist');
 			cy.contains('Dense').should('not.exist');
+			getFlexDirectionToggle('row').within(() => {
+				cy.get('.toggle-select-option-label').should('not.exist');
+			});
+			getFlexDirectionToggle('column').within(() => {
+				cy.get('.toggle-select-option-label').should('not.exist');
+			});
 		});
 
 		it('should render correctly, with defaultValue', () => {
@@ -42,7 +49,7 @@ describe('Layout Matrix Control component testing', () => {
 				),
 			});
 
-			cy.getByAriaLabel('flex-direction: column').should(
+			getFlexDirectionToggle('column').should(
 				'have.attr',
 				'aria-checked',
 				'true'
@@ -55,7 +62,7 @@ describe('Layout Matrix Control component testing', () => {
 				value,
 			});
 
-			cy.getByAriaLabel('flex-direction: row').should(
+			getFlexDirectionToggle('row').should(
 				'have.attr',
 				'aria-checked',
 				'true'
@@ -127,7 +134,7 @@ describe('Layout Matrix Control component testing', () => {
 					'exist'
 				);
 
-				cy.getByAriaLabel('flex-direction: column').click();
+				getFlexDirectionToggle('column').click();
 
 				cy.getByDataTest('matrix-normal-center-center-row').should(
 					'not.exist'
@@ -157,7 +164,7 @@ describe('Layout Matrix Control component testing', () => {
 					'exist'
 				);
 
-				cy.getByAriaLabel('flex-direction: row').click();
+				getFlexDirectionToggle('row').click();
 
 				cy.getByDataTest('matrix-normal-center-center-column').should(
 					'not.exist'
@@ -198,7 +205,7 @@ describe('Layout Matrix Control component testing', () => {
 				checkSelectOption(0, 'layout-matrix-justify-center');
 				checkSelectOption(1, 'layout-matrix-align-start');
 
-				cy.getByAriaLabel('flex-direction: column').click();
+				getFlexDirectionToggle('column').click();
 
 				checkSelectOption(0, 'layout-matrix-align-center');
 				checkSelectOption(1, 'layout-matrix-justify-start');
@@ -225,7 +232,7 @@ describe('Layout Matrix Control component testing', () => {
 					name,
 				});
 
-				cy.getByAriaLabel('flex-direction: column').click();
+				getFlexDirectionToggle('column').click();
 
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
@@ -235,7 +242,7 @@ describe('Layout Matrix Control component testing', () => {
 					});
 				});
 
-				cy.getByAriaLabel('flex-direction: row').click();
+				getFlexDirectionToggle('row').click();
 
 				cy.get('body').then(() => {
 					expect(getControlValue(name)).to.deep.include({
@@ -794,7 +801,7 @@ describe('Layout Matrix Control component testing', () => {
 					name,
 				});
 
-				cy.getByAriaLabel('flex-direction: column').click();
+				getFlexDirectionToggle('column').click();
 				cy.get('@onChange').should('have.been.called');
 			});
 		});

@@ -5,6 +5,7 @@ import {
 	redirectToFrontPage,
 	createPost,
 	appendBlocks,
+	getFlexDirectionToggle,
 } from '@blockera/dev-cypress/js/helpers';
 
 const FLEX_GROUP = `<!-- wp:group {"layout":{"type":"flex","flexWrap":"nowrap"}} -->
@@ -339,7 +340,7 @@ function configureBlockMatrixAlignment(blockIndex, type, point) {
 	ensureBlockDisplayFlex(blockIndex);
 
 	cy.getParentContainer('Flex Layout').within(() => {
-		cy.getByAriaLabel(type).click();
+		getFlexDirectionToggle(getDirectionSuffix(type)).click();
 	});
 
 	cy.getByDataTest(point.testId).click();
@@ -414,7 +415,7 @@ function configureBlockSpecialUnit(blockIndex, type, unit) {
 	ensureBlockDisplayFlex(blockIndex);
 
 	cy.getParentContainer('Flex Layout').within(() => {
-		cy.getByAriaLabel(type).click();
+		getFlexDirectionToggle(getDirectionSuffix(type)).click();
 	});
 
 	// Matrix single-click commits are deferred 200ms (dblclick detection). Wait
@@ -488,7 +489,7 @@ describe('Flex Layout → Functionality', () => {
 		cy.getParentContainer('Flex Layout')
 			.first()
 			.within(() => {
-				cy.getByAriaLabel('flex-direction: row').click();
+				getFlexDirectionToggle('row').click();
 			});
 
 		cy.getBlock('core/group').should('have.css', 'flex-direction', 'row');
@@ -504,7 +505,7 @@ describe('Flex Layout → Functionality', () => {
 		cy.getParentContainer('Flex Layout')
 			.first()
 			.within(() => {
-				cy.getByAriaLabel('flex-direction: column').click();
+				getFlexDirectionToggle('column').click();
 			});
 
 		cy.getBlock('core/group').should(

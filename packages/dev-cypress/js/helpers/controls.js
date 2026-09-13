@@ -82,3 +82,24 @@ export function toggleSettingCheckbox(checkboxLabelText) {
 		.find('.components-form-toggle__input')
 		.click();
 }
+
+/**
+ * Flex Layout direction toggle (WordPress row / stack icons).
+ * Aria-label stays `flex-direction: row|column`.
+ *
+ * @param {'row'|'column'} direction
+ */
+export function getFlexDirectionToggle(direction) {
+	return cy
+		.getByAriaLabel(`flex-direction: ${direction}`)
+		.should(($button) => {
+			expect(
+				$button.find(
+					`[data-test="layout-matrix-direction-${direction}"]`
+				).length,
+				`WordPress ${
+					direction === 'column' ? 'stack' : 'row'
+				} icon on flex-direction: ${direction}`
+			).to.be.at.least(1);
+		});
+}

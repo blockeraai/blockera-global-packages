@@ -6,6 +6,7 @@ import {
 	getSelectedBlock,
 	assertBlockData,
 	createPost,
+	getFlexDirectionToggle,
 } from '@blockera/dev-cypress/js/helpers';
 
 const COLUMN_STACK_GROUP = `<!-- wp:group {"layout":{"type":"flex","orientation":"vertical","justifyContent":"right","verticalAlignment":"top"}} -->
@@ -109,7 +110,7 @@ describe('Flex Layout → WP Data Compatibility', () => {
 		openStackGroupInBlockera();
 
 		cy.getParentContainer('Flex Layout').within(() => {
-			cy.getByAriaLabel('flex-direction: row').click();
+			getFlexDirectionToggle('row').click();
 		});
 
 		assertBlockData((data) => {
@@ -127,7 +128,7 @@ describe('Flex Layout → WP Data Compatibility', () => {
 		});
 
 		cy.getParentContainer('Flex Layout').within(() => {
-			cy.getByAriaLabel('flex-direction: column').click();
+			getFlexDirectionToggle('column').click();
 		});
 
 		assertBlockData((data) => {
@@ -149,7 +150,7 @@ describe('Flex Layout → WP Data Compatibility', () => {
 		openStackGroupInBlockera();
 
 		cy.getParentContainer('Flex Layout').within(() => {
-			cy.getByAriaLabel('flex-direction: row').click();
+			getFlexDirectionToggle('row').click();
 		});
 
 		cy.getParentContainer('Flex Layout').within(() => {

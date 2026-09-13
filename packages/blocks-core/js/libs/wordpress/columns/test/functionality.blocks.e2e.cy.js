@@ -8,6 +8,7 @@ import {
 	setParentBlock,
 	setInnerBlock,
 	redirectToFrontPage,
+	getFlexDirectionToggle,
 } from '@blockera/dev-cypress/js/helpers';
 
 describe('Columns Block', () => {
@@ -494,7 +495,7 @@ describe('Columns Block', () => {
 		cy.getParentContainer('Flex Layout')
 			.first()
 			.within(() => {
-				cy.getByAriaLabel('flex-direction: column').click();
+				getFlexDirectionToggle('column').click();
 			});
 
 		cy.getBlock('core/columns').should(

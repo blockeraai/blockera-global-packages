@@ -31,6 +31,8 @@
   not from “still mounted for the close animation”.
 
 ### Automated Tests
+- Flex Layout e2e uses `getFlexDirectionToggle` so direction clicks assert
+  WordPress row and stack icons.
 - Sidebar layout Cypress specs assert that list view is visible on the
   right dock right after a drop, and that the settings overlay matches the
   settings pane.

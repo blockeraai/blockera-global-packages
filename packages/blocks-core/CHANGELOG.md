@@ -1,3 +1,12 @@
+## Unreleased
+
+### Automated Tests
+- Image selectors e2e asserts the front-end figure with
+  `.blockera-block.wp-block-image` so `.within()` is not called on extra
+  Blockera wrappers.
+- Flex Layout e2e uses `getFlexDirectionToggle` so direction clicks assert
+  WordPress row and stack icons.
+
 ## [6.0.0] - 2026-09-12
 
 ### Automated Tests
