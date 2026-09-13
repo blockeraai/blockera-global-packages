@@ -10,6 +10,7 @@ import { isString } from '@blockera/utils';
  * Internal dependencies
  */
 import {
+	closeBlockInserter,
 	closeWelcomeGuide,
 	disableGutenbergFeatures,
 	hexStringToByte,
@@ -312,10 +313,10 @@ export const registerCommands = () => {
 		'activateMoreSettingsItem',
 		(settingsLabel, itemName) => {
 			// open settings
-			cy.get(`[aria-label="${settingsLabel}"]`).click();
+			cy.get(`[aria-label="${settingsLabel}"]`).click({ force: true });
 
 			// activate item
-			cy.get(`[aria-label="Activate ${itemName}"]`).click();
+			cy.get(`[aria-label="Activate ${itemName}"]`).click({ force: true });
 
 			cy.get('.components-popover.extension-settings')
 				.last()
@@ -1018,16 +1019,7 @@ export const registerCommands = () => {
 				?.dispatch?.('blockera/editor-persistence')
 				?.setSecondarySidebarOpen?.(false);
 		});
-		cy.get('body').then(($body) => {
-			if (
-				$body.find('[data-test="blockera-sidebar-pane-inserter"]')
-					.length
-			) {
-				cy.get('[data-test="blockera-sidebar-pane-inserter"]').should(
-					'not.exist'
-				);
-			}
-		});
+		closeBlockInserter();
 
 		return cy
 			.get(

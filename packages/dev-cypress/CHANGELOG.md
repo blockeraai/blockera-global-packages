@@ -1,6 +1,10 @@
 ## Unreleased
 
 ### Automated Tests
+- `openGlobalStylesPanel` closes the left inserter via the secondary-sidebar
+  toggle and does not require the pane to unmount.
+- `activateMoreSettingsItem` force-clicks so a covering dock does not steal
+  the More Size Settings click.
 - `assertColorControlValue` requeries the color control on each retry so
   inner-block and state switches that remount `color-label` do not fail
   with a detached Cypress subject.
