@@ -268,24 +268,26 @@ describe('Image Block → Selectors test', () => {
 		savePage();
 		redirectToFrontPage();
 
-		cy.get('.blockera-block').within(() => {
-			cy.get('img')
-				.first()
-				.should('have.css', 'width', '100px')
-				.should('have.css', 'min-width', '80px')
-				.should('have.css', 'max-width', '120px')
-				.should('have.css', 'height', '100px')
-				.should('have.css', 'min-height', '80px')
-				.should('have.css', 'max-height', '120px')
-				.should('have.css', 'border', '5px dashed rgb(55, 230, 212)')
-				.should(
-					'have.css',
-					'box-shadow',
-					'rgba(197, 238, 240, 0.67) 10px 50px 30px 40px'
-				)
-				.should('have.css', 'border-radius', '25px')
-				.should('have.css', 'filter')
-				.and('match', /^drop-shadow\(/);
-		});
+		cy.get('.blockera-block.wp-block-image')
+			.first()
+			.within(() => {
+				cy.get('img')
+					.first()
+					.should('have.css', 'width', '100px')
+					.should('have.css', 'min-width', '80px')
+					.should('have.css', 'max-width', '120px')
+					.should('have.css', 'height', '100px')
+					.should('have.css', 'min-height', '80px')
+					.should('have.css', 'max-height', '120px')
+					.should('have.css', 'border', '5px dashed rgb(55, 230, 212)')
+					.should(
+						'have.css',
+						'box-shadow',
+						'rgba(197, 238, 240, 0.67) 10px 50px 30px 40px'
+					)
+					.should('have.css', 'border-radius', '25px')
+					.should('have.css', 'filter')
+					.and('match', /^drop-shadow\(/);
+			});
 	});
 });
