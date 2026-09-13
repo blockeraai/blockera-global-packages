@@ -17,11 +17,16 @@ import {
 	setPresetVariablesViewMode,
 } from '@blockera/dev-cypress/js/helpers/preset-variables-view';
 import {
+	assertEditorThemeBaseHasMuColorTaxonomy,
 	clearVariablePickerSearch,
 	openParagraphTextColorVariablePickerPopover,
 	typeInVariablePickerSearch,
 	withinVariablePickerPopover,
 } from '../colors/test/e2e-variable-variations-helpers';
+
+const MIXED_LEAF_SLUG = 'e-2-e-tax-mix-leaf';
+const MIXED_LEAF_NAME =
+	'E2E Tax Mixed Group/E2E Tax Mixed Category/E2E Tax Mixed Leaf';
 
 const MU_FIX = 'packages/global-styles-ui/js/colors/test/fixtures';
 
@@ -46,7 +51,7 @@ describe('Preset variables view mode (grouped/list)', () => {
 			openGlobalStylesColorPaletteScreen();
 
 			getPresetVariablesSummaryRow().should('be.visible');
-			expectPresetVariablesCount(2);
+			expectPresetVariablesCount(22);
 			expectPresetVariablesViewModeSelectVisible(true);
 			expectPresetTaxonomyGroupedVisible();
 		});
@@ -126,7 +131,7 @@ describe('Preset variables view mode (grouped/list)', () => {
 			openGlobalStylesColorPaletteScreen();
 
 			getPresetVariablesSummaryRow().should('be.visible');
-			expectPresetVariablesCount(1);
+			expectPresetVariablesCount(21);
 			expectPresetVariablesViewModeSelectVisible(false);
 		});
 	});
@@ -136,19 +141,38 @@ describe('Preset variables view mode (grouped/list)', () => {
 		const MU_NAME = 'e2e-color-taxonomy-mixed-simple.php';
 
 		beforeEach(() => {
-			activateMuPlugin({ pluginPath: MU, pluginName: MU_NAME });
+			return activateMuPlugin({ pluginPath: MU, pluginName: MU_NAME });
 		});
 
 		afterEach(() => {
 			return deactivateMuPlugin({ pluginPath: MU, pluginName: MU_NAME });
 		});
 
+		function openPickerWithMixedTaxonomyPresets() {
+			openParagraphTextColorVariablePickerPopover({
+				resetUserGlobalStyles: true,
+			});
+
+			assertEditorThemeBaseHasMuColorTaxonomy(
+				MIXED_LEAF_SLUG,
+				MIXED_LEAF_NAME
+			);
+
+			withinVariablePickerPopover(() => {
+				cy.get(`[data-variable-slug="${MIXED_LEAF_SLUG}"]`, {
+					timeout: 30000,
+				})
+					.first()
+					.should('exist');
+			});
+		}
+
 		it('shows summary row and switches to list view inside the picker', () => {
-			openParagraphTextColorVariablePickerPopover();
+			openPickerWithMixedTaxonomyPresets();
 
 			withinVariablePickerPopover(() => {
 				getPresetVariablesSummaryRow().should('be.visible');
-				expectPresetVariablesCount('10 variables');
+				expectPresetVariablesCount(10);
 				expectPresetVariablesViewModeSelectVisible(true);
 				expectPresetTaxonomyGroupedVisible();
 
@@ -156,14 +180,14 @@ describe('Preset variables view mode (grouped/list)', () => {
 				expectPresetTaxonomyGroupedHidden();
 				cy.contains(
 					'[data-cy="color-repeater-item-header"] [data-cy="header-label"]',
-					'E2E Tax Mixed Group/E2E Tax Mixed Category/E2E Tax Mixed Leaf',
+					MIXED_LEAF_NAME,
 					{ timeout: 20000 }
 				).should('be.visible');
 			});
 		});
 
 		it('hides view select during search and shows filtered match count', () => {
-			openParagraphTextColorVariablePickerPopover();
+			openPickerWithMixedTaxonomyPresets();
 
 			typeInVariablePickerSearch('Mixed Leaf');
 
@@ -176,7 +200,7 @@ describe('Preset variables view mode (grouped/list)', () => {
 
 			withinVariablePickerPopover(() => {
 				expectPresetVariablesViewModeSelectVisible(true);
-				expectPresetVariablesCount('10 variables');
+				expectPresetVariablesCount(10);
 			});
 		});
 	});

@@ -43,9 +43,21 @@ export function expandTaxonomyCategoryAccordion(categoryLabel) {
 		});
 }
 
-/** Opens paragraph → Style → Text Color → variable picker popover. */
-export function openParagraphTextColorVariablePickerPopover() {
+/**
+ * Opens paragraph → Style → Text Color → variable picker popover.
+ *
+ * @param {{ resetUserGlobalStyles?: boolean }} [options]
+ *        When true, discard persisted user palette overrides so MU theme.json
+ *        fixtures are what the picker reads (same as search-fixture E2E).
+ */
+export function openParagraphTextColorVariablePickerPopover({
+	resetUserGlobalStyles = false,
+} = {}) {
 	createPost();
+
+	if (resetUserGlobalStyles) {
+		prepareUserGlobalStylesForVariablePickerE2E();
+	}
 
 	cy.getBlock('default').type('Color variable variations.', { delay: 0 });
 	cy.switchBlockTab('styles');
@@ -602,7 +614,7 @@ function waitForColorVariablePickerSearchFixturesInEditorStore() {
 }
 
 /** Waits for global styles entity + discards persisted user palette overrides. */
-function prepareGlobalStylesForVariablePickerSearchE2E() {
+function prepareUserGlobalStylesForVariablePickerE2E() {
 	cy.window({ timeout: 30000 }).should((win) => {
 		const select = win.wp?.data?.select?.('core');
 		const recordId =
@@ -656,7 +668,7 @@ function createPostForVariablePickerSearchE2E() {
 
 			return getWPDataObject();
 		})
-		.then(() => prepareGlobalStylesForVariablePickerSearchE2E());
+		.then(() => prepareUserGlobalStylesForVariablePickerE2E());
 }
 
 /** Waits until every MU search-fixture slug exists in the open picker catalog. */

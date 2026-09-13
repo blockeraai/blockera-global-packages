@@ -1,6 +1,9 @@
 ## Unreleased
 
 ### Automated Tests
+- Preset variables summary-row helpers wait for the picker summary slot
+  instead of matching the first fallback row, and assert the full
+  “N variables” count label.
 - `openGlobalStylesPanel` closes the left inserter via the secondary-sidebar
   toggle and does not require the pane to unmount.
 - `activateMoreSettingsItem` force-clicks so a covering dock does not steal

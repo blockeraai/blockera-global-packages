@@ -11,17 +11,29 @@ export const PRESET_VARIABLES_VIEW_MODE_STORAGE_KEY =
  * Variable picker portals the summary row into `var-picker-summary-slot` below search.
  * Prefer that row over legacy per-section summary rows in the catalog fallback path.
  *
- * Uses scoped selectors (not `body`) so callers work inside `.within(popover)`.
+ * Uses `cy.root()` (not `body`) so callers work inside `.within(popover)`.
+ * When the picker slot exists, wait for the portaled row instead of matching
+ * another `[data-test="preset-variables-summary-row"]` on the first retry.
  *
  * @returns {Cypress.Chainable<JQuery<HTMLElement>>}
  */
 export function getPresetVariablesSummaryRow() {
-	return cy
-		.get(
-			'[data-test="var-picker-summary-slot"] [data-test="preset-variables-summary-row"], [data-test="preset-variables-summary-row"]',
-			{ timeout: 20000 }
-		)
-		.first();
+	return cy.root().then(($root) => {
+		if ($root.find('[data-test="var-picker-summary-slot"]').length) {
+			return cy
+				.get(
+					'[data-test="var-picker-summary-slot"] [data-test="preset-variables-summary-row"]',
+					{ timeout: 20000 }
+				)
+				.first();
+		}
+
+		return cy
+			.get('[data-test="preset-variables-summary-row"]', {
+				timeout: 20000,
+			})
+			.first();
+	});
 }
 
 /**
@@ -66,12 +78,15 @@ export function expectPresetTaxonomyGroupedHidden() {
 }
 
 /**
- * @param {number} count
+ * @param {number|string} count Number of variables, or the full label (e.g. `10 variables`).
  */
 export function expectPresetVariablesCount(count) {
+	const label =
+		typeof count === 'number' ? `${count} variables` : String(count);
+
 	getPresetVariablesSummaryRow()
 		.find('[data-test="preset-variables-count"]')
-		.should('contain.text', String(count));
+		.should('have.text', label);
 }
 
 /**

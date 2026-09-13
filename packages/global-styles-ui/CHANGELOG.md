@@ -1,6 +1,9 @@
 ## Unreleased
 
 ### Automated Tests
+- Preset variables view-mode specs assert the full “N variables” label
+  (site editor includes theme and default; the picker lists ten colors),
+  reset user Global Styles in the picker, and wait for the MU taxonomy leaf.
 - Cover resolving theme palette rows from a flat `palette` list and from
   numeric `palette[]` keys.
 
