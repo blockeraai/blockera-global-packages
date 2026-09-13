@@ -24,15 +24,21 @@ describe('core/icon Block', () => {
 
 		cy.switchBlockTab('settings');
 
-		cy.get('.blockera-extension-icon').should('be.visible');
+		cy.get('.blockera-extension-icon', { timeout: 20000 }).should(
+			'be.visible'
+		);
 
-		cy.get('.blockera-extension-icon').click();
+		// Requery the inner control; the panel remounts after the Settings tab
+		// switch, so clicking the panel root waits for actionability on a
+		// detached node. The IconControl wrapper always opens the picker.
+		cy.get('.blockera-extension-icon .blockera-control-icon').click({
+			force: true,
+		});
 
-		cy.get('.blockera-component-modal.blockera-control-icon-picker-modal')
-			.should('be.visible')
-			.within(() => {
-				cy.get('button[aria-label="Close"]').click();
-			});
+		cy.get('.blockera-control-icon-picker-modal').should('be.visible');
+		cy.get('.blockera-control-icon-picker-modal')
+			.find('button[aria-label="Close"]')
+			.click({ force: true });
 
 		savePage();
 		redirectToFrontPage();

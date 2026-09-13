@@ -1,6 +1,9 @@
 ## Unreleased
 
 ### Automated Tests
+- Icon block e2e opens the inspector picker via the inner IconControl
+  (`force` click) so a Settings-tab remount does not leave Cypress on a
+  detached `.blockera-extension-icon` panel.
 - Image selectors e2e asserts the front-end figure with
   `.blockera-block.wp-block-image` so `.within()` is not called on extra
   Blockera wrappers.
