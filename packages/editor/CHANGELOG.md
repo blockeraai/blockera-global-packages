@@ -33,6 +33,8 @@
   not from “still mounted for the close animation”.
 
 ### Automated Tests
+- Inner-blocks advanced-label e2e requeries Text Color after inspector
+  remounts instead of a beforeEach `color-label` alias.
 - Global Styles min-height Cover specs requery the Min Height input after
   inspector remounts instead of a stale `within()` alias.
 - Inner-block color assertions requery the live Text Color control after

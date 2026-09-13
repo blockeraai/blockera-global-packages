@@ -21,11 +21,6 @@ describe('Inner Blocks label testing', () => {
 		);
 
 		cy.getBlock('core/paragraph').click();
-
-		// Alias
-		cy.getParentContainer('Text Color').within(() => {
-			cy.getByDataCy('color-label').as('color-label');
-		});
 	});
 
 	it('should display changed value on Test Color -> Inner -> Normal -> Desktop', () => {
@@ -50,7 +45,7 @@ describe('Inner Blocks label testing', () => {
 		);
 
 		// Assert control
-		cy.get('@color-label').should('include.text', 'cccccc');
+		cy.assertColorControlValue('Text Color', 'cccccc');
 
 		/**
 		 * Pseudo State (Hover)
@@ -65,7 +60,7 @@ describe('Inner Blocks label testing', () => {
 		);
 
 		// Assert control
-		cy.get('@color-label').should('include.text', 'ccc');
+		cy.assertColorControlValue('Text Color', 'ccc');
 
 		// Assert state graph
 		cy.checkStateGraph('Typography', 'Text Color', {
@@ -138,7 +133,7 @@ describe('Inner Blocks label testing', () => {
 			'changed-in-secondary-state'
 		);
 		// Assert control
-		cy.get('@color-label').should('include.text', 'cccccc');
+		cy.assertColorControlValue('Text Color', 'cccccc');
 
 		/**
 		 * Normal
@@ -153,7 +148,7 @@ describe('Inner Blocks label testing', () => {
 		);
 
 		// Assert control in normal state
-		cy.get('@color-label').should('include.text', 'None');
+		cy.assertColorControlValue('Text Color', 'None');
 
 		// Assert state graph
 		cy.checkStateGraph('Typography', 'Text Color', {
@@ -173,7 +168,7 @@ describe('Inner Blocks label testing', () => {
 		);
 
 		// Assert control
-		cy.get('@color-label').should('include.text', 'None');
+		cy.assertColorControlValue('Text Color', 'None');
 
 		// Assert state graph
 		cy.checkStateGraph('Typography', 'Text Color', {
@@ -346,7 +341,7 @@ describe('Inner Blocks label testing', () => {
 				);
 
 				// Assert control
-				cy.get('@color-label').should('include.text', 'c4c4c4');
+				cy.assertColorControlValue('Text Color', 'c4c4c4');
 			}
 		);
 
@@ -454,10 +449,7 @@ describe('Inner Blocks label testing', () => {
 								);
 
 								// Assert control
-								cy.get('@color-label').should(
-									'include.text',
-									'ccc'
-								);
+								cy.assertColorControlValue('Text Color', 'ccc');
 
 								// Assert state graph
 								cy.checkStateGraph('Typography', 'Text Color', {
@@ -504,10 +496,7 @@ describe('Inner Blocks label testing', () => {
 								);
 
 								// Assert control
-								cy.get('@color-label').should(
-									'include.text',
-									'bbb'
-								);
+								cy.assertColorControlValue('Text Color', 'bbb');
 
 								// Assert state graph
 								cy.checkStateGraph('Typography', 'Text Color', {
@@ -554,7 +543,7 @@ describe('Inner Blocks label testing', () => {
 						);
 
 						// Assert control
-						cy.get('@color-label').should('include.text', 'fff');
+						cy.assertColorControlValue('Text Color', 'fff');
 
 						// Assert state graph
 						cy.checkStateGraph('Typography', 'Text Color', {
@@ -596,7 +585,7 @@ describe('Inner Blocks label testing', () => {
 						);
 
 						// Assert control
-						cy.get('@color-label').should('include.text', 'ccc');
+						cy.assertColorControlValue('Text Color', 'ccc');
 
 						// Assert state graph
 						cy.checkStateGraph('Typography', 'Text Color', {
@@ -638,7 +627,7 @@ describe('Inner Blocks label testing', () => {
 						);
 
 						// Assert control
-						cy.get('@color-label').should('include.text', 'ccc');
+						cy.assertColorControlValue('Text Color', 'ccc');
 
 						// Assert state graph
 						cy.checkStateGraph('Typography', 'Text Color', {
@@ -678,7 +667,7 @@ describe('Inner Blocks label testing', () => {
 						);
 
 						// Assert control
-						cy.get('@color-label').should('include.text', 'bbb');
+						cy.assertColorControlValue('Text Color', 'bbb');
 
 						// Assert state graph
 						cy.checkStateGraph('Typography', 'Text Color', {
@@ -719,7 +708,7 @@ describe('Inner Blocks label testing', () => {
 						);
 
 						// Assert control
-						cy.get('@color-label').should('include.text', 'ccc');
+						cy.assertColorControlValue('Text Color', 'ccc');
 
 						// Assert state graph
 						cy.checkStateGraph('Typography', 'Text Color', {
@@ -759,7 +748,7 @@ describe('Inner Blocks label testing', () => {
 						);
 
 						// Assert control
-						cy.get('@color-label').should('include.text', 'None');
+						cy.assertColorControlValue('Text Color', 'None');
 
 						// Assert state graph
 						cy.checkStateGraph('Typography', 'Text Color', {});
@@ -847,17 +836,17 @@ describe('Inner Blocks label testing', () => {
 
 			context('checking values on all states', () => {
 				// Assert control
-				cy.get('@color-label').should('include.text', 'None');
+				cy.assertColorControlValue('Text Color', 'None');
 
 				setBlockState('Normal');
 
 				// Assert control
-				cy.get('@color-label').should('include.text', 'None');
+				cy.assertColorControlValue('Text Color', 'None');
 
 				setDeviceType('Tablet');
 
 				// Assert control
-				cy.get('@color-label').should('include.text', 'None');
+				cy.assertColorControlValue('Text Color', 'None');
 
 				setBlockState('Hover');
 
@@ -866,12 +855,12 @@ describe('Inner Blocks label testing', () => {
 				setInnerBlock('elements/link');
 
 				// Assert control
-				cy.get('@color-label').should('include.text', 'None');
+				cy.assertColorControlValue('Text Color', 'None');
 
 				setBlockState('Normal');
 
 				// Assert control
-				cy.get('@color-label').should('include.text', 'None');
+				cy.assertColorControlValue('Text Color', 'None');
 
 				// Assert store data
 				assertBlockData((data) => {
