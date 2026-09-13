@@ -96,7 +96,7 @@ github/
     jobs/remove-pr-config-files/ # run.sh
     jobs/pr-workflows/          # should-run.sh (allowedActions gate)
     jobs/create-demo-attachments/ # build/publish/encode/comment/cleanup
-    jobs/cypress-components-tests/ # run.sh
+    jobs/cypress-components-tests/ # detect | run.sh
     jobs/cypress-e2e-tests/      # detect | run | prepare.sh
     jobs/performance-benchmark/  # setup.sh | run-*.sh | stop.sh
     jobs/php-snapshots/          # compute-previous-wordpress-version.sh | run.sh
@@ -116,7 +116,7 @@ github/
     run-wp-env-start.js / inject-wp-env-dockerfile.js / preload-wp-env-docker-patch.js
     download-artifact.sh / create-wp-env.js       # merge wp-env-configs + .pr-env.json
     list-test-categories.js / list-visual-snapshot-batches.js
-    lib/                     # walk-files, list-test-categories, retry.sh, package-match
+    lib/                     # walk-files, list-test-categories, detect-test-categories, retry.sh, package-match
     sync-consumer-bootstrap.sh
   workflows/             # Blockera-base templates (release-plugin.yml, release-theme.yml, …)
 ```
@@ -711,9 +711,11 @@ their own scan/package/pattern env — there is no product-style switch.
 Set `BLOCKERA_E2E_SHARD_SIZE` (e.g. `100`) to pack each base filename
 category by registered test count. Shard count is `ceil(total / size)`;
 files are split evenly across those shards (one shard keeps the original
-id). `detect-categories.sh` logs each matrix id with its registered `it()`
-count and file count (stdout stays a JSON array for the matrix). `run.sh`
-always passes an explicit `--spec` list from `--specs-for-category`.
+id). `jobs/cypress-e2e-tests/detect-categories.sh` wraps
+`lib/detect-test-categories.sh` (same GITHUB_OUTPUT contract as component
+detect). It logs each matrix id with its registered `it()` count and file
+count (stdout stays a JSON array for the matrix). `run.sh` always passes
+an explicit `--spec` list from `--specs-for-category`.
 
 ```yaml
 # Theme-style example
@@ -777,8 +779,10 @@ env:
 | `BLOCKERA_E2E_BUILD_CMD` / `_TEST_CMD` / `_STOP_CMD` | `npm run build` / `test:e2e` / `env:stop` |
 
 Discovery env: `SCAN_ROOTS`, `PACKAGE_SUFFIX` / `PACKAGE_PREFIX`,
-`GENERAL_PACKAGES`, `EXCLUDE_CATEGORIES`, `EXCLUDE_FILES`, `FILE_PATTERN`,
-`CATEGORY_MODE` (`dot-prefix` \| `last-segment`), `SHARD_SIZE`.
+`GENERAL_PACKAGES`, `EXCLUDE_CATEGORIES`, `EXCLUDE_FILES`,
+`EXCLUDE_SUFFIXES`, `FILE_PATTERN`, `CATEGORY_MODE` (`dot-prefix` \|
+`last-segment`), `SHARD_SIZE`, `PR_SPECS_KEY` (JSON dot path in `--pr-env`,
+default `e2e.specPattern`).
 
 `create-wp-env.js` / Cypress prepare load `.github/wp-env-configs/{category}.json`,
 then `{base}.json` after stripping a trailing `-N` shard (so `woocommerce-2`
@@ -796,6 +800,24 @@ wordpress.org slug) so wp-env does not mount two copies of the companion.
 
 ## Cypress component tests
 
+Two-job flow when the consumer sets a matrix: detect categories → `run.sh`
+per category. Discovery uses `list-test-categories.js --suffix cy.js`. Set
+`BLOCKERA_CT_EXCLUDE_SUFFIXES` (e.g. `e2e.cy.js,visual.cy.js`) so E2E/visual
+files are not packed into the component matrix. `BLOCKERA_CT_SHARD_SIZE`
+packs uncategorized `name.cy.js` files the same way as E2E.
+
+When `BLOCKERA_CT_CATEGORY` is set, `run.sh` passes `--spec` from
+`--specs-for-category`. When it is unset, the full `TEST_CMD` still runs
+(Pro/theme single-job workflows).
+
+```yaml
+env:
+    BLOCKERA_CT_SCAN_ROOTS: packages
+    BLOCKERA_CT_GENERAL_CATEGORY: general-1
+    BLOCKERA_CT_SHARD_SIZE: '400'
+    BLOCKERA_CT_EXCLUDE_SUFFIXES: e2e.cy.js,visual.cy.js
+```
+
 ```yaml
 steps:
     - uses: actions/checkout@v5
@@ -803,19 +825,28 @@ steps:
           token: ${{ secrets.BLOCKERABOT_PAT }}
     - uses: ./.github/actions/ensure-global-packages
     - uses: ./packages/global-packages/packages/dev-tools/github/actions/setup-node
+    - run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/cypress-components-tests/detect-categories.sh
+    # matrix job:
     - run: bash packages/global-packages/packages/dev-tools/github/scripts/jobs/cypress-components-tests/run.sh
 ```
 
 | Env | Default (Blockera base) |
 | --- | --- |
+| `BLOCKERA_CT_CATEGORY` | unset (full suite). Set on the matrix job to pass `--spec` |
+| `BLOCKERA_CT_SCAN_ROOTS` | `packages,tests` (list-test-categories default; consumers usually set `packages`) |
+| `BLOCKERA_CT_GENERAL_CATEGORY` | `general-1` (`none` disables) |
+| `BLOCKERA_CT_SHARD_SIZE` | unset / `0` (no packing). Same packing rules as `BLOCKERA_E2E_SHARD_SIZE` |
+| `BLOCKERA_CT_EXCLUDE_SUFFIXES` | empty. Comma list of extra suffixes skipped while scanning `--suffix cy.js` |
+| `BLOCKERA_CT_LIST_CATEGORIES_CMD` | `list-test-categories.js --suffix cy.js --env-prefix BLOCKERA_CT` |
+| `BLOCKERA_CT_PR_ENV_FILE` | empty (no PR filter). Use with `BLOCKERA_CT_PR_SPECS_KEY` (default `e2e.specPattern`; set `component.specPattern` for component PR lists) |
 | `BLOCKERA_CT_INSTALL_CMD` | `npx cypress install` |
 | `BLOCKERA_CT_COMPOSER_INSTALL` | `true` |
 | `BLOCKERA_CT_COMPOSER_CMD` | `composer install --no-dev -o --apcu-autoloader -a` |
 | `BLOCKERA_CT_BUILD` | `true` |
 | `BLOCKERA_CT_BUILD_CMD` | `npm run build` |
 | `BLOCKERA_CT_TEST_CMD` | `npm run test:ct` |
-| `BLOCKERA_CT_SKIP_IF_NO_SPECS` | `false` |
-| `BLOCKERA_CT_SPECS_ROOTS` / `_SPECS_NAME` | used when skip-if-no-specs is enabled |
+| `BLOCKERA_CT_SKIP_IF_NO_SPECS` | `false` (ignored when `BLOCKERA_CT_CATEGORY` is set) |
+| `BLOCKERA_CT_SPECS_ROOTS` / `_SPECS_NAME` | used when skip-if-no-specs is enabled and no category is set |
 
 ## Check debugging code
 

@@ -18,12 +18,15 @@
  *   GENERAL_CATEGORY       synthetic category (empty / none disables)
  *   EXCLUDE_CATEGORIES     comma list; `*` is a glob
  *   EXCLUDE_FILES          comma-separated cwd-relative paths
+ *   EXCLUDE_SUFFIXES      extra filename suffixes to skip (e.g. e2e.cy.js
+ *                          when scanning `--suffix cy.js`)
  *   FILE_PATTERN           regex; when set, only matching files are scanned
  *   CATEGORY_MODE          dot-prefix (default) | last-segment
  *   SHARD_SIZE             positive int; pack base categories into base-1..N by
  *                          registered `it(` count when more than one shard is
  *                          needed (a single shard keeps the original id; 0 / unset
  *                          disables)
+ *   PR_SPECS_KEY           dot path in --pr-env JSON (default: e2e.specPattern)
  */
 const fs = require('fs');
 const path = require('path');
@@ -180,6 +183,20 @@ function resolveOptions(overrides = {}) {
 	const excludeFilesRaw =
 		overrides.excludeFiles || readPrefixed(envPrefix, 'EXCLUDE_FILES', '');
 
+	const excludeSuffixesRaw =
+		overrides.excludeSuffixes !== undefined
+			? overrides.excludeSuffixes
+			: readPrefixed(envPrefix, 'EXCLUDE_SUFFIXES', '');
+	const excludeSuffixes = (
+		Array.isArray(excludeSuffixesRaw)
+			? excludeSuffixesRaw
+			: splitList(excludeSuffixesRaw)
+	).map(normalizeSuffix);
+
+	const prEnvSpecKey =
+		overrides.prEnvSpecKey ||
+		readPrefixed(envPrefix, 'PR_SPECS_KEY', 'e2e.specPattern');
+
 	const shardSizeRaw =
 		overrides.shardSize !== undefined
 			? overrides.shardSize
@@ -205,11 +222,27 @@ function resolveOptions(overrides = {}) {
 			? excludeFilesRaw
 			: splitList(excludeFilesRaw)
 		).map((file) => path.normalize(file)),
+		excludeSuffixes,
+		prEnvSpecKey,
 		filePattern,
 		categoryMode,
 		generalCategory,
 		shardSize,
 	};
+}
+
+function normalizeSuffix(value) {
+	return String(value).replace(/^\.+/, '');
+}
+
+function isExcludedSuffix(filePath, options) {
+	const suffixes = options.excludeSuffixes || [];
+	if (!suffixes.length) {
+		return false;
+	}
+
+	const posix = toPosix(filePath);
+	return suffixes.some((suffix) => posix.endsWith(`.${suffix}`));
 }
 
 function parseShardSize(raw) {
@@ -335,6 +368,10 @@ function resolveSpecPath(filePath, root) {
 }
 
 function specEntry(filePath, options) {
+	if (isExcludedSuffix(filePath, options)) {
+		return null;
+	}
+
 	const base = baseCategoryForSpecFile(filePath, options);
 
 	if (!base) {
@@ -526,16 +563,28 @@ function specsInShardedCategory(entries, category, shardSize) {
 	return shards[0].map((entry) => entry.relative);
 }
 
-function readPrCypressSpecs(prEnvFile, root) {
+function getByDotPath(obj, key) {
+	return String(key)
+		.split('.')
+		.reduce((acc, part) => {
+			if (acc == null || typeof acc !== 'object') {
+				return undefined;
+			}
+			return acc[part];
+		}, obj);
+}
+
+function readPrCypressSpecs(prEnvFile, root, specKey = 'e2e.specPattern') {
 	const abs = path.isAbsolute(prEnvFile)
 		? prEnvFile
 		: path.join(root || process.cwd(), prEnvFile);
 	const json = JSON.parse(fs.readFileSync(abs, 'utf8'));
-	const specs = json?.e2e?.specPattern;
+	const key = specKey || 'e2e.specPattern';
+	const specs = getByDotPath(json, key);
 
 	if (!Array.isArray(specs)) {
 		throw new Error(
-			'list-test-categories: --pr-env e2e.specPattern must be an array'
+			`list-test-categories: --pr-env ${key} must be an array`
 		);
 	}
 
@@ -577,6 +626,9 @@ function collectFiles(options, filter) {
 			...walkFiles(dir, {
 				fileFilter: (filePath) => {
 					if (isExcludedFile(filePath, options)) {
+						return false;
+					}
+					if (isExcludedSuffix(filePath, options)) {
 						return false;
 					}
 					if (
@@ -684,6 +736,16 @@ function parseArgs(argv) {
 			args.excludeFiles = splitList(next());
 		} else if (arg.startsWith('--exclude-files=')) {
 			args.excludeFiles = splitList(arg.slice('--exclude-files='.length));
+		} else if (arg === '--exclude-suffixes') {
+			args.excludeSuffixes = splitList(next());
+		} else if (arg.startsWith('--exclude-suffixes=')) {
+			args.excludeSuffixes = splitList(
+				arg.slice('--exclude-suffixes='.length)
+			);
+		} else if (arg === '--pr-env-spec-key') {
+			args.prEnvSpecKey = next();
+		} else if (arg.startsWith('--pr-env-spec-key=')) {
+			args.prEnvSpecKey = arg.slice('--pr-env-spec-key='.length);
 		} else if (arg === '--file-pattern') {
 			args.filePattern = new RegExp(next(), 'i');
 		} else if (arg.startsWith('--file-pattern=')) {
@@ -737,11 +799,13 @@ Options / env (BLOCKERA_TEST_* or --env-prefix):
   --general-category / GENERAL_CATEGORY   (empty or none disables)
   --exclude-categories / EXCLUDE_CATEGORIES
   --exclude-files / EXCLUDE_FILES
+  --exclude-suffixes / EXCLUDE_SUFFIXES   extra suffixes skipped (e.g. e2e.cy.js)
   --file-pattern / FILE_PATTERN
   --category-mode / CATEGORY_MODE         dot-prefix | last-segment
   --shard-size / SHARD_SIZE               pack extra shards as base-1..N; one shard keeps the id
   --env-prefix                            e.g. BLOCKERA_E2E
   --pr-env FILE                           Cypress .pr-cypress.env.json
+  --pr-env-spec-key / PR_SPECS_KEY       JSON dot path (default: e2e.specPattern)
   --specs-for-category CAT                print matching spec paths (comma list)
 
 Listing categories prints a JSON array on stdout (matrix input) and
@@ -759,7 +823,18 @@ function runCli() {
 		}
 
 		if (args.prEnv) {
-			const specs = readPrCypressSpecs(args.prEnv, process.cwd());
+			const specKey =
+				args.prEnvSpecKey ||
+				readPrefixed(
+					args.envPrefix || 'BLOCKERA_TEST_',
+					'PR_SPECS_KEY',
+					'e2e.specPattern'
+				);
+			const specs = readPrCypressSpecs(
+				args.prEnv,
+				process.cwd(),
+				specKey
+			);
 
 			if (args.specsForCategory) {
 				process.stdout.write(

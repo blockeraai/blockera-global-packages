@@ -1,3 +1,15 @@
+## Unreleased
+
+### Development Notes
+
+- Cypress CI: `lib/detect-test-categories.sh` writes the matrix JSON for
+  both E2E and component detect wrappers (`BLOCKERA_DETECT_LIST_CMD`).
+- `list-test-categories.js` accepts `EXCLUDE_SUFFIXES` and `PR_SPECS_KEY`
+  so a `--suffix cy.js` scan can skip `e2e.cy.js` / `visual.cy.js` and
+  read a configurable `--pr-env` spec array.
+- Component `run.sh` passes `--spec` when `BLOCKERA_CT_CATEGORY` is set
+  (unset still runs the full suite).
+
 ## [5.0.0] - 2026-09-12
 
 ### Development Notes
