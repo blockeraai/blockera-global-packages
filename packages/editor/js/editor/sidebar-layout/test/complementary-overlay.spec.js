@@ -8,6 +8,7 @@ import {
 	overlayContentClassTokens,
 	overlayHostClassTokens,
 	shouldMeasureComplementaryOverlay,
+	shouldPinComplementaryOverlayToRightEdge,
 	shouldSyncOverlayFromHostResize,
 	shouldWriteComplementaryOverlay,
 	strongerOverlaySyncReason,
@@ -376,5 +377,25 @@ describe('complementary overlay geometry', () => {
 		expect(overlay.overlayBox.width).toBe(300);
 		expect(overlay.overlayBox.height).toBe(480);
 		expect(overlay.clipPath).toBe('');
+	});
+});
+
+describe('shouldPinComplementaryOverlayToRightEdge', () => {
+	it('pins docked settings on the right dock', () => {
+		expect(shouldPinComplementaryOverlayToRightEdge(false, 'right')).toBe(
+			true
+		);
+	});
+
+	it('does not pin a floating pane from the right dock', () => {
+		expect(shouldPinComplementaryOverlayToRightEdge(true, 'right')).toBe(
+			false
+		);
+	});
+
+	it('does not pin the left dock', () => {
+		expect(shouldPinComplementaryOverlayToRightEdge(false, 'left')).toBe(
+			false
+		);
 	});
 });
