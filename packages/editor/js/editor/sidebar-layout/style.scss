@@ -341,7 +341,8 @@ body:not(.is-blockera-complementary-floating)
 		width: var(--sidebar-width);
 	}
 
-	&.is-resizing {
+	&.is-resizing,
+	&.is-inserter-category-collapsing {
 		transition: none !important;
 	}
 
@@ -368,6 +369,11 @@ body:not(.is-blockera-complementary-floating)
 	--sidebar-width: calc(
 		var(--sidebar-width-raw) + var(--sidebar-pattern-inserter-width, 280px)
 	);
+	justify-content: flex-end;
+}
+
+.interface-interface-skeleton__secondary-sidebar-blockera.has-inserter-category-panel {
+	justify-content: flex-start;
 }
 
 .interface-interface-skeleton__secondary-sidebar-blockera.has-inserter-category-panel,
@@ -379,19 +385,14 @@ body:not(.is-blockera-complementary-floating)
 }
 
 .blockera-secondary-sidebar-content.has-inserter-category-panel,
-.blockera-primary-sidebar-content.has-inserter-category-panel,
-.blockera-combined-sidebar.has-inserter-category-panel {
-	--sidebar-width: calc(
-		var(--sidebar-width-raw) + var(--sidebar-pattern-inserter-width, 280px)
-	);
+.blockera-primary-sidebar-content.has-inserter-category-panel {
+	width: var(--sidebar-width-raw);
 }
 
 @media (min-width: 782px) {
 	.interface-interface-skeleton__secondary-sidebar-blockera.has-inserter-category-panel,
-	.interface-interface-skeleton__primary-sidebar-blockera.has-inserter-category-panel,
-	.blockera-secondary-sidebar-content.has-inserter-category-panel,
-	.blockera-primary-sidebar-content.has-inserter-category-panel {
-		overflow: visible;
+	.interface-interface-skeleton__primary-sidebar-blockera.has-inserter-category-panel {
+		overflow: hidden;
 	}
 
 	.blockera-sidebar-dock.has-inserter-category-panel {
@@ -406,6 +407,13 @@ body:not(.is-blockera-complementary-floating)
 		.block-editor-inserter__main-area {
 			position: static !important;
 			overflow: visible !important;
+		}
+
+		.blockera-combined-sidebar__inserter,
+		.blockera-combined-sidebar__list-view {
+			flex: 0 0 var(--sidebar-width-raw);
+			width: var(--sidebar-width-raw);
+			max-width: var(--sidebar-width-raw);
 		}
 
 		.block-editor-inserter__menu.show-panel {
@@ -437,13 +445,9 @@ body:not(.is-blockera-complementary-floating)
 	}
 
 	.blockera-primary-sidebar-content.has-inserter-category-panel {
-		.block-editor-inserter__main-area .block-editor-tabbed-sidebar {
-			margin-inline-start: var(--sidebar-pattern-inserter-width, 280px);
-		}
-
 		.block-editor-inserter__category-panel {
-			left: 0 !important;
-			right: auto !important;
+			left: auto !important;
+			right: 100% !important;
 			background: #f0f0f0;
 			border-right: 1px solid #dddddd;
 			border-top: 1px solid #dddddd;

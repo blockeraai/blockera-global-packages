@@ -23,7 +23,8 @@
 		width: var(--sidebar-width);
 	}
 
-	&.is-resizing {
+	&.is-resizing,
+	&.is-inserter-category-collapsing {
 		/* stylelint-disable-next-line declaration-no-important */
 		transition: none !important;
 	}

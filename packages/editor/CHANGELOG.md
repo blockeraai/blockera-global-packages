@@ -12,6 +12,9 @@
   original width on both the left and right docks.
 
 ### Improvements
+- Opening a Patterns or Media category column keeps the main sidebar still
+  and only grows the extra column. Closing that column no longer plays the
+  sidebar width animation.
 - Global Styles color and preset edits no longer re-read settings dock APIs
   on editor-settings sync ticks that do not open inserter or list view.
 - Closed sidebar docks unmount inserter and list view while the clip host is

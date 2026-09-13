@@ -41,9 +41,23 @@ export function applyInserterCategoryPanelClass(
 		!forceClosed &&
 		!!dock.querySelector(MENU_SELECTOR)?.classList.contains(SHOW_PANEL_CLASS);
 
+	const host = dock.closest(SLIDE_HOST_SELECTOR);
+	const wasOpen = dock.classList.contains(INSERTER_CATEGORY_PANEL_CLASS);
+	const collapsing = wasOpen && !isOpen;
+
+	if (host instanceof HTMLElement && collapsing) {
+		host.classList.add('is-inserter-category-collapsing');
+	}
+
 	toggleClass(dock, isOpen);
 	toggleClass(dock.closest(CONTENT_SELECTOR), isOpen);
-	toggleClass(dock.closest(SLIDE_HOST_SELECTOR), isOpen);
+	toggleClass(host, isOpen);
+
+	if (host instanceof HTMLElement && collapsing) {
+		window.requestAnimationFrame(() => {
+			host.classList.remove('is-inserter-category-collapsing');
+		});
+	}
 
 	return isOpen;
 }
