@@ -33,6 +33,8 @@
   not from “still mounted for the close animation”.
 
 ### Automated Tests
+- Inner-block color assertions requery the live Text Color control after
+  inspector remounts instead of a beforeEach `color-label` alias.
 - Flex Layout e2e uses `getFlexDirectionToggle` so direction clicks assert
   WordPress row and stack icons.
 - Sidebar layout Cypress specs assert that list view is visible on the

@@ -3,7 +3,6 @@
  */
 import {
 	createPost,
-	addBlockState,
 	setInnerBlock,
 	setBlockState,
 	setDeviceType,
@@ -16,10 +15,6 @@ describe('useInnerBlocksInfo custom hook testing ...', () => {
 
 		cy.getBlock('default').type('This is test paragraph', { delay: 0 });
 		cy.switchBlockTab('styles');
-
-		cy.getParentContainer('Text Color').within(() => {
-			cy.getByDataCy('color-label').as('color-label');
-		});
 	});
 
 	it('should render link inner block with correctly values in paragraph/normal/link/normal', () => {
@@ -30,7 +25,7 @@ describe('useInnerBlocksInfo custom hook testing ...', () => {
 		cy.setColorControlValue('Text Color', 'aaaaaa');
 
 		// Expected text-color control value of paragraph/normal/link/normal.
-		cy.get('@color-label').should('include.text', 'aaaaaa');
+		cy.assertColorControlValue('Text Color', 'aaaaaa');
 
 		reSelectBlock();
 
@@ -38,7 +33,7 @@ describe('useInnerBlocksInfo custom hook testing ...', () => {
 		setInnerBlock('elements/link');
 
 		// Assert control
-		cy.get('@color-label').should('include.text', 'aaaaaa');
+		cy.assertColorControlValue('Text Color', 'aaaaaa');
 	});
 
 	it('should render link inner block with correctly values when navigate between all states of self and parent block', () => {
@@ -87,11 +82,11 @@ describe('useInnerBlocksInfo custom hook testing ...', () => {
 			// Set "Link" Inner Block as current block.
 			setInnerBlock('elements/link');
 			// Expected text-color control value of paragraph/normal/link/normal.
-			cy.get('@color-label').should('include.text', 'aaaaaa');
+			cy.assertColorControlValue('Text Color', 'aaaaaa');
 			// Set "Hover" state.
 			setBlockState('Hover');
 			// Expected text-color control value of paragraph/normal/link/hover.
-			cy.get('@color-label').should('include.text', 'bbbbbb');
+			cy.assertColorControlValue('Text Color', 'bbbbbb');
 
 			// ========== //
 			setBlockState('Normal');
@@ -103,11 +98,11 @@ describe('useInnerBlocksInfo custom hook testing ...', () => {
 			// Set "Link" Inner Block as current block.
 			setInnerBlock('elements/link');
 			// Expected text-color control value of paragraph/hover/link/normal.
-			cy.get('@color-label').should('include.text', 'cccccc');
+			cy.assertColorControlValue('Text Color', 'cccccc');
 			// Set "Hover" state.
 			setBlockState('Hover');
 			// Expected text-color control value of paragraph/hover/link/hover.
-			cy.get('@color-label').should('include.text', 'dddddd');
+			cy.assertColorControlValue('Text Color', 'dddddd');
 		}
 
 		// ========== //
@@ -125,13 +120,13 @@ describe('useInnerBlocksInfo custom hook testing ...', () => {
 			// Set "Link" Inner Block as current block.
 			setInnerBlock('elements/link');
 			// Expected text-color control value of paragraph/normal/link/normal.
-			cy.get('@color-label').should('include.text', 'aaaaaa');
+			cy.assertColorControlValue('Text Color', 'aaaaaa');
 			// Set value.
 			cy.setColorControlValue('Text Color', 'eeeeee');
 			// set "Hover" state on paragraph.
 			setBlockState('Hover');
 			// Expected text-color control value of paragraph/normal/link/hover.
-			cy.get('@color-label').should('include.text', 'eeeeee');
+			cy.assertColorControlValue('Text Color', 'eeeeee');
 			// Set value.
 			cy.setColorControlValue('Text Color', 'ffffff');
 
@@ -145,13 +140,13 @@ describe('useInnerBlocksInfo custom hook testing ...', () => {
 			// Set "Link" Inner Block as current block.
 			setInnerBlock('elements/link');
 			// Expected text-color control value of paragraph/hover/link/normal.
-			cy.get('@color-label').should('include.text', 'cccccc');
+			cy.assertColorControlValue('Text Color', 'cccccc');
 			// Set value.
 			cy.setColorControlValue('Text Color', '000000');
 			// set "Hover" state on paragraph.
 			setBlockState('Hover');
 			// Expected text-color control value of paragraph/hover/link/hover.
-			cy.get('@color-label').should('include.text', '000000');
+			cy.assertColorControlValue('Text Color', '000000');
 			// Set value.
 			cy.setColorControlValue('Text Color', '111111');
 		}
@@ -170,11 +165,11 @@ describe('useInnerBlocksInfo custom hook testing ...', () => {
 			// Set "Link" Inner Block as current block.
 			setInnerBlock('elements/link');
 			// Expected text-color control value of paragraph/normal/link/normal.
-			cy.get('@color-label').should('include.text', 'eeeeee');
+			cy.assertColorControlValue('Text Color', 'eeeeee');
 			// Set "Hover" state.
 			setBlockState('Hover');
 			// Expected text-color control value of paragraph/normal/link/hover.
-			cy.get('@color-label').should('include.text', 'ffffff');
+			cy.assertColorControlValue('Text Color', 'ffffff');
 
 			// ========== //
 			setBlockState('Normal');
@@ -186,11 +181,11 @@ describe('useInnerBlocksInfo custom hook testing ...', () => {
 			// Set "Link" Inner Block as current block.
 			setInnerBlock('elements/link');
 			// Expected text-color control value of paragraph/hover/link/normal.
-			cy.get('@color-label').should('include.text', '000000');
+			cy.assertColorControlValue('Text Color', '000000');
 			// Set "Hover" state.
 			setBlockState('Hover');
 			// Expected text-color control value of paragraph/hover/link/hover.
-			cy.get('@color-label').should('include.text', '111111');
+			cy.assertColorControlValue('Text Color', '111111');
 		}
 	});
 });
