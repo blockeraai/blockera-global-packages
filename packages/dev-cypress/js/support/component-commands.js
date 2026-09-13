@@ -44,7 +44,8 @@ export const registerComponentCommands = () => {
 			return cy.wrap(null);
 		}
 
-		return cy.get('body').then(($body) => {
+		// `cy.get('body')` is scoped by `.within()`; inspector panels have no <body>.
+		return cy.get('body', { withinSubject: null }).then(($body) => {
 			if ($body.find('[aria-controls="styles-view"]').length) {
 				cy.switchBlockTab('styles', { force: true });
 			}

@@ -1,6 +1,9 @@
 ## Unreleased
 
 ### Automated Tests
+- `maybeOpenBlockStylesTab` queries document `body` outside `.within()`
+  so `getByAriaLabel('Add New Background')` still works inside an inspector
+  panel scope.
 - `getParentContainer` and `getByAriaLabel` open the block Styles tab for
   Clipping and Add New Background when that inspector tab exists, so
   functionality specs still find those controls while Settings is default.
