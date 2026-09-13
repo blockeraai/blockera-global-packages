@@ -114,6 +114,29 @@ function assertCategoryColumnOnDock(dock, expectedPanelSide) {
 		const panelRect = visiblePanel.getBoundingClientRect();
 		expect(panelRect.height).to.be.closeTo(contentRect.height, 12);
 
+		const inserterInner = contentNode.querySelector(
+			'.blockera-combined-sidebar__inserter'
+		);
+		const listViewInner = contentNode.querySelector(
+			'.blockera-combined-sidebar__list-view'
+		);
+
+		function assertInnerFillsSlot(inner, label) {
+			expect(inner, label).to.exist;
+			const slot = inner.closest('.blockera-sidebar-dock__slot');
+			expect(slot, `${label} slot`).to.exist;
+			expect(
+				inner.getBoundingClientRect().height,
+				`${label} fills slot height`
+			).to.be.closeTo(slot.getBoundingClientRect().height, 12);
+		}
+
+		assertInnerFillsSlot(inserterInner, 'inserter');
+
+		if (listViewInner) {
+			assertInnerFillsSlot(listViewInner, 'list view');
+		}
+
 		const firstColumn = contentNode.querySelector(
 			'.block-editor-inserter__main-area .block-editor-tabbed-sidebar'
 		);
