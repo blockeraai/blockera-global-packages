@@ -25,6 +25,11 @@
 - Primary and secondary docks pass `isDockOpen` from the visible clip class,
   not from “still mounted for the close animation”.
 
+### Automated Tests
+- Sidebar layout Cypress specs assert that list view is visible on the
+  right dock right after a drop, and that the settings overlay matches the
+  settings pane.
+
 ## [5.0.0] - 2026-09-12
 
 ### Improvements

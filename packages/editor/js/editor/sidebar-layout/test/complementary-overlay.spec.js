@@ -7,9 +7,11 @@ import {
 	isSlideHostOpening,
 	overlayContentClassTokens,
 	overlayHostClassTokens,
+	paneShareFromHeights,
 	shouldMeasureComplementaryOverlay,
 	shouldPinComplementaryOverlayToRightEdge,
 	shouldSyncOverlayFromHostResize,
+	shouldSyncOverlayFromPaneShare,
 	shouldWriteComplementaryOverlay,
 	strongerOverlaySyncReason,
 } from '../useComplementaryOverlay';
@@ -124,6 +126,22 @@ describe('shouldWriteComplementaryOverlay', () => {
 		).toBe(true);
 	});
 
+	it('writes docked pane-stack updates that only change overlay height', () => {
+		expect(
+			shouldWriteComplementaryOverlay(
+				false,
+				false,
+				docked,
+				{
+					...docked,
+					height: 250,
+				},
+				0.5,
+				'pane-stack'
+			)
+		).toBe(true);
+	});
+
 	it('writes docked idle updates when the overlay width or left changes', () => {
 		expect(
 			shouldWriteComplementaryOverlay(false, false, docked, {
@@ -235,6 +253,15 @@ describe('shouldMeasureComplementaryOverlay', () => {
 				'drag'
 			)
 		).toBe(true);
+		expect(
+			shouldMeasureComplementaryOverlay(
+				false,
+				false,
+				true,
+				false,
+				'pane-stack'
+			)
+		).toBe(true);
 	});
 });
 
@@ -270,6 +297,23 @@ describe('overlay class tokens and sync reason rank', () => {
 			'resize-width'
 		);
 		expect(strongerOverlaySyncReason('drag', 'slide')).toBe('slide');
+		expect(strongerOverlaySyncReason('resize-width', 'pane-stack')).toBe(
+			'pane-stack'
+		);
+	});
+});
+
+describe('pane share of the settings dock', () => {
+	it('is the pane height divided by the dock height', () => {
+		expect(paneShareFromHeights(250, 500)).toBe(0.5);
+		expect(paneShareFromHeights(500, 0)).toBeNaN();
+	});
+
+	it('syncs when stacking changes the pane share, not when the whole dock grows', () => {
+		expect(shouldSyncOverlayFromPaneShare(1, 0.5)).toBe(true);
+		expect(shouldSyncOverlayFromPaneShare(0.5, 0.5)).toBe(false);
+		expect(shouldSyncOverlayFromPaneShare(0.5, 0.51)).toBe(false);
+		expect(shouldSyncOverlayFromPaneShare(Number.NaN, 0.5)).toBe(false);
 	});
 });
 

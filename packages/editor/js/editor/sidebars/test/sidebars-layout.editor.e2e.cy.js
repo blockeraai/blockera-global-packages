@@ -193,6 +193,38 @@ function assertPaneOrder(dock, sectionIds) {
 		});
 }
 
+function assertPaneVisibleInDock(dock, sectionId) {
+	cy.getByDataTest(`blockera-sidebar-dock-${dock}`)
+		.find(`[data-test="blockera-sidebar-pane-${sectionId}"]`)
+		.should(($pane) => {
+			const rect = $pane[0].getBoundingClientRect();
+			expect(rect.height, `${sectionId} height`).to.be.greaterThan(80);
+			expect(rect.width, `${sectionId} width`).to.be.greaterThan(80);
+		});
+}
+
+function assertSettingsOverlayMatchesComplementaryPane() {
+	cy.get('[data-test="blockera-sidebar-pane-complementary"]').should(
+		($pane) => {
+			const paneRect = $pane[0].getBoundingClientRect();
+			const overlay = Cypress.$(
+				'.interface-interface-skeleton__sidebar.blockera-complementary-overlay'
+			)[0];
+
+			expect(overlay, 'settings overlay').to.exist;
+			const overlayRect = overlay.getBoundingClientRect();
+			expect(overlayRect.height, 'overlay height').to.be.closeTo(
+				paneRect.height,
+				12
+			);
+			expect(overlayRect.top, 'overlay top').to.be.closeTo(
+				paneRect.top,
+				12
+			);
+		}
+	);
+}
+
 describe('Movable sidebar docks', () => {
 	beforeEach(() => {
 		createPost();
@@ -502,12 +534,18 @@ describe('Movable sidebar docks', () => {
 		assertSlotCount('right', 2);
 		dropOnSlot('right', 0);
 		assertPaneOrder('right', ['listView', 'complementary']);
+		assertPaneVisibleInDock('right', 'listView');
+		assertPaneVisibleInDock('right', 'complementary');
+		assertSettingsOverlayMatchesComplementaryPane();
 	});
 
 	it('should drop list view onto right slot 1 below settings', () => {
 		startPaneDrag('listView');
 		dropOnSlot('right', 1);
 		assertPaneOrder('right', ['complementary', 'listView']);
+		assertPaneVisibleInDock('right', 'listView');
+		assertPaneVisibleInDock('right', 'complementary');
+		assertSettingsOverlayMatchesComplementaryPane();
 	});
 
 	it('should drop settings onto left slot 0', () => {
@@ -662,6 +700,8 @@ describe('Movable sidebar docks', () => {
 		cy.getByDataTest('blockera-sidebar-dock-left')
 			.find('[data-test="blockera-sidebar-pane-listView"]')
 			.should('not.exist');
+		assertPaneVisibleInDock('right', 'listView');
+		assertSettingsOverlayMatchesComplementaryPane();
 	});
 
 	it('should place list view below settings when insert index is 1', () => {
