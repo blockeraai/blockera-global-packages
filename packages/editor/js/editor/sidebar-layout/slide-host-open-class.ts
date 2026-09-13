@@ -30,3 +30,39 @@ export function findSecondarySlideHost(): HTMLElement | null {
 		SECONDARY_SLIDE_HOST_SELECTOR
 	) as HTMLElement | null;
 }
+
+/**
+ * Slot hosts can appear after the dock's first layout. Keep watching until
+ * the node exists so a persisted-open dock is not clipped at width 0.
+ */
+export function subscribeSlideHostOpenClass(
+	findHost: () => HTMLElement | null,
+	isOpen: boolean
+): () => void {
+	let observer: MutationObserver | null = null;
+
+	const apply = (): boolean => {
+		const host = findHost();
+		if (!host) {
+			return false;
+		}
+
+		syncSlideHostOpenClass(host, isOpen);
+		return true;
+	};
+
+	if (!apply() && isOpen && typeof MutationObserver !== 'undefined') {
+		observer = new MutationObserver(() => {
+			if (apply()) {
+				observer?.disconnect();
+				observer = null;
+			}
+		});
+		observer.observe(document.body, { childList: true, subtree: true });
+	}
+
+	return () => {
+		observer?.disconnect();
+		syncSlideHostOpenClass(findHost(), false);
+	};
+}

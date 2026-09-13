@@ -25,7 +25,7 @@ import { useSidebarDrag } from '../sidebar-layout/useSidebarDrag';
 import { toggleDock } from '../sidebar-layout/dock-bridge';
 import {
 	findSecondarySlideHost,
-	syncSlideHostOpenClass,
+	subscribeSlideHostOpenClass,
 } from '../sidebar-layout/slide-host-open-class';
 import type { SidebarLayout } from '../sidebar-layout/types';
 import './style.scss';
@@ -182,10 +182,7 @@ function SecondarySidebarContentUI() {
 	const leftHostOpen = shouldRenderContent && isContentVisible;
 
 	useEffect(() => {
-		syncSlideHostOpenClass(findSecondarySlideHost(), leftHostOpen);
-		return () => {
-			syncSlideHostOpenClass(findSecondarySlideHost(), false);
-		};
+		return subscribeSlideHostOpenClass(findSecondarySlideHost, leftHostOpen);
 	}, [leftHostOpen]);
 
 	// Initialize default sidebar reference and body class (runs once)

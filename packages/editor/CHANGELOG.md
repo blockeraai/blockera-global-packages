@@ -3,6 +3,8 @@
 ### Bug Fixes
 - Dragging settings from the right dock now follows the pointer left and
   right, not only up and down.
+- The left sidebar now opens on first editor load when the header toggle
+  shows it as open.
 
 ### Improvements
 - Global Styles color and preset edits no longer re-read settings dock APIs
