@@ -221,13 +221,13 @@ describe('Paragraph Block', () => {
 		savePage();
 		redirectToFrontPage();
 
-		cy.get('.blockera-block').should(
+		cy.get('p.blockera-block').should(
 			'have.css',
 			'background-clip',
 			'padding-box'
 		);
 
-		cy.get('.blockera-block').within(() => {
+		cy.get('p.blockera-block').within(() => {
 			// link inner block
 			cy.get('a').should(
 				'have.css',
