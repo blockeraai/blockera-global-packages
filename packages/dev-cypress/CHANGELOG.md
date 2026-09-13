@@ -1,6 +1,9 @@
 ## Unreleased
 
 ### Automated Tests
+- `assertColorControlValue` requeries the color control on each retry so
+  inner-block and state switches that remount `color-label` do not fail
+  with a detached Cypress subject.
 - `maybeOpenBlockStylesTab` queries document `body` outside `.within()`
   so `getByAriaLabel('Add New Background')` still works inside an inspector
   panel scope.
@@ -50,7 +53,6 @@
   still has canvas blocks.
 - `getIframeBody` waits until the editor canvas document has blocks, so
   specs that reload the post editor still find canvas content.
->>>>>>> master
 
 ## [4.0.0] - 2026-09-01
 

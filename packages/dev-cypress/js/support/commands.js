@@ -619,12 +619,57 @@ export const registerCommands = () => {
 		}
 	);
 
-	Cypress.Commands.add('setColorControlValue', (label, value) => {
+	/**
+	 * Requery Text Color (and other color controls) on each retry.
+	 * Do not alias `color-label`: inner-block / state switches remount it,
+	 * and `cy.get('@alias').should()` cannot requery a detached node.
+	 */
+	Cypress.Commands.add('assertColorControlValue', (label, value) => {
 		const hexNeedle = String(value)
 			.replace(/^#/, '')
 			.trim()
 			.toLowerCase();
+		const labels = Array.isArray(label) ? label : [label];
+		const selector = labels
+			.map((item) => `[aria-label="${item}"]`)
+			.join(',');
 
+		cy.get(selector, { timeout: 20000 }).should(($els) => {
+			const $controls = $els.closest('[data-cy=base-control]');
+			const $inOverlay = $controls.filter((_, el) =>
+				Boolean(el.closest('.blockera-complementary-overlay'))
+			);
+			const $pool = $inOverlay.length ? $inOverlay : $controls;
+			const $visible = $pool.filter(':visible');
+			const $container = ($visible.length ? $visible : $pool).last();
+			const $label = $container.find('[data-cy="color-label"]');
+
+			if ($label.length) {
+				expect(
+					$label.text().replace(/^#/, '').trim().toLowerCase()
+				).to.include(hexNeedle);
+				return;
+			}
+
+			const $btn = $container.find('[data-cy="color-btn"]').first();
+			const primary =
+				$btn[0]?.style.getPropertyValue(
+					'--blockera-controls-primary-color'
+				) || '';
+			const indicatorBackground =
+				$container.find('[data-cy="color-indicator"]')[0]?.style
+					.background || '';
+
+			expect(
+				`${primary} ${indicatorBackground}`
+					.replace(/#/g, '')
+					.replace(/\s+/g, '')
+					.toLowerCase()
+			).to.include(hexNeedle);
+		});
+	});
+
+	Cypress.Commands.add('setColorControlValue', (label, value) => {
 		cy.getParentContainer(label)
 			.last()
 			.then(($container) => {
@@ -654,34 +699,7 @@ export const registerCommands = () => {
 				cy.getByDataTest('close-popover').click({ force: true });
 			});
 
-		cy.getParentContainer(label)
-			.last()
-			.should(($container) => {
-				const $label = $container.find('[data-cy="color-label"]');
-
-				if ($label.length) {
-					expect(
-						$label.text().replace(/^#/, '').trim().toLowerCase()
-					).to.include(hexNeedle);
-					return;
-				}
-
-				const $btn = $container.find('[data-cy="color-btn"]').first();
-				const primary =
-					$btn[0]?.style.getPropertyValue(
-						'--blockera-controls-primary-color'
-					) || '';
-				const indicatorBackground =
-					$container.find('[data-cy="color-indicator"]')[0]?.style
-						.background || '';
-
-				expect(
-					`${primary} ${indicatorBackground}`
-						.replace(/#/g, '')
-						.replace(/\s+/g, '')
-						.toLowerCase()
-				).to.include(hexNeedle);
-			});
+		cy.assertColorControlValue(label, value);
 	});
 
 	Cypress.Commands.add('clearColorControlValue', (label) => {
