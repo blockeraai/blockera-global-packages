@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Bug Fixes
+- Dragging settings from the right dock now follows the pointer left and
+  right, not only up and down.
+
 ### Improvements
 - Global Styles color and preset edits no longer re-read settings dock APIs
   on editor-settings sync ticks that do not open inserter or list view.

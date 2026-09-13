@@ -324,6 +324,17 @@ function overlayClipRectFromSlideHost(
 }
 
 /**
+ * Docked settings on the right stay glued to the viewport edge so they
+ * cannot cover the left inserter. A floating pane must follow the pointer.
+ */
+export function shouldPinComplementaryOverlayToRightEdge(
+	isFloating: boolean,
+	dockSide: string
+): boolean {
+	return !isFloating && dockSide === 'right';
+}
+
+/**
  * While the complementary placeholder is docked, overlay left follows the
  * slide host so open/close clip stays correct. While it is floating, follow
  * the placeholder on both axes — host left would pin settings to the dock.
@@ -550,7 +561,7 @@ export function useComplementaryOverlay(
 				dockSide === 'right' || dockSide === 'left'
 					? cssDockWidth
 					: overlayBox.width;
-			if (dockSide === 'right') {
+			if (shouldPinComplementaryOverlayToRightEdge(isFloating, dockSide)) {
 				node.style.removeProperty('left');
 				node.style.setProperty('right', '0', 'important');
 			} else {

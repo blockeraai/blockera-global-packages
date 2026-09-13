@@ -284,7 +284,8 @@ body.has-blockera-complementary-overlay
 	pointer-events: auto;
 }
 
-.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock="right"] {
+body:not(.is-blockera-complementary-floating)
+	.interface-interface-skeleton__sidebar.blockera-complementary-overlay[data-blockera-overlay-dock="right"] {
 	justify-content: flex-start;
 	left: auto !important;
 	right: 0 !important;
