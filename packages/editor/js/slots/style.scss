@@ -19,6 +19,13 @@
 	border: 1px solid var(--blockera-controls-border-color-soft);
 }
 
+.editor-header__settings .components-button.editor-zoom-out-toggle {
+	svg {
+		width: 22px;
+		height: 22px;
+	}
+}
+
 /* Hide View Page button */
 .editor-header__settings > a[aria-label="View Page"],
 .editor-header__settings > a[target="_blank"]:first-child,
