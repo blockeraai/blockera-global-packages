@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Automated Tests
+- Cover resolving theme palette rows from a flat `palette` list and from
+  numeric `palette[]` keys.
+
 ### Improvements
 - Global Styles color, duplicate, and preset edits no longer walk the
   inspector DOM looking for canvas iframe remounts. The watcher stays on
