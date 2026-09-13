@@ -8,6 +8,8 @@
 - Moving list view onto the right sidebar shows it immediately. Settings no
   longer stay full-height over the dropped panel until the dock is closed
   and opened again.
+- Closing the Patterns or Media category column restores the sidebar to its
+  original width on both the left and right docks.
 
 ### Improvements
 - Global Styles color and preset edits no longer re-read settings dock APIs
@@ -29,6 +31,8 @@
 - Sidebar layout Cypress specs assert that list view is visible on the
   right dock right after a drop, and that the settings overlay matches the
   settings pane.
+- Inserter category-column Cypress specs close the Patterns column on the
+  left and right docks and assert the sidebar width returns to the raw size.
 
 ## [5.0.0] - 2026-09-12
 

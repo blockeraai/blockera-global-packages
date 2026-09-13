@@ -23,6 +23,7 @@ import { useEditorMode } from '@blockera/utils';
 import InserterCategoryPanelCloseButton from './InserterCategoryPanelCloseButton';
 import InserterTextModePanel from './InserterTextModePanel';
 import { closeSection } from '../../sidebar-layout/dock-bridge';
+import { clearInserterCategoryPanelClass } from '../../sidebar-layout/inserter-category-panel-class';
 
 interface InserterRemountState {
 	tab: string | undefined;
@@ -126,6 +127,8 @@ export default function InserterLibraryPanel() {
 			'.block-editor-inserter__search input'
 		) as HTMLInputElement | null;
 		const filterValue = searchInput?.value ?? inserter.filterValue ?? '';
+
+		clearInserterCategoryPanelClass(root);
 
 		setInserterRemountState({
 			tab: activeTabId ?? inserter.tab,

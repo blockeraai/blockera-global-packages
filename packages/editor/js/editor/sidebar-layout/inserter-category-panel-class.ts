@@ -48,6 +48,47 @@ export function applyInserterCategoryPanelClass(
 	return isOpen;
 }
 
+/**
+ * Clears the expanded-width class from the dock that contains `fromNode`.
+ * Closing remounts the Gutenberg library, so the class must drop even before
+ * the new menu is observed.
+ */
+export function clearInserterCategoryPanelClass(
+	fromNode: HTMLElement | null
+): void {
+	const dock = fromNode?.closest('.blockera-sidebar-dock');
+	if (dock instanceof HTMLElement) {
+		applyInserterCategoryPanelClass(dock, true);
+	}
+}
+
+/**
+ * Watch the inserter pane subtree so remounting the library (close) still
+ * clears the expanded dock width. Observing only the menu node misses that
+ * because the old menu is replaced, not class-toggled.
+ */
+export function observeInserterCategoryPanelClass(
+	dock: HTMLElement
+): () => void {
+	const apply = () => {
+		applyInserterCategoryPanelClass(dock);
+	};
+	const observer = new MutationObserver(apply);
+	const inserterPane = dock.querySelector(INSERTER_PANE_SELECTOR);
+	observer.observe(inserterPane ?? dock, {
+		subtree: true,
+		childList: true,
+		attributes: true,
+		attributeFilter: ['class'],
+	});
+	apply();
+
+	return () => {
+		observer.disconnect();
+		applyInserterCategoryPanelClass(dock, true);
+	};
+}
+
 export function useInserterCategoryPanelClass(
 	dockRef: RefObject<HTMLElement | null>,
 	enabled: boolean
@@ -59,34 +100,6 @@ export function useInserterCategoryPanelClass(
 			return;
 		}
 
-		const apply = () => {
-			applyInserterCategoryPanelClass(dock);
-		};
-
-		const menuObserver = new MutationObserver(apply);
-		const attachMenuObserver = () => {
-			menuObserver.disconnect();
-			const menu = dock.querySelector(MENU_SELECTOR);
-			if (menu) {
-				menuObserver.observe(menu, {
-					attributes: true,
-					attributeFilter: ['class'],
-				});
-			}
-			apply();
-		};
-
-		attachMenuObserver();
-		const inserterPane = dock.querySelector(INSERTER_PANE_SELECTOR);
-		const mountObserver = new MutationObserver(attachMenuObserver);
-		if (inserterPane) {
-			mountObserver.observe(inserterPane, { childList: true });
-		}
-
-		return () => {
-			menuObserver.disconnect();
-			mountObserver.disconnect();
-			applyInserterCategoryPanelClass(dock, true);
-		};
+		return observeInserterCategoryPanelClass(dock);
 	}, [dockRef, enabled]);
 }
