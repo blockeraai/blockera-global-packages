@@ -117,6 +117,37 @@ export function shouldSyncOverlayFromHostResize(
 	return Math.abs(previousWidth - nextWidth) >= epsilon;
 }
 
+/**
+ * Settings overlay height is a share of the dock. Canvas / Global Styles
+ * ticks grow the whole dock; stacking or splitting panes changes the share.
+ */
+export function paneShareFromHeights(
+	paneHeight: number,
+	dockHeight: number
+): number {
+	if (
+		!Number.isFinite(paneHeight) ||
+		!Number.isFinite(dockHeight) ||
+		dockHeight <= 0
+	) {
+		return Number.NaN;
+	}
+
+	return paneHeight / dockHeight;
+}
+
+export function shouldSyncOverlayFromPaneShare(
+	previousShare: number,
+	nextShare: number,
+	epsilon = 0.02
+): boolean {
+	if (!Number.isFinite(previousShare) || !Number.isFinite(nextShare)) {
+		return false;
+	}
+
+	return Math.abs(nextShare - previousShare) >= epsilon;
+}
+
 type OverlayBoxSnapshot = {
 	top: number;
 	left: number;
@@ -139,7 +170,8 @@ export type ComplementaryOverlaySyncReason =
 	| 'resize-width'
 	| 'window-resize'
 	| 'inserter'
-	| 'class';
+	| 'class'
+	| 'pane-stack';
 
 const MEASURE_REASON_RANK: Record<ComplementaryOverlaySyncReason, number> = {
 	idle: 0,
@@ -147,9 +179,10 @@ const MEASURE_REASON_RANK: Record<ComplementaryOverlaySyncReason, number> = {
 	'resize-width': 2,
 	inserter: 3,
 	'window-resize': 4,
-	drag: 5,
-	slide: 6,
-	init: 7,
+	'pane-stack': 5,
+	drag: 6,
+	slide: 7,
+	init: 8,
 };
 
 /**
@@ -224,7 +257,8 @@ export function shouldWriteComplementaryOverlay(
 	isFloating: boolean,
 	previous: OverlayBoxSnapshot,
 	next: OverlayBoxSnapshot,
-	widthEpsilon = 0.5
+	widthEpsilon = 0.5,
+	reason: ComplementaryOverlaySyncReason = 'idle'
 ): boolean {
 	if (trackingSlide || isFloating) {
 		return (
@@ -233,6 +267,15 @@ export function shouldWriteComplementaryOverlay(
 			previous.width !== next.width ||
 			previous.height !== next.height ||
 			previous.clipPath !== next.clipPath
+		);
+	}
+
+	if (reason === 'pane-stack') {
+		return (
+			previous.top !== next.top ||
+			previous.left !== next.left ||
+			Math.abs(previous.width - next.width) >= widthEpsilon ||
+			Math.abs(previous.height - next.height) >= 1
 		);
 	}
 
@@ -450,6 +493,10 @@ export function useComplementaryOverlay(
 		let lastHeight = Number.NaN;
 		let lastClipPath = '';
 		let lastHostWidth = Number.NaN;
+		let lastHostHeight = Number.NaN;
+		let lastAnchorHeight = Number.NaN;
+		let lastPaneShare = Number.NaN;
+		let paneShareFrame = 0;
 		let pendingReason: ComplementaryOverlaySyncReason = 'idle';
 		let overlayNode = sidebar;
 		let categoryPanelOpen = false;
@@ -489,7 +536,13 @@ export function useComplementaryOverlay(
 				: slideHostForAnchor?.getBoundingClientRect();
 			if (hostRect) {
 				lastHostWidth = hostRect.width;
+				lastHostHeight = hostRect.height;
 			}
+			lastAnchorHeight = anchorRect.height;
+			const nextPaneShare = paneShareFromHeights(
+				anchorRect.height,
+				hostRect?.height ?? lastHostHeight
+			);
 			const { overlayBox, clipPath: measuredClipPath } =
 				complementaryOverlayGeometry(
 					anchor,
@@ -499,7 +552,12 @@ export function useComplementaryOverlay(
 				);
 			const clipPath =
 				trackingSlide || isFloating ? measuredClipPath : '';
+			const shareChanged = shouldSyncOverlayFromPaneShare(
+				lastPaneShare,
+				nextPaneShare
+			);
 			if (
+				!shareChanged &&
 				!shouldWriteComplementaryOverlay(
 					trackingSlide,
 					isFloating,
@@ -516,7 +574,9 @@ export function useComplementaryOverlay(
 						width: overlayBox.width,
 						height: overlayBox.height,
 						clipPath,
-					}
+					},
+					0.5,
+					reason
 				)
 			) {
 				lastHeight = overlayBox.height;
@@ -528,6 +588,9 @@ export function useComplementaryOverlay(
 			lastWidth = overlayBox.width;
 			lastHeight = overlayBox.height;
 			lastClipPath = clipPath;
+			if (Number.isFinite(nextPaneShare)) {
+				lastPaneShare = nextPaneShare;
+			}
 
 			const dock = anchor.closest('.blockera-sidebar-dock');
 			const dockSide = dock?.classList.contains('blockera-sidebar-dock--right')
@@ -618,11 +681,32 @@ export function useComplementaryOverlay(
 			? findSlideHost(anchorRef.current)
 			: null;
 		lastHostWidth = slideHost?.getBoundingClientRect().width ?? Number.NaN;
+		lastHostHeight =
+			slideHost?.getBoundingClientRect().height ?? Number.NaN;
 
 		const maybeStartTrackingForOpen = () => {
 			if (isSlideHostOpening(slideHost)) {
 				startSlideTracking();
 			}
+		};
+
+		const schedulePaneShareCheck = () => {
+			if (paneShareFrame) {
+				return;
+			}
+
+			paneShareFrame = window.requestAnimationFrame(() => {
+				paneShareFrame = 0;
+				const nextShare = paneShareFromHeights(
+					lastAnchorHeight,
+					lastHostHeight
+				);
+		if (!shouldSyncOverlayFromPaneShare(lastPaneShare, nextShare)) {
+			return;
+		}
+
+				syncOnFrame('pane-stack');
+			});
 		};
 
 		const observer = new ResizeObserver((entries) => {
@@ -637,6 +721,11 @@ export function useComplementaryOverlay(
 			const nextWidth = Number.isFinite(borderBox?.inlineSize)
 				? borderBox.inlineSize
 				: entry.contentRect.width;
+			const nextHeight = Number.isFinite(borderBox?.blockSize)
+				? borderBox.blockSize
+				: entry.contentRect.height;
+
+			lastHostHeight = nextHeight;
 
 			if (
 				!shouldSyncOverlayFromHostResize(
@@ -645,11 +734,27 @@ export function useComplementaryOverlay(
 					trackingSlide
 				)
 			) {
+				schedulePaneShareCheck();
 				return;
 			}
 
 			lastHostWidth = nextWidth;
 			syncOnFrame(trackingSlide ? 'slide' : 'resize-width');
+		});
+
+		const anchorObserver = new ResizeObserver((entries) => {
+			const entry = entries[0];
+			if (!entry) {
+				return;
+			}
+
+			const borderBox = Array.isArray(entry.borderBoxSize)
+				? entry.borderBoxSize[0]
+				: entry.borderBoxSize;
+			lastAnchorHeight = Number.isFinite(borderBox?.blockSize)
+				? borderBox.blockSize
+				: entry.contentRect.height;
+			schedulePaneShareCheck();
 		});
 
 		const onTransitionStart = (event: TransitionEvent) => {
@@ -671,6 +776,9 @@ export function useComplementaryOverlay(
 
 		if (slideHost) {
 			observer.observe(slideHost);
+		}
+		if (anchorRef.current) {
+			anchorObserver.observe(anchorRef.current);
 		}
 		slideHost?.addEventListener('transitionstart', onTransitionStart);
 		slideHost?.addEventListener('transitionend', onTransitionEnd);
@@ -771,7 +879,11 @@ export function useComplementaryOverlay(
 			if (frame) {
 				window.cancelAnimationFrame(frame);
 			}
+			if (paneShareFrame) {
+				window.cancelAnimationFrame(paneShareFrame);
+			}
 			observer.disconnect();
+			anchorObserver.disconnect();
 			classObserver.disconnect();
 			showPanelObserver.disconnect();
 			inserterMountObserver.disconnect();

@@ -25,6 +25,7 @@ type ComplementaryAnchorProps = {
 	complementaryAreaId?: string | null;
 	canDrag: boolean;
 	height: string;
+	overlayStackKey?: string;
 	isFloating?: boolean;
 	floatingStyle?: CSSProperties;
 	onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
@@ -38,13 +39,18 @@ export default function ComplementaryAnchor({
 	complementaryAreaId,
 	canDrag,
 	height,
+	overlayStackKey,
 	isFloating,
 	floatingStyle,
 	onPointerDown,
 }: ComplementaryAnchorProps) {
 	const paneRef = useRef<HTMLDivElement | null>(null);
 	const [handleHost, setHandleHost] = useState<HTMLElement | null>(null);
-	useComplementaryOverlay(paneRef, isActive, complementaryAreaId ?? null);
+	useComplementaryOverlay(
+		paneRef,
+		isActive,
+		`${complementaryAreaId ?? ''}:${overlayStackKey ?? ''}`
+	);
 	useLayoutEffect(() => {
 		document.body.classList.toggle(
 			'is-blockera-complementary-floating',

@@ -322,6 +322,7 @@ function SidebarDock({ dock, isDockOpen }: SidebarDockProps) {
 			<ComplementaryAnchor
 				isActive={complementaryOverlayActive}
 				complementaryAreaId={complementaryAreaId}
+				overlayStackKey={`${occupancy}:${layout.complementary.order}`}
 				canDrag={canDrag}
 				height={useFlexFill ? '100%' : height}
 				isFloating={isFloating}

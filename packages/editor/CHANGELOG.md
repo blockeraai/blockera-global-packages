@@ -5,6 +5,9 @@
   right, not only up and down.
 - The left sidebar now opens on first editor load when the header toggle
   shows it as open.
+- Moving list view onto the right sidebar shows it immediately. Settings no
+  longer stay full-height over the dropped panel until the dock is closed
+  and opened again.
 
 ### Improvements
 - Global Styles color and preset edits no longer re-read settings dock APIs
