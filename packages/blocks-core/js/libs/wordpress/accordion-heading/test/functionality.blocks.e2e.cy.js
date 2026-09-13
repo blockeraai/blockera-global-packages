@@ -26,6 +26,8 @@ describe('Accordion Heading Block', () => {
 
 		cy.getBlock('core/accordion-heading').first().click();
 
+		cy.switchBlockTab('styles');
+
 		// Block supported is active
 		cy.get('.blockera-extension-block-card').should('be.visible');
 
