@@ -1,6 +1,8 @@
 ## Unreleased
 
 ### Bug Fixes
+- Opening a Patterns or Media category column no longer shrinks the Blocks
+  and List View panes to half height.
 - Dragging settings from the right dock now follows the pointer left and
   right, not only up and down.
 - The left sidebar now opens on first editor load when the header toggle
