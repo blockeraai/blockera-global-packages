@@ -122,6 +122,18 @@ function assertCategoryColumnOnDock(dock, expectedPanelSide) {
 
 		const columnRect = firstColumn.getBoundingClientRect();
 
+		if (dock === 'left') {
+			expect(columnRect.left, 'main column stays at left edge').to.be.closeTo(
+				contentRect.left,
+				8
+			);
+		} else {
+			expect(
+				columnRect.right,
+				'main column stays at right edge'
+			).to.be.closeTo(contentRect.right, 8);
+		}
+
 		if (expectedPanelSide === 'right') {
 			expect(panelRect.left).to.be.at.least(columnRect.right - 4);
 		} else {

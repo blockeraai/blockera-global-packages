@@ -34,6 +34,33 @@ describe('applyInserterCategoryPanelClass', () => {
 		document.body.innerHTML = '';
 	});
 
+	it('marks the slide host as collapsing when the category column closes', () => {
+		document.body.innerHTML = `
+			<div class="interface-interface-skeleton__secondary-sidebar-blockera has-inserter-category-panel">
+				<div class="blockera-secondary-sidebar-content has-inserter-category-panel">
+					<div class="blockera-sidebar-dock has-inserter-category-panel">
+						<div class="block-editor-inserter__menu show-panel"></div>
+					</div>
+				</div>
+			</div>
+		`;
+		const dock = document.querySelector('.blockera-sidebar-dock');
+		const host = document.querySelector(
+			'.interface-interface-skeleton__secondary-sidebar-blockera'
+		);
+		const menu = document.querySelector('.block-editor-inserter__menu');
+
+		menu.classList.remove('show-panel');
+		applyInserterCategoryPanelClass(dock);
+
+		expect(host.classList.contains('is-inserter-category-collapsing')).toBe(
+			true
+		);
+		expect(host.classList.contains('has-inserter-category-panel')).toBe(
+			false
+		);
+	});
+
 	it('mirrors show-panel onto the dock, content, and slide host', () => {
 		document.body.innerHTML = `
 			<div class="interface-interface-skeleton__secondary-sidebar-blockera">

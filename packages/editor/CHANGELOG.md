@@ -36,6 +36,8 @@
   settings pane.
 - Inserter category-column Cypress specs close the Patterns column on the
   left and right docks and assert the sidebar width returns to the raw size.
+- Those specs also assert the main inserter column stays on the dock edge
+  while the extra category column is open.
 
 ## [5.0.0] - 2026-09-12
 
