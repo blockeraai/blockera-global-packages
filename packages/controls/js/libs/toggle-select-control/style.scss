@@ -43,6 +43,7 @@
 
 		&:focus {
 			color: var(--blockera-controls-primary-color);
+			background-color: color-mix(in srgb, #3858e9 15%, #ffffff 100%);
 			border: none !important;
 			box-shadow: none !important;
 			outline: none !important;
@@ -50,6 +51,7 @@
 
 		&:hover:not([aria-checked="true"], .is-selected) {
 			color: var(--blockera-controls-primary-color);
+			background-color: color-mix(in srgb, #3858e9 15%, #ffffff 100%);
 		}
 
 		&.is-selected {

@@ -15,11 +15,12 @@
 		height: 26px;
 		border-radius: 2px;
 
+		&:focus:not(.is-active-breakpoint),
 		&:hover:not(.is-active-breakpoint) {
 			--icon-outline-color: var(--blockera-controls-primary-color);
 			--blockera-controls-primary-color: color-mix(
 				in srgb,
-				var(--blockera-controls-primary-color-bk) 20%,
+				var(--blockera-controls-primary-color-bk) 15%,
 				#ffffff 100%
 			);
 			fill: var(--blockera-controls-primary-color-bk);
