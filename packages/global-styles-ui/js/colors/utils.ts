@@ -18,6 +18,7 @@ import {
 	splitStoredCompositePlainPresetValue,
 } from '../theme-json-plain-preset';
 import { COLOR_SHADE_STEPS } from './color-shades-generator';
+import { coerceThemeJsonPresetOriginList } from '../components/coerce-theme-json-preset-origin-list';
 import { withPresetMetaFromRepeaterRow } from '../components/preset-meta-utils';
 
 const PALETTE_SHADE_SLUG_MARKER = '-shade-';
@@ -419,7 +420,8 @@ export function shadeHexDiffersFromBaseline(
 
 /**
  * Theme palette rows from global-styles `settings.color`: prefers `palette.theme`,
- * falls back to a flat `palette` array (raw theme.json).
+ * falls back to a flat `palette` array, and merges MU `palette[]` numeric keys
+ * (same as {@link coerceThemeJsonPresetOriginList}).
  */
 export function resolveColorPaletteThemeRows(colorSettings: unknown): Color[] {
 	if (!colorSettings || typeof colorSettings !== 'object') {
@@ -430,9 +432,12 @@ export function resolveColorPaletteThemeRows(colorSettings: unknown): Color[] {
 		return palette as Color[];
 	}
 	if (palette && typeof palette === 'object') {
-		const theme = (palette as { theme?: unknown }).theme;
-		if (Array.isArray(theme)) {
-			return theme as Color[];
+		const coerced = coerceThemeJsonPresetOriginList(
+			(palette as { theme?: unknown }).theme,
+			palette
+		);
+		if (Array.isArray(coerced)) {
+			return coerced as Color[];
 		}
 	}
 	return [];

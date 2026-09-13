@@ -6,6 +6,8 @@
   the canvas.
 
 ### Development Notes
+- Theme palette row resolution reuses the origin-list coerce helper so MU
+  `palette[]` numeric keys are included with `palette.theme`.
 - Iframe preset CSS observer prefers `.edit-site-visual-editor` /
   `.editor-visual-editor` / skeleton content over the full interface
   skeleton, and checks `addedNodes` without spreading or `querySelector`.
