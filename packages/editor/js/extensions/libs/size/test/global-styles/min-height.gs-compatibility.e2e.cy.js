@@ -82,24 +82,27 @@ describe('Min Height → WP Compatibility (Global Styles)', () => {
 	describe('Cover Block', () => {
 		describe('Simple Value', () => {
 			it('Simple Value', () => {
-				cy.getParentContainer('Min Height').as('minHeightContainer');
-
 				assertBlockData((data) => {
 					expect('300px').to.equal(
 						getCoverGlobalStyles(data)?.blockeraMinHeight?.value
 					);
 				});
 
-				cy.get('@minHeightContainer').within(() => {
-					cy.get('input').clear({ force: true });
-				});
+				// Cover remounts this control on store updates; requery instead of
+				// alias + `within()` so Cypress is not stuck on a detached node.
+				cy.getParentContainer('Min Height')
+					.find('input')
+					.clear({ force: true });
 
 				// Re-activate min height
 				cy.activateMoreSettingsItem('More Size Settings', 'Min Height');
 
-				cy.get('@minHeightContainer').within(() => {
-					cy.get('input').type('400px', { force: true });
-				});
+				cy.getParentContainer('Min Height')
+					.find('input')
+					.clear({ force: true });
+				cy.getParentContainer('Min Height')
+					.find('input')
+					.type('400px', { force: true });
 
 				assertBlockData((data) => {
 					expect('400px').to.equal(
@@ -107,9 +110,9 @@ describe('Min Height → WP Compatibility (Global Styles)', () => {
 					);
 				});
 
-				cy.get('@minHeightContainer').within(() => {
-					cy.get('input').clear({ force: true });
-				});
+				cy.getParentContainer('Min Height')
+					.find('input')
+					.clear({ force: true });
 
 				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getCoverGlobalStyles(data);
@@ -126,27 +129,25 @@ describe('Min Height → WP Compatibility (Global Styles)', () => {
 	describe('Group Block', () => {
 		describe('Group Simple Value', () => {
 			it('Group Simple Value', () => {
-				cy.getParentContainer('Min Height').as('minHeightContainer');
-
 				assertBlockData((data) => {
 					expect('300px').to.equal(
 						getGroupGlobalStyles(data)?.blockeraMinHeight?.value
 					);
 				});
 
-				cy.get('@minHeightContainer').within(() => {
-					cy.get('input').clear({ force: true });
-				});
+				cy.getParentContainer('Min Height')
+					.find('input')
+					.clear({ force: true });
 
 				// Re-activate min height
 				cy.activateMoreSettingsItem('More Size Settings', 'Min Height');
 
-				cy.getParentContainer('Min Height').as('minHeightContainer');
-
-				cy.get('@minHeightContainer').within(() => {
-					cy.get('input').clear({ force: true });
-					cy.get('input').type('400px', { force: true });
-				});
+				cy.getParentContainer('Min Height')
+					.find('input')
+					.clear({ force: true });
+				cy.getParentContainer('Min Height')
+					.find('input')
+					.type('400px', { force: true });
 
 				assertBlockData((data) => {
 					expect('400px').to.equal(
@@ -154,9 +155,9 @@ describe('Min Height → WP Compatibility (Global Styles)', () => {
 					);
 				});
 
-				cy.get('@minHeightContainer').within(() => {
-					cy.get('input').clear({ force: true });
-				});
+				cy.getParentContainer('Min Height')
+					.find('input')
+					.clear({ force: true });
 
 				assertClearedGlobalStylesStayCleared((data) => {
 					const root = getGroupGlobalStyles(data);

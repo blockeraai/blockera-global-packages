@@ -33,6 +33,8 @@
   not from “still mounted for the close animation”.
 
 ### Automated Tests
+- Global Styles min-height Cover specs requery the Min Height input after
+  inspector remounts instead of a stale `within()` alias.
 - Inner-block color assertions requery the live Text Color control after
   inspector remounts instead of a beforeEach `color-label` alias.
 - Flex Layout e2e uses `getFlexDirectionToggle` so direction clicks assert
