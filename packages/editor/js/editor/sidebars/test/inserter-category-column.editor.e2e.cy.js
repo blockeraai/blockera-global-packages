@@ -130,6 +130,30 @@ function assertCategoryColumnOnDock(dock, expectedPanelSide) {
 	});
 }
 
+function closeCategoryColumn() {
+	cy.get('.blockera-inserter-category-panel-close').click();
+}
+
+function assertCategoryColumnClosed(dock) {
+	const hostSelector =
+		dock === 'left'
+			? '.interface-interface-skeleton__secondary-sidebar-blockera'
+			: '.interface-interface-skeleton__primary-sidebar-blockera';
+
+	cy.getByDataTest(`blockera-sidebar-dock-${dock}`)
+		.find('.block-editor-inserter__menu')
+		.should('not.have.class', 'show-panel');
+	cy.get(hostSelector).should(
+		'not.have.class',
+		'has-inserter-category-panel'
+	);
+	cy.get(hostSelector).should(($host) => {
+		const width = $host[0].getBoundingClientRect().width;
+		expect(width, 'dock width after close').to.be.lessThan(420);
+		expect(width, 'dock still open').to.be.greaterThan(200);
+	});
+}
+
 describe('Inserter category column layout', () => {
 	beforeEach(() => {
 		createPost();
@@ -160,6 +184,19 @@ describe('Inserter category column layout', () => {
 		assertCategoryColumnOnDock('left', 'right');
 	});
 
+	it('should restore left dock width after closing the patterns category column', () => {
+		cy.window().should((win) => {
+			applyDefaultSidebarLayout(win);
+			ensureSecondarySidebarOpen(win);
+		});
+
+		openInserterTab('left', 'Patterns');
+		openFirstCategory('left');
+		assertCategoryColumnOnDock('left', 'right');
+		closeCategoryColumn();
+		assertCategoryColumnClosed('left');
+	});
+
 	it('should show a full-height media column to the right on the left dock', () => {
 		cy.window().should((win) => {
 			applyDefaultSidebarLayout(win);
@@ -182,6 +219,20 @@ describe('Inserter category column layout', () => {
 		openFirstCategory('right');
 		assertCategoryTabFlexDirection('right', 'row-reverse');
 		assertCategoryColumnOnDock('right', 'left');
+	});
+
+	it('should restore right dock width after closing the patterns category column', () => {
+		cy.window().should((win) => {
+			applyAllRightLayout(win);
+		});
+
+		cy.getByDataTest('blockera-sidebar-pane-drag-inserter').should('exist');
+
+		openInserterTab('right', 'Patterns');
+		openFirstCategory('right');
+		assertCategoryColumnOnDock('right', 'left');
+		closeCategoryColumn();
+		assertCategoryColumnClosed('right');
 	});
 
 	it('should show a full-height media column to the left on the right dock', () => {

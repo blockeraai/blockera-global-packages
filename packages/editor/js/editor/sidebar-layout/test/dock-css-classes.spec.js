@@ -1,7 +1,11 @@
 /**
  * Internal dependencies
  */
-import { applyInserterCategoryPanelClass } from '../inserter-category-panel-class';
+import {
+	applyInserterCategoryPanelClass,
+	clearInserterCategoryPanelClass,
+	observeInserterCategoryPanelClass,
+} from '../inserter-category-panel-class';
 import { syncSlideHostOpenClass } from '../slide-host-open-class';
 
 describe('syncSlideHostOpenClass', () => {
@@ -58,6 +62,74 @@ describe('applyInserterCategoryPanelClass', () => {
 				)
 				.classList.contains('has-inserter-category-panel')
 		).toBe(true);
+	});
+
+	it('clears the class when a remounted menu no longer has show-panel', async () => {
+		document.body.innerHTML = `
+			<div class="interface-interface-skeleton__secondary-sidebar-blockera">
+				<div class="blockera-secondary-sidebar-content">
+					<div class="blockera-sidebar-dock">
+						<div data-test="blockera-sidebar-pane-inserter">
+							<div class="block-editor-inserter__menu show-panel"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		`;
+		const dock = document.querySelector('.blockera-sidebar-dock');
+		const pane = document.querySelector(
+			'[data-test="blockera-sidebar-pane-inserter"]'
+		);
+		const disconnect = observeInserterCategoryPanelClass(dock);
+
+		expect(dock.classList.contains('has-inserter-category-panel')).toBe(
+			true
+		);
+
+		pane.innerHTML = '<div class="block-editor-inserter__menu"></div>';
+		await Promise.resolve();
+		await Promise.resolve();
+
+		expect(dock.classList.contains('has-inserter-category-panel')).toBe(
+			false
+		);
+		expect(
+			document
+				.querySelector(
+					'.interface-interface-skeleton__secondary-sidebar-blockera'
+				)
+				.classList.contains('has-inserter-category-panel')
+		).toBe(false);
+
+		disconnect();
+	});
+
+	it('clears the class from a nested close target', () => {
+		document.body.innerHTML = `
+			<div class="interface-interface-skeleton__primary-sidebar-blockera has-inserter-category-panel">
+				<div class="blockera-primary-sidebar-content has-inserter-category-panel">
+					<div class="blockera-sidebar-dock has-inserter-category-panel">
+						<div class="block-editor-inserter__menu show-panel"></div>
+					</div>
+				</div>
+			</div>
+		`;
+		const menu = document.querySelector('.block-editor-inserter__menu');
+
+		clearInserterCategoryPanelClass(menu);
+
+		expect(
+			document
+				.querySelector('.blockera-sidebar-dock')
+				.classList.contains('has-inserter-category-panel')
+		).toBe(false);
+		expect(
+			document
+				.querySelector(
+					'.interface-interface-skeleton__primary-sidebar-blockera'
+				)
+				.classList.contains('has-inserter-category-panel')
+		).toBe(false);
 	});
 
 	it('clears the class when the category column is closed', () => {
