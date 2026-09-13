@@ -10,6 +10,11 @@
 - Component `run.sh` passes `--spec` when `BLOCKERA_CT_CATEGORY` is set
   (unset still runs the full suite).
 
+### Automated Tests
+
+- `list-test-categories` covers `EXCLUDE_SUFFIXES` and `--pr-env` spec
+  keys.
+
 ## [5.0.0] - 2026-09-12
 
 ### Development Notes

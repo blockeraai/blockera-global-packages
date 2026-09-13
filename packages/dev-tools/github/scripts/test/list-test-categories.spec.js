@@ -9,6 +9,8 @@ const {
 	listCategories,
 	listCategoriesFromSpecPaths,
 	listCategorySummaries,
+	parseArgs,
+	readPrCypressSpecs,
 	specsForCategory,
 	specsForCategoryFromDisk,
 	stripShardSuffix,
@@ -355,5 +357,104 @@ describe('list-test-categories sharding', () => {
 		expect(
 			formatCategorySummaries(listCategorySummaries(options))
 		).toMatch(/total\s+125 its/);
+	});
+});
+
+describe('EXCLUDE_SUFFIXES', () => {
+	let root;
+
+	beforeEach(() => {
+		root = fs.mkdtempSync(path.join(os.tmpdir(), 'ct-suffixes-'));
+	});
+
+	afterEach(() => {
+		fs.rmSync(root, { recursive: true, force: true });
+	});
+
+	it('skips e2e and visual specs when scanning suffix cy.js', () => {
+		writeSpec(root, 'packages/controls/test/input-control.cy.js', its(2));
+		writeSpec(
+			root,
+			'packages/controls/test/functionality.e2e.cy.js',
+			its(4)
+		);
+		writeSpec(root, 'packages/controls/test/snapshot.visual.cy.js', its(1));
+
+		expect(
+			listCategories({
+				root,
+				suffix: 'cy.js',
+				scanRoots: ['packages'],
+				excludeSuffixes: ['e2e.cy.js', 'visual.cy.js'],
+			})
+		).toEqual(['general-1']);
+		expect(
+			specsForCategoryFromDisk('general-1', {
+				root,
+				suffix: 'cy.js',
+				scanRoots: ['packages'],
+				excludeSuffixes: ['e2e.cy.js', 'visual.cy.js'],
+			})
+		).toEqual(['packages/controls/test/input-control.cy.js']);
+	});
+});
+
+describe('readPrCypressSpecs', () => {
+	let root;
+
+	beforeEach(() => {
+		root = fs.mkdtempSync(path.join(os.tmpdir(), 'pr-env-specs-'));
+	});
+
+	afterEach(() => {
+		fs.rmSync(root, { recursive: true, force: true });
+	});
+
+	it('reads e2e.specPattern by default', () => {
+		const filePath = path.join(root, '.pr-cypress.env.json');
+		fs.writeFileSync(
+			filePath,
+			JSON.stringify({
+				e2e: { specPattern: ['packages/a.e2e.cy.js'] },
+				component: { specPattern: ['packages/b.cy.js'] },
+			})
+		);
+
+		expect(readPrCypressSpecs(filePath, root)).toEqual([
+			'packages/a.e2e.cy.js',
+		]);
+	});
+
+	it('reads a custom JSON dot path', () => {
+		const filePath = path.join(root, '.pr-cypress.env.json');
+		fs.writeFileSync(
+			filePath,
+			JSON.stringify({
+				e2e: { specPattern: ['packages/a.e2e.cy.js'] },
+				component: { specPattern: ['packages/b.cy.js'] },
+			})
+		);
+
+		expect(
+			readPrCypressSpecs(filePath, root, 'component.specPattern')
+		).toEqual(['packages/b.cy.js']);
+	});
+});
+
+describe('parseArgs extra knobs', () => {
+	it('parses exclude-suffixes and pr-env-spec-key', () => {
+		expect(
+			parseArgs([
+				'--exclude-suffixes',
+				'e2e.cy.js,visual.cy.js',
+				'--pr-env-spec-key',
+				'component.specPattern',
+			])
+		).toEqual(
+			expect.objectContaining({
+				excludeSuffixes: ['e2e.cy.js', 'visual.cy.js'],
+				prEnvSpecKey: 'component.specPattern',
+			})
+		);
 	});
 });
